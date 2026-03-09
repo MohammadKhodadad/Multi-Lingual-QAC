@@ -1,0 +1,13 @@
+[project]
+name = "multi-lingual-qac"
+version = "0.1.0"
+description = "Multi-lingual chemical Question-Answer-Context pipeline"
+readme = "MULTILINGUAL_CHEMICAL_QAC_PLAN.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-cloud-bigquery>=3.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+qac = "main:main"
