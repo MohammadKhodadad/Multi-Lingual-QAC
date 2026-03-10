@@ -11,24 +11,43 @@ uv sync
 Add `.env`:
 ```
 GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+OPENAI_API_KEY=your-openai-api-key
+HF_TOKEN=your-huggingface-token
 ```
 
-For Google Patents extraction: `gcloud auth application-default login`
+- For Google Patents extraction: `gcloud auth application-default login`
+- For Q&A generation: `OPENAI_API_KEY` (OpenAI API)
+- For Hugging Face push: `HF_TOKEN` (create at huggingface.co/settings/tokens)
 
 ## Usage
 
 ```bash
-uv run main.py              # interactive: asks redo for extraction and each language
-uv run main.py --yes        # no prompts; redo all
-uv run main.py --no-extraction   # skip extraction; only preprocess
-uv run main.py --limit 100  # 100 per language (en, de, fr, ...) into one NDJSON
+uv run main.py                  # interactive: asks redo for extraction, preprocessing, corpus merge, Q&A
+uv run main.py --yes            # no prompts; redo all
+uv run main.py --no-extraction  # skip extraction; only preprocess and corpus merge
+uv run main.py --limit 100      # 100 per language (en, de, fr, ...) into one NDJSON
+uv run main.py --qa-sample 50   # generate Q&A for 50 sampled corpus documents (default); use 0 to skip
+uv run main.py --push-hf --hf-repo username/multi-lingual-chemical-qac   # push to Hugging Face
 ```
 
 ## Data flow
 
 1. **Extraction** → `data/google_patents/chemistry_patents.ndjson` (BigQuery)
 2. **Preprocessing** → `data/google_patents/preprocessed/{en,de,fr,...}.csv`
-3. Each CSV has: `id`, `language`, `title`, `abstract`, `context`, `publication_number`, `country_code`, `publication_date`, `source`
+3. **Corpus merge** → `data/google_patents/corpus.csv` (all languages combined)
+4. **Q&A generation** → `data/google_patents/qac/qac.csv`
+5. **Push to Hugging Face** → dataset with splits: corpus, queries, qrels, qac (MTEB retrieval format)
+
+### Q&A generation (Option A)
+
+- Samples corpus (stratified by language)
+- Generates (question, answer) in **English** via OpenAI per document
+- Translates Q&A to all target languages (de, fr, es, ja, ko, zh, ru, pt, it, nl, ar, tr, pl, hi)
+- Output: `corpus_id`, `language`, `question`, `answer` (one row per document per language)
+
+### Corpus / preprocessed columns
+
+- `id`, `language`, `title`, `abstract`, `context`, `publication_number`, `country_code`, `publication_date`, `source`
 
 ## Plan
 

@@ -1,0 +1,49 @@
+# Pipeline Steps Done So Far
+
+Short recap of every step implemented in the Multi-Lingual Chemical QAC pipeline.
+
+---
+
+## 1. Plan
+Created `MULTILINGUAL_CHEMICAL_QAC_PLAN.md`: data gathering → QAC generation → multilingual setup → cleaning → export. Targets WIPO, Lens, Google Patents. Defines MTEB format (corpus, queries, qrels).
+
+---
+
+## 2. Project Layout
+Set up `data/`, `src/dataloader/`, `main.py`. Added `google_patents.py` loader, `wipo.py` stub. Dependencies in `pyproject.toml`, env via `.env`.
+
+---
+
+## 3. BigQuery Extraction
+Query `patents-public-data.patents.publications` for chemistry patents using CPC/IPC prefixes and SureChEMBL. Writes NDJSON with multilingual title/abstract.
+
+---
+
+## 4. Per-Language Extraction
+`extract_chemistry_patents_per_language()` pulls up to N patents per language into one NDJSON. Each language gets its own BigQuery query with `primary_lang` filter.
+
+---
+
+## 5. Preprocessing (NDJSON → CSV)
+`preprocess_ndjson_to_csv()`: extract title/abstract per language, dedupe by publication number, apply `clean_text` (HTML decode + whitespace collapse), write `data/google_patents/preprocessed/{lang}.csv`.
+
+---
+
+## 6. Text Cleaning
+`clean_text()` decodes HTML entities (`html.unescape`) and normalizes whitespace. Applied to title, abstract, and context in preprocessing and merge.
+
+---
+
+## 7. Corpus Merge
+`merge_corpus_csv()` merges all per-language CSVs into one `data/google_patents/corpus.csv`. Corpus = documents for retrieval; queries and answers come from later QAC generation.
+
+---
+
+## 8. Main Flow
+`main.py` runs: extraction → per-language preprocessing → corpus merge → Q&A generation. Asks redo for each step. Supports `--yes`, `--no-extraction`, `--limit N`, `--qa-sample M`.
+
+## 9. Q&A Generation (Option A)
+Sample corpus (stratified by language). Generate (question, answer) in English via OpenAI per document. Translate Q&A to all target languages. Output: `qac/qac.csv` with corpus_id, language, question, answer.
+
+## 10. Push to Hugging Face
+`push_to_hub()` uploads corpus, queries, qrels, qac to HF. Requires HF_TOKEN. Use `--push-hf --hf-repo username/dataset`. Dataset splits: corpus (_id, title, text), queries (_id, text), qrels (query-id, corpus-id, score), qac (full triplets).

@@ -14,9 +14,20 @@ Requires: GOOGLE_APPLICATION_CREDENTIALS or gcloud auth, and a Google Cloud proj
 from __future__ import annotations
 
 import csv
+import html
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+
+def clean_text(s: str) -> str:
+    """Decode HTML entities and normalize whitespace."""
+    if not s:
+        return ""
+    s = html.unescape(s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
 
 # Fields that BigQuery returns as repeated RECORDs; need JSON serialization
 _RECORD_KEYS = [
@@ -418,8 +429,8 @@ def preprocess_ndjson_to_csv(
                 continue
             seen_pub.add(pub_num)
 
-            title = title or ""
-            abstract = abstract or ""
+            title = clean_text(title or "")
+            abstract = clean_text(abstract or "")
             context = f"{title}\n\n{abstract}".strip() if title else abstract
 
             rows.append({
@@ -447,3 +458,46 @@ def preprocess_ndjson_to_csv(
         print(f"  {lang}: {len(rows):,} rows -> {out_path}")
 
     return counts
+
+
+def merge_corpus_csv(
+    preprocessed_dir: Path,
+    output_path: Path,
+    *,
+    languages: Optional[List[str]] = None,
+) -> int:
+    """
+    Merge all per-language CSVs into one corpus CSV. Applies clean_text.
+    Corpus = documents for retrieval; queries/answers come from QAC generation.
+    """
+    preprocessed_dir = Path(preprocessed_dir)
+    output_path = Path(output_path)
+    languages = languages or DEFAULT_LANGS
+
+    rows: List[Dict[str, Any]] = []
+    for lang in languages:
+        p = preprocessed_dir / f"{lang}.csv"
+        if not p.exists():
+            continue
+        with p.open(encoding="utf-8") as f:
+            rdr = csv.DictReader(f)
+            for row in rdr:
+                row["title"] = clean_text(row.get("title", ""))
+                row["abstract"] = clean_text(row.get("abstract", ""))
+                row["context"] = clean_text(row.get("context", ""))
+                if not row["context"]:
+                    row["context"] = f"{row['title']}\n\n{row['abstract']}".strip()
+                rows.append(row)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "id", "language", "title", "abstract", "context",
+        "publication_number", "country_code", "publication_date", "source",
+    ]
+    with output_path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        w.writerows(rows)
+
+    print(f"Merged {len(rows):,} rows -> {output_path}")
+    return len(rows)

@@ -267,17 +267,55 @@ Standard fields (e.g., SQuAD-style):
 
 ### MTEB Retrieval Format (Retrieval task)
 
-MTEB uses separate splits for:
+MTEB uses **three parquet datasets** (separate configs/splits). Load with:
+`load_dataset(name, "corpus")`, `load_dataset(name, "queries")`, `load_dataset(name, "qrels")`.
 
-- **queries** — `query_id`, `query` (question)
-- **corpus** — `doc_id`, `title`, `text` (or just `text`)
-- **qrels** — `query_id`, `doc_id`, `score` (relevance)
+#### 1. Corpus (`corpus/*.parquet`)
 
-For QAC → MTEB:
+| Column | Type | Description |
+|--------|------|-------------|
+| `_id` | str | Unique document ID |
+| `title` | str | Document title (can be empty string) |
+| `text` | str | Document content |
 
-- Treat each **context** as a document in the corpus.
-- Treat each **question** as a query.
-- Qrels: each question links to its ground-truth context (and possibly other relevant contexts) with score 1.
+#### 2. Queries (`queries/*.parquet`)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `_id` | str | Unique query ID |
+| `text` | str | Query text (the question) |
+
+#### 3. Qrels (`qrels/*.parquet`)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `query-id` | str | References query `_id` |
+| `corpus-id` | str | References corpus `_id` |
+| `score` | float | Relevance (1 = relevant, 0 = not) |
+
+#### Directory structure (Hugging Face)
+
+```
+dataset_name/
+├── corpus/
+│   └── corpus-00000-of-00001.parquet
+├── queries/
+│   └── queries-00000-of-00001.parquet
+└── qrels/
+    └── qrels-00000-of-00001.parquet
+```
+
+#### Mapping from QAC to MTEB
+
+| QAC field | MTEB field |
+|-----------|------------|
+| `context` | corpus `text` (and optionally `title`) |
+| `question` | queries `text` |
+| context `id` | corpus `_id` |
+| question `id` | queries `_id` |
+| — | qrels: `query-id` = question id, `corpus-id` = context id, `score` = 1 |
+
+Each QAC triplet becomes: one corpus row (context), one query row (question), one qrels row linking them with score 1.
 
 ### Where to start
 
