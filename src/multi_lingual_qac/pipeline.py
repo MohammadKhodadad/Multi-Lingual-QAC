@@ -148,16 +148,22 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
             except ValueError as exc:
                 print(f"Q&A generation skipped: {exc}")
 
-    if config.push_hf:
-        hf_repo = config.hf_repo
-        if not hf_repo and not config.yes:
-            hf_repo = ask_text(
-                "Hugging Face repo ID for upload (e.g. username/multi-lingual-chemical-qac): "
-            )
-        if not hf_repo:
-            print("Error: --hf-repo required when using --push-hf (e.g. --hf-repo username/multi-lingual-chemical-qac)")
-            raise SystemExit(1)
-        qac_csv = paths.qac_dir / "qac.csv"
+    qac_csv = paths.qac_dir / "qac.csv"
+    hf_repo = config.hf_repo
+    should_push = config.push_hf
+
+    if (
+        not config.yes
+        and not should_push
+        and paths.corpus_csv.exists()
+        and qac_csv.exists()
+    ):
+        should_push = ask_interactive(
+            "Data is ready. Do you want to push it to Hugging Face? (y/n): ",
+            "n",
+        ) == "y"
+
+    if should_push:
         if not paths.corpus_csv.exists():
             print("Error: Corpus not found. Run pipeline first.")
             raise SystemExit(1)
@@ -165,12 +171,20 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
             print("Error: QAC not found. Run with --qa-sample > 0 first.")
             raise SystemExit(1)
 
-        do_push = config.yes
-        if not config.yes:
-            do_push = ask_interactive(f"Push to {hf_repo}? (y/n): ", "n") == "y"
-            if not do_push:
+        if not hf_repo and not config.yes:
+            hf_repo = ask_text(
+                "Hugging Face repo ID for upload (e.g. username/multi-lingual-chemical-qac): "
+            )
+        if not hf_repo:
+            print("Error: --hf-repo required when using --push-hf (e.g. --hf-repo username/multi-lingual-chemical-qac)")
+            raise SystemExit(1)
+
+        if config.push_hf and not config.yes:
+            confirmed = ask_interactive(f"Push to {hf_repo}? (y/n): ", "n") == "y"
+            if not confirmed:
                 print("Push skipped.")
-        if do_push:
+                should_push = False
+        if should_push:
             push_to_hub(
                 corpus_path=paths.corpus_csv,
                 qac_path=qac_csv,
@@ -182,7 +196,5 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
     print("  Corpus:", paths.corpus_csv)
     if qa_sample > 0:
         print("  QAC:", paths.qac_dir / "qac.csv")
-    if config.push_hf:
-        hf_repo = config.hf_repo
-        if hf_repo:
-            print("  Hugging Face: https://huggingface.co/datasets/" + hf_repo)
+    if should_push and hf_repo:
+        print("  Hugging Face: https://huggingface.co/datasets/" + hf_repo)
