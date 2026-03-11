@@ -35,6 +35,14 @@ def _get_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
+def _parse_json_response(text: str) -> Dict[str, Any]:
+    """Parse a JSON object from a model response."""
+    text = (text or "").strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    return json.loads(text)
+
+
 def load_corpus(corpus_path: Path) -> List[Dict[str, Any]]:
     """Load corpus CSV into list of dicts."""
     rows: List[Dict[str, Any]] = []
@@ -77,20 +85,31 @@ def sample_corpus(
     return sampled[:sample_size]
 
 
-def generate_qa_english(client: OpenAI, context: str, *, model: str = "gpt-4o-mini") -> Tuple[str, str]:
+def generate_qa_english(
+    client: OpenAI,
+    context: str,
+    *,
+    model: str = "gpt-4o-mini",
+) -> Dict[str, str]:
     """
-    Generate one (question, answer) pair in English from the given context.
-    Returns (question, answer).
+    Generate one validated-target Q&A pair in English from the given context.
+    Returns question, answer, and supporting_text.
     """
-    prompt = """You are an expert at creating reading comprehension questions from technical chemistry/patent texts.
+    prompt = """You are an expert at creating chemistry and patent reading-comprehension questions.
 
-Given the following patent abstract or context, generate exactly ONE question and its answer.
+The source context may be in any language, but your output must be in English only.
+
+Generate exactly ONE question-answer pair from the context.
 
 Rules:
-- The question must be answerable from the text (extractive or short abstractive).
-- The answer must be concise (1-3 sentences) and grounded in the context.
-- Focus on chemistry, materials, processes, or technical details.
-- Output valid JSON only, no markdown: {"question": "...", "answer": "..."}
+- Output must be in natural English only.
+- Do not copy the source language unless a chemical name, formula, identifier, or proper noun should remain unchanged.
+- The question must be answerable from the text and specific enough to be useful for retrieval.
+- Avoid generic questions such as "What is the main object of the invention?" unless the text is too short for anything better.
+- The answer must be concise (1-2 sentences) and strictly grounded in the context.
+- Include a short supporting_text quote copied from the source context that justifies the answer.
+- Output valid JSON only, no markdown:
+  {"question": "...", "answer": "...", "supporting_text": "..."}
 """
 
     response = client.chat.completions.create(
@@ -101,12 +120,102 @@ Rules:
         ],
         temperature=0.3,
     )
-    text = response.choices[0].message.content or ""
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-    data = json.loads(text)
-    return (data.get("question", "").strip(), data.get("answer", "").strip())
+    data = _parse_json_response(response.choices[0].message.content or "")
+    return {
+        "question": str(data.get("question", "")).strip(),
+        "answer": str(data.get("answer", "")).strip(),
+        "supporting_text": str(data.get("supporting_text", "")).strip(),
+    }
+
+
+def check_english_language(
+    client: OpenAI,
+    question: str,
+    answer: str,
+    *,
+    model: str = "gpt-4o-mini",
+) -> Tuple[bool, str]:
+    """
+    Validate that the generated question and answer are written in English.
+    Returns (approved, reason).
+    """
+    prompt = """You are a strict language checker.
+
+Decide whether BOTH the question and answer are written mainly in English.
+
+Approve only if:
+- both are natural English,
+- they are not primarily written in another language,
+- they are not mixed-language outputs except for unavoidable chemical names, formulas, identifiers, or proper nouns.
+
+Output valid JSON only:
+{"approved": true, "reason": "..."}
+"""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": f"Question: {question}\n\nAnswer: {answer}",
+            },
+        ],
+        temperature=0,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    approved = bool(data.get("approved", False))
+    reason = str(data.get("reason", "")).strip()
+    return approved, reason
+
+
+def check_faithfulness(
+    client: OpenAI,
+    context: str,
+    question: str,
+    answer: str,
+    supporting_text: str,
+    *,
+    model: str = "gpt-4o-mini",
+) -> Tuple[bool, str]:
+    """
+    Validate that the answer is supported by the source context.
+    Returns (approved, reason).
+    """
+    prompt = """You are a strict faithfulness checker for patent question-answer pairs.
+
+Approve only if:
+- the question is answerable from the context,
+- the answer is fully supported by the context,
+- the answer does not add unsupported details,
+- the supporting_text is relevant evidence from the context.
+
+Reject if the answer is generic, speculative, partially unsupported, or not clearly grounded.
+
+Output valid JSON only:
+{"approved": true, "reason": "..."}
+"""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Context:\n{context[:5000]}\n\n"
+                    f"Question: {question}\n\n"
+                    f"Answer: {answer}\n\n"
+                    f"Supporting text: {supporting_text}"
+                ),
+            },
+        ],
+        temperature=0,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    approved = bool(data.get("approved", False))
+    reason = str(data.get("reason", "")).strip()
+    return approved, reason
 
 
 def translate_qa(
@@ -166,6 +275,7 @@ def run_qa_pipeline(
     sample_size: int = 50,
     target_languages: Optional[List[str]] = None,
     model: str = "gpt-4o-mini",
+    max_attempts: int = 3,
 ) -> int:
     """
     Sample corpus, generate Q&A in English, translate to all target languages.
@@ -191,7 +301,47 @@ def run_qa_pipeline(
             continue
         print(f"  [{i+1}/{len(sampled)}] {corpus_id}...", end=" ", flush=True)
         try:
-            q_en, a_en = generate_qa_english(client, context, model=model)
+            approved = False
+            q_en = ""
+            a_en = ""
+            supporting_text = ""
+            last_failure = ""
+
+            for attempt in range(1, max_attempts + 1):
+                generated = generate_qa_english(client, context, model=model)
+                q_en = generated["question"]
+                a_en = generated["answer"]
+                supporting_text = generated["supporting_text"]
+
+                lang_ok, lang_reason = check_english_language(
+                    client,
+                    q_en,
+                    a_en,
+                    model=model,
+                )
+                if not lang_ok:
+                    last_failure = f"language check failed: {lang_reason or 'not English enough'}"
+                    continue
+
+                faithful_ok, faithful_reason = check_faithfulness(
+                    client,
+                    context,
+                    q_en,
+                    a_en,
+                    supporting_text,
+                    model=model,
+                )
+                if not faithful_ok:
+                    last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
+                    continue
+
+                approved = True
+                break
+
+            if not approved:
+                print(f"skipped ({last_failure or 'validation failed'})")
+                continue
+
             qac_rows.append({
                 "corpus_id": corpus_id,
                 "language": "en",
@@ -206,7 +356,7 @@ def run_qa_pipeline(
                     "question": q,
                     "answer": a,
                 })
-            print(f"ok (en + {len(trans)} translations)")
+            print(f"ok (validated en + {len(trans)} translations)")
         except Exception as e:
             print(f"error: {e}")
 
