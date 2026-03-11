@@ -43,7 +43,7 @@ Query `patents-public-data.patents.publications` for chemistry patents using CPC
 `main.py` now calls the structured pipeline. Interactive runs can prompt for `limit`, `qa_sample`, redo decisions, and an optional Hugging Face push after corpus and QAC generation complete.
 
 ## 9. Q&A Generation (Option A)
-Sample corpus (stratified by language). Generate English Q&A via OpenAI, then require a language checker and a faithfulness checker to approve each pair before translating it to all target languages.
+Sample corpus (stratified by language). Generate English retrieval-style Q&A via OpenAI, then require language, faithfulness, and question-quality checks to approve each pair before translating it.
 
 ## 10. Push to Hugging Face
 `push_to_hub()` uploads corpus, queries, qrels, qac to HF. Requires HF_TOKEN. Works with `--push-hf --hf-repo username/dataset`, or interactive end-of-run prompting for push confirmation and repo ID.

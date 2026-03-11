@@ -95,7 +95,7 @@ def generate_qa_english(
     Generate one validated-target Q&A pair in English from the given context.
     Returns question, answer, and supporting_text.
     """
-    prompt = """You are an expert at creating chemistry and patent reading-comprehension questions.
+    prompt = """You are an expert at creating chemistry and patent retrieval questions.
 
 The source context may be in any language, but your output must be in English only.
 
@@ -104,12 +104,21 @@ Generate exactly ONE question-answer pair from the context.
 Rules:
 - Output must be in natural English only.
 - Do not copy the source language unless a chemical name, formula, identifier, or proper noun should remain unchanged.
+- The question must read like a realistic retrieval query that a researcher, engineer, or technical reader might actually ask to find this document.
+- Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, or material relationship.
 - The question must be answerable from the text and specific enough to be useful for retrieval.
-- Avoid generic questions such as "What is the main object of the invention?" unless the text is too short for anything better.
+- Avoid generic questions such as:
+  - "What is the main object of the invention?"
+  - "What is the main feature of the invention?"
+  - "What are the main components?"
+  unless the text is too short for anything better.
+- Do not copy a sentence from the context nearly verbatim.
+- Do not make the question artificially difficult or obscure just to reduce word overlap.
 - The answer must be concise (1-2 sentences) and strictly grounded in the context.
 - Include a short supporting_text quote copied from the source context that justifies the answer.
+- Include a question_type chosen from: purpose, application, composition, method, property, advantage, operating_condition, material_relationship, other.
 - Output valid JSON only, no markdown:
-  {"question": "...", "answer": "...", "supporting_text": "..."}
+  {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
 
     response = client.chat.completions.create(
@@ -125,6 +134,7 @@ Rules:
         "question": str(data.get("question", "")).strip(),
         "answer": str(data.get("answer", "")).strip(),
         "supporting_text": str(data.get("supporting_text", "")).strip(),
+        "question_type": str(data.get("question_type", "other")).strip(),
     }
 
 
@@ -218,6 +228,59 @@ Output valid JSON only:
     return approved, reason
 
 
+def check_question_quality(
+    client: OpenAI,
+    context: str,
+    question: str,
+    answer: str,
+    *,
+    model: str = "gpt-4o-mini",
+) -> Tuple[bool, str]:
+    """
+    Validate that the question is retrieval-useful, specific, and not overly generic.
+    Returns (approved, reason).
+    """
+    prompt = """You are a strict quality checker for retrieval questions built from technical patent text.
+
+Approve only if the question:
+- sounds like a realistic search or retrieval query,
+- is specific enough to distinguish the document,
+- asks about a concrete technical point from the context,
+- is not too generic,
+- is not nearly copied from the context verbatim,
+- and is useful for retrieval benchmarking.
+
+Reject questions that are broad or repetitive patterns such as:
+- "What is the main object of the invention?"
+- "What is the main feature?"
+- "What are the main components?"
+unless the context is too short for a better question.
+
+Output valid JSON only:
+{"approved": true, "reason": "..."}
+"""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Context:\n{context[:5000]}\n\n"
+                    f"Question: {question}\n\n"
+                    f"Answer: {answer}"
+                ),
+            },
+        ],
+        temperature=0,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    approved = bool(data.get("approved", False))
+    reason = str(data.get("reason", "")).strip()
+    return approved, reason
+
+
 def translate_qa(
     client: OpenAI,
     question: str,
@@ -234,7 +297,9 @@ def translate_qa(
     lang_list = ", ".join(LANG_NAMES.get(l, l) for l in target_langs)
     prompt = f"""Translate the following question and answer pair into these languages: {lang_list}.
 
-For each language, produce a natural translation. Keep the same meaning and technical terms where appropriate.
+For each language, produce a natural, retrieval-style translation.
+Keep the same meaning, level of specificity, and technical terms where appropriate.
+Do not make the question more generic than the original.
 
 Output valid JSON only:
 {{"translations": {{"de": {{"question": "...", "answer": "..."}}, "fr": {{...}}, ...}}}}
@@ -253,11 +318,7 @@ Languages to include: {json.dumps(target_langs)}
         ],
         temperature=0.2,
     )
-    text = response.choices[0].message.content or ""
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-    data = json.loads(text)
+    data = _parse_json_response(response.choices[0].message.content or "")
     trans = data.get("translations", data)
     result: Dict[str, Tuple[str, str]] = {}
     for lang in target_langs:
@@ -305,6 +366,7 @@ def run_qa_pipeline(
             q_en = ""
             a_en = ""
             supporting_text = ""
+            question_type = ""
             last_failure = ""
 
             for attempt in range(1, max_attempts + 1):
@@ -312,6 +374,7 @@ def run_qa_pipeline(
                 q_en = generated["question"]
                 a_en = generated["answer"]
                 supporting_text = generated["supporting_text"]
+                question_type = generated["question_type"]
 
                 lang_ok, lang_reason = check_english_language(
                     client,
@@ -335,6 +398,17 @@ def run_qa_pipeline(
                     last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
                     continue
 
+                quality_ok, quality_reason = check_question_quality(
+                    client,
+                    context,
+                    q_en,
+                    a_en,
+                    model=model,
+                )
+                if not quality_ok:
+                    last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
+                    continue
+
                 approved = True
                 break
 
@@ -356,7 +430,7 @@ def run_qa_pipeline(
                     "question": q,
                     "answer": a,
                 })
-            print(f"ok (validated en + {len(trans)} translations)")
+            print(f"ok ({question_type or 'validated'} en + {len(trans)} translations)")
         except Exception as e:
             print(f"error: {e}")
 
