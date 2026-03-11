@@ -22,13 +22,37 @@ HF_TOKEN=your-huggingface-token
 ## Usage
 
 ```bash
-uv run main.py                  # interactive: asks redo for extraction, preprocessing, corpus merge, Q&A
-uv run main.py --yes            # no prompts; redo all
+uv run main.py                  # interactive: also asks for limit and Q&A sample size
+uv run main.py --yes            # no prompts; redo all, uses fallback defaults
 uv run main.py --no-extraction  # skip extraction; only preprocess and corpus merge
 uv run main.py --limit 100      # 100 per language (en, de, fr, ...) into one NDJSON
-uv run main.py --qa-sample 50   # generate Q&A for 50 sampled corpus documents (default); use 0 to skip
+uv run main.py --qa-sample 50   # generate Q&A for 50 sampled corpus documents; use 0 to skip
 uv run main.py --push-hf --hf-repo username/multi-lingual-chemical-qac   # push to Hugging Face
 ```
+
+If you use `--push-hf` in interactive mode without `--hf-repo`, the CLI will ask for the repo ID.
+
+## Code Structure
+
+The project now uses a structured package under `src/multi_lingual_qac/`.
+
+```text
+src/
+├── multi_lingual_qac/
+│   ├── cli.py                  # argparse + env loading
+│   ├── config.py               # shared paths and pipeline config
+│   ├── pipeline.py             # main orchestration flow
+│   ├── dataloaders/
+│   │   └── google_patents.py   # extraction + preprocessing + corpus merge
+│   ├── qac_generation/
+│   │   └── openai_qa.py        # Q&A generation + translation
+│   ├── export/
+│   │   └── hf_upload.py        # Hugging Face / MTEB upload
+│   └── preprocess/
+│       └── corpus.py           # corpus-related helpers
+```
+
+`main.py` is now a thin entrypoint that calls `src.multi_lingual_qac.cli:main`.
 
 ## Data flow
 
