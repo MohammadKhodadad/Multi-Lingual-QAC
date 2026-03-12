@@ -7,6 +7,7 @@ then translates to all target languages.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 import json
 import os
@@ -104,7 +105,8 @@ Generate exactly ONE question-answer pair from the context.
 Rules:
 - Output must be in natural English only.
 - Do not copy the source language unless a chemical name, formula, identifier, or proper noun should remain unchanged.
-- The question must read like a realistic retrieval query that a researcher, engineer, or technical reader might actually ask to find this document.
+- The question must read like a realistic retrieval query that a researcher, engineer, or technical reader might actually type into a search system.
+- Prefer short, natural, user-like wording over patent-summary wording.
 - Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, or material relationship.
 - The question must be answerable from the text and specific enough to be useful for retrieval.
 - Avoid generic questions such as:
@@ -112,11 +114,24 @@ Rules:
   - "What is the main feature of the invention?"
   - "What are the main components?"
   unless the text is too short for anything better.
+- Avoid document-centered phrasing such as:
+  - "described in the invention"
+  - "mentioned in the invention"
+  - "according to the invention"
+  - "in the text"
+  Rewrite those into natural user-style English instead.
 - Do not copy a sentence from the context nearly verbatim.
 - Do not make the question artificially difficult or obscure just to reduce word overlap.
 - The answer must be concise (1-2 sentences) and strictly grounded in the context.
 - Include a short supporting_text quote copied from the source context that justifies the answer.
 - Include a question_type chosen from: purpose, application, composition, method, property, advantage, operating_condition, material_relationship, other.
+- Good style examples:
+  - "How should the hair-strengthening preparation be applied?"
+  - "What products can use the polyamide-based microcapsules?"
+  - "What does the shape deformation layer do in the artificial nail?"
+- Bad style examples:
+  - "What are the recommended application methods for the preparation described in the invention?"
+  - "What type of products can include the microcapsules mentioned in the invention?"
 - Output valid JSON only, no markdown:
   {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
@@ -246,6 +261,7 @@ Approve only if the question:
 - sounds like a realistic search or retrieval query,
 - is specific enough to distinguish the document,
 - asks about a concrete technical point from the context,
+- uses natural user-like wording rather than patent-summary wording,
 - is not too generic,
 - is not nearly copied from the context verbatim,
 - and is useful for retrieval benchmarking.
@@ -254,7 +270,15 @@ Reject questions that are broad or repetitive patterns such as:
 - "What is the main object of the invention?"
 - "What is the main feature?"
 - "What are the main components?"
+- "What are the applications ...?" when a more specific application question is possible
+- "What is the composition ...?" when a more targeted material or component question is possible
 unless the context is too short for a better question.
+
+Also reject document-centered wording such as:
+- "described in the invention"
+- "mentioned in the invention"
+- "according to the invention"
+- "in the text"
 
 Output valid JSON only:
 {"approved": true, "reason": "..."}
@@ -329,6 +353,113 @@ Languages to include: {json.dumps(target_langs)}
     return result
 
 
+def _process_sample_row(
+    index: int,
+    row: Dict[str, Any],
+    *,
+    target_languages: List[str],
+    model: str,
+    max_attempts: int,
+) -> Dict[str, Any]:
+    corpus_id = row.get("id", "")
+    context = row.get("context", row.get("abstract", "")) or row.get("title", "")
+    if not context.strip():
+        return {
+            "index": index,
+            "corpus_id": corpus_id,
+            "rows": [],
+            "status": "skipped (empty context)",
+        }
+
+    try:
+        client = _get_client()
+        approved = False
+        q_en = ""
+        a_en = ""
+        supporting_text = ""
+        question_type = ""
+        last_failure = ""
+
+        for _attempt in range(1, max_attempts + 1):
+            generated = generate_qa_english(client, context, model=model)
+            q_en = generated["question"]
+            a_en = generated["answer"]
+            supporting_text = generated["supporting_text"]
+            question_type = generated["question_type"]
+
+            lang_ok, lang_reason = check_english_language(
+                client,
+                q_en,
+                a_en,
+                model=model,
+            )
+            if not lang_ok:
+                last_failure = f"language check failed: {lang_reason or 'not English enough'}"
+                continue
+
+            faithful_ok, faithful_reason = check_faithfulness(
+                client,
+                context,
+                q_en,
+                a_en,
+                supporting_text,
+                model=model,
+            )
+            if not faithful_ok:
+                last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
+                continue
+
+            quality_ok, quality_reason = check_question_quality(
+                client,
+                context,
+                q_en,
+                a_en,
+                model=model,
+            )
+            if not quality_ok:
+                last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
+                continue
+
+            approved = True
+            break
+
+        if not approved:
+            return {
+                "index": index,
+                "corpus_id": corpus_id,
+                "rows": [],
+                "status": f"skipped ({last_failure or 'validation failed'})",
+            }
+
+        qac_rows = [{
+            "corpus_id": corpus_id,
+            "language": "en",
+            "question": q_en,
+            "answer": a_en,
+        }]
+        trans = translate_qa(client, q_en, a_en, target_languages, model=model)
+        for lang, (q, a) in trans.items():
+            qac_rows.append({
+                "corpus_id": corpus_id,
+                "language": lang,
+                "question": q,
+                "answer": a,
+            })
+        return {
+            "index": index,
+            "corpus_id": corpus_id,
+            "rows": qac_rows,
+            "status": f"ok ({question_type or 'validated'} en + {len(trans)} translations)",
+        }
+    except Exception as exc:
+        return {
+            "index": index,
+            "corpus_id": corpus_id,
+            "rows": [],
+            "status": f"error: {exc}",
+        }
+
+
 def run_qa_pipeline(
     corpus_path: Path,
     output_dir: Path,
@@ -337,6 +468,7 @@ def run_qa_pipeline(
     target_languages: Optional[List[str]] = None,
     model: str = "gpt-4o-mini",
     max_attempts: int = 3,
+    batch_mode: bool = False,
 ) -> int:
     """
     Sample corpus, generate Q&A in English, translate to all target languages.
@@ -351,88 +483,50 @@ def run_qa_pipeline(
     rows = load_corpus(corpus_path)
     sampled = sample_corpus(rows, sample_size, stratify_by_language=True, seed=42)
     print(f"Sampled {len(sampled)} documents from corpus ({len(rows)} total).")
-
-    client = _get_client()
     qac_rows: List[Dict[str, str]] = []
+    results: List[Dict[str, Any]] = []
 
-    for i, row in enumerate(sampled):
-        corpus_id = row.get("id", "")
-        context = row.get("context", row.get("abstract", "")) or row.get("title", "")
-        if not context.strip():
-            continue
-        print(f"  [{i+1}/{len(sampled)}] {corpus_id}...", end=" ", flush=True)
-        try:
-            approved = False
-            q_en = ""
-            a_en = ""
-            supporting_text = ""
-            question_type = ""
-            last_failure = ""
-
-            for attempt in range(1, max_attempts + 1):
-                generated = generate_qa_english(client, context, model=model)
-                q_en = generated["question"]
-                a_en = generated["answer"]
-                supporting_text = generated["supporting_text"]
-                question_type = generated["question_type"]
-
-                lang_ok, lang_reason = check_english_language(
-                    client,
-                    q_en,
-                    a_en,
+    if batch_mode and sampled:
+        available_cpus = os.cpu_count() or 1
+        workers = max(1, min(len(sampled), available_cpus))
+        print(
+            f"Running batched Q&A generation with {workers} worker(s) "
+            f"based on {available_cpus} available CPU(s)."
+        )
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [
+                executor.submit(
+                    _process_sample_row,
+                    index,
+                    row,
+                    target_languages=target_languages,
                     model=model,
+                    max_attempts=max_attempts,
                 )
-                if not lang_ok:
-                    last_failure = f"language check failed: {lang_reason or 'not English enough'}"
-                    continue
-
-                faithful_ok, faithful_reason = check_faithfulness(
-                    client,
-                    context,
-                    q_en,
-                    a_en,
-                    supporting_text,
-                    model=model,
+                for index, row in enumerate(sampled)
+            ]
+            for completed, future in enumerate(as_completed(futures), start=1):
+                result = future.result()
+                results.append(result)
+                print(
+                    f"  [{completed}/{len(sampled)}] {result['corpus_id']}... {result['status']}"
                 )
-                if not faithful_ok:
-                    last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
-                    continue
+    else:
+        if sampled:
+            print("Running Q&A generation in single-threaded mode.")
+        for index, row in enumerate(sampled, start=1):
+            result = _process_sample_row(
+                index - 1,
+                row,
+                target_languages=target_languages,
+                model=model,
+                max_attempts=max_attempts,
+            )
+            results.append(result)
+            print(f"  [{index}/{len(sampled)}] {result['corpus_id']}... {result['status']}")
 
-                quality_ok, quality_reason = check_question_quality(
-                    client,
-                    context,
-                    q_en,
-                    a_en,
-                    model=model,
-                )
-                if not quality_ok:
-                    last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
-                    continue
-
-                approved = True
-                break
-
-            if not approved:
-                print(f"skipped ({last_failure or 'validation failed'})")
-                continue
-
-            qac_rows.append({
-                "corpus_id": corpus_id,
-                "language": "en",
-                "question": q_en,
-                "answer": a_en,
-            })
-            trans = translate_qa(client, q_en, a_en, target_languages, model=model)
-            for lang, (q, a) in trans.items():
-                qac_rows.append({
-                    "corpus_id": corpus_id,
-                    "language": lang,
-                    "question": q,
-                    "answer": a,
-                })
-            print(f"ok ({question_type or 'validated'} en + {len(trans)} translations)")
-        except Exception as e:
-            print(f"error: {e}")
+    for result in sorted(results, key=lambda item: item["index"]):
+        qac_rows.extend(result["rows"])
 
     out_csv = output_dir / "qac.csv"
     with out_csv.open("w", encoding="utf-8", newline="") as f:

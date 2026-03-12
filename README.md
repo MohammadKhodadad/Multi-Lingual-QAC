@@ -22,15 +22,17 @@ HF_TOKEN=your-huggingface-token
 ## Usage
 
 ```bash
-uv run main.py                  # interactive: asks for limit, Q&A sample size, and optional HF push at the end
+uv run main.py                  # interactive: asks for limit, Q&A sample size, batch mode, and optional HF push at the end
 uv run main.py --yes            # no prompts; redo all, uses fallback defaults
 uv run main.py --no-extraction  # skip extraction; only preprocess and corpus merge
 uv run main.py --limit 100      # 100 per language (en, de, fr, ...) into one NDJSON
 uv run main.py --qa-sample 50   # generate Q&A for 50 sampled corpus documents; use 0 to skip
+uv run main.py --qa-sample 50 --qa-batch      # batch Q&A generation using available CPUs
+uv run main.py --qa-sample 50 --qa-no-batch   # force single-threaded Q&A generation
 uv run main.py --push-hf --hf-repo username/multi-lingual-chemical-qac   # push to Hugging Face
 ```
 
-At the end of an interactive run, if the corpus and QAC files are ready, the CLI can ask whether you want to push to Hugging Face. If you say yes, it will then ask for the repo ID.
+At the end of an interactive run, the CLI can ask whether to batch-create QAs using available CPUs. If the corpus and QAC files are ready, it can also ask whether you want to push to Hugging Face and then ask for the repo ID.
 
 ## Code Structure
 

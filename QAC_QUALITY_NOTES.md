@@ -5,55 +5,55 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 ## Current Snapshot
 
 - Source file reviewed: `data/google_patents/qac/qac.csv`
-- Current sample size: 75 rows
-- Unique source documents: 5
+- Current sample size: 90 rows
+- Unique source documents: 6
 - Languages present: `en`, `de`, `fr`, `es`, `ja`, `ko`, `zh`, `ru`, `pt`, `it`, `nl`, `ar`, `tr`, `pl`, `hi`
 - Current design: English-first generation, then translation to the other languages
 - Current validation: English language check + faithfulness check + retrieval-quality check before translation
 
 ## What Looks Good
 
-- The `en` rows are now actually English. This is a major improvement over the previous version.
-- Most answers appear grounded in the source patent abstract or context.
+- The `en` rows are genuinely English in the current sample.
+- The answers appear grounded in the source patent abstract or context.
 - The English answers are generally concise and readable.
 - The structure is consistent across languages: one approved English QA gets translated into the target languages.
 - The current validators seem to remove obvious language failures and some unsupported outputs.
-- The latest prompt revision produces more retrieval-style questions that ask about purpose, application, method, or composition rather than falling back as often to generic invention-summary templates.
+- The latest prompt revision produces better questions when it focuses on method, ingredients, component role, or technical purpose.
 
 ## What Still Looks Weak
 
-- Question style is still repetitive. Many questions follow patterns like:
-  - `What is the main feature ...?`
-  - `What are the main components ...?`
-  - `What type of products ...?`
-- Some English outputs still preserve non-English technical spellings when cleaner English normalization would be better.
+- Question style is still somewhat repetitive. Several current questions use broad patterns like:
+  - `What types of products ...?`
+  - `What is the application ...?`
+  - `What is the main advantage ...?`
+- Some questions are faithful but still too broad for strong retrieval benchmarking. They summarize a whole benefit or use case instead of isolating one sharp fact.
 - Some translated outputs are accurate but feel literal rather than natural.
+- Technical-name normalization is better than before, but should still be monitored on chemistry-heavy examples.
 - The current sample is still very small, so quality judgments are preliminary.
-- Some English questions still sound a bit document-centered, for example using phrases like `described in the invention` or `mentioned in the invention`, instead of sounding like natural user queries.
-- We now validate language, faithfulness, and retrieval usefulness, but the prompt and checker may still need tuning over time.
+- We now validate language, faithfulness, and retrieval usefulness, but the prompt and checker still need tuning to push questions toward more discriminative search intent.
 
 ## Example Strengths
 
 ### Good: grounded and understandable
 
-- `WO-2025215522-A1_ko`
-  - Q: `What is the main feature of the artificial nail according to the invention?`
-  - A: `The artificial nail includes a shape deformation layer that fills the gap between the bottom of the nail body and the top surface of the natural nail, adapting to their respective shapes when pressed together.`
-  - Why it is good: English is clear, answer is specific, and it matches the source context.
+- `DE-102020108236-B4_de`
+  - Q: `What is the role of the open-pore vent textile in the bonding process of the two parts?`
+  - A: `The open-pore vent textile is placed between the parts to ensure that it touches each part's surface, facilitating the bonding process under vacuum conditions.`
+  - Why it is good: The question is specific, technical, and directly tied to a concrete mechanism in the source.
 
 - `EP-4633790-A1_fr`
-  - Q: `What type of products can include the polyamide-based microcapsules mentioned in the invention?`
-  - A: `The polyamide-based microcapsules can be included in perfumed consumer products, particularly in household or personal care products.`
-  - Why it is good: The question targets a concrete detail from the source and is useful for retrieval.
+  - Q: `What types of products can incorporate the polyamide-based microcapsules?`
+  - A: `The polyamide-based microcapsules can be used in perfumed consumer products, particularly in household or personal care items.`
+  - Why it is good: The question targets a concrete detail from the source and remains useful for retrieval, even if it is still somewhat broad.
 
 - `WO-2025201614-A1_ru`
-  - Q: `What are the recommended application methods for the hair strengthening and growth stimulating preparation?`
-  - A: `The preparation should be applied in a sequential strand-by-strand manner, followed by exposure to infrared rays for at least 10-20 minutes at a temperature of 30-70 degrees, or under a thermal cap for at least 20-30 minutes at 45-80 degrees.`
-  - Why it is good: The question is more retrieval-like than a generic component question and targets a concrete usage detail from the source.
+  - Q: `What is the method for applying the hair-strengthening preparation?`
+  - A: `The preparation should be applied in sections to the hair base and left under infrared rays for at least 10-20 minutes at a temperature of 30-70 degrees or under a thermal cap for at least 20-30 minutes at a temperature of 45-80 degrees.`
+  - Why it is good: The question asks for a practical procedure, and the answer is concrete and well grounded in the source.
 
 ## Example Weaknesses
 
-### Weak: untranslated or partially normalized terminology
+### Weak: technical normalization still worth watching
 
 - `PL-448242-A1_pl`
   - Previous weak form: `What is the application of the compound 8-(4-trifluorometoksy)benzyloamino-2'-deoksyadenozyny?`
@@ -62,24 +62,26 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 
 ### Weak: question pattern too generic
 
-- Several questions still rely on broad templates such as:
-  - `What are the applications ...?`
-  - `What is the composition ...?`
-  - `What type of products ...?`
-  - Why it is weak: These are usually faithful, but some still sound slightly generic or summary-like rather than like natural user retrieval queries.
+- `PL-448242-A1_pl`
+  - Q: `What is the application of 8-(4-trifluoromethoxy)benzyloamino-2'-deoxyadenosine?`
+  - Why it is weak: It is faithful, but still sounds like a template question. A more natural retrieval query would focus on radiosensitizing DNA damage or making cancer cells more sensitive to ionizing radiation.
+
+- `WO-2025202696-A1_es`
+  - Q: `What is the main advantage of the machine for fine defibrillation of pineapple leaves and other plant stems?`
+  - Why it is weak: It asks for a broad summary benefit, so the answer bundles multiple ideas. A better question would isolate one stronger retrieval target such as corrosion reduction, safety structure, or the 2,000 RPM operating detail.
 
 ## Current Quality Summary
 
 - English correctness: much improved
 - Faithfulness to source: good, but should keep being spot-checked
 - Translation quality: acceptable, sometimes literal
-- Retrieval usefulness: improving and now clearly better than the earlier run
+- Retrieval usefulness: improving and clearly better than the earlier run, but still limited by broad question templates in part of the sample
 - Overall status: usable pilot output with meaningful prompt improvements, but not yet strong enough to treat as final dataset quality
 
 ## Recommended Next Improvements
 
-1. Tune the new question-quality validator so it rejects generic questions without over-filtering.
-2. Push the prompt further toward natural search intent and away from document-centered phrasing like `described in the invention`.
+1. Tune the question-quality validator so it rejects broad summary prompts without over-filtering.
+2. Push the prompt further toward sharper search intent instead of asking for whole-document advantages or applications.
 3. Keep improving prompts to encourage more diverse question types.
 4. Continue monitoring English normalization of technical terms.
 5. Review a larger sample before trusting the pipeline broadly.
@@ -98,3 +100,9 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Result: Better than Review 1.
 - Main improvement: questions are more retrieval-oriented and less stuck on the old `main feature / main components` pattern.
 - Main remaining issue: some questions still sound too document-centered or slightly generic for strong retrieval benchmarking.
+
+### Review 3
+
+- Result: Still usable and generally grounded, with no obvious English-language failures in the current 6-question source set.
+- Main improvement: the best questions now target method steps, ingredients, or component roles more directly.
+- Main remaining issue: several questions are still broad summary prompts rather than highly discriminative retrieval queries.

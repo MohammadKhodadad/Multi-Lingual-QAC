@@ -48,6 +48,7 @@ def _count_rows(path: Path) -> int:
 def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
     limit = config.limit
     qa_sample = config.qa_sample
+    qa_batch = config.qa_batch
 
     if not config.yes:
         if limit is None:
@@ -59,9 +60,19 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
             qa_sample = ask_int(
                 "How many corpus documents should be sampled for Q&A generation? Enter 0 to skip: "
             )
+        if qa_sample > 0 and qa_batch is None:
+            qa_batch = (
+                ask_interactive(
+                    "Do you want to batch create QAs using available CPUs? (y/n): ",
+                    "y",
+                )
+                == "y"
+            )
     else:
         if qa_sample is None:
             qa_sample = 50
+        if qa_batch is None:
+            qa_batch = False
 
     run_extraction = not config.no_extraction
 
@@ -144,6 +155,7 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     corpus_path=paths.corpus_csv,
                     output_dir=paths.qac_dir,
                     sample_size=qa_sample,
+                    batch_mode=bool(qa_batch),
                 )
             except ValueError as exc:
                 print(f"Q&A generation skipped: {exc}")

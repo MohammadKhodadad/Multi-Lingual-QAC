@@ -18,14 +18,24 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--no-extraction", action="store_true", help="Skip extraction; only preprocess")
     parser.add_argument("--limit", type=int, default=None, help="Max patents per language (if omitted in interactive mode, you will be prompted)")
     parser.add_argument("--qa-sample", type=int, default=None, help="Sample size for Q&A generation (if omitted in interactive mode, you will be prompted; 0 = skip Q&A)")
+    parser.add_argument("--qa-batch", action="store_true", help="Batch QA generation using worker threads based on available CPUs")
+    parser.add_argument("--qa-no-batch", action="store_true", help="Disable batch QA generation")
     parser.add_argument("--push-hf", action="store_true", help="Push corpus + QAC to Hugging Face Hub")
     parser.add_argument("--hf-repo", type=str, default=None, help="Hugging Face repo ID (e.g. username/multi-lingual-chemical-qac); required if --push-hf")
     args = parser.parse_args()
+    qa_batch = None
+    if args.qa_batch and args.qa_no_batch:
+        parser.error("Use only one of --qa-batch or --qa-no-batch")
+    if args.qa_batch:
+        qa_batch = True
+    elif args.qa_no_batch:
+        qa_batch = False
     return PipelineConfig(
         yes=args.yes,
         no_extraction=args.no_extraction,
         limit=args.limit,
         qa_sample=args.qa_sample,
+        qa_batch=qa_batch,
         push_hf=args.push_hf,
         hf_repo=args.hf_repo,
     )
