@@ -116,6 +116,16 @@ Rules:
 - The question must be answerable from the text and specific enough to be useful for retrieval.
 - Prefer semantically challenging questions that dense retrieval should handle better than simple keyword matching.
 - Ask about function, effect, mechanism, role, use condition, or technical implication when possible, not just surface wording.
+- Vary the question form across examples. Do not default to "How does ..." if another natural opening fits the fact better.
+- Match the question opening to the fact type. Use forms such as:
+  - "Why is ..." for step rationale or process purpose tied to a specific step
+  - "Which ..." for identified biomarker pairs, materials, components, or options
+  - "What function does ..." for a component's role
+  - "What condition ..." or "At what ..." for operating constraints or measured ranges
+  - "What property allows ..." for enabling characteristics
+  - "How does ..." for mechanism, effect, or interaction only when that is the most natural form
+- If you choose a method-style question, name the actual step, material, condition, or operation from the context.
+- Do not ask vague questions like "What is the purpose of the method?" or "What is something about the process?" when the method contains a specific named step that can be asked about directly.
 - Avoid making the question easy for exact-match retrieval by simply lifting the most distinctive nouns from the source into a template question.
 - Preserve technical terms only when they are necessary for faithfulness or the question would become unnatural or ambiguous without them.
 - Prefer grounded paraphrase over direct lexical overlap.
@@ -137,8 +147,16 @@ Rules:
   - "What is the application of ..."
   - "What are the advantages of ..."
   - "What is the benefit of ..."
+  - "What is the main technical advantage of ..."
+  - "What is the purpose of ..."
   - "What types of products ..."
   - "What is the role of ..." when it only asks for a broad use summary
+- Avoid these patterns especially when a more specific question can be asked about:
+  - one process step
+  - one operating condition
+  - one material property
+  - one mechanism
+  - one component interaction
 - Do not turn the title into a question.
 - Do not simply wrap a copied title phrase or copied noun phrase in a question template.
 - If a title-like wording comes to mind first, rewrite it into a more natural and more semantically reformulated question.
@@ -153,12 +171,20 @@ Rules:
   - "How does the treatment improve hair growth when heat is applied afterward?"
   - "Where would these microcapsules be used in fragranced consumer goods?"
   - "What does the shape deformation layer do when the artificial nail is pressed onto the natural nail?"
+  - "Why is cold rolling performed after hot rolling or forging in this steel production process?"
+  - "What function does sodium bicarbonate serve in the enteric coating composition?"
+  - "Which biomarker pairs are measured to assess early-onset preeclampsia risk?"
+  - "At what density is the mixed solution evaporated before filtration?"
+  - "What property of the glass substrate supports fine pattern formation?"
 - Bad style examples:
   - "What are the recommended application methods for the preparation described in the invention?"
   - "What type of products can include the microcapsules mentioned in the invention?"
   - "What is the application of 8-(4-trifluoromethoxy)benzyloamino-2'-deoxyadenosine?"
   - "What types of products can utilize the hair dye composition described in the text?"
   - "What is the role of the benzoxazole derivatives in detecting GHB in beverages?"
+  - "What is the main technical advantage of this method?"
+  - "What is the purpose of the process?"
+  - "How does the method work?" when the context supports a more specific `Why`, `Which`, `What function`, `What condition`, or `At what` question
 - Output valid JSON only, no markdown:
   {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
@@ -301,12 +327,16 @@ Reject questions that are broad or repetitive patterns such as:
 - "What are the main components?"
 - "What are the applications ...?" when a more specific application question is possible
 - "What is the composition ...?" when a more targeted material or component question is possible
+- "What is the main technical advantage ...?" when a narrower effect, property, operating condition, or mechanism question is possible
+- "What is the advantage ...?" when the answer would bundle multiple benefits instead of one fact
+- "What is the purpose ...?" when the question does not name a specific step, component, material, or operation
 unless the context is too short for a better question.
 
 Also reject questions that:
 - mostly reuse a title phrase or a distinctive noun phrase from the source with only light reformatting,
 - depend mainly on exact keyword overlap rather than semantic understanding,
 - ask directly for the name, application, or advantage of a named entity when a more functional or effect-based question is possible.
+- ask vaguely about "the method" or "the process" without identifying what part of it is being asked about, even though the context contains a more specific step or condition.
 
 Also reject document-centered wording such as:
 - "described in the invention"
@@ -318,6 +348,8 @@ Also reject broad template openings such as:
 - "What is the application of ..."
 - "What are the advantages of ..."
 - "What is the benefit of ..."
+- "What is the main technical advantage of ..."
+- "What is the purpose of ..."
 - "What types of products ..."
 - "What is the role of ..."
 when they lead to a broad summary question instead of a sharper technical query.

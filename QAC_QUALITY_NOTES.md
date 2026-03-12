@@ -5,8 +5,8 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 ## Current Snapshot
 
 - Source file reviewed: `data/google_patents/qac/qac.csv`
-- Current sample size: 225 rows
-- Unique source documents: 15
+- Current sample size: 240 rows
+- Unique source documents: 16
 - Languages present: `en`, `de`, `fr`, `es`, `ja`, `ko`, `zh`, `ru`, `pt`, `it`, `nl`, `ar`, `tr`, `pl`, `hi`
 - Current design: English-first generation, then translation to the other languages
 - Current validation: English language check + faithfulness check + retrieval-quality check before translation
@@ -22,32 +22,41 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - The latest prompt revision produces better questions when it focuses on method, ingredients, component role, technical purpose, or process effect.
 - The new preprocessing gate appears to have fixed the previous title-only failure mode in the reviewed sample.
 - Several of the latest questions are more procedural and discriminative than earlier runs, especially around production steps, mixing logic, sealing, and operating constraints.
+- The newest generation-prompt update improved question-shape diversity. In the current 16-question English sample, the set now mixes `Why`, `Which`, `What property`, `What function`, and `How does` instead of clustering mostly around one opening pattern.
 
 ## What Still Looks Weak
 
-- Question style is still somewhat repetitive. Several current questions still use broad patterns like:
-  - `What is the advantage ...?`
-  - `What is the main technical advantage ...?`
-  - `What is the purpose ...?`
-- Some questions are faithful but still too broad for strong retrieval benchmarking. They summarize a benefit or use case instead of isolating one narrower technical fact.
+- Question style is more varied than before, but some mild repetition still remains around causal/rationale framing.
+- A small number of questions still use broad purpose or advantage framing.
+- Some questions are faithful but still a bit broad for strong retrieval benchmarking. They summarize a benefit or use case instead of isolating one narrower technical fact.
 - Some translated outputs are accurate but feel literal rather than natural.
 - Technical-name normalization is better than before, but should still be monitored on chemistry-heavy examples.
 - The current sample is still modest, so quality judgments are still preliminary.
-- We now validate language, faithfulness, and retrieval usefulness, but the prompt and checker still need tuning to push questions away from `advantage` / `purpose` fallback wording.
+- We now validate language, faithfulness, and retrieval usefulness, but the prompt and checker may still need tuning to improve question-form diversity further and reduce the remaining broad purpose/advantage cases.
 
 ## Example Strengths
 
 ### Good: grounded and understandable
 
-- `CH-720331-B1_it`
-  - Q: `How does the system ensure the separate storage and mixing of the whitening gel components before application to discolored teeth?`
-  - A: `The system uses two syringes, one containing a liquid and the other a powder, which are kept separate until they are mixed via a connector just before use.`
-  - Why it is good: The question targets a concrete mechanism and the answer is specific, procedural, and clearly grounded.
+- `WO-2025211942-A1_ko`
+  - Q: `What property of this glass substrate makes it suitable for forming fine patterns in semiconductor core substrates?`
+  - A: `Its surface roughness (Ra) is at most 10 nm, which supports the formation of fine patterns.`
+  - Why it is good: This is a good example of the newer prompt producing a property-focused question instead of defaulting to a generic mechanism or benefit question.
 
-- `US-2025327009-A1_en`
-  - Q: `How does the double-sided structure of the cell production devices contribute to safety during robotic operation?`
-  - A: `The double-sided structure separates the dangerous region, where the robot operates, from the safe region on the opposite side, enhancing operator safety.`
-  - Why it is good: The question is technical, natural enough, and focused on a specific safety mechanism rather than a generic invention summary.
+- `WO-2025211985-A1_ru`
+  - Q: `Why is the mixed solution evaporated to a density of 1400-1800 kg/m3 in the process of preparing the heavy well-killing fluid?`
+  - A: `The solution is evaporated to that density so the resulting filtrate has the required characteristics as a heavy well-killing fluid.`
+  - Why it is good: The question points to a specific process step and operating target instead of asking for a vague process summary.
+
+- `EP-4634668-A1_fr`
+  - Q: `Which biomarker pairs are quantified in small extracellular vesicles to assess early-onset preeclampsia risk?`
+  - A: `The biomarker pairs chosen from CD10, CD63, and placental alkaline phosphatase (PLAP) are quantified.`
+  - Why it is good: This is a clear improvement in question-form diversity and asks for a concrete identifying detail rather than a broad summary.
+
+- `CH-720331-B1_it`
+  - Q: `How are the liquid and powder components combined in this dental whitening system before application?`
+  - A: `The liquid from the first syringe and the powder from the second syringe are mixed together using a connector between the two syringes to prepare the whitening gel.`
+  - Why it is good: The question targets a concrete mechanism and the answer is specific, procedural, and clearly grounded.
 
 - `TR-2021006663-A2_tr`
   - Q: `Why is cold rolling performed after hot rolling or forging in the production of this steel for valves?`
@@ -58,13 +67,14 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 
 ### Weak: broad benefit / purpose framing
 
-- `CN-117945379-B_zh`
-  - Q: `What is the main technical advantage of using an electrochemical sodium insertion step in water for preparing Na3Ti2(PO4)3 from NaTi2(PO4)3?`
-  - Why it is weak: It is grounded, but still asks for a broad technical advantage. A harder retrieval query would target one sharper property such as mild preparation conditions, scalability, or low-risk mass production.
+- `EP-4634126-A1_fr`
+  - Q: `What is the purpose of using at least two highly hermetic sealing elements spaced apart and formed simultaneously during the cold welding of the metallic bridge element to the substrate?`
+  - Why it is weak: It is grounded, but still framed as a broad `purpose` question. A stronger alternative would ask directly how the spaced simultaneous seals affect vacuum tightness or seal reliability.
 
-- `US-2025325674-A1_en`
-  - Q: `What is the advantage of using the specified DNA oligonucleotide as an autoimmune disease treatment compared to protein-based agents?`
-  - Why it is weak: The answer is supported, but the question still uses generic `advantage` framing instead of asking about the more concrete differences: room-temperature storage or lack of biological contamination.
+### Weak: question-shape diversity still limited
+
+- The current sample is much more varied than the previous run, but there is still room to add more `At what ...`, `Under what conditions ...`, and `Which component ...` questions.
+  - Why it is weak: Diversity is improved, but it can still widen further so the benchmark covers more natural query forms and not just a few recurring patterns.
 
 ### Weak: technical normalization still worth watching
 
@@ -75,13 +85,13 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - English correctness: much improved
 - Faithfulness to source: clearly improved after removing title-only and ultra-short records
 - Translation quality: acceptable, sometimes literal
-- Retrieval usefulness: clearly better than the earlier runs, with more mechanism/process questions and fewer obvious title-lift failures
-- Overall status: best run so far; usable pilot output with better trustworthiness, though still not final-quality due to remaining broad `advantage/purpose` question patterns
+- Retrieval usefulness: clearly better than the earlier runs, with stronger step-specific queries and noticeably better diversity of question forms
+- Overall status: best run so far; usable pilot output with better trustworthiness, better question specificity, and improved question-form diversity, though a few broad purpose-style questions still remain
 
 ## Recommended Next Improvements
 
-1. Tune the question-quality validator so it rejects broad `advantage` / `purpose` prompts without over-filtering.
-2. Push the prompt further toward sharper search intent instead of asking for whole-document benefits or general technical advantages.
+1. Keep reducing the remaining broad `purpose` / `advantage` cases without over-filtering.
+2. Encourage even more diversity in question forms, especially `At what ...`, `Under what conditions ...`, and `Which component ...` patterns.
 3. Keep improving prompts to encourage more diverse question types.
 4. Continue monitoring English normalization of technical terms.
 5. Review a larger sample before trusting the pipeline broadly.
@@ -112,3 +122,15 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Result: Best run so far.
 - Main improvement: title-only and ultra-short records no longer appear in the corpus, which materially improved trustworthiness of the generated QAs.
 - Main remaining issue: wording is better, but some questions still fall back to broad `advantage` or `purpose` framing instead of narrower technical facts.
+
+### Review 5
+
+- Result: Better than Review 4.
+- Main improvement: the latest prompt/judge update further reduced broad `advantage` / `purpose` questions and produced more specific step- and mechanism-focused queries.
+- Main remaining issue: the set now leans heavily toward `How does ...` framing, so diversity of high-quality question forms is the next area to improve.
+
+### Review 6
+
+- Result: Better than Review 5.
+- Main improvement: the generation-only prompt update noticeably improved question-form diversity, with strong `Why`, `Which`, `What property`, and `What function` questions now appearing in the sample.
+- Main remaining issue: a few broad `purpose`-style questions still remain and should be pushed toward more direct technical formulations.
