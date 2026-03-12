@@ -28,6 +28,11 @@ LANG_NAMES = {
     "ar": "Arabic", "tr": "Turkish", "pl": "Polish", "hi": "Hindi", "en": "English",
 }
 
+DEFAULT_GENERATION_MODEL = "gpt-4.1"
+DEFAULT_QUALITY_MODEL = "gpt-4.1"
+DEFAULT_SUPPORT_MODEL = "gpt-4o-mini"
+DEFAULT_TRANSLATION_MODEL = "gpt-4o-mini"
+
 
 def _get_client() -> OpenAI:
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -90,7 +95,7 @@ def generate_qa_english(
     client: OpenAI,
     context: str,
     *,
-    model: str = "gpt-4o-mini",
+    model: str = DEFAULT_GENERATION_MODEL,
 ) -> Dict[str, str]:
     """
     Generate one validated-target Q&A pair in English from the given context.
@@ -107,8 +112,13 @@ Rules:
 - Do not copy the source language unless a chemical name, formula, identifier, or proper noun should remain unchanged.
 - The question must read like a realistic retrieval query that a researcher, engineer, or technical reader might actually type into a search system.
 - Prefer short, natural, user-like wording over patent-summary wording.
-- Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, or material relationship.
+- Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, material relationship, mechanism, effect, or functional role.
 - The question must be answerable from the text and specific enough to be useful for retrieval.
+- Prefer semantically challenging questions that dense retrieval should handle better than simple keyword matching.
+- Ask about function, effect, mechanism, role, use condition, or technical implication when possible, not just surface wording.
+- Avoid making the question easy for exact-match retrieval by simply lifting the most distinctive nouns from the source into a template question.
+- Preserve technical terms only when they are necessary for faithfulness or the question would become unnatural or ambiguous without them.
+- Prefer grounded paraphrase over direct lexical overlap.
 - Avoid generic questions such as:
   - "What is the main object of the invention?"
   - "What is the main feature of the invention?"
@@ -119,19 +129,36 @@ Rules:
   - "mentioned in the invention"
   - "according to the invention"
   - "in the text"
+  - "described in the text"
+  - "described in the present disclosure"
+  - "used in the invention"
   Rewrite those into natural user-style English instead.
+- Do not begin the question with broad template wording such as:
+  - "What is the application of ..."
+  - "What are the advantages of ..."
+  - "What is the benefit of ..."
+  - "What types of products ..."
+  - "What is the role of ..." when it only asks for a broad use summary
+- Do not turn the title into a question.
+- Do not simply wrap a copied title phrase or copied noun phrase in a question template.
+- If a title-like wording comes to mind first, rewrite it into a more natural and more semantically reformulated question.
 - Do not copy a sentence from the context nearly verbatim.
+- Do not just wrap a copied noun phrase in a question template.
+- Do not keep unusually high word overlap with the opening sentence or title unless a few technical anchor terms must remain for clarity.
 - Do not make the question artificially difficult or obscure just to reduce word overlap.
 - The answer must be concise (1-2 sentences) and strictly grounded in the context.
 - Include a short supporting_text quote copied from the source context that justifies the answer.
 - Include a question_type chosen from: purpose, application, composition, method, property, advantage, operating_condition, material_relationship, other.
 - Good style examples:
-  - "How should the hair-strengthening preparation be applied?"
-  - "What products can use the polyamide-based microcapsules?"
-  - "What does the shape deformation layer do in the artificial nail?"
+  - "How does the treatment improve hair growth when heat is applied afterward?"
+  - "Where would these microcapsules be used in fragranced consumer goods?"
+  - "What does the shape deformation layer do when the artificial nail is pressed onto the natural nail?"
 - Bad style examples:
   - "What are the recommended application methods for the preparation described in the invention?"
   - "What type of products can include the microcapsules mentioned in the invention?"
+  - "What is the application of 8-(4-trifluoromethoxy)benzyloamino-2'-deoxyadenosine?"
+  - "What types of products can utilize the hair dye composition described in the text?"
+  - "What is the role of the benzoxazole derivatives in detecting GHB in beverages?"
 - Output valid JSON only, no markdown:
   {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
@@ -158,7 +185,7 @@ def check_english_language(
     question: str,
     answer: str,
     *,
-    model: str = "gpt-4o-mini",
+    model: str = DEFAULT_SUPPORT_MODEL,
 ) -> Tuple[bool, str]:
     """
     Validate that the generated question and answer are written in English.
@@ -201,7 +228,7 @@ def check_faithfulness(
     answer: str,
     supporting_text: str,
     *,
-    model: str = "gpt-4o-mini",
+    model: str = DEFAULT_SUPPORT_MODEL,
 ) -> Tuple[bool, str]:
     """
     Validate that the answer is supported by the source context.
@@ -249,7 +276,7 @@ def check_question_quality(
     question: str,
     answer: str,
     *,
-    model: str = "gpt-4o-mini",
+    model: str = DEFAULT_QUALITY_MODEL,
 ) -> Tuple[bool, str]:
     """
     Validate that the question is retrieval-useful, specific, and not overly generic.
@@ -262,6 +289,8 @@ Approve only if the question:
 - is specific enough to distinguish the document,
 - asks about a concrete technical point from the context,
 - uses natural user-like wording rather than patent-summary wording,
+- is phrased semantically rather than as an obvious exact-match template,
+- would be easier for a strong semantic retriever than for naive keyword matching,
 - is not too generic,
 - is not nearly copied from the context verbatim,
 - and is useful for retrieval benchmarking.
@@ -274,14 +303,33 @@ Reject questions that are broad or repetitive patterns such as:
 - "What is the composition ...?" when a more targeted material or component question is possible
 unless the context is too short for a better question.
 
+Also reject questions that:
+- mostly reuse a title phrase or a distinctive noun phrase from the source with only light reformatting,
+- depend mainly on exact keyword overlap rather than semantic understanding,
+- ask directly for the name, application, or advantage of a named entity when a more functional or effect-based question is possible.
+
 Also reject document-centered wording such as:
 - "described in the invention"
 - "mentioned in the invention"
 - "according to the invention"
 - "in the text"
 
+Also reject broad template openings such as:
+- "What is the application of ..."
+- "What are the advantages of ..."
+- "What is the benefit of ..."
+- "What types of products ..."
+- "What is the role of ..."
+when they lead to a broad summary question instead of a sharper technical query.
+
+Be especially strict about these two failure modes:
+1. title-lift: the question is basically the title or first source phrase converted into a question
+2. high-overlap paraphrase: the question keeps too much surface wording from the source and would still be easy for exact-match retrieval
+
+Approve borderline cases only if the question is clearly more natural, more specific, and less surface-aligned than those failure modes.
+
 Output valid JSON only:
-{"approved": true, "reason": "..."}
+{"approved": true, "reason": "...", "failure_type": "none"}
 """
 
     response = client.chat.completions.create(
@@ -302,6 +350,9 @@ Output valid JSON only:
     data = _parse_json_response(response.choices[0].message.content or "")
     approved = bool(data.get("approved", False))
     reason = str(data.get("reason", "")).strip()
+    failure_type = str(data.get("failure_type", "")).strip()
+    if failure_type and failure_type != "none":
+        reason = f"{failure_type}: {reason}" if reason else failure_type
     return approved, reason
 
 
@@ -311,7 +362,7 @@ def translate_qa(
     answer: str,
     target_langs: List[str],
     *,
-    model: str = "gpt-4o-mini",
+    model: str = DEFAULT_TRANSLATION_MODEL,
 ) -> Dict[str, Tuple[str, str]]:
     """
     Translate (question, answer) to target languages. Returns {lang: (q, a)}.
@@ -324,6 +375,8 @@ def translate_qa(
 For each language, produce a natural, retrieval-style translation.
 Keep the same meaning, level of specificity, and technical terms where appropriate.
 Do not make the question more generic than the original.
+Preserve the semantic difficulty of the original question.
+Do not simplify the question into a keyword-heavy or literal surface-form restatement.
 
 Output valid JSON only:
 {{"translations": {{"de": {{"question": "...", "answer": "..."}}, "fr": {{...}}, ...}}}}
@@ -358,7 +411,10 @@ def _process_sample_row(
     row: Dict[str, Any],
     *,
     target_languages: List[str],
-    model: str,
+    generation_model: str,
+    quality_model: str,
+    support_model: str,
+    translation_model: str,
     max_attempts: int,
 ) -> Dict[str, Any]:
     corpus_id = row.get("id", "")
@@ -381,7 +437,7 @@ def _process_sample_row(
         last_failure = ""
 
         for _attempt in range(1, max_attempts + 1):
-            generated = generate_qa_english(client, context, model=model)
+            generated = generate_qa_english(client, context, model=generation_model)
             q_en = generated["question"]
             a_en = generated["answer"]
             supporting_text = generated["supporting_text"]
@@ -391,7 +447,7 @@ def _process_sample_row(
                 client,
                 q_en,
                 a_en,
-                model=model,
+                model=support_model,
             )
             if not lang_ok:
                 last_failure = f"language check failed: {lang_reason or 'not English enough'}"
@@ -403,7 +459,7 @@ def _process_sample_row(
                 q_en,
                 a_en,
                 supporting_text,
-                model=model,
+                model=support_model,
             )
             if not faithful_ok:
                 last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
@@ -414,7 +470,7 @@ def _process_sample_row(
                 context,
                 q_en,
                 a_en,
-                model=model,
+                model=quality_model,
             )
             if not quality_ok:
                 last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
@@ -437,7 +493,13 @@ def _process_sample_row(
             "question": q_en,
             "answer": a_en,
         }]
-        trans = translate_qa(client, q_en, a_en, target_languages, model=model)
+        trans = translate_qa(
+            client,
+            q_en,
+            a_en,
+            target_languages,
+            model=translation_model,
+        )
         for lang, (q, a) in trans.items():
             qac_rows.append({
                 "corpus_id": corpus_id,
@@ -466,7 +528,11 @@ def run_qa_pipeline(
     *,
     sample_size: int = 50,
     target_languages: Optional[List[str]] = None,
-    model: str = "gpt-4o-mini",
+    model: Optional[str] = None,
+    generation_model: str = DEFAULT_GENERATION_MODEL,
+    quality_model: str = DEFAULT_QUALITY_MODEL,
+    support_model: str = DEFAULT_SUPPORT_MODEL,
+    translation_model: str = DEFAULT_TRANSLATION_MODEL,
     max_attempts: int = 3,
     batch_mode: bool = False,
 ) -> int:
@@ -478,6 +544,11 @@ def run_qa_pipeline(
     corpus_path = Path(corpus_path)
     output_dir = Path(output_dir)
     target_languages = target_languages or DEFAULT_TARGET_LANGS
+    if model is not None:
+        generation_model = model
+        quality_model = model
+        support_model = model
+        translation_model = model
     output_dir.mkdir(parents=True, exist_ok=True)
 
     rows = load_corpus(corpus_path)
@@ -500,7 +571,10 @@ def run_qa_pipeline(
                     index,
                     row,
                     target_languages=target_languages,
-                    model=model,
+                    generation_model=generation_model,
+                    quality_model=quality_model,
+                    support_model=support_model,
+                    translation_model=translation_model,
                     max_attempts=max_attempts,
                 )
                 for index, row in enumerate(sampled)
@@ -519,7 +593,10 @@ def run_qa_pipeline(
                 index - 1,
                 row,
                 target_languages=target_languages,
-                model=model,
+                generation_model=generation_model,
+                quality_model=quality_model,
+                support_model=support_model,
+                translation_model=translation_model,
                 max_attempts=max_attempts,
             )
             results.append(result)

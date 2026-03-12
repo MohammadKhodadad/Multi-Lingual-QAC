@@ -52,10 +52,16 @@ DEFAULT_LANGS = [
     "ru", "pt", "it", "nl",
     "ar", "tr", "pl", "hi",
 ]
+MIN_ABSTRACT_WORDS = 50
 
 
 def sql_list(values: List[str]) -> str:
     return ", ".join(f"'{v}'" for v in values)
+
+
+def word_count(text: str) -> int:
+    """Count whitespace-delimited words in cleaned text."""
+    return len((text or "").split())
 
 
 def build_query(
@@ -375,6 +381,7 @@ def preprocess_ndjson_to_csv(
     *,
     languages: Optional[List[str]] = None,
     per_lang_limit: Optional[int] = None,
+    min_abstract_words: int = MIN_ABSTRACT_WORDS,
 ) -> Dict[str, int]:
     """
     Preprocess NDJSON patent data into per-language CSVs for QAC generation.
@@ -417,6 +424,7 @@ def preprocess_ndjson_to_csv(
     for lang in languages:
         rows: List[Dict[str, Any]] = []
         seen_pub: set = set()
+        skipped_short = 0
         for rec in records:
             title = _get_localized_text(rec.get("title_localized"), lang)
             abstract = _get_localized_text(rec.get("abstract_localized"), lang)
@@ -431,6 +439,9 @@ def preprocess_ndjson_to_csv(
 
             title = clean_text(title or "")
             abstract = clean_text(abstract or "")
+            if word_count(abstract) < min_abstract_words:
+                skipped_short += 1
+                continue
             context = f"{title}\n\n{abstract}".strip() if title else abstract
 
             rows.append({
@@ -455,7 +466,10 @@ def preprocess_ndjson_to_csv(
             writer.writerows(rows)
 
         counts[lang] = len(rows)
-        print(f"  {lang}: {len(rows):,} rows -> {out_path}")
+        print(
+            f"  {lang}: {len(rows):,} rows -> {out_path}"
+            f" (skipped {skipped_short:,} short/title-only records)"
+        )
 
     return counts
 
@@ -465,6 +479,7 @@ def merge_corpus_csv(
     output_path: Path,
     *,
     languages: Optional[List[str]] = None,
+    min_abstract_words: int = MIN_ABSTRACT_WORDS,
 ) -> int:
     """
     Merge all per-language CSVs into one corpus CSV. Applies clean_text.
@@ -485,6 +500,8 @@ def merge_corpus_csv(
                 row["title"] = clean_text(row.get("title", ""))
                 row["abstract"] = clean_text(row.get("abstract", ""))
                 row["context"] = clean_text(row.get("context", ""))
+                if word_count(row["abstract"]) < min_abstract_words:
+                    continue
                 if not row["context"]:
                     row["context"] = f"{row['title']}\n\n{row['abstract']}".strip()
                 rows.append(row)

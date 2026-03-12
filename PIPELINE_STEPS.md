@@ -25,7 +25,7 @@ Query `patents-public-data.patents.publications` for chemistry patents using CPC
 ---
 
 ## 5. Preprocessing (NDJSON → CSV)
-`preprocess_ndjson_to_csv()`: extract title/abstract per language, dedupe by publication number, apply `clean_text` (HTML decode + whitespace collapse), write `data/google_patents/preprocessed/{lang}.csv`.
+`preprocess_ndjson_to_csv()`: extract title/abstract per language, dedupe by publication number, apply `clean_text` (HTML decode + whitespace collapse), skip records whose cleaned abstract is under 50 words, then write `data/google_patents/preprocessed/{lang}.csv`.
 
 ---
 

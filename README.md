@@ -34,6 +34,8 @@ uv run main.py --push-hf --hf-repo username/multi-lingual-chemical-qac   # push 
 
 At the end of an interactive run, the CLI can ask whether to batch-create QAs using available CPUs. If the corpus and QAC files are ready, it can also ask whether you want to push to Hugging Face and then ask for the repo ID.
 
+By default, Q&A generation now uses a stronger OpenAI model for English question creation and quality judging, while keeping translation and lighter validation checks on a cheaper model.
+
 ## Code Structure
 
 The project now uses a structured package under `src/multi_lingual_qac/`.
@@ -76,6 +78,8 @@ src/
 ### Corpus / preprocessed columns
 
 - `id`, `language`, `title`, `abstract`, `context`, `publication_number`, `country_code`, `publication_date`, `source`
+
+Preprocessing filters out low-information records before they enter the corpus: documents whose cleaned abstract is shorter than `50` words are skipped, which also removes title-only entries from downstream Q&A generation.
 
 ## Plan
 
