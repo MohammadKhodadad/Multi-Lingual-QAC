@@ -488,7 +488,7 @@ def run_qa_pipeline(
 
     if batch_mode and sampled:
         available_cpus = os.cpu_count() or 1
-        workers = max(1, min(len(sampled), available_cpus))
+        workers = max(1, min(len(sampled), max(1, available_cpus // 2), 4))
         print(
             f"Running batched Q&A generation with {workers} worker(s) "
             f"based on {available_cpus} available CPU(s)."
