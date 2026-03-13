@@ -30,7 +30,7 @@ LANG_NAMES = {
 
 DEFAULT_GENERATION_MODEL = "gpt-4.1"
 DEFAULT_QUALITY_MODEL = "gpt-4.1"
-DEFAULT_SUPPORT_MODEL = "gpt-4o-mini"
+DEFAULT_SUPPORT_MODEL = "gpt-4.1"
 DEFAULT_TRANSLATION_MODEL = "gpt-4.1"
 
 
@@ -95,6 +95,7 @@ def generate_qa_english(
     client: OpenAI,
     context: str,
     *,
+    previous_feedback: Optional[str] = None,
     model: str = DEFAULT_GENERATION_MODEL,
 ) -> Dict[str, str]:
     """
@@ -188,12 +189,22 @@ Rules:
 - Output valid JSON only, no markdown:
   {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
+    retry_note = ""
+    if previous_feedback:
+        retry_note = (
+            "\n\nPrevious attempt issue to fix:\n"
+            f"{previous_feedback}\n"
+            "Regenerate the question and answer so they fix that issue while staying fully grounded in the context."
+        )
 
     response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"Context:\n\n{context[:4000]}"},
+            {
+                "role": "user",
+                "content": f"Context:\n\n{context[:4000]}{retry_note}",
+            },
         ],
         temperature=0.3,
     )
@@ -581,9 +592,15 @@ def _process_sample_row(
         supporting_text = ""
         question_type = ""
         last_failure = ""
+        retry_feedback: Optional[str] = None
 
         for _attempt in range(1, max_attempts + 1):
-            generated = generate_qa_english(client, context, model=generation_model)
+            generated = generate_qa_english(
+                client,
+                context,
+                previous_feedback=retry_feedback,
+                model=generation_model,
+            )
             q_en = generated["question"]
             a_en = generated["answer"]
             supporting_text = generated["supporting_text"]
@@ -597,6 +614,9 @@ def _process_sample_row(
             )
             if not lang_ok:
                 last_failure = f"language check failed: {lang_reason or 'not English enough'}"
+                retry_feedback = (
+                    f"{last_failure}. The output must be natural English only."
+                )
                 continue
 
             faithful_ok, faithful_reason = check_faithfulness(
@@ -609,6 +629,9 @@ def _process_sample_row(
             )
             if not faithful_ok:
                 last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
+                retry_feedback = (
+                    f"{last_failure}. Remove unsupported details and keep the answer strictly grounded in the context."
+                )
                 continue
 
             quality_ok, quality_reason = check_question_quality(
@@ -620,6 +643,9 @@ def _process_sample_row(
             )
             if not quality_ok:
                 last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
+                retry_feedback = (
+                    f"{last_failure}. Regenerate a more retrieval-useful question that is more specific, less generic, and less surface-aligned."
+                )
                 continue
 
             approved = True
