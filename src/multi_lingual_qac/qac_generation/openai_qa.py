@@ -31,7 +31,7 @@ LANG_NAMES = {
 DEFAULT_GENERATION_MODEL = "gpt-4.1"
 DEFAULT_QUALITY_MODEL = "gpt-4.1"
 DEFAULT_SUPPORT_MODEL = "gpt-4o-mini"
-DEFAULT_TRANSLATION_MODEL = "gpt-4o-mini"
+DEFAULT_TRANSLATION_MODEL = "gpt-4.1"
 
 
 def _get_client() -> OpenAI:
@@ -390,6 +390,7 @@ Output valid JSON only:
 
 def translate_qa(
     client: OpenAI,
+    context: str,
     question: str,
     answer: str,
     target_langs: List[str],
@@ -402,13 +403,20 @@ def translate_qa(
     if not target_langs:
         return {}
     lang_list = ", ".join(LANG_NAMES.get(l, l) for l in target_langs)
-    prompt = f"""Translate the following question and answer pair into these languages: {lang_list}.
+    prompt = f"""Translate the following English retrieval question and answer pair into these languages: {lang_list}.
 
-For each language, produce a natural, retrieval-style translation.
+For each language, produce a natural, native-sounding, retrieval-style translation.
+Use the source context to resolve ambiguity and preserve the original information need exactly.
 Keep the same meaning, level of specificity, and technical terms where appropriate.
 Do not make the question more generic than the original.
 Preserve the semantic difficulty of the original question.
 Do not simplify the question into a keyword-heavy or literal surface-form restatement.
+Prefer natural target-language phrasing over word-for-word translation.
+Do not omit or alter numbers, units, ranges, formulas, identifiers, or named technical materials.
+Preserve chemical names, abbreviations, symbols, and patent-style identifiers when translating them would be incorrect or unnatural.
+Keep the answer faithful to the English answer and consistent with the source context.
+Do not add explanation, background, or extra claims not present in the English pair or source context.
+If the English question is technical and concise, keep the target-language question technical and concise too.
 
 Output valid JSON only:
 {{"translations": {{"de": {{"question": "...", "answer": "..."}}, "fr": {{...}}, ...}}}}
@@ -422,7 +430,11 @@ Languages to include: {json.dumps(target_langs)}
             {"role": "system", "content": prompt},
             {
                 "role": "user",
-                "content": f"Question: {question}\n\nAnswer: {answer}",
+                "content": (
+                    f"Source context:\n{context[:5000]}\n\n"
+                    f"English question: {question}\n\n"
+                    f"English answer: {answer}"
+                ),
             },
         ],
         temperature=0.2,
@@ -527,6 +539,7 @@ def _process_sample_row(
         }]
         trans = translate_qa(
             client,
+            context,
             q_en,
             a_en,
             target_languages,
