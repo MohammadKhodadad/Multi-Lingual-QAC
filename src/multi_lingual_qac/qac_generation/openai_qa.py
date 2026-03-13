@@ -95,6 +95,8 @@ def generate_qa_english(
     client: OpenAI,
     context: str,
     *,
+    previous_question: Optional[str] = None,
+    previous_answer: Optional[str] = None,
     previous_feedback: Optional[str] = None,
     model: str = DEFAULT_GENERATION_MODEL,
 ) -> Dict[str, str]:
@@ -196,6 +198,14 @@ Rules:
             f"{previous_feedback}\n"
             "Regenerate the question and answer so they fix that issue while staying fully grounded in the context."
         )
+    previous_attempt_note = ""
+    if previous_question or previous_answer:
+        previous_attempt_note = (
+            "\n\nPrevious failed attempt to improve upon:\n"
+            f"Previous question: {previous_question or ''}\n"
+            f"Previous answer: {previous_answer or ''}\n"
+            "Use this only as feedback about what to avoid or improve. Do not lightly edit it or reuse its wording as a template. Generate a fresh corrected question-answer pair."
+        )
 
     response = client.chat.completions.create(
         model=model,
@@ -203,7 +213,11 @@ Rules:
             {"role": "system", "content": prompt},
             {
                 "role": "user",
-                "content": f"Context:\n\n{context[:4000]}{retry_note}",
+                "content": (
+                    f"Context:\n\n{context[:4000]}"
+                    f"{retry_note}"
+                    f"{previous_attempt_note}"
+                ),
             },
         ],
         temperature=0.3,
@@ -593,11 +607,15 @@ def _process_sample_row(
         question_type = ""
         last_failure = ""
         retry_feedback: Optional[str] = None
+        retry_question: Optional[str] = None
+        retry_answer: Optional[str] = None
 
         for _attempt in range(1, max_attempts + 1):
             generated = generate_qa_english(
                 client,
                 context,
+                previous_question=retry_question,
+                previous_answer=retry_answer,
                 previous_feedback=retry_feedback,
                 model=generation_model,
             )
@@ -605,6 +623,8 @@ def _process_sample_row(
             a_en = generated["answer"]
             supporting_text = generated["supporting_text"]
             question_type = generated["question_type"]
+            retry_question = q_en
+            retry_answer = a_en
 
             lang_ok, lang_reason = check_english_language(
                 client,
