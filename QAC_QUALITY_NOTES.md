@@ -10,6 +10,7 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Languages present: `en`, `de`, `fr`, `es`, `ja`, `ko`, `zh`, `ru`, `pt`, `it`, `nl`, `ar`, `tr`, `pl`, `hi`
 - Current design: English-first generation, then translation to the other languages
 - Current validation: English language check + faithfulness check + retrieval-quality check before translation
+- Current translation behavior: each target language is translated separately, checked for translation quality, retried on failure, and skipped if it still fails after the retry budget
 - Current corpus gate: preprocessing now skips documents whose cleaned abstract is shorter than `50` words, so title-only and ultra-short records are excluded before Q&A generation
 
 ## What Looks Good
@@ -22,17 +23,20 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - The latest prompt revision produces better questions when it focuses on method, ingredients, component role, technical purpose, or process effect.
 - The new preprocessing gate appears to have fixed the previous title-only failure mode in the reviewed sample.
 - Several of the latest questions are more procedural and discriminative than earlier runs, especially around production steps, mixing logic, sealing, and operating constraints.
-- The newest generation-prompt update improved question-shape diversity. In the current 16-question English sample, the set now mixes `Why`, `Which`, `What property`, `What function`, and `How does` instead of clustering mostly around one opening pattern.
+- The newest generation-prompt update still shows good question-shape diversity. In the current 16-question English sample, the set mixes `Why`, `Which`, `What property`, `What function`, `What effect`, and `How does` rather than clustering around one opening pattern.
+- The refined translation checker improved the quality/coverage balance compared with the previous stricter run. In the current sample, all kept documents retain full multilingual coverage across the target languages.
 
 ## What Still Looks Weak
 
 - Question style is more varied than before, but some mild repetition still remains around causal/rationale framing.
-- A small number of questions still use broad purpose or advantage framing.
+- A small number of questions still use broad function/purpose framing.
 - Some questions are faithful but still a bit broad for strong retrieval benchmarking. They summarize a benefit or use case instead of isolating one narrower technical fact.
-- Some translated outputs are accurate but feel literal rather than natural.
+- Some translated outputs are accurate but still feel literal rather than fully native.
+- A few target-language rows still show grammar or phrasing issues even when the meaning is preserved.
+- Coverage is better than the previous strict-check run, but some sampled documents are still skipped at the English validation stage.
 - Technical-name normalization is better than before, but should still be monitored on chemistry-heavy examples.
 - The current sample is still modest, so quality judgments are still preliminary.
-- We now validate language, faithfulness, and retrieval usefulness, but the prompt and checker may still need tuning to improve question-form diversity further and reduce the remaining broad purpose/advantage cases.
+- We now validate language, faithfulness, retrieval usefulness, and translation quality, but the prompt and checker may still need tuning to improve question-form diversity further, reduce the remaining broad function/purpose cases, and catch more subtle multilingual fluency problems.
 
 ## Example Strengths
 
@@ -76,6 +80,21 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - The current sample is much more varied than the previous run, but there is still room to add more `At what ...`, `Under what conditions ...`, and `Which component ...` questions.
   - Why it is weak: Diversity is improved, but it can still widen further so the benchmark covers more natural query forms and not just a few recurring patterns.
 
+### Weak: translation fluency still uneven
+
+- `WO-2025211942-A1_ko`
+  - Example issue: the Russian question still contains a grammar error (`этого стеклянного подложки`), even though the meaning is understandable.
+  - Why it is weak: This is good enough for retrieval experiments, but not good enough to call the multilingual text polished or native-quality.
+
+- `WO-2025208192-A1_pt`
+  - Example issue: the Japanese question is understandable, but the phrasing is awkward and mixes a property question with unnatural `reason` wording.
+  - Why it is weak: The information is preserved, but the sentence does not read like clean native technical Japanese.
+
+### Weak: stricter validation reduced yield
+
+- In the current run, `20` documents were sampled but only `16` reached the final QAC file.
+  - Why it is weak: quality control remains useful, but the dataset still loses some usable coverage because several sampled English QAs fail faithfulness checks before translation.
+
 ### Weak: technical normalization still worth watching
 
 - Chemical and material names are generally better normalized than in earlier runs, but this should still be monitored in future chemistry-heavy samples where exact English rendering matters.
@@ -84,18 +103,20 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 
 - English correctness: much improved
 - Faithfulness to source: clearly improved after removing title-only and ultra-short records
-- Translation quality: acceptable, sometimes literal
+- Translation quality: improved and more controlled, usable for multilingual retrieval, but still only moderate in fluency
 - Retrieval usefulness: clearly better than the earlier runs, with stronger step-specific queries and noticeably better diversity of question forms
-- Overall status: best run so far; usable pilot output with better trustworthiness, better question specificity, and improved question-form diversity, though a few broad purpose-style questions still remain
+- Overall status: best balance so far; usable pilot output with stronger trustworthiness than earlier runs, recovered multilingual coverage across kept documents, and better control of weak translations, though some uneven multilingual phrasing and a few broad function/purpose questions still remain
 
 ## Recommended Next Improvements
 
 1. Keep reducing the remaining broad `purpose` / `advantage` cases without over-filtering.
 2. Encourage even more diversity in question forms, especially `At what ...`, `Under what conditions ...`, and `Which component ...` patterns.
 3. Keep improving prompts to encourage more diverse question types.
-4. Continue monitoring English normalization of technical terms.
-5. Review a larger sample before trusting the pipeline broadly.
-6. Keep periodic human review notes in this file after each generation update.
+4. Tighten the translation checker so it catches grammar issues like the current Russian example without over-rejecting good rows.
+5. Reduce the remaining broad `function` / `purpose` English questions with more direct retrieval phrasing.
+6. Continue monitoring English normalization of technical terms.
+7. Review a larger sample before trusting the pipeline broadly.
+8. Keep periodic human review notes in this file after each generation update.
 
 ## Review Log
 
@@ -134,3 +155,21 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Result: Better than Review 5.
 - Main improvement: the generation-only prompt update noticeably improved question-form diversity, with strong `Why`, `Which`, `What property`, and `What function` questions now appearing in the sample.
 - Main remaining issue: a few broad `purpose`-style questions still remain and should be pushed toward more direct technical formulations.
+
+### Review 7
+
+- Result: Better than Review 6.
+- Main improvement: the latest run keeps the stronger English question diversity and shows better translation faithfulness and somewhat more natural multilingual phrasing.
+- Main remaining issue: translation fluency is still uneven across languages, with some literal wording and occasional grammar problems even when the meaning is preserved.
+
+### Review 8
+
+- Result: Mixed compared with Review 7.
+- Main improvement: the new per-language translation validation increased quality control and prevents some weak multilingual outputs from being kept automatically.
+- Main remaining issue: coverage dropped, one language row was lost, and some translated text is still not fluent enough despite passing the checker.
+
+### Review 9
+
+- Result: Better than Review 8.
+- Main improvement: the refined translation checker recovered full language coverage for the kept documents while preserving the stronger quality-control setup.
+- Main remaining issue: translation fluency is still only moderate, and the checker still misses some grammar problems and some broad English `function` wording.

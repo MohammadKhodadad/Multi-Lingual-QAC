@@ -395,6 +395,7 @@ def translate_qa(
     answer: str,
     target_langs: List[str],
     *,
+    previous_feedback: Optional[str] = None,
     model: str = DEFAULT_TRANSLATION_MODEL,
 ) -> Dict[str, Tuple[str, str]]:
     """
@@ -423,6 +424,13 @@ Output valid JSON only:
 
 Languages to include: {json.dumps(target_langs)}
 """
+    retry_note = ""
+    if previous_feedback:
+        retry_note = (
+            "\n\nPrevious attempt issue to fix:\n"
+            f"{previous_feedback}\n"
+            "Revise the translation to fix that issue while preserving meaning and technical details."
+        )
 
     response = client.chat.completions.create(
         model=model,
@@ -434,6 +442,7 @@ Languages to include: {json.dumps(target_langs)}
                     f"Source context:\n{context[:5000]}\n\n"
                     f"English question: {question}\n\n"
                     f"English answer: {answer}"
+                    f"{retry_note}"
                 ),
             },
         ],
@@ -448,6 +457,99 @@ Languages to include: {json.dumps(target_langs)}
             a = trans[lang].get("answer", "")
             result[lang] = (str(q).strip(), str(a).strip())
     return result
+
+
+def check_translation_quality(
+    client: OpenAI,
+    context: str,
+    english_question: str,
+    english_answer: str,
+    translated_question: str,
+    translated_answer: str,
+    target_lang: str,
+    *,
+    model: str = DEFAULT_QUALITY_MODEL,
+) -> Dict[str, Any]:
+    """
+    Validate that a translated QA pair is fluent, faithful, and in the target language.
+    Returns structured quality signals for approval and retry decisions.
+    """
+    target_lang_name = LANG_NAMES.get(target_lang, target_lang)
+    prompt = f"""You are a strict but practical translation quality checker for multilingual patent retrieval data.
+
+The source context may be in any language. The reference question and answer are in English.
+The candidate translation must be in {target_lang_name}.
+
+Judge these dimensions separately:
+- `language_ok`: the translated question and answer are clearly written in {target_lang_name}
+- `meaning_ok`: the meaning matches the English question and English answer closely
+- `technical_ok`: numbers, units, ranges, formulas, identifiers, and important technical terms are preserved
+- `specificity_ok`: the translated question keeps the same information need and specificity and does not become more generic
+- `fluency_ok`: the translation sounds natural enough for a native technical reader and is not clearly word-for-word or grammatically broken
+
+Severity guidelines:
+- `high`: wrong language, meaning drift, dropped or altered technical details, or much more generic wording
+- `medium`: meaning is mostly correct but there are clear grammar problems or very awkward/literal phrasing
+- `low`: minor stiffness or small fluency issues only
+
+Approval policy:
+- Reject when `language_ok`, `meaning_ok`, `technical_ok`, or `specificity_ok` is false.
+- Reject when `fluency_ok` is false and severity is `medium` or `high`.
+- Approve when the only issue is minor fluency stiffness with `severity = low`.
+
+Output valid JSON only:
+{{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "fluency_ok": true, "severity": "low", "reason": "..."}}
+"""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Context:\n{context[:5000]}\n\n"
+                    f"English question: {english_question}\n\n"
+                    f"English answer: {english_answer}\n\n"
+                    f"{target_lang_name} question: {translated_question}\n\n"
+                    f"{target_lang_name} answer: {translated_answer}"
+                ),
+            },
+        ],
+        temperature=0,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    language_ok = bool(data.get("language_ok", False))
+    meaning_ok = bool(data.get("meaning_ok", False))
+    technical_ok = bool(data.get("technical_ok", False))
+    specificity_ok = bool(data.get("specificity_ok", False))
+    fluency_ok = bool(data.get("fluency_ok", False))
+    severity = str(data.get("severity", "high")).strip().lower() or "high"
+    if severity not in {"low", "medium", "high"}:
+        severity = "high"
+    reason = str(data.get("reason", "")).strip()
+    approved = language_ok and meaning_ok and technical_ok and specificity_ok
+    if approved and not fluency_ok and severity in {"medium", "high"}:
+        approved = False
+
+    retry_recommended = (
+        (not language_ok)
+        or (not meaning_ok)
+        or (not technical_ok)
+        or (not specificity_ok)
+        or ((not fluency_ok) and severity in {"medium", "high"})
+    )
+    return {
+        "approved": approved,
+        "retry_recommended": retry_recommended,
+        "reason": reason,
+        "severity": severity,
+        "language_ok": language_ok,
+        "meaning_ok": meaning_ok,
+        "technical_ok": technical_ok,
+        "specificity_ok": specificity_ok,
+        "fluency_ok": fluency_ok,
+    }
 
 
 def _process_sample_row(
@@ -537,26 +639,73 @@ def _process_sample_row(
             "question": q_en,
             "answer": a_en,
         }]
-        trans = translate_qa(
-            client,
-            context,
-            q_en,
-            a_en,
-            target_languages,
-            model=translation_model,
-        )
-        for lang, (q, a) in trans.items():
+        approved_translations: Dict[str, Tuple[str, str]] = {}
+        failed_languages: List[str] = []
+        for lang in target_languages:
+            lang_failure = "translation missing"
+            retry_feedback: Optional[str] = None
+            for _attempt in range(1, max_attempts + 1):
+                trans = translate_qa(
+                    client,
+                    context,
+                    q_en,
+                    a_en,
+                    [lang],
+                    previous_feedback=retry_feedback,
+                    model=translation_model,
+                )
+                if lang not in trans:
+                    lang_failure = "translation missing"
+                    retry_feedback = "The previous translation attempt was missing or malformed. Return valid JSON with a complete translated question and answer."
+                    continue
+
+                q, a = trans[lang]
+                trans_check = check_translation_quality(
+                    client,
+                    context,
+                    q_en,
+                    a_en,
+                    q,
+                    a,
+                    lang,
+                    model=quality_model,
+                )
+                if not trans_check["approved"]:
+                    reason = str(trans_check.get("reason", "")).strip()
+                    severity = str(trans_check.get("severity", "high")).strip()
+                    lang_failure = (
+                        "translation quality failed: "
+                        f"{reason or 'not fluent/faithful enough'}"
+                        f" [severity={severity}]"
+                    )
+                    retry_feedback = (
+                        reason
+                        or "The previous translation had quality problems. Fix language correctness, preserve meaning and technical details, and avoid awkward literal phrasing."
+                    )
+                    continue
+
+                approved_translations[lang] = (q, a)
+                lang_failure = ""
+                break
+
+            if lang_failure:
+                failed_languages.append(f"{lang} ({lang_failure})")
+
+        for lang, (q, a) in approved_translations.items():
             qac_rows.append({
                 "corpus_id": corpus_id,
                 "language": lang,
                 "question": q,
                 "answer": a,
             })
+        translation_status = f"{len(approved_translations)} translations"
+        if failed_languages:
+            translation_status += f", skipped {len(failed_languages)}: {', '.join(failed_languages)}"
         return {
             "index": index,
             "corpus_id": corpus_id,
             "rows": qac_rows,
-            "status": f"ok ({question_type or 'validated'} en + {len(trans)} translations)",
+            "status": f"ok ({question_type or 'validated'} en + {translation_status})",
         }
     except Exception as exc:
         return {
