@@ -28,10 +28,12 @@ LANG_NAMES = {
     "ar": "Arabic", "tr": "Turkish", "pl": "Polish", "hi": "Hindi", "en": "English",
 }
 
-DEFAULT_GENERATION_MODEL = "gpt-4.1"
-DEFAULT_QUALITY_MODEL = "gpt-4.1"
-DEFAULT_SUPPORT_MODEL = "gpt-4.1"
-DEFAULT_TRANSLATION_MODEL = "gpt-4.1"
+DEFAULT_GENERATION_MODEL = "gpt-5-mini"
+DEFAULT_QUALITY_MODEL = "gpt-5-mini"
+DEFAULT_SUPPORT_MODEL = "gpt-5-mini"
+DEFAULT_TRANSLATION_MODEL = "gpt-5-mini"
+DEFAULT_REASONING_EFFORT = "low"
+DEFAULT_GENERATION_REASONING_EFFORT = "medium"
 
 
 def _get_client() -> OpenAI:
@@ -118,6 +120,11 @@ Rules:
 - Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, material relationship, mechanism, effect, or functional role.
 - The question must be answerable from the text and specific enough to be useful for retrieval.
 - Prefer semantically challenging questions that dense retrieval should handle better than simple keyword matching.
+- For this task, semantic reformulation is more important than choosing the easiest extractive fact.
+- First look for a question about rationale, role, effect, mechanism, interaction, implication, or process purpose tied to a specific step.
+- Only fall back to exact ranges, exact ratios, exact named lists, or exact composition tables when the context does not support a stronger semantic question.
+- If both are possible, prefer the question that requires understanding what the detail does or why it matters, not the one that only asks for the raw value.
+- Prefer a question about one core technical fact, not a bundled summary of multiple advantages or multiple properties, unless the source presents them as one inseparable claim.
 - Ask about function, effect, mechanism, role, use condition, or technical implication when possible, not just surface wording.
 - Vary the question form across examples. Do not default to "How does ..." if another natural opening fits the fact better.
 - Match the question opening to the fact type. Use forms such as:
@@ -132,6 +139,19 @@ Rules:
 - Avoid making the question easy for exact-match retrieval by simply lifting the most distinctive nouns from the source into a template question.
 - Preserve technical terms only when they are necessary for faithfulness or the question would become unnatural or ambiguous without them.
 - Prefer grounded paraphrase over direct lexical overlap.
+- Avoid spec-sheet questions when a more semantic alternative exists, especially:
+  - exact wt% or mol-ratio lookups
+  - exact temperature, density, time, or concentration range lookups
+  - exact component inventory or long named-list lookups
+  - exact "what does the composition contain" questions
+- A numeric question is acceptable only when the number itself is the important retrieval target and the context does not support a better question about function, rationale, or effect.
+- Avoid broad fallback wording like:
+  - "What is the purpose of ..."
+  - "What advantages does ... offer ..."
+  - "What benefits does ... provide ..."
+  when you can instead ask what a step achieves, why it is done, what a component does, or what effect it has.
+- Avoid turning classification/grouping text into a weak taxonomy question if the same text supports a more functional question.
+- When the context contains both "what it is" and "what it does", prefer "what it does".
 - Avoid generic questions such as:
   - "What is the main object of the invention?"
   - "What is the main feature of the invention?"
@@ -167,6 +187,13 @@ Rules:
 - Do not just wrap a copied noun phrase in a question template.
 - Do not keep unusually high word overlap with the opening sentence or title unless a few technical anchor terms must remain for clarity.
 - Do not make the question artificially difficult or obscure just to reduce word overlap.
+- Before finalizing, ask yourself:
+  - Did I choose the deepest answerable fact rather than the easiest extractive fact?
+  - Would this still look like a good query if the exact numbers or list items were hidden?
+  - Does this require some semantic understanding rather than simple table lookup?
+  - Did I accidentally ask for a broad purpose/advantage summary when a narrower technical question was available?
+- If the question starts with "What is the purpose of" or "What advantages does", rewrite it unless no narrower question is possible.
+- If the answer to those checks is no, regenerate a better question.
 - The answer must be concise (1-2 sentences) and strictly grounded in the context.
 - Include a short supporting_text quote copied from the source context that justifies the answer.
 - Include a question_type chosen from: purpose, application, composition, method, property, advantage, operating_condition, material_relationship, other.
@@ -188,6 +215,11 @@ Rules:
   - "What is the main technical advantage of this method?"
   - "What is the purpose of the process?"
   - "How does the method work?" when the context supports a more specific `Why`, `Which`, `What function`, `What condition`, or `At what` question
+  - "What SiO2/Li2O and SiO2/Al2O3 mol ratios does the glass composition require?" when the context also supports a better question about why the composition enables the target property
+  - "What are the specified weight percent ranges for silicon and manganese?" when the context also supports a better question about the role or effect of the composition
+  - "Which specific fungicides are named as component (2)?" when the context also supports a better question about selection logic, interaction, or functional grouping
+  - "What is the purpose of flowing a portion of metal-rich produced water to an evaporation area ...?" when the better question is about what this step causes or why it enables metal recovery
+  - "What advantages does the DNA oligonucleotide ... offer ...?" when the better question is about the concrete storage or biosafety property
 - Output valid JSON only, no markdown:
   {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
@@ -220,7 +252,7 @@ Rules:
                 ),
             },
         ],
-        temperature=0.3,
+        reasoning_effort=DEFAULT_GENERATION_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     return {
@@ -264,7 +296,7 @@ Output valid JSON only:
                 "content": f"Question: {question}\n\nAnswer: {answer}",
             },
         ],
-        temperature=0,
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     approved = bool(data.get("approved", False))
@@ -313,7 +345,7 @@ Output valid JSON only:
                 ),
             },
         ],
-        temperature=0,
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     approved = bool(data.get("approved", False))
@@ -355,6 +387,7 @@ Reject questions that are broad or repetitive patterns such as:
 - "What is the main technical advantage ...?" when a narrower effect, property, operating condition, or mechanism question is possible
 - "What is the advantage ...?" when the answer would bundle multiple benefits instead of one fact
 - "What is the purpose ...?" when the question does not name a specific step, component, material, or operation
+- "What advantages does ... offer ...?" when the answer mainly bundles several benefits that could be asked about more concretely
 unless the context is too short for a better question.
 
 Also reject questions that:
@@ -362,6 +395,18 @@ Also reject questions that:
 - depend mainly on exact keyword overlap rather than semantic understanding,
 - ask directly for the name, application, or advantage of a named entity when a more functional or effect-based question is possible.
 - ask vaguely about "the method" or "the process" without identifying what part of it is being asked about, even though the context contains a more specific step or condition.
+- are primarily spec-sheet or table-lookup questions when the same context supports a better semantic question about rationale, role, effect, mechanism, implication, or process purpose.
+- ask only for raw values, ranges, ratios, or enumerated lists even though the document provides enough context to ask what those details enable, affect, control, or explain.
+
+Treat these as common extractive failure modes:
+- exact wt% / mol-ratio lookup
+- exact temperature / density / time / concentration range lookup
+- exact ingredient inventory or long named-list lookup
+- direct "what does the composition contain" lookup
+- direct "what values are specified for X and Y" lookup
+
+Do NOT reject all numeric questions automatically.
+Approve them only when the number or range itself is genuinely the most retrieval-worthy fact in the context and no clearly better semantic question is available.
 
 Also reject document-centered wording such as:
 - "described in the invention"
@@ -372,6 +417,7 @@ Also reject document-centered wording such as:
 Also reject broad template openings such as:
 - "What is the application of ..."
 - "What are the advantages of ..."
+- "What advantages does ..."
 - "What is the benefit of ..."
 - "What is the main technical advantage of ..."
 - "What is the purpose of ..."
@@ -382,6 +428,7 @@ when they lead to a broad summary question instead of a sharper technical query.
 Be especially strict about these two failure modes:
 1. title-lift: the question is basically the title or first source phrase converted into a question
 2. high-overlap paraphrase: the question keeps too much surface wording from the source and would still be easy for exact-match retrieval
+3. overly-extractive: the question is safe and specific but mainly asks for a literal value/list/span rather than a semantic technical point that the same context supports
 
 Approve borderline cases only if the question is clearly more natural, more specific, and less surface-aligned than those failure modes.
 
@@ -402,7 +449,7 @@ Output valid JSON only:
                 ),
             },
         ],
-        temperature=0,
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     approved = bool(data.get("approved", False))
@@ -471,7 +518,7 @@ Languages to include: {json.dumps(target_langs)}
                 ),
             },
         ],
-        temperature=0.2,
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     trans = data.get("translations", data)
@@ -541,7 +588,7 @@ Output valid JSON only:
                 ),
             },
         ],
-        temperature=0,
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     language_ok = bool(data.get("language_ok", False))

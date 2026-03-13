@@ -1,6 +1,6 @@
-# Multi-Lingual Chemical QAC Data Pipeline — Plan
+# Multi-Lingual Chemical QAC Data Pipeline - Plan
 
-A step-by-step plan for building chemical Question–Answer–Context (QAC) data that is multi-lingual (questions and answers can be in different languages) and compatible with **Hugging Face Datasets** and **MTEB**.
+A step-by-step plan for building chemical Question-Answer-Context (QAC) data that is multi-lingual (questions and answers can be in different languages) and compatible with **Hugging Face Datasets** and **MTEB**.
 
 ---
 
@@ -16,7 +16,7 @@ A step-by-step plan for building chemical Question–Answer–Context (QAC) data
 
 ---
 
-## Step 1: Data Gathering — Chemical Text Corpora
+## Step 1: Data Gathering - Chemical Text Corpora
 
 ### Goals
 - Collect chemical text in multiple languages
@@ -72,7 +72,7 @@ Lens provides a **REST API** for patent search. Programmatic access is straightf
 #### Step 1: Get API access
 
 1. **Register** at [lens.org](https://www.lens.org/)
-2. Go to your **profile** → API section
+2. Go to your **profile** -> API section
 3. **Request trial access** (free 14-day trial for non-commercial/academic use) or subscribe for ongoing access
 4. Generate an **API token**
 5. Set the token: `export LENS_API_TOKEN='your_token_here'`
@@ -107,7 +107,7 @@ Filter by IPC class prefix `C` for chemistry-related patents, and optionally by 
 #### Step 4: Pagination
 
 - Use the `scroll_id` from the response to fetch the next page: `POST` same endpoint with `{"scroll_id": "...", "scroll": "1m"}`
-- Add a small delay (e.g. 0.3–0.5 s) between requests to respect rate limits
+- Add a small delay (e.g. 0.3-0.5 s) between requests to respect rate limits
 
 #### Step 5: Output
 
@@ -130,15 +130,15 @@ Filter by IPC class prefix `C` for chemistry-related patents, and optionally by 
 
 #### Option B: Third-party APIs (paid)
 
-- **SerpApi** — [Google Patents API](https://serpapi.com/google-patents-api): search by keywords, patent numbers, CPC; paginated results
-- **SearchApi** — [Google Patents API](https://searchapi.io/docs/google-patents): similar capabilities
+- **SerpApi** - [Google Patents API](https://serpapi.com/google-patents-api): search by keywords, patent numbers, CPC; paginated results
+- **SearchApi** - [Google Patents API](https://searchapi.io/docs/google-patents): similar capabilities
 - Both require API keys and have usage-based pricing
 - Filter by country, language, patent status, and type
 
 #### Option C: Python scraping tools
 
-- **google-patent-scraper** — [PyPI](https://pypi.org/project/google-patent-scraper/): extract patent data (inventors, assignees, dates, citations)
-- **GooglePatentsPdfDownloader** — [GitHub](https://github.com/lorenzbr/GooglePatentsPdfDownloader): download patents as PDF
+- **google-patent-scraper** - [PyPI](https://pypi.org/project/google-patent-scraper/): extract patent data (inventors, assignees, dates, citations)
+- **GooglePatentsPdfDownloader** - [GitHub](https://github.com/lorenzbr/GooglePatentsPdfDownloader): download patents as PDF
 - Check terms of service; use responsibly and respect rate limits
 
 #### Filters for chemistry
@@ -173,20 +173,20 @@ Filter by IPC class prefix `C` for chemistry-related patents, and optionally by 
 |----------|-------------|------|------|
 | **LLM-based generation** | Use GPT-4, Claude, LLaMA, etc. to generate Q&A from context | High throughput, controllable formats | Cost, hallucinations, needs validation |
 | **Existing chemistry QA datasets** | Adapt ChemLit-QA, ChemRxivQuest, ChemIQ | Human/expert validated | Mostly English; limited size |
-| **Template-based** | Templates over entities (e.g., “What is the melting point of X?”) | Deterministic, cheap | Less diverse, needs entity extraction |
+| **Template-based** | Templates over entities (e.g., "What is the melting point of X?") | Deterministic, cheap | Less diverse, needs entity extraction |
 | **Synthetic augmentation** | Paraphrase questions, translate | Can add languages | May drift from original semantics |
 | **Human annotation** | Crowdsource or expert labeling | High quality | Expensive and slow |
 
 ### Existing chemistry QA resources
-- **[ChemLit-QA](https://github.com/geemi725/chemlit-qa)** — 1,000+ expert-validated QAC triplets (EN)
-- **[ChemRxivQuest](https://arxiv.org/html/2505.05232)** — 970 QA pairs from ChemRxiv (EN)
-- **[ChemIQ](https://github.com/oxpig/ChemIQ)** — Complex chemistry QA
-- **[Microsoft ChemistryQA](https://github.com/microsoft/chemistry-qa)** — Chemistry QA tasks
+- **[ChemLit-QA](https://github.com/geemi725/chemlit-qa)** - 1,000+ expert-validated QAC triplets (EN)
+- **[ChemRxivQuest](https://arxiv.org/html/2505.05232)** - 970 QA pairs from ChemRxiv (EN)
+- **[ChemIQ](https://github.com/oxpig/ChemIQ)** - Complex chemistry QA
+- **[Microsoft ChemistryQA](https://github.com/microsoft/chemistry-qa)** - Chemistry QA tasks
 
 ### Recommended starting points
 1. **LLM-based generation** (e.g., GPT-4) with prompting similar to ChemLit-QA / ChemRxivQuest.
-2. **ChemLit-QA / ChemRxivQuest** — use as seed data, evaluation benchmarks, and prompt templates.
-3. **Entity-based templates** — use CHEMDNER / NLM-Chem annotations to generate entity-centric questions.
+2. **ChemLit-QA / ChemRxivQuest** - use as seed data, evaluation benchmarks, and prompt templates.
+3. **Entity-based templates** - use CHEMDNER / NLM-Chem annotations to generate entity-centric questions.
 
 ---
 
@@ -208,9 +208,9 @@ Filter by IPC class prefix `C` for chemistry-related patents, and optionally by 
 | **Cross-lingual QA pairs** | Generate Q in L1, keep A in L2 (or vice versa) | Custom pipeline: generate in EN, translate only Q or only A |
 
 ### Recommended starting points
-1. **WIPO / Lens patents** — same patent or family in multiple languages; extract QAC in each language and link by patent ID or family.
-2. **Wikipedia** — use [interlanguage links](https://www.mediawiki.org/wiki/Manual:Interwiki) to build (EN, DE, FR, …) aligned chemistry articles; generate QAC per language.
-3. **Translation pipeline** — start from EN QAC (ChemLit-QA, ChemRxivQuest), translate Q or A to create cross-language variants.
+1. **WIPO / Lens patents** - same patent or family in multiple languages; extract QAC in each language and link by patent ID or family.
+2. **Wikipedia** - use [interlanguage links](https://www.mediawiki.org/wiki/Manual:Interwiki) to build (EN, DE, FR, ...) aligned chemistry articles; generate QAC per language.
+3. **Translation pipeline** - start from EN QAC (ChemLit-QA, ChemRxivQuest), translate Q or A to create cross-language variants.
 
 ---
 
@@ -233,9 +233,9 @@ Filter by IPC class prefix `C` for chemistry-related patents, and optionally by 
 | **Length & format** | Reasonable lengths, valid characters | Heuristics, schema validation |
 
 ### Recommended starting points
-1. **ChemLit-QA metrics** — reuse their answer relevancy and faithfulness evaluation.
-2. **NLI-based filtering** — entailment score between (context, answer) and (question).
-3. **Language detection** — attach `lang_question`, `lang_answer`, `lang_context` for downstream analysis.
+1. **ChemLit-QA metrics** - reuse their answer relevancy and faithfulness evaluation.
+2. **NLI-based filtering** - entailment score between (context, answer) and (question).
+3. **Language detection** - attach `lang_question`, `lang_answer`, `lang_context` for downstream analysis.
 
 ---
 
@@ -313,7 +313,7 @@ dataset_name/
 | `question` | queries `text` |
 | context `id` | corpus `_id` |
 | question `id` | queries `_id` |
-| — | qrels: `query-id` = question id, `corpus-id` = context id, `score` = 1 |
+| - | qrels: `query-id` = question id, `corpus-id` = context id, `score` = 1 |
 
 Each QAC triplet becomes: one corpus row (context), one query row (question), one qrels row linking them with score 1.
 
@@ -327,13 +327,13 @@ Each QAC triplet becomes: one corpus row (context), one query row (question), on
 | [Parquet format](https://parquet.apache.org/) | Recommended storage for corpus, queries, qrels |
 
 ### Suggested export flow
-1. **QAC dataset** → Hugging Face via `datasets.Dataset.from_*` and `push_to_hub`.
-2. **MTEB retrieval** → Derive `corpus`, `queries`, `qrels` from QAC and load via MTEB’s `RetrievalTask` with parquet or custom loader.
-3. **Multilingual subsets** — create splits like `en_en`, `en_de`, `de_en` for different (question_lang, answer_lang) combinations.
+1. **QAC dataset** -> Hugging Face via `datasets.Dataset.from_*` and `push_to_hub`.
+2. **MTEB retrieval** -> Derive `corpus`, `queries`, `qrels` from QAC and load via MTEB's `RetrievalTask` with parquet or custom loader.
+3. **Multilingual subsets** - create splits like `en_en`, `en_de`, `de_en` for different (question_lang, answer_lang) combinations.
 
 ---
 
-## Step 6: Optional — MTEB Task Contribution
+## Step 6: Optional - MTEB Task Contribution
 
 ### Goals
 - Contribute a new retrieval (or other) task to MTEB
@@ -358,7 +358,7 @@ Each QAC triplet becomes: one corpus row (context), one query row (question), on
 
 ---
 
-## Quick Reference — URLs
+## Quick Reference - URLs
 
 | Resource | URL |
 |----------|-----|

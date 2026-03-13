@@ -83,4 +83,4 @@ Preprocessing filters out low-information records before they enter the corpus: 
 
 ## Plan
 
-See [MULTILINGUAL_CHEMICAL_QAC_PLAN.md](MULTILINGUAL_CHEMICAL_QAC_PLAN.md) for the full pipeline (WIPO, Lens, Google Patents → QAC generation → HF/MTEB).
+See [docs/MULTILINGUAL_CHEMICAL_QAC_PLAN.md](docs/MULTILINGUAL_CHEMICAL_QAC_PLAN.md) for the full pipeline (WIPO, Lens, Google Patents -> QAC generation -> HF/MTEB).

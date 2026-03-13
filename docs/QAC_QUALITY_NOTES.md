@@ -5,8 +5,8 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 ## Current Snapshot
 
 - Source file reviewed: `data/google_patents/qac/qac.csv`
-- Current sample size: 240 rows
-- Unique source documents: 16
+- Current sample size: 300 rows
+- Unique source documents: 20
 - Languages present: `en`, `de`, `fr`, `es`, `ja`, `ko`, `zh`, `ru`, `pt`, `it`, `nl`, `ar`, `tr`, `pl`, `hi`
 - Current design: English-first generation, then translation to the other languages
 - Current validation: English language check + faithfulness check + retrieval-quality check before translation
@@ -23,8 +23,9 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - The latest prompt revision produces better questions when it focuses on method, ingredients, component role, technical purpose, or process effect.
 - The new preprocessing gate appears to have fixed the previous title-only failure mode in the reviewed sample.
 - Several of the latest questions are more procedural and discriminative than earlier runs, especially around production steps, mixing logic, sealing, and operating constraints.
-- The newest generation-prompt update still shows good question-shape diversity. In the current 16-question English sample, the set mixes `Why`, `Which`, `What property`, `What function`, `What effect`, and `How does` rather than clustering around one opening pattern.
+- The newest generation-prompt update still shows good question-shape diversity. In the current 20-question English sample, the set mixes `Why`, `Which`, `What function`, `What effect`, `How does`, `At what`, and other targeted question forms rather than clustering around one opening pattern.
 - The refined translation checker improved the quality/coverage balance compared with the previous stricter run. In the current sample, all kept documents retain full multilingual coverage across the target languages.
+- The latest `gpt-5-mini` prompt revision plus higher reasoning effort for English generation reduced the worst `purpose` / `advantages` fallback questions and improved semantic phrasing compared with the earlier `gpt-5-mini` runs.
 
 ## What Still Looks Weak
 
@@ -37,6 +38,8 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Technical-name normalization is better than before, but should still be monitored on chemistry-heavy examples.
 - The current sample is still modest, so quality judgments are still preliminary.
 - We now validate language, faithfulness, retrieval usefulness, and translation quality, but the prompt and checker may still need tuning to improve question-form diversity further, reduce the remaining broad function/purpose cases, and catch more subtle multilingual fluency problems.
+- A few questions are still somewhat extractive or lookup-oriented, especially around exact named compounds, percentage targets, or allowed classes.
+- The latest `gpt-5-mini` run is the best `gpt-5-mini` result so far, but it still looks slightly weaker than the strongest `gpt-4.1` run for pure query quality.
 
 ## Example Strengths
 
@@ -90,10 +93,10 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
   - Example issue: the Japanese question is understandable, but the phrasing is awkward and mixes a property question with unnatural `reason` wording.
   - Why it is weak: The information is preserved, but the sentence does not read like clean native technical Japanese.
 
-### Weak: stricter validation reduced yield
+### Weak: stricter validation reduced yield in some earlier runs
 
-- In the current run, `20` documents were sampled but only `16` reached the final QAC file.
-  - Why it is weak: quality control remains useful, but the dataset still loses some usable coverage because several sampled English QAs fail faithfulness checks before translation.
+- In the latest run, all `20` sampled documents reached the final QAC file, but some earlier stricter runs dropped sampled English QAs before translation.
+  - Why it is weak: quality control remains useful, but coverage can still drop if the checks become stricter than the generator can consistently satisfy.
 
 ### Weak: technical normalization still worth watching
 
@@ -105,18 +108,16 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Faithfulness to source: clearly improved after removing title-only and ultra-short records
 - Translation quality: improved and more controlled, usable for multilingual retrieval, but still only moderate in fluency
 - Retrieval usefulness: clearly better than the earlier runs, with stronger step-specific queries and noticeably better diversity of question forms
-- Overall status: best balance so far; usable pilot output with stronger trustworthiness than earlier runs, recovered multilingual coverage across kept documents, and better control of weak translations, though some uneven multilingual phrasing and a few broad function/purpose questions still remain
+- Overall status: best `gpt-5-mini` run so far and clearly better than the earlier `gpt-5-mini` outputs; usable pilot output with full multilingual coverage and better question shaping, though still slightly behind the best `gpt-4.1` run and still showing a few extractive questions and some uneven multilingual phrasing
 
 ## Recommended Next Improvements
 
-1. Keep reducing the remaining broad `purpose` / `advantage` cases without over-filtering.
-2. Encourage even more diversity in question forms, especially `At what ...`, `Under what conditions ...`, and `Which component ...` patterns.
-3. Keep improving prompts to encourage more diverse question types.
-4. Tighten the translation checker so it catches grammar issues like the current Russian example without over-rejecting good rows.
-5. Reduce the remaining broad `function` / `purpose` English questions with more direct retrieval phrasing.
-6. Continue monitoring English normalization of technical terms.
-7. Review a larger sample before trusting the pipeline broadly.
-8. Keep periodic human review notes in this file after each generation update.
+1. Keep reducing the remaining extractive `lookup` questions without pushing the model back into broad summaries.
+2. Keep improving prompt wording for dense-retrieval style questions before adding more pipeline complexity.
+3. Tighten the translation checker so it catches grammar issues like the current Russian example without over-rejecting good rows.
+4. Continue monitoring English normalization of technical terms.
+5. Review a larger sample before trusting the pipeline broadly.
+6. Keep periodic human review notes in this file after each generation update.
 
 ## Review Log
 
@@ -173,3 +174,15 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Result: Better than Review 8.
 - Main improvement: the refined translation checker recovered full language coverage for the kept documents while preserving the stronger quality-control setup.
 - Main remaining issue: translation fluency is still only moderate, and the checker still misses some grammar problems and some broad English `function` wording.
+
+### Review 10
+
+- Result: Mixed relative to the best `gpt-4.1` run.
+- Main improvement: the first `gpt-5-mini` switch produced cleaner question hygiene and kept full multilingual coverage.
+- Main remaining issue: the questions became too literal and too lookup-oriented, making them less suitable for the desired dense-retrieval setting than the best `gpt-4.1` output.
+
+### Review 11
+
+- Result: Better than Review 10 and the best `gpt-5-mini` run so far.
+- Main improvement: prompt tightening plus `medium` reasoning for English generation reduced the worst broad fallback wording and improved semantic question framing.
+- Main remaining issue: a few English questions are still extractive or list/percentage oriented, so the best `gpt-4.1` run still looks slightly stronger overall.

@@ -5,7 +5,7 @@ Short recap of every step implemented in the Multi-Lingual Chemical QAC pipeline
 ---
 
 ## 1. Plan
-Created `MULTILINGUAL_CHEMICAL_QAC_PLAN.md`: data gathering → QAC generation → multilingual setup → cleaning → export. Targets WIPO, Lens, Google Patents. Defines MTEB format (corpus, queries, qrels).
+Created `docs/MULTILINGUAL_CHEMICAL_QAC_PLAN.md`: data gathering -> QAC generation -> multilingual setup -> cleaning -> export. Targets WIPO, Lens, Google Patents. Defines MTEB format (corpus, queries, qrels).
 
 ---
 
@@ -24,7 +24,7 @@ Query `patents-public-data.patents.publications` for chemistry patents using CPC
 
 ---
 
-## 5. Preprocessing (NDJSON → CSV)
+## 5. Preprocessing (NDJSON -> CSV)
 `preprocess_ndjson_to_csv()`: extract title/abstract per language, dedupe by publication number, apply `clean_text` (HTML decode + whitespace collapse), skip records whose cleaned abstract is under 50 words, then write `data/google_patents/preprocessed/{lang}.csv`.
 
 ---
