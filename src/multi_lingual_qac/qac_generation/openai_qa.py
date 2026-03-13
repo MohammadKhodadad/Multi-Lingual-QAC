@@ -429,11 +429,34 @@ Be especially strict about these two failure modes:
 1. title-lift: the question is basically the title or first source phrase converted into a question
 2. high-overlap paraphrase: the question keeps too much surface wording from the source and would still be easy for exact-match retrieval
 3. overly-extractive: the question is safe and specific but mainly asks for a literal value/list/span rather than a semantic technical point that the same context supports
+4. broad-summary: the question asks for a broad purpose/advantage/benefit summary instead of one narrower technical fact
+5. bundled-facts: the question asks for multiple loosely related facts at once instead of one core information need
+6. weak-query-shape: the question is understandable but not phrased like a strong retrieval query a user would naturally type
 
 Approve borderline cases only if the question is clearly more natural, more specific, and less surface-aligned than those failure modes.
 
+If you reject the question:
+- set `failure_type` to exactly one of:
+  - `title-lift`
+  - `high-overlap`
+  - `overly-extractive`
+  - `broad-summary`
+  - `bundled-facts`
+  - `weak-query-shape`
+- keep `reason` short and concrete
+- provide `better_direction` as ONE short actionable hint for regeneration, for example:
+  - `ask about why the step is used`
+  - `ask about the component's role`
+  - `ask about the effect, not the raw value`
+  - `ask what the condition enables`
+  - `focus on one narrower technical fact`
+
+If you approve the question:
+- set `failure_type` to `none`
+- set `better_direction` to an empty string
+
 Output valid JSON only:
-{"approved": true, "reason": "...", "failure_type": "none"}
+{"approved": true, "reason": "...", "failure_type": "none", "better_direction": ""}
 """
 
     response = client.chat.completions.create(
@@ -455,8 +478,11 @@ Output valid JSON only:
     approved = bool(data.get("approved", False))
     reason = str(data.get("reason", "")).strip()
     failure_type = str(data.get("failure_type", "")).strip()
+    better_direction = str(data.get("better_direction", "")).strip()
     if failure_type and failure_type != "none":
         reason = f"{failure_type}: {reason}" if reason else failure_type
+    if better_direction:
+        reason = f"{reason} Better direction: {better_direction}".strip()
     return approved, reason
 
 
@@ -711,7 +737,7 @@ def _process_sample_row(
             if not quality_ok:
                 last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
                 retry_feedback = (
-                    f"{last_failure}. Regenerate a more retrieval-useful question that is more specific, less generic, and less surface-aligned."
+                    f"{last_failure}. Use the better direction above if present. Regenerate one fresh question that is more retrieval-useful, more specific, less generic, and less surface-aligned. Prefer one narrower technical fact over a broad summary or literal lookup."
                 )
                 continue
 
