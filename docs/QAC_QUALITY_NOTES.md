@@ -5,12 +5,12 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 ## Current Snapshot
 
 - Source file reviewed: `data/google_patents/qac/qac.csv`
-- Current sample size: 300 rows
-- Unique source documents: 20
+- Current sample size: 449 rows
+- Unique source documents: 30
 - Languages present: `en`, `de`, `fr`, `es`, `ja`, `ko`, `zh`, `ru`, `pt`, `it`, `nl`, `ar`, `tr`, `pl`, `hi`
 - Current design: English-first generation, then translation to the other languages
 - Current validation: English language check + faithfulness check + retrieval-quality check before translation
-- Current translation behavior: each target language is translated separately, checked for translation quality, retried on failure, and skipped if it still fails after the retry budget
+- Current translation behavior: each target language is translated separately with `medium` reasoning, checked for generic artifact/fluency/meaning quality, retried with failure-type feedback plus the previous failed translation, and skipped if it still fails after the retry budget
 - Current corpus gate: preprocessing now skips documents whose cleaned abstract is shorter than `50` words, so title-only and ultra-short records are excluded before Q&A generation
 
 ## What Looks Good
@@ -27,6 +27,9 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - The refined translation checker improved the quality/coverage balance compared with the previous stricter run. In the current sample, all kept documents retain full multilingual coverage across the target languages.
 - The latest `gpt-5-mini` prompt revision plus higher reasoning effort for English generation reduced the worst `purpose` / `advantages` fallback questions and improved semantic phrasing compared with the earlier `gpt-5-mini` runs.
 - The newest stricter retry-feedback update appears to help again: the latest reviewed sample keeps full multilingual coverage while shifting more English questions toward `Why`, `What property`, and `What function` framing instead of broad summary wording.
+- The latest generic translation prompt/checker update removed the need for handcrafted per-language translation hints while still improving artifact control.
+- The latest run no longer shows the earlier kept Hindi row with Korean-script leakage; the new generic artifact rules appear to be catching that class of failure.
+- The latest multilingual sample is the best overall `gpt-5-mini` run so far for end-to-end balance across English quality, translation cleanliness, and pipeline robustness.
 
 ## What Still Looks Weak
 
@@ -42,10 +45,17 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - A few questions are still somewhat extractive or lookup-oriented, especially around exact named compounds, percentage targets, or allowed classes.
 - The latest `gpt-5-mini` run is the best `gpt-5-mini` result so far, but it still looks slightly weaker than the strongest `gpt-4.1` run for pure query quality.
 - The remaining weak cases are now more concentrated in literal list/value questions than in vague `purpose` / `advantage` questions, which is better than before but still not ideal for a dense-retrieval benchmark.
+- Coverage is no longer always full at the row level in the latest stricter multilingual runs. The current `30`-document run dropped one `hi` translation, finishing with `449` rows instead of `450`.
+- The stricter translation checker may now be slightly too strict on some low-severity Hindi phrasing or terminology choices, even when meaning is preserved.
 
 ## Example Strengths
 
 ### Good: grounded and understandable
+
+- `US-2025325674-A1_en`
+  - Q: `What function does the DNA oligonucleotide (SEQ ID NO:1–3) perform in the autoimmune disease therapeutic agent?`
+  - A: `The DNA oligonucleotide selectively binds to IFN-γ and thereby selectively inhibits IFN-γ, producing a therapeutic effect against autoimmune diseases.`
+  - Why it is good: In the latest run, the kept multilingual rows for this example are cleaner than before, and the earlier Hindi foreign-script contamination no longer appears.
 
 - `US-2025327402-A1_en`
   - Q: `Why is the evaporation area selected for its existing evaporite deposits?`
@@ -102,18 +112,18 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 
 ### Weak: translation fluency still uneven
 
-- `WO-2025211942-A1_ko`
-  - Example issue: the Russian question still contains a grammar error (`этого стеклянного подложки`), even though the meaning is understandable.
-  - Why it is weak: This is good enough for retrieval experiments, but not good enough to call the multilingual text polished or native-quality.
+- `WO-2025211983-A1_ru`
+  - Example issue: the `hi` row was dropped in the latest run because the checker flagged low-severity wording around an English-derived term for `oncological`.
+  - Why it is weak: This is preferable to keeping a clearly bad row, but it shows the stricter checker can still trade away coverage for relatively mild style issues.
 
-- `WO-2025208192-A1_pt`
-  - Example issue: the Japanese question is understandable, but the phrasing is awkward and mixes a property question with unnatural `reason` wording.
-  - Why it is weak: The information is preserved, but the sentence does not read like clean native technical Japanese.
+- `DE-102024111126-A1_de`
+  - Example issue: the latest Russian row is much cleaner than before, but still reads somewhat formal and procedural rather than fully native.
+  - Why it is weak: The artifact problems are reduced, but some target-language outputs still sound translated rather than naturally authored.
 
-### Weak: stricter validation reduced yield in some earlier runs
+### Weak: stricter validation still sometimes reduces yield
 
-- In the latest run, all `20` sampled documents reached the final QAC file, but some earlier stricter runs dropped sampled English QAs before translation.
-  - Why it is weak: quality control remains useful, but coverage can still drop if the checks become stricter than the generator can consistently satisfy.
+- In the latest `30`-document run, `29/30` documents kept full `15-language` coverage, while one `hi` row was dropped after translation retries.
+  - Why it is weak: quality control is working, but coverage can still drop if the checker rejects low-severity target-language wording that might otherwise be acceptable for retrieval use.
 
 ### Weak: technical normalization still worth watching
 
@@ -123,15 +133,15 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 
 - English correctness: much improved
 - Faithfulness to source: clearly improved after removing title-only and ultra-short records
-- Translation quality: improved and more controlled, usable for multilingual retrieval, but still only moderate in fluency
+- Translation quality: clearly improved and better controlled, with stronger artifact filtering and cleaner kept rows; now solid for multilingual retrieval, though still not fully native-quality in every language
 - Retrieval usefulness: clearly better than the earlier runs, with stronger step-specific queries and noticeably better diversity of question forms
-- Overall status: best `gpt-5-mini` run so far and clearly better than the earlier `gpt-5-mini` outputs; usable pilot output with full multilingual coverage and better question shaping, now quite close to the best `gpt-4.1` run, though still slightly behind it because a few questions remain extractive and some multilingual phrasing is still uneven
+- Overall status: best overall `gpt-5-mini` run so far and the strongest multilingual run yet; better than the earlier `gpt-5-mini` outputs in translation cleanliness and robustness, and probably the best end-to-end balance so far, though the strongest `gpt-4.1` run may still retain a slight edge on pure English query quality
 
 ## Recommended Next Improvements
 
 1. Keep reducing the remaining extractive `lookup` questions without pushing the model back into broad summaries.
-2. Use the stricter retry feedback to push more failures toward mechanism, role, or enabling-condition questions instead of named-item or range-list questions.
-3. Tighten the translation checker so it catches grammar issues like the current Russian example without over-rejecting good rows.
+2. Relax or refine the translation checker slightly so it does not drop acceptable rows for low-severity Hindi wording while still rejecting real artifacts.
+3. Continue monitoring foreign-script leakage, code-mixing, and English glosses to confirm the new generic artifact rules stay effective on larger samples.
 4. Continue monitoring English normalization of technical terms.
 5. Review a larger sample before trusting the pipeline broadly.
 6. Keep periodic human review notes in this file after each generation update.
@@ -209,3 +219,9 @@ Living notes for reviewing the generated Question-Answer-Context output over tim
 - Result: Better than Review 11 and still the best `gpt-5-mini` run so far.
 - Main improvement: the stricter retry feedback appears to have improved English question shaping again without hurting multilingual coverage; the sample now leans more toward causal, property, and function questions and away from broad summary wording.
 - Main remaining issue: some questions are still literal lookup prompts for named compounds, permitted classes, or numeric ranges, so the strongest `gpt-4.1` run still retains a small edge in pure retrieval quality.
+
+### Review 13
+
+- Result: Better than Review 12 and the best translation-focused run so far.
+- Main improvement: the new generic translation artifact checks plus feedback-aware retries reduced obvious multilingual cleanup problems, and the earlier kept Hindi foreign-script leakage no longer appears in the reviewed sample.
+- Main remaining issue: one Hindi row was dropped in the latest `30`-document run, so the stricter checker still looks slightly over-sensitive on some low-severity target-language wording.
