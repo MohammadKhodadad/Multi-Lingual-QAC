@@ -34,6 +34,7 @@ DEFAULT_SUPPORT_MODEL = "gpt-5-mini"
 DEFAULT_TRANSLATION_MODEL = "gpt-5-mini"
 DEFAULT_REASONING_EFFORT = "low"
 DEFAULT_GENERATION_REASONING_EFFORT = "medium"
+DEFAULT_TRANSLATION_REASONING_EFFORT = "medium"
 
 
 def _get_client() -> OpenAI:
@@ -494,6 +495,8 @@ def translate_qa(
     target_langs: List[str],
     *,
     previous_feedback: Optional[str] = None,
+    previous_translated_question: Optional[str] = None,
+    previous_translated_answer: Optional[str] = None,
     model: str = DEFAULT_TRANSLATION_MODEL,
 ) -> Dict[str, Tuple[str, str]]:
     """
@@ -516,6 +519,17 @@ Preserve chemical names, abbreviations, symbols, and patent-style identifiers wh
 Keep the answer faithful to the English answer and consistent with the source context.
 Do not add explanation, background, or extra claims not present in the English pair or source context.
 If the English question is technical and concise, keep the target-language question technical and concise too.
+Avoid translation artifacts:
+- choose one natural term, not slash-separated alternatives like `X/Y`
+- do not leave editor-style repair traces or synonym bundles
+- do not include unnecessary English glosses in parentheses
+- avoid code-mixed verbs or phrasing when the target language has a normal technical equivalent
+- rewrite into natural target-language syntax instead of following English word order too closely
+- keep the text fully in the target language except for unavoidable chemical names, formulas, units, identifiers, abbreviations, or proper nouns
+- do not leak words from unrelated languages or scripts into the translation
+- if a technical term can stay in Latin script, integrate it naturally into an otherwise target-language sentence
+- if the English answer contains multiple supported facts, preserve them cleanly without turning the translation into a glossary or note
+- prefer one polished final phrasing, not an exploratory or half-edited wording
 
 Output valid JSON only:
 {{"translations": {{"de": {{"question": "...", "answer": "..."}}, "fr": {{...}}, ...}}}}
@@ -529,6 +543,14 @@ Languages to include: {json.dumps(target_langs)}
             f"{previous_feedback}\n"
             "Revise the translation to fix that issue while preserving meaning and technical details."
         )
+    previous_attempt_note = ""
+    if previous_translated_question or previous_translated_answer:
+        previous_attempt_note = (
+            "\n\nPrevious failed translation to improve upon:\n"
+            f"Previous translated question: {previous_translated_question or ''}\n"
+            f"Previous translated answer: {previous_translated_answer or ''}\n"
+            "Use this only as repair context. Do not copy it mechanically. Rewrite it so it sounds more natural in the target language while preserving the exact information need, meaning, and technical details."
+        )
 
     response = client.chat.completions.create(
         model=model,
@@ -541,10 +563,11 @@ Languages to include: {json.dumps(target_langs)}
                     f"English question: {question}\n\n"
                     f"English answer: {answer}"
                     f"{retry_note}"
+                    f"{previous_attempt_note}"
                 ),
             },
         ],
-        reasoning_effort=DEFAULT_REASONING_EFFORT,
+        reasoning_effort=DEFAULT_TRANSLATION_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
     trans = data.get("translations", data)
@@ -583,20 +606,61 @@ Judge these dimensions separately:
 - `meaning_ok`: the meaning matches the English question and English answer closely
 - `technical_ok`: numbers, units, ranges, formulas, identifiers, and important technical terms are preserved
 - `specificity_ok`: the translated question keeps the same information need and specificity and does not become more generic
+- `terminology_ok`: the translation uses appropriate technical terminology and register for {target_lang_name}
+- `artifact_ok`: the translation does not contain repair artifacts such as slash-separated alternatives, unnecessary English glosses, editor-style synonym bundles, or gratuitous code mixing
 - `fluency_ok`: the translation sounds natural enough for a native technical reader and is not clearly word-for-word or grammatically broken
+- `grammar_ok`: grammar, agreement, case, morphology, and local sentence form are acceptable for {target_lang_name}
+
+Be especially strict about these artifact failures:
+- slash alternatives like `X/Y` when one natural wording should be chosen
+- parenthetical English glosses like `(oiling)` when they are not required for correctness
+- mixed-language repair wording or unresolved synonym pairs
+- foreign-script leakage from an unrelated language when the span is not just a formula, identifier, unit, abbreviation, or proper noun
+- faithful but clearly literal syntax that still reads like English structure mapped into {target_lang_name}
 
 Severity guidelines:
 - `high`: wrong language, meaning drift, dropped or altered technical details, or much more generic wording
 - `medium`: meaning is mostly correct but there are clear grammar problems or very awkward/literal phrasing
 - `low`: minor stiffness or small fluency issues only
 
+Choose exactly one `failure_type`:
+- `none`
+- `wrong-language`
+- `meaning-error`
+- `missing-technical-detail`
+- `too-generic`
+- `unnatural-phrasing`
+- `grammar-morphology`
+- `terminology-register`
+- `translation-artifact`
+
+If you reject:
+- keep `reason` short and concrete
+- provide `better_direction` as ONE short actionable repair hint
+- examples:
+  - `rewrite more naturally for native technical phrasing`
+  - `fix grammar and agreement`
+  - `restore the missing technical detail exactly`
+  - `use the standard technical term in {target_lang_name}`
+  - `keep the question as specific as the English original`
+  - `choose one natural term instead of slash alternatives`
+  - `remove the English gloss and use native technical wording`
+  - `rewrite in natural {target_lang_name} syntax`
+
+If you approve:
+- set `failure_type` to `none`
+- set `better_direction` to an empty string
+
 Approval policy:
 - Reject when `language_ok`, `meaning_ok`, `technical_ok`, or `specificity_ok` is false.
+- Reject when `terminology_ok` is false.
+- Reject when `artifact_ok` is false.
+- Reject when `grammar_ok` is false and severity is `medium` or `high`.
 - Reject when `fluency_ok` is false and severity is `medium` or `high`.
 - Approve when the only issue is minor fluency stiffness with `severity = low`.
 
 Output valid JSON only:
-{{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "fluency_ok": true, "severity": "low", "reason": "..."}}
+{{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "terminology_ok": true, "artifact_ok": true, "fluency_ok": true, "grammar_ok": true, "severity": "low", "failure_type": "none", "better_direction": "", "reason": "..."}}
 """
 
     response = client.chat.completions.create(
@@ -621,12 +685,38 @@ Output valid JSON only:
     meaning_ok = bool(data.get("meaning_ok", False))
     technical_ok = bool(data.get("technical_ok", False))
     specificity_ok = bool(data.get("specificity_ok", False))
+    terminology_ok = bool(data.get("terminology_ok", True))
+    artifact_ok = bool(data.get("artifact_ok", True))
     fluency_ok = bool(data.get("fluency_ok", False))
+    grammar_ok = bool(data.get("grammar_ok", True))
     severity = str(data.get("severity", "high")).strip().lower() or "high"
     if severity not in {"low", "medium", "high"}:
         severity = "high"
     reason = str(data.get("reason", "")).strip()
-    approved = language_ok and meaning_ok and technical_ok and specificity_ok
+    failure_type = str(data.get("failure_type", "none")).strip().lower() or "none"
+    if failure_type not in {
+        "none",
+        "wrong-language",
+        "meaning-error",
+        "missing-technical-detail",
+        "too-generic",
+        "unnatural-phrasing",
+        "grammar-morphology",
+        "terminology-register",
+        "translation-artifact",
+    }:
+        failure_type = "meaning-error"
+    better_direction = str(data.get("better_direction", "")).strip()
+    approved = (
+        language_ok
+        and meaning_ok
+        and technical_ok
+        and specificity_ok
+        and terminology_ok
+        and artifact_ok
+    )
+    if approved and not grammar_ok and severity in {"medium", "high"}:
+        approved = False
     if approved and not fluency_ok and severity in {"medium", "high"}:
         approved = False
 
@@ -635,6 +725,9 @@ Output valid JSON only:
         or (not meaning_ok)
         or (not technical_ok)
         or (not specificity_ok)
+        or (not terminology_ok)
+        or (not artifact_ok)
+        or ((not grammar_ok) and severity in {"medium", "high"})
         or ((not fluency_ok) and severity in {"medium", "high"})
     )
     return {
@@ -642,11 +735,16 @@ Output valid JSON only:
         "retry_recommended": retry_recommended,
         "reason": reason,
         "severity": severity,
+        "failure_type": failure_type,
+        "better_direction": better_direction,
         "language_ok": language_ok,
         "meaning_ok": meaning_ok,
         "technical_ok": technical_ok,
         "specificity_ok": specificity_ok,
+        "terminology_ok": terminology_ok,
+        "artifact_ok": artifact_ok,
         "fluency_ok": fluency_ok,
+        "grammar_ok": grammar_ok,
     }
 
 
@@ -763,6 +861,8 @@ def _process_sample_row(
         for lang in target_languages:
             lang_failure = "translation missing"
             retry_feedback: Optional[str] = None
+            retry_q: Optional[str] = None
+            retry_a: Optional[str] = None
             for _attempt in range(1, max_attempts + 1):
                 trans = translate_qa(
                     client,
@@ -771,6 +871,8 @@ def _process_sample_row(
                     a_en,
                     [lang],
                     previous_feedback=retry_feedback,
+                    previous_translated_question=retry_q,
+                    previous_translated_answer=retry_a,
                     model=translation_model,
                 )
                 if lang not in trans:
@@ -779,6 +881,8 @@ def _process_sample_row(
                     continue
 
                 q, a = trans[lang]
+                retry_q = q
+                retry_a = a
                 trans_check = check_translation_quality(
                     client,
                     context,
@@ -792,15 +896,27 @@ def _process_sample_row(
                 if not trans_check["approved"]:
                     reason = str(trans_check.get("reason", "")).strip()
                     severity = str(trans_check.get("severity", "high")).strip()
+                    failure_type = str(trans_check.get("failure_type", "")).strip()
+                    better_direction = str(trans_check.get("better_direction", "")).strip()
                     lang_failure = (
                         "translation quality failed: "
                         f"{reason or 'not fluent/faithful enough'}"
                         f" [severity={severity}]"
                     )
-                    retry_feedback = (
-                        reason
-                        or "The previous translation had quality problems. Fix language correctness, preserve meaning and technical details, and avoid awkward literal phrasing."
+                    feedback_parts = []
+                    if failure_type and failure_type != "none":
+                        feedback_parts.append(f"Failure type: {failure_type}.")
+                    if reason:
+                        feedback_parts.append(f"Reason: {reason}.")
+                    if better_direction:
+                        feedback_parts.append(f"Better direction: {better_direction}.")
+                    feedback_parts.append(
+                        "Revise the translation by preserving the exact meaning, specificity, numbers, units, and technical details from the English pair and source context."
                     )
+                    feedback_parts.append(
+                        "If the problem is fluency or grammar, rewrite more naturally in the target language without changing the information need."
+                    )
+                    retry_feedback = " ".join(feedback_parts)
                     continue
 
                 approved_translations[lang] = (q, a)
