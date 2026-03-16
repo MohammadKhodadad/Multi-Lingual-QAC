@@ -1,0 +1,53 @@
+\section{Contributions}
+
+We introduce a practical pipeline for constructing a multilingual chemistry retrieval benchmark from public patent text. Our work makes four main contributions. First, we build a chemistry-focused multilingual corpus from Google Patents Public Data on BigQuery by filtering patents with chemistry-relevant CPC/IPC prefixes and optional SureChEMBL matches, then retaining localized patent text across a diverse set of target languages. Second, we formulate benchmark supervision as question--answer--context (QAC) triplets designed for retrieval rather than general-purpose question answering, with the goal of producing queries that target concrete technical content in patent abstracts. Third, we adopt an English-first generation strategy followed by controlled multilingual translation, which lets us concentrate semantic query design and quality control in one language before projecting the same information need into multiple target languages. Fourth, we export the resulting data in a format directly usable for retrieval evaluation, including corpus, queries, qrels, and full QAC triplets suitable for Hugging Face distribution and MTEB-style benchmarking.
+
+\section{Method}
+
+Our method converts multilingual chemistry patents into a retrieval benchmark through four stages: patent extraction, corpus construction, English question--answer generation with validation, and multilingual projection of approved pairs.
+
+\subsection{Patent Extraction}
+
+We source patents from the public BigQuery tables in Google Patents Public Data. Given a target language set $\mathcal{L}$, we query the patent publications table and retain documents that are likely to be chemistry-related. The chemistry filter combines patent classification constraints with an optional chemistry-specific database match. In particular, we keep patents whose CPC or IPC codes begin with chemistry-relevant prefixes such as \texttt{C}, \texttt{A61K}, or \texttt{A61P}, and we may additionally require or include matches from the SureChEMBL-linked table. This produces a pool of recent chemistry patents with multilingual metadata and localized text fields.
+
+For each retained publication, we extract localized titles and abstracts from the patent record. The pipeline can also read localized claims and descriptions from the source table, but the benchmark construction method described here is intentionally centered on title and abstract text. This design choice keeps the retrieval unit concise, reduces legal boilerplate, and favors semantic technical matching over literal claim-span lookup.
+
+\subsection{Corpus Construction}
+
+We convert the raw patent dump into per-language corpus files. For each language $\ell \in \mathcal{L}$, we select the localized title and abstract associated with $\ell$, deduplicate by publication number, normalize the text, and discard records that do not provide enough technical substance. Text normalization consists of HTML entity decoding and whitespace cleanup. To remove low-information entries, we exclude documents whose cleaned abstract contains fewer than 50 words. This step filters out title-only records and very short abstracts that are unlikely to support strong retrieval questions.
+
+For each surviving document, we define the retrieval context as the concatenation of title and abstract:
+\[
+\texttt{context} = \texttt{title} \; || \; \texttt{abstract}.
+\]
+We then merge all language-specific files into a single multilingual corpus while preserving document identifiers, language labels, publication metadata, and source provenance.
+
+\subsection{English-First QAC Generation}
+
+We generate supervision from the corpus using an English-first strategy. Rather than generating independent questions in every language, we first sample source documents from the multilingual corpus and ask a language model to produce exactly one English question--answer pair for each selected context. This choice gives us one canonical information need per document and avoids uncontrolled drift in question intent across languages.
+
+The prompt is designed for retrieval-oriented question construction instead of generic reading-comprehension generation. In particular, it encourages questions that target specific technical content such as material function, process rationale, operating condition, component role, or mechanism, while discouraging vague summaries and overly literal extraction. The answer is required to remain concise and grounded in the provided context.
+
+\subsection{Validation of Generated English Pairs}
+
+Generated English pairs are filtered by a sequence of validation checks before they are admitted into the benchmark. The first check enforces that the generated pair is genuinely in English. The second check evaluates faithfulness: the question must be answerable from the source context, the answer must be supported by the context, and the supporting evidence must correspond to the claimed answer. The third check evaluates retrieval usefulness. This stage rejects questions that are too generic, too broad, nearly copied from the source text, or dominated by literal value/list lookup when the same context supports a stronger semantic query.
+
+This validation stack serves two purposes. First, it reduces hallucinated or weakly supported supervision. Second, it shapes the benchmark toward harder and more realistic retrieval behavior by preferring focused technical questions over shallow lexical matching.
+
+\subsection{Multilingual Projection by Translation}
+
+Once an English pair passes validation, we project it into the target languages through translation. The translation stage preserves the original information need rather than regenerating new questions independently in each language. This keeps cross-lingual evaluation aligned: each language version corresponds to the same source document and the same underlying retrieval target.
+
+Each translated pair is checked with a multilingual quality validator that looks for common failure modes such as generic translation artifacts, fluency problems, meaning drift, and corruption of technical terminology, numbers, or units. When a translation fails, the system retries using structured feedback from the previous failure. Pairs that still fail after the retry budget are skipped rather than kept with low quality. This conservative design trades some coverage for more reliable multilingual supervision.
+
+\subsection{Benchmark Packaging}
+
+The final benchmark is exported in retrieval format with four components: \texttt{corpus}, \texttt{queries}, \texttt{qrels}, and \texttt{qac}. The corpus contains multilingual patent contexts. The queries split contains one query per approved language-specific question. The qrels link each query to its originating patent document with a positive relevance label. The qac split preserves the full question--answer--context supervision for analysis and downstream reuse.
+
+This representation supports both benchmark evaluation and dataset inspection. In particular, it allows dense retrieval experiments over the multilingual patent corpus while retaining the full generative supervision used to create the benchmark.
+
+\subsection{Design Rationale}
+
+Three design decisions are central to our method. First, we build the benchmark from title and abstract text rather than full claims. This improves signal-to-noise ratio and keeps the task closer to technical semantic retrieval than to claim parsing or legal scope analysis. Second, we generate in English first and translate afterward, which makes quality control more consistent and reduces cross-language divergence in query intent. Third, we use explicit validators at multiple stages, because patent text is technically dense and multilingual translation errors can easily produce low-quality benchmark entries if left unchecked.
+
+Overall, the method is intended to produce a multilingual chemistry benchmark that is practical to build, faithful to the underlying patent text, and directly compatible with standard retrieval evaluation pipelines.
