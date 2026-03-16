@@ -4,8 +4,8 @@ Build multi-lingual Question–Answer–Context (QAC) data from chemistry patent
 
 ## Data source and license
 
-- **Source dataset:** Patent text (titles, abstracts) in this project is derived from **Google Patents Public Data** on BigQuery (`patents-public-data.patents.publications`), provided by IFI CLAIMS Patent Services and Google.
-- **License:** That source data is made available under **CC BY 4.0** (Creative Commons Attribution 4.0). See [Google’s announcement](https://cloud.google.com/blog/topics/public-datasets/google-patents-public-datasets-connecting-public-paid-and-private-patent-data).
+- **Source dataset:** Patent text (titles, abstracts) in this project is derived from **Google Patents Public Data** on BigQuery (`patents-public-data.patents.publications`), provided by IFI CLAIMS Patent Services and Google. See [Marketplace](https://console.cloud.google.com/marketplace/product/google_patents_public_datasets/google-patents-public-data) and [announcement](https://cloud.google.com/blog/topics/public-datasets/google-patents-public-datasets-connecting-public-paid-and-private-patent-data).
+- **License:** That source data is made available under [**CC BY 4.0**](https://creativecommons.org/licenses/by/4.0/) (Creative Commons Attribution 4.0).
 - **This project’s data:** The corpus, questions, and answers produced by this pipeline (including all Q&A pairs and translations) form a **derived/adapted dataset** based on that source.
 - **No endorsement:** This dataset is not affiliated with, endorsed by, or officially connected with Google or IFI CLAIMS. Only the underlying patent publication text is from that source; the pipeline, Q&A generation, and benchmark design are independent.
 - **Scope:** Attribution and license refer only to the patent dataset content used here (bibliographic and abstract text from the public BigQuery tables). They do not cover other Google services, products, or UI content.
