@@ -3,16 +3,31 @@ Push corpus and QAC data to Hugging Face Hub.
 
 Creates a dataset with splits: corpus, queries, qrels (MTEB retrieval format),
 plus qac (full question-answer-context triplets).
+Uploads a dataset card (README.md) that includes source attribution and license.
 """
 
 from __future__ import annotations
 
 import csv
+import io
 import os
 from pathlib import Path
 from typing import Optional
 
 from datasets import Dataset
+from huggingface_hub import HfApi
+
+# Dataset card text: attribution and license (CC BY 4.0, derived dataset, no endorsement, scope).
+# Used for the Hugging Face dataset README so the same terms appear on the Hub.
+DATASET_CARD_ATTRIBUTION = """
+## Data source and license
+
+- **Source dataset:** Patent text (titles, abstracts) in this dataset is derived from **Google Patents Public Data** on BigQuery (`patents-public-data.patents.publications`), provided by IFI CLAIMS Patent Services and Google.
+- **License:** That source data is made available under **CC BY 4.0** (Creative Commons Attribution 4.0). See [Google's announcement](https://cloud.google.com/blog/topics/public-datasets/google-patents-public-datasets-connecting-public-paid-and-private-patent-data).
+- **This dataset:** The corpus, questions, and answers (including all Q&A pairs and translations) form a **derived/adapted dataset** based on that source.
+- **No endorsement:** This dataset is not affiliated with, endorsed by, or officially connected with Google or IFI CLAIMS. Only the underlying patent publication text is from that source; the Q&A generation and benchmark design are independent.
+- **Scope:** Attribution and license refer only to the patent dataset content (bibliographic and abstract text from the public BigQuery tables). They do not cover other Google services, products, or UI content.
+"""
 
 
 def load_corpus(corpus_path: Path) -> list[dict]:
@@ -97,6 +112,22 @@ def push_to_hub(
     queries_ds.push_to_hub(repo_id, config_name="queries", token=token, private=private)
     qrels_ds.push_to_hub(repo_id, config_name="qrels", token=token, private=private)
     qac_ds.push_to_hub(repo_id, config_name="qac", token=token, private=private)
+
+    # Upload dataset card (README.md) with attribution and license
+    readme_body = (
+        "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
+        "Question–Answer–Context (QAC) data for chemistry patent retrieval, multiple languages. "
+        "Configs: `corpus`, `queries`, `qrels`, `qac` (MTEB-style).\n"
+        + DATASET_CARD_ATTRIBUTION
+    )
+    api = HfApi(token=token)
+    api.upload_file(
+        path_or_fileobj=io.BytesIO(readme_body.encode("utf-8")),
+        path_in_repo="README.md",
+        repo_id=repo_id,
+        repo_type="dataset",
+    )
+
     url = f"https://huggingface.co/datasets/{repo_id}"
     print(f"Pushed to {url}")
     return url
