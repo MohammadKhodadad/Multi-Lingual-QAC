@@ -29,6 +29,27 @@ DATASET_CARD_ATTRIBUTION = """
 - **Scope:** Attribution and license refer only to the patent dataset content (bibliographic and abstract text from the public BigQuery tables). They do not cover other Google services, products, or UI content.
 """
 
+README_YAML = """---
+configs:
+- config_name: corpus
+  data_files:
+  - split: train
+    path: data/corpus/*.parquet
+- config_name: queries
+  data_files:
+  - split: train
+    path: data/queries/*.parquet
+- config_name: qrels
+  data_files:
+  - split: train
+    path: data/qrels/*.parquet
+- config_name: qac
+  data_files:
+  - split: train
+    path: data/qac/*.parquet
+---
+"""
+
 
 def load_corpus(corpus_path: Path) -> list[dict]:
     rows = []
@@ -107,17 +128,47 @@ def push_to_hub(
     qrels_ds = Dataset.from_list(qrels_data)
     qac_ds = Dataset.from_list(qac_full)
 
-    # Push each config separately (different schemas: corpus has title, queries does not, etc.)
-    corpus_ds.push_to_hub(repo_id, config_name="corpus", token=token, private=private)
-    queries_ds.push_to_hub(repo_id, config_name="queries", token=token, private=private)
-    qrels_ds.push_to_hub(repo_id, config_name="qrels", token=token, private=private)
-    qac_ds.push_to_hub(repo_id, config_name="qac", token=token, private=private)
+    # Push each subset/config separately, each with its own train split.
+    corpus_ds.push_to_hub(
+        repo_id,
+        config_name="corpus",
+        split="train",
+        data_dir="data/corpus",
+        token=token,
+        private=private,
+    )
+    queries_ds.push_to_hub(
+        repo_id,
+        config_name="queries",
+        split="train",
+        data_dir="data/queries",
+        token=token,
+        private=private,
+    )
+    qrels_ds.push_to_hub(
+        repo_id,
+        config_name="qrels",
+        split="train",
+        data_dir="data/qrels",
+        token=token,
+        private=private,
+    )
+    qac_ds.push_to_hub(
+        repo_id,
+        config_name="qac",
+        split="train",
+        data_dir="data/qac",
+        token=token,
+        private=private,
+    )
 
     # Upload dataset card (README.md) with attribution and license
     readme_body = (
-        "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
+        README_YAML
+        + "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
         "Question–Answer–Context (QAC) data for chemistry patent retrieval, multiple languages. "
-        "Configs: `corpus`, `queries`, `qrels`, `qac` (MTEB-style).\n"
+        "Configs/subsets: `corpus`, `queries`, `qrels`, `qac` (MTEB-style). "
+        "Each config currently contains a `train` split.\n"
         + DATASET_CARD_ATTRIBUTION
     )
     api = HfApi(token=token)

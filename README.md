@@ -72,7 +72,7 @@ src/
 2. **Preprocessing** → `data/google_patents/preprocessed/{en,de,fr,...}.csv`
 3. **Corpus merge** → `data/google_patents/corpus.csv` (all languages combined)
 4. **Q&A generation** → `data/google_patents/qac/qac.csv`
-5. **Push to Hugging Face** → dataset with splits: corpus, queries, qrels, qac (MTEB retrieval format)
+5. **Push to Hugging Face** → dataset with configs/subsets: corpus, queries, qrels, qac, each with a `train` split (MTEB retrieval format)
 
 ### Q&A generation (Option A)
 
