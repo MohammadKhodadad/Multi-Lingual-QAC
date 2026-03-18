@@ -20,6 +20,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from tqdm import tqdm
+
 
 def clean_text(s: str) -> str:
     """Decode HTML entities and normalize whitespace."""
@@ -50,9 +52,11 @@ DEFAULT_IPC_PREFIXES = ["C", "A61K", "A61P"]
 DEFAULT_LANGS = [
     "en", "de", "fr", "es", "ja", "ko", "zh",
     "ru", "pt", "it", "nl",
-    "ar", "tr", "pl", "hi",
+    "ar", "fa", "tr", "pl", "hi",
 ]
 MIN_ABSTRACT_WORDS = 50
+PER_LANGUAGE_OVERFETCH_FACTOR = 1.25
+PER_LANGUAGE_OVERFETCH_MIN = 10
 
 
 def sql_list(values: List[str]) -> str:
@@ -75,6 +79,7 @@ def build_query(
     min_language_count: int = 2,
     limit: Optional[int] = None,
     primary_lang: Optional[str] = None,
+    min_primary_abstract_words: Optional[int] = None,
     start_date: Optional[int] = None,
     end_date: Optional[int] = None,
     country_codes: Optional[List[str]] = None,
@@ -139,17 +144,27 @@ def build_query(
 
     chemistry_where = " OR ".join(f"({p.strip()})" for p in chemistry_predicates)
 
-    # Filter to patents that have primary_lang (e.g. en) before limiting.
-    # Ensures --limit 100 gives 100 patents with that language.
+    # Filter to patents that have a usable localized abstract for primary_lang
+    # before limiting. This lets per-language extraction target documents that
+    # are likely to survive later preprocessing.
     primary_lang_filter = ""
-    if primary_lang and limit:
+    if primary_lang:
         pl = primary_lang.strip().lower()
+        min_words_filter = ""
+        if min_primary_abstract_words:
+            min_words_filter = f"""
+              AND ARRAY_LENGTH(
+                SPLIT(REGEXP_REPLACE(TRIM(a.text), r'\\s+', ' '), ' ')
+              ) >= {int(min_primary_abstract_words)}
+            """
         primary_lang_filter = f"""
-        AND (
-          EXISTS (SELECT 1 FROM UNNEST(IFNULL(p.title_localized, [])) t
-                  WHERE LOWER(COALESCE(t.language, '')) = {pl!r} AND t.text IS NOT NULL)
-          OR EXISTS (SELECT 1 FROM UNNEST(IFNULL(p.abstract_localized, [])) a
-                     WHERE LOWER(COALESCE(a.language, '')) = {pl!r} AND a.text IS NOT NULL)
+        AND EXISTS (
+          SELECT 1
+          FROM UNNEST(IFNULL(p.abstract_localized, [])) a
+          WHERE LOWER(COALESCE(a.language, '')) = {pl!r}
+            AND a.text IS NOT NULL
+            AND LENGTH(TRIM(a.text)) > 0
+            {min_words_filter}
         )
         """
 
@@ -329,8 +344,11 @@ def extract_chemistry_patents_per_language(
     use_classification: bool = True,
 ) -> int:
     """
-    For each language, pull up to limit_per_lang patents that have that language,
-    append all to one NDJSON. So --limit 100 gives 100 en + 100 de + ... (one file).
+    For each language, pull a slightly overfetched set of patents that have a
+    usable abstract in that language, then append all to one NDJSON.
+
+    The overfetch helps preserve up to limit_per_lang usable rows per language
+    after downstream cleaning and safety checks.
     """
     languages = languages or DEFAULT_LANGS
     output_path = Path(output_path)
@@ -338,23 +356,31 @@ def extract_chemistry_patents_per_language(
 
     total = 0
     with output_path.open("w", encoding="utf-8") as f:
-        for lang in languages:
+        for lang in tqdm(languages, desc="Languages", unit="lang"):
+            fetch_limit = max(
+                limit_per_lang + PER_LANGUAGE_OVERFETCH_MIN,
+                int(limit_per_lang * PER_LANGUAGE_OVERFETCH_FACTOR),
+            )
             query = build_query(
                 cpc_prefixes=cpc_prefixes or DEFAULT_CPC_PREFIXES,
                 ipc_prefixes=ipc_prefixes or DEFAULT_IPC_PREFIXES,
                 use_surechembl=use_surechembl,
                 use_classification=use_classification,
-                limit=limit_per_lang,
+                limit=fetch_limit,
                 primary_lang=lang,
+                min_primary_abstract_words=MIN_ABSTRACT_WORDS,
             )
-            print(f"  {lang}: pulling up to {limit_per_lang}...")
+            tqdm.write(
+                f"  {lang}: pulling up to {fetch_limit} candidates "
+                f"(target {limit_per_lang} usable docs)..."
+            )
             n = 0
             for record in _run_query_iter(project_id, query):
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
                 n += 1
                 total += 1
-            print(f"  {lang}: {n} rows")
-    print(f"Done. Wrote {total:,} rows to: {output_path}")
+            tqdm.write(f"  {lang}: {n} rows")
+    tqdm.write(f"Done. Wrote {total:,} rows to: {output_path}")
     return total
 
 
@@ -421,7 +447,7 @@ def preprocess_ndjson_to_csv(
         "source",
     ]
 
-    for lang in languages:
+    for lang in tqdm(languages, desc="Preprocess languages", unit="lang"):
         rows: List[Dict[str, Any]] = []
         seen_pub: set = set()
         skipped_short = 0
@@ -466,7 +492,7 @@ def preprocess_ndjson_to_csv(
             writer.writerows(rows)
 
         counts[lang] = len(rows)
-        print(
+        tqdm.write(
             f"  {lang}: {len(rows):,} rows -> {out_path}"
             f" (skipped {skipped_short:,} short/title-only records)"
         )

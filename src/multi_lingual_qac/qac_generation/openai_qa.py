@@ -16,16 +16,17 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from openai import OpenAI
+from tqdm import tqdm
 
 # Languages to translate into (exclude en; we generate in English)
 DEFAULT_TARGET_LANGS = [
-    "de", "fr", "es", "ja", "ko", "zh", "ru", "pt", "it", "nl", "ar", "tr", "pl", "hi",
+    "de", "fr", "es", "ja", "ko", "zh", "ru", "pt", "it", "nl", "ar", "fa", "tr", "pl", "hi",
 ]
 
 LANG_NAMES = {
     "de": "German", "fr": "French", "es": "Spanish", "ja": "Japanese", "ko": "Korean",
     "zh": "Chinese", "ru": "Russian", "pt": "Portuguese", "it": "Italian", "nl": "Dutch",
-    "ar": "Arabic", "tr": "Turkish", "pl": "Polish", "hi": "Hindi", "en": "English",
+    "ar": "Arabic", "fa": "Farsi", "tr": "Turkish", "pl": "Polish", "hi": "Hindi", "en": "English",
 }
 
 DEFAULT_GENERATION_MODEL = "gpt-5-mini"
@@ -1008,16 +1009,18 @@ def run_qa_pipeline(
                 )
                 for index, row in enumerate(sampled)
             ]
-            for completed, future in enumerate(as_completed(futures), start=1):
+            progress = tqdm(as_completed(futures), total=len(futures), desc="Generate Q&A", unit="doc")
+            for completed, future in enumerate(progress, start=1):
                 result = future.result()
                 results.append(result)
-                print(
+                tqdm.write(
                     f"  [{completed}/{len(sampled)}] {result['corpus_id']}... {result['status']}"
                 )
     else:
         if sampled:
             print("Running Q&A generation in single-threaded mode.")
-        for index, row in enumerate(sampled, start=1):
+        progress = tqdm(sampled, total=len(sampled), desc="Generate Q&A", unit="doc")
+        for index, row in enumerate(progress, start=1):
             result = _process_sample_row(
                 index - 1,
                 row,
@@ -1029,7 +1032,7 @@ def run_qa_pipeline(
                 max_attempts=max_attempts,
             )
             results.append(result)
-            print(f"  [{index}/{len(sampled)}] {result['corpus_id']}... {result['status']}")
+            tqdm.write(f"  [{index}/{len(sampled)}] {result['corpus_id']}... {result['status']}")
 
     for result in sorted(results, key=lambda item: item["index"]):
         qac_rows.extend(result["rows"])

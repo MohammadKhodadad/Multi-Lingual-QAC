@@ -80,7 +80,7 @@ src/
 - Generates (question, answer) in **English** via OpenAI per document
 - Runs an English language check and a faithfulness check before keeping each QA pair
 - Runs a retrieval-quality check to reject overly generic or weak questions
-- Translates Q&A to all target languages (de, fr, es, ja, ko, zh, ru, pt, it, nl, ar, tr, pl, hi)
+- Translates Q&A to all target languages (de, fr, es, ja, ko, zh, ru, pt, it, nl, ar, fa, tr, pl, hi)
 - Output: `corpus_id`, `language`, `question`, `answer` (one row per document per language)
 
 ### Corpus / preprocessed columns
