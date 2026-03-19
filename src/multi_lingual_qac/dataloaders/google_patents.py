@@ -702,9 +702,10 @@ def preprocess_ndjson_to_csv(
     """
     Preprocess NDJSON patent data into per-language CSVs for QAC generation.
 
-    For each language, extracts records that have title/abstract/claim in that
+    For each language, extracts records that have title/abstract in that
     language, dedupes by publication_number, optionally caps at per_lang_limit
-    rows, writes CSV.
+    rows, writes CSV. When available, the first claim is added as an optional
+    context enrichment field.
 
     CSV columns: id, language, title, abstract, description, first_claim, context,
     publication_number, country_code, publication_date, source
@@ -744,12 +745,12 @@ def preprocess_ndjson_to_csv(
         rows: List[Dict[str, Any]] = []
         seen_pub: set = set()
         skipped_short = 0
-        skipped_missing_claim = 0
+        missing_claim = 0
         for rec in records:
             title = _get_localized_text(rec.get("title_localized"), lang)
             abstract = _get_localized_text(rec.get("abstract_localized"), lang)
             # Disabled for now: keep the column for schema stability, but build
-            # contexts from title + abstract + first claim only.
+            # contexts from title + abstract, with first claim when available.
             description = ""
             first_claim = _build_first_claim(
                 rec.get("claims_localized"),
@@ -771,14 +772,14 @@ def preprocess_ndjson_to_csv(
                 skipped_short += 1
                 continue
             if not first_claim:
-                skipped_missing_claim += 1
-                continue
+                missing_claim += 1
             context_parts = []
             if title:
                 context_parts.append(f"Title: {title}")
             if abstract:
                 context_parts.append(f"Abstract: {abstract}")
-            context_parts.append(f"First claim: {first_claim}")
+            if first_claim:
+                context_parts.append(f"First claim: {first_claim}")
             context = "\n\n".join(context_parts).strip()
 
             rows.append({
@@ -808,7 +809,7 @@ def preprocess_ndjson_to_csv(
         tqdm.write(
             f"  {lang}: {len(rows):,} rows -> {out_path}"
             f" (skipped {skipped_short:,} short/title-only records,"
-            f" {skipped_missing_claim:,} missing claims)"
+            f" {missing_claim:,} without claims)"
         )
 
     return counts
@@ -844,15 +845,14 @@ def merge_corpus_csv(
                 row["context"] = clean_text(row.get("context", ""))
                 if word_count(row["abstract"]) < min_abstract_words:
                     continue
-                if not row["first_claim"]:
-                    continue
                 if not row["context"]:
                     context_parts = []
                     if row["title"]:
                         context_parts.append(f"Title: {row['title']}")
                     if row["abstract"]:
                         context_parts.append(f"Abstract: {row['abstract']}")
-                    context_parts.append(f"First claim: {row['first_claim']}")
+                    if row["first_claim"]:
+                        context_parts.append(f"First claim: {row['first_claim']}")
                     row["context"] = "\n\n".join(context_parts).strip()
                 rows.append(row)
 
