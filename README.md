@@ -68,11 +68,13 @@ src/
 
 ## Data flow
 
-1. **Extraction** → `data/google_patents/chemistry_patents.ndjson` (BigQuery)
+1. **Extraction** → `data/google_patents/chemistry_patents.ndjson` (BigQuery raw cache with localized text + metadata)
 2. **Preprocessing** → `data/google_patents/preprocessed/{en,de,fr,...}.csv`
 3. **Corpus merge** → `data/google_patents/corpus.csv` (all languages combined)
 4. **Q&A generation** → `data/google_patents/qac/qac.csv`
 5. **Push to Hugging Face** → dataset with configs/subsets: corpus, queries, qrels, qac, each with a `train` split (MTEB retrieval format)
+
+The raw NDJSON is intended to be the one BigQuery-touching artifact. It keeps a richer cache of fields such as `family_id`, localized `title`, `abstract`, `description`, localized/plain-text and HTML `claims`, and classification metadata (`cpc`, `ipc`) so later corpus experiments can be done offline without querying BigQuery again.
 
 ### Q&A generation (Option A)
 
@@ -85,9 +87,11 @@ src/
 
 ### Corpus / preprocessed columns
 
-- `id`, `language`, `title`, `abstract`, `context`, `publication_number`, `country_code`, `publication_date`, `source`
+- `id`, `language`, `title`, `abstract`, `description`, `first_claim`, `context`, `publication_number`, `country_code`, `publication_date`, `source`
 
-Preprocessing filters out low-information records before they enter the corpus: documents whose cleaned abstract is shorter than `50` words are skipped, which also removes title-only entries from downstream Q&A generation.
+Preprocessing filters out low-information records before they enter the corpus: documents whose cleaned abstract is shorter than `50` words are skipped. The current experimental corpus context is built from `title + abstract + first_claim` when claim text is available.
+
+Important current limitation: in the Google Patents BigQuery data we observed strong multilingual coverage for localized `title` and `abstract`, but `description` and `claims` are much sparser and, in our latest raw dump, are largely available only in English. In practice this means the raw cache is rich, but multilingual corpus construction is still driven mainly by `title + abstract`, with claim-based variants requiring careful fallback logic.
 
 ## Plan
 

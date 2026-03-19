@@ -35,16 +35,12 @@ def clean_text(s: str) -> str:
 _RECORD_KEYS = [
     "title_localized",
     "abstract_localized",
-    "claims_localized",
     "description_localized",
+    "description_localized_html",
+    "claims_localized",
+    "claims_localized_html",
     "cpc",
     "ipc",
-    "inventor_harmonized",
-    "assignee_harmonized",
-    "citation",
-    "priority_claim",
-    "research_cpc",
-    "languages_present",
 ]
 
 DEFAULT_CPC_PREFIXES = ["C", "A61K", "A61P"]
@@ -55,6 +51,10 @@ DEFAULT_LANGS = [
     "ar", "fa", "tr", "pl", "hi",
 ]
 MIN_ABSTRACT_WORDS = 50
+MIN_ABSTRACT_CHARS = 300
+MIN_DESCRIPTION_CHARS = 200
+DESCRIPTION_SNIPPET_MAX_CHARS = 1500
+FIRST_CLAIM_MAX_CHARS = 1500
 PER_LANGUAGE_OVERFETCH_FACTOR = 1.25
 PER_LANGUAGE_OVERFETCH_MIN = 10
 
@@ -66,6 +66,11 @@ def sql_list(values: List[str]) -> str:
 def word_count(text: str) -> int:
     """Count whitespace-delimited words in cleaned text."""
     return len((text or "").split())
+
+
+def min_abstract_chars_for_sql(min_words: int) -> int:
+    """Approximate a word-count gate with a cheaper character-count gate."""
+    return max(MIN_ABSTRACT_CHARS, min_words * 5)
 
 
 def build_query(
@@ -80,6 +85,9 @@ def build_query(
     limit: Optional[int] = None,
     primary_lang: Optional[str] = None,
     min_primary_abstract_words: Optional[int] = None,
+    require_primary_description: bool = False,
+    require_primary_claim: bool = False,
+    require_any_claim: bool = False,
     start_date: Optional[int] = None,
     end_date: Optional[int] = None,
     country_codes: Optional[List[str]] = None,
@@ -150,12 +158,44 @@ def build_query(
     primary_lang_filter = ""
     if primary_lang:
         pl = primary_lang.strip().lower()
-        min_words_filter = ""
+        min_chars_filter = ""
         if min_primary_abstract_words:
-            min_words_filter = f"""
-              AND ARRAY_LENGTH(
-                SPLIT(REGEXP_REPLACE(TRIM(a.text), r'\\s+', ' '), ' ')
-              ) >= {int(min_primary_abstract_words)}
+            min_chars_filter = f"""
+              AND LENGTH(TRIM(a.text)) >= {min_abstract_chars_for_sql(int(min_primary_abstract_words))}
+            """
+        description_filter = ""
+        if require_primary_description:
+            # Disabled for now: many non-English patents in BigQuery have a
+            # localized abstract but no localized description.
+            # description_filter = f"""
+            # AND EXISTS (
+            #   SELECT 1
+            #   FROM UNNEST(IFNULL(p.description_localized, [])) d
+            #   WHERE LOWER(COALESCE(d.language, '')) = {pl!r}
+            #     AND d.text IS NOT NULL
+            #     AND LENGTH(TRIM(d.text)) >= {MIN_DESCRIPTION_CHARS}
+            # )
+            # """
+            pass
+        claim_filter = ""
+        if require_primary_claim:
+            claim_filter = f"""
+        AND (
+          EXISTS (
+            SELECT 1
+            FROM UNNEST(IFNULL(p.claims_localized, [])) c
+            WHERE LOWER(COALESCE(c.language, '')) = {pl!r}
+              AND c.text IS NOT NULL
+              AND LENGTH(TRIM(c.text)) > 0
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM UNNEST(IFNULL(p.claims_localized_html, [])) c
+            WHERE LOWER(COALESCE(c.language, '')) = {pl!r}
+              AND c.text IS NOT NULL
+              AND LENGTH(TRIM(c.text)) > 0
+          )
+        )
             """
         primary_lang_filter = f"""
         AND EXISTS (
@@ -164,7 +204,28 @@ def build_query(
           WHERE LOWER(COALESCE(a.language, '')) = {pl!r}
             AND a.text IS NOT NULL
             AND LENGTH(TRIM(a.text)) > 0
-            {min_words_filter}
+            {min_chars_filter}
+        )
+        {description_filter}
+        {claim_filter}
+        """
+
+    any_claim_filter = ""
+    if require_any_claim and not primary_lang:
+        any_claim_filter = """
+        AND (
+          EXISTS (
+            SELECT 1
+            FROM UNNEST(IFNULL(p.claims_localized, [])) c
+            WHERE c.text IS NOT NULL
+              AND LENGTH(TRIM(c.text)) > 0
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM UNNEST(IFNULL(p.claims_localized_html, [])) c
+            WHERE c.text IS NOT NULL
+              AND LENGTH(TRIM(c.text)) > 0
+          )
         )
         """
 
@@ -178,37 +239,17 @@ def build_query(
     WITH base AS (
       SELECT
         p.publication_number,
-        p.application_number,
-        p.country_code,
-        p.kind_code,
-        p.application_kind,
-        p.application_number_formatted,
-        p.pct_number,
         p.family_id,
+        p.country_code,
         p.publication_date,
-        p.filing_date,
-        p.grant_date,
-        p.priority_date,
-
         p.title_localized,
         p.abstract_localized,
-        p.claims_localized,
         p.description_localized,
-
+        p.description_localized_html,
+        p.claims_localized,
+        p.claims_localized_html,
         p.cpc,
         p.ipc,
-        p.inventor_harmonized,
-        p.assignee_harmonized,
-        p.citation,
-        p.priority_claim,
-
-        {surechembl_flag},
-
-        gr.title AS english_title_research,
-        gr.title_translated AS english_title_machine_translated,
-        gr.abstract AS english_abstract_research,
-        gr.abstract_translated AS english_abstract_machine_translated,
-        gr.cpc AS research_cpc,
 
         ARRAY(
           SELECT DISTINCT t.language
@@ -220,12 +261,11 @@ def build_query(
           WHERE a.language IN ({lang_sql}) AND a.text IS NOT NULL
         ) AS languages_present
       FROM `patents-public-data.patents.publications` p
-      LEFT JOIN `patents-public-data.google_patents_research.publications` gr
-        ON p.publication_number = gr.publication_number
       {surechembl_join}
       WHERE
         ({chemistry_where})
         {primary_lang_filter}
+        {any_claim_filter}
         {date_filter}
         {country_filter}
     )
@@ -236,6 +276,181 @@ def build_query(
     {limit_clause}
     """
     return query
+
+
+def build_query_per_language_top_n(
+    *,
+    languages: Optional[List[str]] = None,
+    limit_per_lang: int,
+    cpc_prefixes: Optional[List[str]] = None,
+    ipc_prefixes: Optional[List[str]] = None,
+    use_surechembl: bool = True,
+    use_classification: bool = True,
+    start_date: Optional[int] = None,
+    end_date: Optional[int] = None,
+    country_codes: Optional[List[str]] = None,
+    min_abstract_words: int = MIN_ABSTRACT_WORDS,
+    require_description: bool = False,
+    require_claim: bool = False,
+) -> str:
+    """Build one top-N-per-language query for cheaper extraction."""
+    languages = languages or DEFAULT_LANGS
+    cpc_prefixes = cpc_prefixes or DEFAULT_CPC_PREFIXES
+    ipc_prefixes = ipc_prefixes or DEFAULT_IPC_PREFIXES
+
+    if not use_surechembl and not use_classification:
+        raise ValueError("At least one of use_surechembl or use_classification must be True.")
+
+    lang_array_sql = ", ".join(f"'{lang}'" for lang in languages)
+
+    date_filter = ""
+    if start_date is not None:
+        date_filter += f"\n      AND p.publication_date >= {start_date}"
+    if end_date is not None:
+        date_filter += f"\n      AND p.publication_date <= {end_date}"
+
+    country_filter = ""
+    if country_codes:
+        cc_sql = sql_list(country_codes)
+        country_filter = f"\n      AND p.country_code IN ({cc_sql})"
+
+    chemistry_predicates: List[str] = []
+    if use_classification:
+        cpc_preds = " OR ".join(f"STARTS_WITH(c.code, {p!r})" for p in cpc_prefixes)
+        ipc_preds = " OR ".join(f"STARTS_WITH(i.code, {p!r})" for p in ipc_prefixes)
+        chemistry_predicates.append(
+            f"""
+            EXISTS (
+              SELECT 1
+              FROM UNNEST(IFNULL(p.cpc, [])) AS c
+              WHERE {cpc_preds}
+            )
+            """
+        )
+        chemistry_predicates.append(
+            f"""
+            EXISTS (
+              SELECT 1
+              FROM UNNEST(IFNULL(p.ipc, [])) AS i
+              WHERE {ipc_preds}
+            )
+            """
+        )
+
+    surechembl_join = ""
+    if use_surechembl:
+        surechembl_join = """
+        LEFT JOIN (
+          SELECT DISTINCT publication_number
+          FROM `patents-public-data.ebi_surechembl.match`
+        ) sc
+        ON p.publication_number = sc.publication_number
+        """
+        chemistry_predicates.append("sc.publication_number IS NOT NULL")
+
+    chemistry_where = " OR ".join(f"({p.strip()})" for p in chemistry_predicates)
+    min_abstract_chars = min_abstract_chars_for_sql(min_abstract_words)
+    description_clause = ""
+    if require_description:
+        # Disabled for now: requiring localized descriptions collapses
+        # multilingual coverage in the public BigQuery table.
+        # description_clause = f"""
+        # AND EXISTS (
+        #   SELECT 1
+        #   FROM UNNEST(IFNULL(b.description_localized, [])) d
+        #   WHERE LOWER(COALESCE(d.language, '')) = lang
+        #     AND d.text IS NOT NULL
+        #     AND LENGTH(TRIM(d.text)) >= {MIN_DESCRIPTION_CHARS}
+        # )
+        # """
+        pass
+
+    claim_clause = ""
+    if require_claim:
+        claim_clause = """
+      AND (
+        EXISTS (
+          SELECT 1
+          FROM UNNEST(IFNULL(b.claims_localized, [])) c
+          WHERE LOWER(COALESCE(c.language, '')) = lang
+            AND c.text IS NOT NULL
+            AND LENGTH(TRIM(c.text)) > 0
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM UNNEST(IFNULL(b.claims_localized_html, [])) c
+          WHERE LOWER(COALESCE(c.language, '')) = lang
+            AND c.text IS NOT NULL
+            AND LENGTH(TRIM(c.text)) > 0
+        )
+      )
+        """
+
+    return f"""
+    WITH base AS (
+      SELECT
+        p.publication_number,
+        p.family_id,
+        p.country_code,
+        p.publication_date,
+        p.title_localized,
+        p.abstract_localized,
+        p.description_localized,
+        p.description_localized_html,
+        p.claims_localized,
+        p.claims_localized_html,
+        p.cpc,
+        p.ipc
+      FROM `patents-public-data.patents.publications` p
+      {surechembl_join}
+      WHERE
+        ({chemistry_where})
+        {date_filter}
+        {country_filter}
+    ),
+    ranked AS (
+      SELECT
+        b.publication_number,
+        lang,
+        ROW_NUMBER() OVER (
+          PARTITION BY lang
+          ORDER BY b.publication_date DESC, b.publication_number DESC
+        ) AS rn
+      FROM base b
+      CROSS JOIN UNNEST([{lang_array_sql}]) AS lang
+      WHERE EXISTS (
+        SELECT 1
+        FROM UNNEST(IFNULL(b.abstract_localized, [])) a
+        WHERE LOWER(COALESCE(a.language, '')) = lang
+          AND a.text IS NOT NULL
+          AND LENGTH(TRIM(a.text)) >= {min_abstract_chars}
+      )
+      {description_clause}
+      {claim_clause}
+    ),
+    selected AS (
+      SELECT DISTINCT publication_number
+      FROM ranked
+      WHERE rn <= {limit_per_lang}
+    )
+    SELECT
+      b.publication_number,
+      b.family_id,
+      b.country_code,
+      b.publication_date,
+      b.title_localized,
+      b.abstract_localized,
+      b.description_localized,
+      b.description_localized_html,
+      b.claims_localized,
+      b.claims_localized_html,
+      b.cpc,
+      b.ipc
+    FROM base b
+    INNER JOIN selected s
+      USING (publication_number)
+    ORDER BY b.publication_date DESC, b.publication_number DESC
+    """
 
 
 def _serialize_record(obj: Any) -> Any:
@@ -321,6 +536,10 @@ def extract_chemistry_patents(
         min_language_count=min_language_count,
         limit=limit,
         primary_lang=primary_lang,
+        min_primary_abstract_words=MIN_ABSTRACT_WORDS if primary_lang else None,
+        require_primary_description=False,
+        require_primary_claim=False,
+        require_any_claim=False,
         start_date=start_date,
         end_date=end_date,
         country_codes=country_codes,
@@ -344,44 +563,35 @@ def extract_chemistry_patents_per_language(
     use_classification: bool = True,
 ) -> int:
     """
-    For each language, pull a slightly overfetched set of patents that have a
-    usable abstract in that language, then append all to one NDJSON.
+    Pull one shared set of patents that covers up to limit_per_lang per language.
 
-    The overfetch helps preserve up to limit_per_lang usable rows per language
-    after downstream cleaning and safety checks.
+    This avoids scanning the same large public tables once per language, which
+    is the main BigQuery cost driver in the naive implementation.
     """
     languages = languages or DEFAULT_LANGS
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    total = 0
-    with output_path.open("w", encoding="utf-8") as f:
-        for lang in tqdm(languages, desc="Languages", unit="lang"):
-            fetch_limit = max(
-                limit_per_lang + PER_LANGUAGE_OVERFETCH_MIN,
-                int(limit_per_lang * PER_LANGUAGE_OVERFETCH_FACTOR),
-            )
-            query = build_query(
-                cpc_prefixes=cpc_prefixes or DEFAULT_CPC_PREFIXES,
-                ipc_prefixes=ipc_prefixes or DEFAULT_IPC_PREFIXES,
-                use_surechembl=use_surechembl,
-                use_classification=use_classification,
-                limit=fetch_limit,
-                primary_lang=lang,
-                min_primary_abstract_words=MIN_ABSTRACT_WORDS,
-            )
-            tqdm.write(
-                f"  {lang}: pulling up to {fetch_limit} candidates "
-                f"(target {limit_per_lang} usable docs)..."
-            )
-            n = 0
-            for record in _run_query_iter(project_id, query):
-                f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                n += 1
-                total += 1
-            tqdm.write(f"  {lang}: {n} rows")
-    tqdm.write(f"Done. Wrote {total:,} rows to: {output_path}")
-    return total
+    fetch_limit = max(
+        limit_per_lang + PER_LANGUAGE_OVERFETCH_MIN,
+        int(limit_per_lang * PER_LANGUAGE_OVERFETCH_FACTOR),
+    )
+    query = build_query_per_language_top_n(
+        languages=languages,
+        limit_per_lang=fetch_limit,
+        cpc_prefixes=cpc_prefixes,
+        ipc_prefixes=ipc_prefixes,
+        use_surechembl=use_surechembl,
+        use_classification=use_classification,
+        min_abstract_words=MIN_ABSTRACT_WORDS,
+        require_description=False,
+        require_claim=False,
+    )
+    tqdm.write(
+        f"Running one top-N-per-language query for {len(languages)} languages "
+        f"(target {limit_per_lang}, fetch {fetch_limit} per language)."
+    )
+    return run_query(project_id=project_id, query=query, output_path=output_path)
 
 
 def _get_localized_text(
@@ -401,6 +611,86 @@ def _get_localized_text(
     return None
 
 
+def _build_first_claim(
+    claim_items: Optional[List[Dict[str, Any]]],
+    claim_html_items: Optional[List[Dict[str, Any]]],
+    lang: str,
+    *,
+    max_chars: int = FIRST_CLAIM_MAX_CHARS,
+) -> str:
+    """Extract and lightly clean the first localized claim."""
+    claim_html = _get_localized_text(claim_html_items, lang)
+    if claim_html:
+        first_claim = _extract_first_claim_from_html(claim_html)
+        if first_claim:
+            return _truncate_text(first_claim, max_chars=max_chars)
+
+    claim_text = _get_localized_text(claim_items, lang)
+    if claim_text:
+        first_claim = _extract_first_claim_from_text(claim_text)
+        if first_claim:
+            return _truncate_text(first_claim, max_chars=max_chars)
+
+    return ""
+
+
+def _extract_first_claim_from_html(claim_html: str) -> str:
+    """Parse the first claim from claims_localized_html."""
+    match = re.search(r"<claim\b[^>]*>(.*?)</claim>", claim_html, flags=re.IGNORECASE | re.DOTALL)
+    if not match:
+        return ""
+
+    claim_block = re.sub(r"<chemistry\b.*?</chemistry>", " ", match.group(1), flags=re.IGNORECASE | re.DOTALL)
+    claim_block = re.sub(r"</?claim-text\b[^>]*>", " ", claim_block, flags=re.IGNORECASE)
+    claim_block = re.sub(r"<[^>]+>", " ", claim_block)
+    return _normalize_claim_text(claim_block)
+
+
+def _extract_first_claim_from_text(claim_text: str) -> str:
+    """Parse the first claim from claims_localized plain text."""
+    cleaned = clean_text(claim_text)
+    if not cleaned:
+        return ""
+
+    cleaned = re.sub(r"^\s*1\s*[\.\):\-]*\s*", "", cleaned)
+    next_claim = re.search(r"\s2\s*[\.\):\-]\s+", cleaned)
+    if next_claim:
+        cleaned = cleaned[:next_claim.start()]
+    return _normalize_claim_text(cleaned)
+
+
+def _normalize_claim_text(text: str) -> str:
+    """Normalize parsed claim text and drop the leading claim number."""
+    text = clean_text(text)
+    text = re.sub(r"^\s*1\s*[\.\):\-]*\s*", "", text)
+    return text.strip()
+
+
+def _truncate_text(text: str, *, max_chars: int) -> str:
+    """Trim long text without splitting the last word when possible."""
+    text = clean_text(text)
+    if len(text) <= max_chars:
+        return text
+    snippet = text[:max_chars].rsplit(" ", 1)[0].strip()
+    return snippet or text[:max_chars].strip()
+
+
+def _build_description_snippet(
+    items: Optional[List[Dict[str, Any]]],
+    lang: str,
+    *,
+    max_chars: int = DESCRIPTION_SNIPPET_MAX_CHARS,
+) -> str:
+    """Extract and lightly clean a localized description snippet."""
+    description = _get_localized_text(items, lang)
+    if not description:
+        return ""
+
+    description = re.sub(r"\[\d{3,5}\]", " ", description)
+    description = clean_text(description)
+    return _truncate_text(description, max_chars=max_chars)
+
+
 def preprocess_ndjson_to_csv(
     ndjson_path: Path,
     output_dir: Path,
@@ -412,11 +702,12 @@ def preprocess_ndjson_to_csv(
     """
     Preprocess NDJSON patent data into per-language CSVs for QAC generation.
 
-    For each language, extracts records that have title/abstract in that language,
-    dedupes by publication_number, optionally caps at per_lang_limit rows, writes CSV.
+    For each language, extracts records that have title/abstract/claim in that
+    language, dedupes by publication_number, optionally caps at per_lang_limit
+    rows, writes CSV.
 
-    CSV columns: id, language, title, abstract, context, publication_number,
-    country_code, publication_date, source
+    CSV columns: id, language, title, abstract, description, first_claim, context,
+    publication_number, country_code, publication_date, source
 
     Returns dict mapping language -> row count.
     """
@@ -440,6 +731,8 @@ def preprocess_ndjson_to_csv(
         "language",
         "title",
         "abstract",
+        "description",
+        "first_claim",
         "context",
         "publication_number",
         "country_code",
@@ -451,9 +744,18 @@ def preprocess_ndjson_to_csv(
         rows: List[Dict[str, Any]] = []
         seen_pub: set = set()
         skipped_short = 0
+        skipped_missing_claim = 0
         for rec in records:
             title = _get_localized_text(rec.get("title_localized"), lang)
             abstract = _get_localized_text(rec.get("abstract_localized"), lang)
+            # Disabled for now: keep the column for schema stability, but build
+            # contexts from title + abstract + first claim only.
+            description = ""
+            first_claim = _build_first_claim(
+                rec.get("claims_localized"),
+                rec.get("claims_localized_html"),
+                lang,
+            )
 
             if not abstract and not title:
                 continue
@@ -468,13 +770,24 @@ def preprocess_ndjson_to_csv(
             if word_count(abstract) < min_abstract_words:
                 skipped_short += 1
                 continue
-            context = f"{title}\n\n{abstract}".strip() if title else abstract
+            if not first_claim:
+                skipped_missing_claim += 1
+                continue
+            context_parts = []
+            if title:
+                context_parts.append(f"Title: {title}")
+            if abstract:
+                context_parts.append(f"Abstract: {abstract}")
+            context_parts.append(f"First claim: {first_claim}")
+            context = "\n\n".join(context_parts).strip()
 
             rows.append({
                 "id": f"{pub_num}_{lang}",
                 "language": lang,
                 "title": title,
                 "abstract": abstract,
+                "description": description,
+                "first_claim": first_claim,
                 "context": context,
                 "publication_number": pub_num,
                 "country_code": rec.get("country_code") or "",
@@ -494,7 +807,8 @@ def preprocess_ndjson_to_csv(
         counts[lang] = len(rows)
         tqdm.write(
             f"  {lang}: {len(rows):,} rows -> {out_path}"
-            f" (skipped {skipped_short:,} short/title-only records)"
+            f" (skipped {skipped_short:,} short/title-only records,"
+            f" {skipped_missing_claim:,} missing claims)"
         )
 
     return counts
@@ -525,16 +839,26 @@ def merge_corpus_csv(
             for row in rdr:
                 row["title"] = clean_text(row.get("title", ""))
                 row["abstract"] = clean_text(row.get("abstract", ""))
+                row["description"] = clean_text(row.get("description", ""))
+                row["first_claim"] = clean_text(row.get("first_claim", ""))
                 row["context"] = clean_text(row.get("context", ""))
                 if word_count(row["abstract"]) < min_abstract_words:
                     continue
+                if not row["first_claim"]:
+                    continue
                 if not row["context"]:
-                    row["context"] = f"{row['title']}\n\n{row['abstract']}".strip()
+                    context_parts = []
+                    if row["title"]:
+                        context_parts.append(f"Title: {row['title']}")
+                    if row["abstract"]:
+                        context_parts.append(f"Abstract: {row['abstract']}")
+                    context_parts.append(f"First claim: {row['first_claim']}")
+                    row["context"] = "\n\n".join(context_parts).strip()
                 rows.append(row)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
-        "id", "language", "title", "abstract", "context",
+        "id", "language", "title", "abstract", "description", "first_claim", "context",
         "publication_number", "country_code", "publication_date", "source",
     ]
     with output_path.open("w", encoding="utf-8", newline="") as f:

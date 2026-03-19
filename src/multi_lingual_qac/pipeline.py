@@ -79,7 +79,11 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
     if run_extraction:
         if paths.raw_ndjson.exists() and not config.yes:
             line_count = sum(1 for _ in paths.raw_ndjson.open()) if paths.raw_ndjson.stat().st_size > 0 else 0
-            redo = ask_interactive(f"Raw data exists ({line_count} records). Redo extraction? (y/n): ", "n")
+            redo = ask_interactive(
+                f"Raw data already exists ({line_count} records). Query BigQuery again and overwrite it? "
+                "(y = re-extract, n = reuse existing raw data): ",
+                "n",
+            )
             run_extraction = redo == "y"
 
         if run_extraction:
@@ -99,6 +103,8 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     project_id=project_id,
                     output_path=paths.raw_ndjson,
                 )
+        else:
+            print(f"Reusing existing raw data: {paths.raw_ndjson}")
 
     if not paths.raw_ndjson.exists():
         print(f"Error: Raw data not found at {paths.raw_ndjson}. Run extraction first.")
@@ -114,7 +120,8 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
         out_csv = paths.preprocessed_dir / f"{lang}.csv"
         if out_csv.exists() and not config.yes:
             redo = ask_interactive(
-                f"  {lang}: preprocessed exists ({_count_rows(out_csv)} rows). Redo? (y/n/s=skip remaining): ",
+                f"  {lang}: preprocessed CSV already exists ({_count_rows(out_csv)} rows). Rebuild it from raw data? "
+                "(y = rebuild, n = keep current file, s = keep this and all remaining languages): ",
                 "n",
             )
             if redo == "s":
@@ -134,7 +141,11 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
 
     run_merge = True
     if paths.corpus_csv.exists() and not config.yes:
-        redo = ask_interactive(f"Corpus exists ({_count_rows(paths.corpus_csv)} rows). Redo merge? (y/n): ", "n")
+        redo = ask_interactive(
+            f"Corpus already exists ({_count_rows(paths.corpus_csv)} rows). Rebuild corpus.csv from the preprocessed files? "
+            "(y/n): ",
+            "n",
+        )
         run_merge = redo == "y"
 
     if run_merge:
@@ -147,7 +158,10 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
         qac_csv = paths.qac_dir / "qac.csv"
         run_qa = True
         if qac_csv.exists() and not config.yes:
-            redo = ask_interactive(f"QAC exists ({_count_rows(qac_csv)} rows). Redo Q&A generation? (y/n): ", "n")
+            redo = ask_interactive(
+                f"QAC already exists ({_count_rows(qac_csv)} rows). Regenerate Q&A and overwrite it? (y/n): ",
+                "n",
+            )
             run_qa = redo == "y"
         if run_qa:
             try:
