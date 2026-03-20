@@ -18,8 +18,8 @@ from src.multi_lingual_qac.constants import DEFAULT_LANGS, DEFAULT_WIKIDATA_ENTI
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 WIKIPEDIA_API_TEMPLATE = "https://{lang}.wikipedia.org/w/api.php"
-HTTP_TIMEOUT_SECONDS = 60
-MAX_HTTP_RETRIES = 3
+HTTP_TIMEOUT_SECONDS = 120
+MAX_HTTP_RETRIES = 5
 SPARQL_PAGE_SIZE = 500
 SPARQL_MIN_SITELINKS = 5
 SITELINK_BATCH_SIZE = 200
@@ -77,7 +77,9 @@ def _http_get_json(url: str, *, headers: dict[str, str] | None = None) -> dict[s
             last_error = exc
             if attempt == MAX_HTTP_RETRIES:
                 break
-            time.sleep(attempt)
+            wait = 2 ** attempt
+            tqdm.write(f"  [retry {attempt}/{MAX_HTTP_RETRIES - 1}] {type(exc).__name__}: {exc}. Waiting {wait}s...")
+            time.sleep(wait)
     assert last_error is not None
     raise last_error
 
@@ -103,13 +105,16 @@ def _qid_from_uri(uri: str) -> str:
 
 
 def _candidate_query(seed_qid: str, *, limit: int, offset: int) -> str:
+    # Use only P31 (instance of) without the expensive P279* (subclass chain)
+    # to avoid WDQS timeouts. We accept slight recall loss in exchange for
+    # reliable, fast queries.
     return f"""
 SELECT DISTINCT ?item ?itemLabel ?itemDescription ?sitelinks
 WHERE {{
-  ?item wdt:P31/wdt:P279* wd:{seed_qid} .
+  ?item wdt:P31 wd:{seed_qid} .
   ?item wikibase:sitelinks ?sitelinks .
   FILTER(?sitelinks >= {SPARQL_MIN_SITELINKS})
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,[AUTO_LANGUAGE]". }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
 }}
 ORDER BY DESC(?sitelinks) ?item
 LIMIT {limit}
