@@ -149,10 +149,17 @@ def _discover_candidates(
     per_seed_target = max(candidate_target // max(len(CHEMISTRY_SEED_CLASSES), 1), SPARQL_PAGE_SIZE)
     candidates: dict[str, dict[str, Any]] = {}
 
-    for seed in CHEMISTRY_SEED_CLASSES:
+    seed_bar = tqdm(CHEMISTRY_SEED_CLASSES, desc="Discover seed classes", unit="class")
+    for seed in seed_bar:
+        seed_bar.set_postfix(seed=seed["label"], entities=len(candidates))
         collected_for_seed = 0
         offset = 0
 
+        page_bar = tqdm(
+            desc=f"  {seed['label']} pages",
+            unit="page",
+            leave=False,
+        )
         while collected_for_seed < per_seed_target and len(candidates) < candidate_target:
             rows = _run_sparql(_candidate_query(seed["qid"], limit=SPARQL_PAGE_SIZE, offset=offset))
             if not rows:
@@ -181,15 +188,21 @@ def _discover_candidates(
                 candidate["seed_classes"].add(seed["label"])
                 collected_for_seed += 1
 
+            page_bar.update(len(rows))
+            page_bar.set_postfix(unique=len(candidates))
             offset += SPARQL_PAGE_SIZE
             time.sleep(0.1)
 
             if len(rows) < SPARQL_PAGE_SIZE:
                 break
 
+        page_bar.close()
+        seed_bar.set_postfix(seed=seed["label"], entities=len(candidates))
+
     for candidate in candidates.values():
         candidate["seed_classes"] = sorted(candidate["seed_classes"])
 
+    tqdm.write(f"Discovered {len(candidates)} unique candidate entities.")
     return candidates
 
 
@@ -446,9 +459,13 @@ def prepare_wikidata_source(
         prepared_dir.mkdir(parents=True, exist_ok=True)
     raw_pages_dir.mkdir(parents=True, exist_ok=True)
 
+    tqdm.write(f"[1/4] Discovering chemistry entity candidates (target pool: {target_entities * 3:,})...")
     candidates = _discover_candidates(target_entities=target_entities)
+    tqdm.write(f"[2/4] Resolving sitelinks for {len(candidates):,} candidates across {len(languages)} languages...")
     _attach_target_language_sitelinks(candidates, languages=languages)
+    tqdm.write(f"[3/4] Selecting top {target_entities:,} entities by cross-language coverage...")
     selected_entities = _select_entities(candidates, target_entities=target_entities)
+    tqdm.write(f"      Selected {len(selected_entities):,} entities. Building coverage report...")
     coverage = _coverage_report(
         selected_entities,
         languages=languages,
@@ -457,6 +474,7 @@ def prepare_wikidata_source(
     )
 
     _write_entities_csv(prepared_dir / "entities.csv", selected_entities, languages)
+    tqdm.write(f"[4/4] Fetching Wikipedia pages for {len(selected_entities):,} entities...")
 
     by_language: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for entity in selected_entities:
@@ -466,10 +484,11 @@ def prepare_wikidata_source(
     pages_fetched = 0
     missing_pages = 0
     optional_fields_by_language: dict[str, dict[str, int]] = {}
-    for lang in languages:
+    active_languages = [lang for lang in languages if by_language.get(lang)]
+    lang_bar = tqdm(active_languages, desc="Fetch Wikipedia pages", unit="lang")
+    for lang in lang_bar:
         lang_entities = by_language.get(lang, [])
-        if not lang_entities:
-            continue
+        lang_bar.set_postfix(lang=lang, entities=len(lang_entities))
         lang_stats = _fetch_pages_for_language(
             lang,
             lang_entities,
@@ -481,6 +500,7 @@ def prepare_wikidata_source(
             "pages_fetched": lang_stats["pages_written"],
             **lang_stats["optional_field_counts"],
         }
+        lang_bar.set_postfix(lang=lang, fetched=pages_fetched, missing=missing_pages)
 
     coverage["optional_fields_by_language"] = optional_fields_by_language
 
