@@ -12,6 +12,7 @@ from src.multi_lingual_qac.preprocess.corpus import (
     prepare_corpus_source,
 )
 from src.multi_lingual_qac.pipeline import run_pipeline
+from src.multi_lingual_qac.qac_generation.label_wikidata_qrels import run_wikidata_qrels_labeling
 
 
 def _normalize_source_name(value: str) -> str:
@@ -50,6 +51,20 @@ def parse_args() -> PipelineConfig:
         action="store_true",
         help="Build corpus using multiple CPU workers (default: single CPU)",
     )
+    parser.add_argument(
+        "--label-qrels",
+        type=_normalize_source_name,
+        default=None,
+        metavar="SOURCE",
+        help="Label multilingual retrieval qrels (WIKIDATA only; needs corpus_full + qac)",
+    )
+    parser.add_argument(
+        "--label-qrels-batch-size",
+        type=int,
+        default=5,
+        metavar="N",
+        help="Passages per LLM judge call for --label-qrels (default: 5)",
+    )
     parser.add_argument("--yes", "-y", action="store_true", help="No prompts; redo all")
     parser.add_argument(
         "--no-extraction",
@@ -75,6 +90,8 @@ def parse_args() -> PipelineConfig:
         prepare_source=args.prepare_source,
         build_corpus=args.build_corpus,
         build_corpus_batch=args.build_corpus_batch,
+        label_qrels=args.label_qrels,
+        label_qrels_batch_size=max(1, args.label_qrels_batch_size),
         yes=args.yes,
         no_extraction=args.no_extraction,
         limit=args.limit,
@@ -92,8 +109,36 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
-    active_source = config.prepare_source or config.build_corpus or config.source
+    active_source = (
+        config.prepare_source
+        or config.build_corpus
+        or config.label_qrels
+        or config.source
+    )
     paths = PipelinePaths.from_project_root(project_root, source=active_source)
+
+    if config.label_qrels:
+        if config.label_qrels != "wikidata":
+            print("Error: --label-qrels currently supports only WIKIDATA.")
+            raise SystemExit(1)
+        qac_file = paths.qac_dir / "qac.csv"
+        if not paths.corpus_full_csv.is_file():
+            print(f"Error: Missing corpus full file: {paths.corpus_full_csv}")
+            print("Run `uv run main.py --build-corpus WIKIDATA` first.")
+            raise SystemExit(1)
+        if not qac_file.is_file():
+            print(f"Error: Missing QAC file: {qac_file}")
+            print("Run `uv run main.py --source wikidata --qa-sample N` first.")
+            raise SystemExit(1)
+        run_wikidata_qrels_labeling(
+            corpus_full_path=paths.corpus_full_csv,
+            qac_path=qac_file,
+            output_dir=paths.qac_dir,
+            batch_size=config.label_qrels_batch_size,
+        )
+        print("  Queries:", paths.qac_dir / "queries.csv")
+        print("  Qrels:", paths.qac_dir / "qrels.csv")
+        return
 
     if config.prepare_source:
         prepare_config = PipelineConfig(

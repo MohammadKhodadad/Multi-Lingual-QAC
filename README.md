@@ -36,9 +36,13 @@ uv run main.py --source epo --push-hf --hf-repo username/multi-lingual-chemical-
 uv run main.py --prepare-source WIKIDATA              # Wikidata + multilingual Wikipedia fetch → data/WIKIDATA/prepared/
 uv run main.py --build-corpus WIKIDATA                # chunk page extracts → corpus_full.csv + corpus.csv
 uv run main.py --source wikidata --qa-sample 50       # Q&A in each row’s language (no translation)
+uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queries (gpt-5-mini)
+# Optional: uv run main.py --label-qrels WIKIDATA --label-qrels-batch-size 8
 ```
 
 Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A generation for this source produces **one row per sampled chunk**: question and answer are both in the **same language** as the corpus row (`language` column).
+
+**`--label-qrels WIKIDATA`** reads `preprocessed/corpus_full.csv` and `qac/qac.csv`, groups chunks by Wikidata `qid`, and calls **`gpt-5-mini`** (same family as the rest of the pipeline) in batches to mark which other-language (and same-language) chunks answer each question. It writes **`qac/queries.csv`** and **`qac/qrels.csv`** (plus `qrels_label_stats.json`).
 
 `--prepare-source EPO` is separate from the main pipeline on purpose. Normal `main.py` runs do not unpack source zip files by default, which makes it easier to support multiple patent sources such as EPO and USPTO later.
 
