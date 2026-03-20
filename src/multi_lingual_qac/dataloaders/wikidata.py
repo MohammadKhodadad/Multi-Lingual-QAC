@@ -16,252 +16,6 @@ from tqdm import tqdm
 
 from src.multi_lingual_qac.constants import DEFAULT_LANGS, DEFAULT_WIKIDATA_ENTITY_TARGET
 
-# Canonical chemistry section keys mapped to known titles across all 16 target languages.
-# A section whose title (lowercased, stripped) matches any alias maps to that canonical key.
-# "lead" is special: the article introduction before any section header.
-CHEMISTRY_SECTION_TITLES: dict[str, list[str]] = {
-    "lead": [],  # always the intro text before first ==
-    "properties": [
-        # en
-        "properties", "physical properties", "chemical properties",
-        "physicochemical properties", "physical and chemical properties",
-        "characteristics", "structure and properties",
-        # de
-        "eigenschaften", "physikalische eigenschaften", "chemische eigenschaften",
-        # fr
-        "propriétés", "propriétés physiques", "propriétés chimiques",
-        "caractéristiques",
-        # es
-        "propiedades", "propiedades físicas", "propiedades químicas",
-        "características",
-        # pt
-        "propriedades", "propriedades físicas", "propriedades químicas",
-        # it
-        "proprietà", "proprietà fisiche", "proprietà chimiche",
-        # nl
-        "eigenschappen", "fysische eigenschappen", "chemische eigenschappen",
-        # ru
-        "свойства", "физические свойства", "химические свойства",
-        # pl
-        "właściwości", "właściwości fizyczne", "właściwości chemiczne",
-        # tr
-        "özellikler", "fiziksel özellikler", "kimyasal özellikler",
-        # ar
-        "خصائص", "الخصائص", "خصائص فيزيائية", "خصائص كيميائية",
-        # fa
-        "خواص", "ویژگی‌ها", "خواص فیزیکی", "خواص شیمیایی",
-        # zh
-        "性质", "物理性质", "化学性质", "特性",
-        # ja
-        "性質", "物性", "化学的性質", "物理的性質",
-        # ko
-        "성질", "물리적 성질", "화학적 성질", "특성",
-        # hi
-        "गुण", "भौतिक गुण", "रासायनिक गुण",
-    ],
-    "history": [
-        "history", "historical background", "discovery",
-        "geschichte", "entdeckung",
-        "histoire", "découverte",
-        "historia", "descubrimiento",
-        "história", "descoberta",
-        "storia", "scoperta",
-        "geschiedenis", "ontdekking",
-        "история", "открытие",
-        "historia", "odkrycie",
-        "tarih", "keşif",
-        "تاريخ", "التاريخ", "الاكتشاف",
-        "تاریخ", "کشف",
-        "历史", "发现",
-        "歴史", "発見",
-        "역사", "발견",
-        "इतिहास",
-    ],
-    "uses": [
-        "uses", "applications", "use", "usage",
-        "verwendung", "anwendung", "anwendungen",
-        "utilisations", "applications", "usages",
-        "usos", "aplicaciones",
-        "usos", "aplicações",
-        "usi", "applicazioni",
-        "toepassingen", "gebruik",
-        "применение", "использование",
-        "zastosowanie", "zastosowania",
-        "kullanım", "kullanım alanları",
-        "استخدامات", "تطبيقات",
-        "کاربردها", "استفاده",
-        "用途", "应用",
-        "用途", "利用",
-        "용도", "사용",
-        "उपयोग",
-    ],
-    "synthesis": [
-        "synthesis", "production", "preparation", "manufacture",
-        "synthese", "herstellung", "produktion",
-        "synthèse", "préparation", "production",
-        "síntesis", "producción", "preparación",
-        "síntese", "produção",
-        "sintesi", "produzione",
-        "synthese", "productie",
-        "синтез", "производство", "получение",
-        "synteza", "produkcja",
-        "sentez", "üretim",
-        "تخليق", "إنتاج", "تحضير",
-        "سنتز", "تولید",
-        "合成", "制备", "生产",
-        "合成", "製造",
-        "합성", "제조",
-        "संश्लेषण",
-    ],
-    "safety": [
-        "safety", "hazards", "toxicity", "health effects", "safety and hazards",
-        "sicherheit", "gefährdung", "toxizität",
-        "sécurité", "dangers", "toxicité",
-        "seguridad", "peligros", "toxicidad",
-        "segurança", "perigos",
-        "sicurezza", "pericoli",
-        "veiligheid", "gevaren",
-        "безопасность", "токсичность", "опасность",
-        "bezpieczeństwo", "toksyczność",
-        "güvenlik", "tehlikeler",
-        "سلامة", "مخاطر", "سمية",
-        "ایمنی", "خطرات",
-        "安全", "危险", "毒性",
-        "安全性", "毒性",
-        "안전", "위험",
-        "सुरक्षा",
-    ],
-    "structure": [
-        "structure", "molecular structure", "crystal structure", "structure and bonding",
-        "struktur", "molekülstruktur", "kristallstruktur",
-        "structure", "structure moléculaire",
-        "estructura", "estructura molecular",
-        "estrutura", "estrutura molecular",
-        "struttura",
-        "structuur",
-        "структура",
-        "struktura",
-        "yapı", "moleküler yapı",
-        "بنية", "البنية",
-        "ساختار",
-        "结构", "分子结构",
-        "構造",
-        "구조",
-        "संरचना",
-    ],
-    "occurrence": [
-        "occurrence", "natural occurrence", "abundance", "sources",
-        "vorkommen", "natürliches vorkommen",
-        "occurrence", "présence naturelle",
-        "ocurrencia", "fuentes naturales",
-        "ocorrência",
-        "occorrenza",
-        "voorkomen",
-        "нахождение в природе", "распространённость",
-        "występowanie",
-        "doğal kaynaklar",
-        "الوجود", "المصادر الطبيعية",
-        "وجود در طبیعت",
-        "自然界", "存在",
-        "存在",
-        "존재",
-        "प्राकृतिक स्रोत",
-    ],
-}
-
-# Invert for fast lookup: alias -> canonical key
-_SECTION_ALIAS_MAP: dict[str, str] = {
-    alias.lower().strip(): canonical
-    for canonical, aliases in CHEMISTRY_SECTION_TITLES.items()
-    for alias in aliases
-}
-
-
-def _normalize_section_title(raw_title: str) -> str | None:
-    """Return the canonical section key for a raw section title, or None if unknown."""
-    return _SECTION_ALIAS_MAP.get(raw_title.lower().strip())
-
-
-_WIKITEXT_STRIP_RE: list[tuple] = []
-
-
-def _strip_wikitext(text: str) -> str:
-    """Best-effort wikitext markup stripping for human-readable section content."""
-    import re
-    # Remove <ref>...</ref> blocks (including multiline)
-    text = re.sub(r"<ref[^>]*>.*?</ref>", "", text, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"<ref[^/]*/\s*>", "", text, flags=re.IGNORECASE)
-    # Remove {{templates}} — nested templates need multiple passes
-    for _ in range(4):
-        text = re.sub(r"\{\{[^{}]*\}\}", "", text)
-    # [[File:...]] / [[Image:...]] — remove entirely
-    text = re.sub(r"\[\[(?:File|Image|Datei|Fichier|Archivo|Ficheiro|Bestand):[^\]]*\]\]", "", text, flags=re.IGNORECASE)
-    # [[Link|Label]] → Label,  [[Link]] → Link
-    text = re.sub(r"\[\[(?:[^|\]]+\|)?([^\]]+)\]\]", r"\1", text)
-    # External links [url label] → label, or drop bare [url]
-    text = re.sub(r"\[https?://\S+\s+([^\]]+)\]", r"\1", text)
-    text = re.sub(r"\[https?://\S+\]", "", text)
-    # Bold/italic markup
-    text = re.sub(r"'{2,3}", "", text)
-    # HTML tags
-    text = re.sub(r"<[^>]+>", "", text)
-    # HTML entities
-    text = re.sub(r"&[a-z]+;", " ", text)
-    # Collapse whitespace
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    text = re.sub(r"[ \t]+", " ", text)
-    return text.strip()
-
-
-def _parse_sections(wikitext: str) -> list[dict[str, Any]]:
-    """
-    Split Wikipedia wikitext into sections using `== Title ==` header markers.
-    Returns a list of dicts:
-
-        [{"title_raw": str, "title_normalized": str | None, "level": int, "content": str}]
-
-    The lead (introduction before the first header) is entry 0 with
-    title_raw="" and title_normalized="lead".
-
-    Content is stripped of the most common wikitext markup so it is
-    human-readable without a full wikitext parser.
-    """
-    import re
-    sections: list[dict[str, Any]] = []
-    header_re = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$", re.MULTILINE)
-
-    last_end = 0
-    last_title_raw = ""
-    last_title_normalized: str | None = "lead"
-    last_level = 1
-
-    for match in header_re.finditer(wikitext):
-        raw_content = wikitext[last_end:match.start()]
-        content = _strip_wikitext(raw_content)
-        if content:
-            sections.append({
-                "title_raw": last_title_raw,
-                "title_normalized": last_title_normalized,
-                "level": last_level,
-                "content": content,
-            })
-        last_title_raw = match.group(2)
-        last_title_normalized = _normalize_section_title(match.group(2))
-        last_level = len(match.group(1))
-        last_end = match.end()
-
-    trailing = _strip_wikitext(wikitext[last_end:])
-    if trailing:
-        sections.append({
-            "title_raw": last_title_raw,
-            "title_normalized": last_title_normalized,
-            "level": last_level,
-            "content": trailing,
-        })
-
-    return sections
-
-
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 WIKIPEDIA_API_TEMPLATE = "https://{lang}.wikipedia.org/w/api.php"
 HTTP_TIMEOUT_SECONDS = 120
@@ -592,7 +346,6 @@ def _fetch_pages_for_language(
         "has_extract": 0,
         "has_categories": 0,
         "has_wikitext": 0,
-        "has_sections": 0,
     }
 
     records_by_title = {
@@ -616,6 +369,7 @@ def _fetch_pages_for_language(
                     "inprop": "url",
                     "explaintext": "1",
                     "exsectionformat": "plain",
+                    "exlimit": "max",
                     "rvslots": "main",
                     "rvprop": "ids|timestamp|content",
                     "cllimit": "max",
@@ -653,12 +407,10 @@ def _fetch_pages_for_language(
                     for category in page.get("categories", [])
                 ]
                 raw_wikitext = _extract_revision_content(page)
-                sections = _parse_sections(raw_wikitext) if raw_wikitext else []
 
                 has_extract = bool(raw_extract)
                 has_categories = bool(categories)
                 has_wikitext = bool(raw_wikitext)
-                has_sections = bool(sections)
 
                 if has_extract:
                     optional_field_counts["has_extract"] += 1
@@ -666,8 +418,6 @@ def _fetch_pages_for_language(
                     optional_field_counts["has_categories"] += 1
                 if has_wikitext:
                     optional_field_counts["has_wikitext"] += 1
-                if has_sections:
-                    optional_field_counts["has_sections"] += 1
 
                 record = {
                     "qid": entity["qid"],
@@ -682,8 +432,6 @@ def _fetch_pages_for_language(
                     "seed_classes": entity["seed_classes"],
                     "raw_extract": raw_extract,
                     "has_extract": has_extract,
-                    "sections": sections,
-                    "has_sections": has_sections,
                     "categories": categories,
                     "has_categories": has_categories,
                     "raw_wikitext": raw_wikitext,
