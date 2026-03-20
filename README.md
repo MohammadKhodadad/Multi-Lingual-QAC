@@ -1,6 +1,6 @@
 # Multi-Lingual Chemical QAC
 
-Build multi-lingual Question–Answer–Context (QAC) data from chemistry patents for Hugging Face and MTEB.
+Build multi-lingual Question–Answer–Context (QAC) data from chemistry patents (EPO) and chemistry Wikipedia pages (Wikidata) for Hugging Face and MTEB.
 
 ## Setup
 
@@ -35,14 +35,22 @@ uv run main.py --source epo --push-hf --hf-repo username/multi-lingual-chemical-
 ```bash
 uv run main.py --prepare-source WIKIDATA              # Wikidata + multilingual Wikipedia fetch → data/WIKIDATA/prepared/
 uv run main.py --build-corpus WIKIDATA                # chunk page extracts → corpus_full.csv + corpus.csv
-uv run main.py --source wikidata --qa-sample 50       # Q&A in each row’s language (no translation)
-uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queries (gpt-5-mini)
+uv run main.py --source wikidata --qa-sample 50       # English Q&A + translate (one row per language per sampled chunk)
+uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queries (gpt-5-nano)
 # Optional: uv run main.py --label-qrels WIKIDATA --label-qrels-batch-size 8
 ```
 
-Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A generation for this source produces **one row per sampled chunk**: question and answer are both in the **same language** as the corpus row (`language` column).
+Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A generation matches the EPO flow: **English** question/answer from the sampled corpus context, then **translation** to the configured target languages—so `qac.csv` has **one row per language** per sampled source chunk (`corpus_id` ties the translations together).
 
-**`--label-qrels WIKIDATA`** reads `preprocessed/corpus_full.csv` and `qac/qac.csv`, groups chunks by Wikidata `qid`, and calls **`gpt-5-mini`** (same family as the rest of the pipeline) in batches to mark which other-language (and same-language) chunks answer each question. It writes **`qac/queries.csv`** and **`qac/qrels.csv`** (plus `qrels_label_stats.json`).
+**`--label-qrels WIKIDATA`** (see `qac_generation/label_wikidata_qrels.py`):
+
+- **Inputs:** `preprocessed/corpus_full.csv` (chunk-level rows with `id`, `qid`, `context`, `language`) and `qac/qac.csv`.
+- **Grouping:** one logical Q&A per `corpus_id`; all languages in `qac` share one **merged** relevance set over corpus rows with the same Wikidata **`qid`** (other chunks of the same page, other languages, etc.). The **source** chunk is always counted relevant; the LLM judges only **siblings** (batched by passage language).
+- **Judge model:** **`gpt-5-nano`** (independent of Q&A models in `openai_qa.py`). Optional: `--label-qrels-batch-size` (passages per API call, default 5).
+- **Outputs:**
+  - **`qac/queries.csv`** — one row per `(corpus_id, language)` in `qac`: `_id` = `{corpus_id}_q_{lang}`, `text` = that language’s question.
+  - **`qac/qrels.csv`** — TREC-style rows: `query-id`, `corpus-id`, `score` (always `1.0`); the **same** relevant document ids are repeated for **every** query-id of that chunk (per-language queries, shared gold pool).
+  - **`qac/qrels_label_stats.json`** — row counts and `judge_api_calls`.
 
 `--prepare-source EPO` is separate from the main pipeline on purpose. Normal `main.py` runs do not unpack source zip files by default, which makes it easier to support multiple patent sources such as EPO and USPTO later.
 
@@ -50,7 +58,7 @@ Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A
 
 At the end of an interactive run, the CLI can ask whether to batch-create QAs using available CPUs. If the corpus and QAC files are ready, it can also ask whether you want to push to Hugging Face and then ask for the repo ID.
 
-By default, Q&A generation now uses a stronger OpenAI model for English question creation and quality judging, while keeping translation and lighter validation checks on a cheaper model.
+By default, Q&A generation uses **`gpt-5-mini`** (and configured reasoning effort) in `openai_qa.py` for English generation, checks, and translation. **Wikidata qrels labeling** uses **`gpt-5-nano`** only for the relevance judge (`label_wikidata_qrels.py`).
 
 ## Code Structure
 
@@ -66,7 +74,8 @@ src/
 │   │   ├── epo.py              # EPO zip scanning + XML extraction + corpus build
 │   │   └── wikidata.py         # Wikidata/Wikipedia fetch + chunk corpus build
 │   ├── qac_generation/
-│   │   └── openai_qa.py        # Q&A generation (EN+translate or same-language)
+│   │   ├── openai_qa.py              # Q&A generation (EN + translate; optional same-language mode)
+│   │   └── label_wikidata_qrels.py   # Wikidata: multilingual qrels + queries (gpt-5-nano judge)
 │   ├── export/
 │   │   └── hf_upload.py        # Hugging Face / MTEB upload
 │   └── preprocess/
@@ -87,6 +96,15 @@ src/
 8. **Push to Hugging Face** → dataset with configs/subsets: corpus, queries, qrels, qac, each with a `train` split (MTEB retrieval format)
 
 The extracted XML directory is intended to be the source-local raw cache. It keeps the unpacked patent XMLs so later corpus experiments can be done without repeatedly opening the original zip files.
+
+### Wikidata data flow
+
+1. **`--prepare-source WIKIDATA`** → `data/WIKIDATA/prepared/` (entities, page JSONL, coverage).
+2. **`--build-corpus WIKIDATA`** → `preprocessed/corpus_full.csv` (full chunks + metadata) and **`corpus.csv`** (MTEB: `_id`, `title`, `text`).
+3. **`--source wikidata --qa-sample N`** → `qac/qac.csv` (English + translations; one row per language per sampled chunk).
+4. **`--label-qrels WIKIDATA`** → `qac/queries.csv`, `qac/qrels.csv`, `qrels_label_stats.json`.
+
+Re-run **step 4** alone if you change labeling logic only; re-run **3** (and **4**) if `qac.csv` changes; re-run **2** onward if chunking or corpus content changes.
 
 ### Q&A generation (Option A)
 

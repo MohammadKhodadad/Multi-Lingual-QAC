@@ -24,6 +24,13 @@ Notes for the switch from `gpt-4.1` to `gpt-5-mini` in `src/multi_lingual_qac/qa
   - English generation: `DEFAULT_GENERATION_REASONING_EFFORT = "medium"`
   - Checks and translation: `DEFAULT_REASONING_EFFORT = "low"`
 
+## Wikidata qrels relevance judge (`gpt-5-nano`)
+
+Separate from the Q&A stack above:
+
+- **`src/multi_lingual_qac/qac_generation/label_wikidata_qrels.py`** uses **`DEFAULT_QRELS_JUDGE_MODEL = "gpt-5-nano"`** for batched “which passages answer this question?” calls when labeling `queries.csv` / `qrels.csv`.
+- Changing Q&A defaults in `openai_qa.py` does **not** change this judge unless you edit `label_wikidata_qrels.py` (or add a CLI override later).
+
 ## Prompt Changes Added For `gpt-5-mini`
 
 - Stronger instruction to prefer semantic questions over easy extractive lookups.

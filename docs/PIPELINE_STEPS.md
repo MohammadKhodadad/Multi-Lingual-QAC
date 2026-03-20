@@ -47,3 +47,13 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 
 ## 10. Push to Hugging Face
 `push_to_hub()` uploads corpus, queries, qrels, qac to HF. Requires HF_TOKEN. Works with `--push-hf --hf-repo username/dataset`, or interactive end-of-run prompting for push confirmation and repo ID.
+
+---
+
+## 11. Wikidata / Wikipedia (chemistry corpus)
+- **`prepare_corpus_source` + `wikidata.py`**: SPARQL entity selection, sitelinks, fetch of multilingual Wikipedia extracts; artifacts under `data/WIKIDATA/prepared/`.
+- **`build_wikidata_corpus`**: chunk page text → `data/WIKIDATA/preprocessed/corpus_full.csv` (rich rows: `id`, `qid`, `language`, `context`, …) and `data/WIKIDATA/corpus.csv` (MTEB retrieval format).
+
+## 12. Wikidata Q&A and qrels (MTEB-style)
+- **Q&A** (`--source wikidata --qa-sample N`): same flow as EPO — English generation, checks, translation — via `openai_qa.run_qa_pipeline` with `same_language=False`. Output: `data/WIKIDATA/qac/qac.csv`.
+- **Qrels + queries** (`--label-qrels WIKIDATA`): `label_wikidata_qrels.run_wikidata_qrels_labeling` groups `qac` by `corpus_id`, judges sibling chunks (same Wikidata `qid`) with **`gpt-5-nano`**, writes `qac/queries.csv` (one query id per language: `{corpus_id}_q_{lang}`) and `qac/qrels.csv` (shared relevant `corpus-id` set duplicated per query-id). Stats in `qrels_label_stats.json`.

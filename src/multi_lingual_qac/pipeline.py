@@ -92,7 +92,7 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     output_dir=paths.qac_dir,
                     sample_size=qa_sample,
                     batch_mode=bool(qa_batch),
-                    same_language=(config.source == "wikidata"),
+                    same_language=False,
                 )
             except ValueError as exc:
                 print(f"Q&A generation skipped: {exc}")

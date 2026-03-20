@@ -1,10 +1,12 @@
 """
 OpenAI-based Q&A generation.
 
-Default (EPO / legacy): generate in English, translate to all target languages.
+Default pipeline (`same_language=False`, including Wikidata via `pipeline.py`):
+generate question and answer in English from the corpus context, validate, then
+translate to all target languages.
 
-Wikidata / multilingual retrieval: generate question and answer in the same
-language as the corpus row (`language` column) — no translation step.
+Optional `same_language=True`: generate and validate Q&A in each row's
+`language` field (no translation step); for experiments or direct API use.
 """
 
 from __future__ import annotations
