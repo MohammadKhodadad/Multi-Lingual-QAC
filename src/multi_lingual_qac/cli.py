@@ -16,7 +16,7 @@ from src.multi_lingual_qac.pipeline import run_pipeline
 
 def _normalize_source_name(value: str) -> str:
     normalized = value.strip().lower()
-    if normalized not in {"epo"}:
+    if normalized not in {"epo", "wikidata"}:
         raise argparse.ArgumentTypeError(f"Unsupported source: {value}")
     return normalized
 
@@ -29,7 +29,7 @@ def parse_args() -> PipelineConfig:
         "--source",
         type=_normalize_source_name,
         default="epo",
-        help="Patent source pipeline to run for the main workflow",
+        help="Source pipeline to run for the main workflow",
     )
     parser.add_argument(
         "--prepare-source",
@@ -56,7 +56,7 @@ def parse_args() -> PipelineConfig:
         action="store_true",
         help="Deprecated: source preparation is now a separate command",
     )
-    parser.add_argument("--limit", type=int, default=None, help="Max patents per language (if omitted in interactive mode, you will be prompted)")
+    parser.add_argument("--limit", type=int, default=None, help="Optional source-specific limit (for Wikidata, max selected entities)")
     parser.add_argument("--qa-sample", type=int, default=None, help="Sample size for Q&A generation (if omitted in interactive mode, you will be prompted; 0 = skip Q&A)")
     parser.add_argument("--qa-batch", action="store_true", help="Batch QA generation using worker threads based on available CPUs")
     parser.add_argument("--qa-no-batch", action="store_true", help="Disable batch QA generation")
@@ -92,7 +92,8 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
-    paths = PipelinePaths.from_project_root(project_root)
+    active_source = config.prepare_source or config.build_corpus or config.source
+    paths = PipelinePaths.from_project_root(project_root, source=active_source)
 
     if config.prepare_source:
         prepare_config = PipelineConfig(
@@ -109,13 +110,26 @@ def main() -> None:
         )
         stats = prepare_corpus_source(prepare_config, paths, overwrite=True)
         source_label = config.prepare_source.upper()
-        print(
-            f"Prepared {source_label} source files:"
-            f" {stats['xml_files']} XMLs from {stats['zip_files']} zip files"
-            f" ({stats['skipped_existing']} skipped existing, {stats['bad_zips']} bad zips)."
-        )
-        print("  Input:", paths.input_dir)
-        print("  XMLs:", paths.xml_dir)
+        if config.prepare_source == "epo":
+            print(
+                f"Prepared {source_label} source files:"
+                f" {stats['xml_files']} XMLs from {stats['zip_files']} zip files"
+                f" ({stats['skipped_existing']} skipped existing, {stats['bad_zips']} bad zips)."
+            )
+            print("  Input:", paths.input_dir)
+            print("  XMLs:", paths.xml_dir)
+        else:
+            print(
+                f"Prepared {source_label} source files:"
+                f" {stats['selected_entities']} entities"
+                f" -> {stats['pages_fetched']} multilingual Wikipedia pages"
+                f" across {stats['languages_with_pages']} languages."
+            )
+            print("  Data:", paths.data_dir)
+            print("  Prepared:", paths.prepared_dir)
+            print("  Entities:", paths.prepared_dir / "entities.csv")
+            print("  Pages:", paths.raw_pages_dir)
+            print("  Coverage:", paths.prepared_dir / "coverage_report.json")
         return
 
     if config.build_corpus:

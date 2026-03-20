@@ -14,24 +14,7 @@ from typing import Any, Dict, Iterator, List
 
 from tqdm import tqdm
 
-DEFAULT_LANGS = [
-    "en",
-    "de",
-    "fr",
-    "es",
-    "ja",
-    "ko",
-    "zh",
-    "ru",
-    "pt",
-    "it",
-    "nl",
-    "ar",
-    "fa",
-    "tr",
-    "pl",
-    "hi",
-]
+from src.multi_lingual_qac.constants import DEFAULT_LANGS
 
 CHEMISTRY_CLASSIFICATION_PREFIXES = [
     "C",

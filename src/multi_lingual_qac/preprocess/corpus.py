@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from src.multi_lingual_qac.config import PipelineConfig, PipelinePaths
+from src.multi_lingual_qac.constants import DEFAULT_WIKIDATA_ENTITY_TARGET
 from src.multi_lingual_qac.dataloaders.epo import (
     build_epo_corpus,
     clean_text,
     count_epo_xml_files,
     extract_epo_xml_files,
+)
+from src.multi_lingual_qac.dataloaders.wikidata import (
+    count_wikidata_prepared_records,
+    prepare_wikidata_source,
 )
 
 
@@ -22,13 +27,23 @@ def prepare_corpus_source(
             output_dir=paths.xml_dir,
             overwrite=overwrite,
         )
+    if config.source == "wikidata":
+        return prepare_wikidata_source(
+            prepared_dir=paths.prepared_dir,
+            raw_pages_dir=paths.raw_pages_dir,
+            languages=config.languages,
+            target_entities=config.limit or DEFAULT_WIKIDATA_ENTITY_TARGET,
+            overwrite=overwrite,
+        )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
 
 def count_source_records(config: PipelineConfig, paths: PipelinePaths) -> int:
-    """Count prepared source artifacts for the configured patent source."""
+    """Count prepared source artifacts for the configured source."""
     if config.source == "epo":
         return count_epo_xml_files(paths.xml_dir)
+    if config.source == "wikidata":
+        return count_wikidata_prepared_records(paths.prepared_dir)
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
 
@@ -44,6 +59,11 @@ def build_corpus_from_source(
             full_output_path=paths.corpus_full_csv,
             output_path=paths.corpus_csv,
             batch_mode=config.build_corpus_batch,
+        )
+    if config.source == "wikidata":
+        raise NotImplementedError(
+            "Wikidata corpus building is not implemented yet. "
+            "Run `uv run main.py --prepare-source WIKIDATA` for the acquisition stage."
         )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 

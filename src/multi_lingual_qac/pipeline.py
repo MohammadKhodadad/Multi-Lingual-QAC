@@ -42,6 +42,8 @@ def _count_rows(path: Path) -> int:
 def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
     qa_sample = config.qa_sample
     qa_batch = config.qa_batch
+    prepared_label = "XMLs" if config.source == "epo" else "Prepared source"
+    prepared_path = paths.xml_dir if config.source == "epo" else paths.prepared_dir
 
     if not config.yes:
         if qa_sample is None:
@@ -64,13 +66,13 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
 
     xml_count = count_source_records(config, paths)
     if not xml_count:
-        print(f"Error: No prepared source files found at {paths.xml_dir}.")
+        print(f"Error: No prepared source files found at {prepared_path}.")
         print(f"Run `uv run main.py --prepare-source {config.source.upper()}` first.")
         raise SystemExit(1)
 
     if not paths.corpus_csv.exists() or not paths.corpus_full_csv.exists():
         print("\nPrepared source artifacts are available.")
-        print("  XMLs:", paths.xml_dir)
+        print(f"  {prepared_label}:", prepared_path)
         print(f"Run `uv run main.py --build-corpus {config.source.upper()}` to create the corpus.")
         return
 
@@ -138,7 +140,7 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
             )
 
     print("\nDone.")
-    print("  XMLs:", paths.xml_dir)
+    print(f"  {prepared_label}:", prepared_path)
     print("  Corpus (MTEB):", paths.corpus_csv)
     print("  Corpus (full):", paths.corpus_full_csv)
     if qa_sample > 0:
