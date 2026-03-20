@@ -30,6 +30,16 @@ uv run main.py --source epo --qa-sample 50 --qa-batch
 uv run main.py --source epo --push-hf --hf-repo username/multi-lingual-chemical-qac
 ```
 
+### Wikidata / Wikipedia (chemistry pages)
+
+```bash
+uv run main.py --prepare-source WIKIDATA              # Wikidata + multilingual Wikipedia fetch → data/WIKIDATA/prepared/
+uv run main.py --build-corpus WIKIDATA                # chunk page extracts → corpus_full.csv + corpus.csv
+uv run main.py --source wikidata --qa-sample 50       # Q&A in each row’s language (no translation)
+```
+
+Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A generation for this source produces **one row per sampled chunk**: question and answer are both in the **same language** as the corpus row (`language` column).
+
 `--prepare-source EPO` is separate from the main pipeline on purpose. Normal `main.py` runs do not unpack source zip files by default, which makes it easier to support multiple patent sources such as EPO and USPTO later.
 
 `--build-corpus EPO` is also explicit. It reads `data/EPO/xmls`, extracts useful bibliographic metadata, scores chemistry relevance from CPC/IPC codes plus title keywords, writes all parsed rows to `data/EPO/preprocessed/all_epo_records.csv`, and writes chemistry-focused rows to `data/EPO/corpus.csv`.
@@ -49,9 +59,10 @@ src/
 │   ├── config.py               # shared paths and pipeline config
 │   ├── pipeline.py             # main orchestration flow
 │   ├── dataloaders/
-│   │   └── epo.py              # EPO zip scanning + XML extraction
+│   │   ├── epo.py              # EPO zip scanning + XML extraction + corpus build
+│   │   └── wikidata.py         # Wikidata/Wikipedia fetch + chunk corpus build
 │   ├── qac_generation/
-│   │   └── openai_qa.py        # Q&A generation + translation
+│   │   └── openai_qa.py        # Q&A generation (EN+translate or same-language)
 │   ├── export/
 │   │   └── hf_upload.py        # Hugging Face / MTEB upload
 │   └── preprocess/

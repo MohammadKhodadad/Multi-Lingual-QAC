@@ -149,20 +149,29 @@ def main() -> None:
         )
         stats = build_corpus_from_source(build_config, paths)
         source_label = config.build_corpus.upper()
-        print(
-            f"Built {source_label} corpus:"
-            f" parsed {stats['documents_parsed']} documents"
-            f" from {stats['xml_files']} XML files"
-            f" ({stats['parse_errors']} parse errors)."
-        )
-        if stats.get("workers"):
-            print(f"  Workers used: {stats['workers']}")
-        print(
-            f"  Chemistry-kept documents: {stats['documents_kept']}"
-            f" -> {stats['corpus_rows']} corpus rows"
-        )
-        print(f"  All parsed rows: {stats['all_rows']}")
-        print("  Parsed records:", paths.preprocessed_dir / "all_epo_records.csv")
+        if config.build_corpus == "wikidata":
+            print(
+                f"Built {source_label} corpus:"
+                f" read {stats['documents_parsed']} Wikipedia pages"
+                f" across {stats['xml_files']} language files"
+                f" ({stats['parse_errors']} pages skipped empty or unchunkable)."
+            )
+            print(f"  Chunks: {stats['corpus_rows']} corpus rows")
+        else:
+            print(
+                f"Built {source_label} corpus:"
+                f" parsed {stats['documents_parsed']} documents"
+                f" from {stats['xml_files']} XML files"
+                f" ({stats['parse_errors']} parse errors)."
+            )
+            if stats.get("workers"):
+                print(f"  Workers used: {stats['workers']}")
+            print(
+                f"  Chemistry-kept documents: {stats['documents_kept']}"
+                f" -> {stats['corpus_rows']} corpus rows"
+            )
+            print(f"  All parsed rows: {stats['all_rows']}")
+            print("  Parsed records:", paths.preprocessed_dir / "all_epo_records.csv")
         print("  Corpus (full):", paths.corpus_full_csv)
         print("  Corpus (MTEB):", paths.corpus_csv)
         return

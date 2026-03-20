@@ -546,7 +546,161 @@ def count_wikidata_prepared_records(prepared_dir: Path) -> int:
     return int(stats.get("pages_fetched", 0))
 
 
+# Chunking Wikipedia plain-text extracts for retrieval / QA (not full article HTML).
+DEFAULT_CHUNK_MAX_CHARS = 3800
+DEFAULT_CHUNK_MIN_CHARS = 180
+
+
+def _chunk_plain_text(text: str, *, max_chars: int, min_chars: int) -> list[str]:
+    text = (text or "").strip()
+    if not text:
+        return []
+    if len(text) <= max_chars:
+        return [text] if len(text) >= min_chars else []
+
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    if not paragraphs:
+        return []
+
+    chunks: list[str] = []
+    buf = ""
+    for para in paragraphs:
+        candidate = f"{buf}\n\n{para}".strip() if buf else para
+        if len(candidate) <= max_chars:
+            buf = candidate
+            continue
+        if buf and len(buf) >= min_chars:
+            chunks.append(buf)
+        elif buf and chunks:
+            chunks[-1] = (chunks[-1] + "\n\n" + buf).strip()
+        elif buf:
+            chunks.append(buf)
+        buf = para if len(para) <= max_chars else para[:max_chars]
+
+    if buf:
+        if len(buf) >= min_chars:
+            chunks.append(buf)
+        elif chunks:
+            chunks[-1] = (chunks[-1] + "\n\n" + buf).strip()
+        else:
+            chunks.append(buf)
+
+    return chunks
+
+
+WIKIDATA_CORPUS_FIELDNAMES = [
+    "id",
+    "language",
+    "title",
+    "abstract",
+    "context",
+    "qid",
+    "wiki_title",
+    "wiki_url",
+    "source",
+    "chunk_index",
+]
+
+
+def build_wikidata_corpus(
+    *,
+    raw_pages_dir: Path,
+    preprocessed_dir: Path,
+    full_output_path: Path,
+    output_path: Path,
+    chunk_max_chars: int = DEFAULT_CHUNK_MAX_CHARS,
+    chunk_min_chars: int = DEFAULT_CHUNK_MIN_CHARS,
+) -> dict[str, int]:
+    """
+    Build corpus_full.csv + MTEB corpus.csv from gzipped JSONL page files
+    produced by prepare_wikidata_source.
+    """
+    raw_pages_dir = Path(raw_pages_dir)
+    preprocessed_dir = Path(preprocessed_dir)
+    full_output_path = Path(full_output_path)
+    output_path = Path(output_path)
+
+    if not raw_pages_dir.is_dir():
+        raise ValueError(f"Wikidata pages directory not found: {raw_pages_dir}")
+
+    preprocessed_dir.mkdir(parents=True, exist_ok=True)
+    full_output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    stats = {
+        "pages_read": 0,
+        "pages_skipped_empty": 0,
+        "chunks_written": 0,
+        "languages": 0,
+    }
+
+    gz_paths = sorted(raw_pages_dir.glob("*.jsonl.gz"))
+    stats["languages"] = len(gz_paths)
+    corpus_rows: list[dict[str, str]] = []
+
+    for gz_path in tqdm(gz_paths, desc="Build Wikidata corpus", unit="lang"):
+        lang = gz_path.name.removesuffix(".jsonl.gz")
+        with gzip.open(gz_path, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                rec = json.loads(line)
+                stats["pages_read"] += 1
+                body = (rec.get("raw_extract") or "").strip()
+                if not body:
+                    stats["pages_skipped_empty"] += 1
+                    continue
+                qid = str(rec.get("qid", "")).strip()
+                wiki_title = str(rec.get("wiki_title", "")).strip()
+                wiki_url = str(rec.get("wiki_url", "")).strip()
+                chunks = _chunk_plain_text(
+                    body,
+                    max_chars=chunk_max_chars,
+                    min_chars=chunk_min_chars,
+                )
+                if not chunks:
+                    stats["pages_skipped_empty"] += 1
+                    continue
+                for idx, chunk in enumerate(chunks):
+                    cid = f"{qid}_{lang}_{idx}"
+                    corpus_rows.append(
+                        {
+                            "id": cid,
+                            "language": lang,
+                            "title": wiki_title,
+                            "abstract": chunk[:800] if len(chunk) > 800 else chunk,
+                            "context": chunk,
+                            "qid": qid,
+                            "wiki_title": wiki_title,
+                            "wiki_url": wiki_url,
+                            "source": "wikidata",
+                            "chunk_index": str(idx),
+                        }
+                    )
+
+    stats["chunks_written"] = len(corpus_rows)
+
+    with full_output_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=WIKIDATA_CORPUS_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(corpus_rows)
+
+    mteb_fieldnames = ["_id", "title", "text"]
+    with output_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=mteb_fieldnames)
+        writer.writeheader()
+        writer.writerows(
+            {
+                "_id": row["id"],
+                "title": row["title"],
+                "text": row["context"],
+            }
+            for row in corpus_rows
+        )
+
+    return stats
+
+
 __all__ = [
     "prepare_wikidata_source",
     "count_wikidata_prepared_records",
+    "build_wikidata_corpus",
 ]

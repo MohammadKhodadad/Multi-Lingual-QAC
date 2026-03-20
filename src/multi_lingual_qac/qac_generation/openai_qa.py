@@ -1,8 +1,10 @@
 """
-OpenAI-based Q&A generation (Option A: English first, translate to all languages).
+OpenAI-based Q&A generation.
 
-Samples corpus, generates (question, answer) in English per document,
-then translates to all target languages.
+Default (EPO / legacy): generate in English, translate to all target languages.
+
+Wikidata / multilingual retrieval: generate question and answer in the same
+language as the corpus row (`language` column) — no translation step.
 """
 
 from __future__ import annotations
@@ -24,9 +26,22 @@ DEFAULT_TARGET_LANGS = [
 ]
 
 LANG_NAMES = {
-    "de": "German", "fr": "French", "es": "Spanish", "ja": "Japanese", "ko": "Korean",
-    "zh": "Chinese", "ru": "Russian", "pt": "Portuguese", "it": "Italian", "nl": "Dutch",
-    "ar": "Arabic", "fa": "Farsi", "tr": "Turkish", "pl": "Polish", "hi": "Hindi", "en": "English",
+    "de": "German",
+    "fr": "French",
+    "es": "Spanish",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "zh": "Chinese",
+    "ru": "Russian",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "nl": "Dutch",
+    "ar": "Arabic",
+    "fa": "Farsi",
+    "tr": "Turkish",
+    "pl": "Polish",
+    "hi": "Hindi",
+    "en": "English",
 }
 
 DEFAULT_GENERATION_MODEL = "gpt-5-mini"
@@ -270,6 +285,80 @@ Rules:
     }
 
 
+def generate_qa_in_language(
+    client: OpenAI,
+    context: str,
+    target_lang_code: str,
+    *,
+    previous_question: Optional[str] = None,
+    previous_answer: Optional[str] = None,
+    previous_feedback: Optional[str] = None,
+    model: str = DEFAULT_GENERATION_MODEL,
+) -> Dict[str, str]:
+    """
+    Generate one Q&A pair in the same language as the corpus row (target_lang_code).
+    """
+    lang_name = LANG_NAMES.get(target_lang_code.lower(), target_lang_code)
+    prompt = f"""You are an expert at creating chemistry-focused retrieval questions from encyclopedia or technical passages.
+
+The source context is written mainly in {lang_name} (BCP-47 code: {target_lang_code}).
+You MUST write the question, answer, and supporting_text entirely in {lang_name}.
+
+Rules:
+- Natural, fluent {lang_name} only. Keep chemical names, formulas, identifiers, units, and proper nouns as appropriate (they may stay in Latin script or standard notation).
+- The question must read like a realistic search query a researcher or reader would type.
+- Prefer a specific question about: properties, reactions, uses, safety, synthesis, structure, history, or comparisons — whatever the passage supports best.
+- The question must be answerable strictly from the passage and be specific enough for retrieval benchmarking.
+- Prefer semantically challenging questions over trivial keyword overlap with the first sentence.
+- Do not copy a long span from the source verbatim into the question.
+- Do not turn the title alone into the question.
+- The answer must be concise (1-2 sentences) and fully grounded in the context.
+- Include supporting_text: a short quote copied from the source that justifies the answer.
+- Include question_type: one of purpose, application, composition, method, property, safety, history, other.
+
+Output valid JSON only, no markdown:
+{{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
+"""
+    retry_note = ""
+    if previous_feedback:
+        retry_note = (
+            "\n\nPrevious attempt issue to fix:\n"
+            f"{previous_feedback}\n"
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}."
+        )
+    previous_attempt_note = ""
+    if previous_question or previous_answer:
+        previous_attempt_note = (
+            "\n\nPrevious failed attempt to improve upon:\n"
+            f"Previous question: {previous_question or ''}\n"
+            f"Previous answer: {previous_answer or ''}\n"
+            "Generate a fresh corrected pair; do not lightly paraphrase the failed attempt."
+        )
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Context ({lang_name}):\n\n{context[:4000]}"
+                    f"{retry_note}"
+                    f"{previous_attempt_note}"
+                ),
+            },
+        ],
+        reasoning_effort=DEFAULT_GENERATION_REASONING_EFFORT,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    return {
+        "question": str(data.get("question", "")).strip(),
+        "answer": str(data.get("answer", "")).strip(),
+        "supporting_text": str(data.get("supporting_text", "")).strip(),
+        "question_type": str(data.get("question_type", "other")).strip(),
+    }
+
+
 def check_english_language(
     client: OpenAI,
     question: str,
@@ -311,6 +400,48 @@ Output valid JSON only:
     return approved, reason
 
 
+def check_language_match(
+    client: OpenAI,
+    question: str,
+    answer: str,
+    target_lang_code: str,
+    *,
+    model: str = DEFAULT_SUPPORT_MODEL,
+) -> Tuple[bool, str]:
+    """
+    Validate that question and answer are written mainly in the expected language.
+    """
+    lang_name = LANG_NAMES.get(target_lang_code.lower(), target_lang_code)
+    prompt = f"""You are a strict language checker.
+
+Decide whether BOTH the question and answer are written mainly in {lang_name} (language code {target_lang_code}).
+
+Approve only if:
+- both are natural {lang_name},
+- they are not primarily in a different language,
+- chemical names, formulas, units, identifiers, and proper nouns may appear in Latin script or standard notation when normal for that field.
+
+Output valid JSON only:
+{{"approved": true, "reason": "..."}}
+"""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": f"Question: {question}\n\nAnswer: {answer}",
+            },
+        ],
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    approved = bool(data.get("approved", False))
+    reason = str(data.get("reason", "")).strip()
+    return approved, reason
+
+
 def check_faithfulness(
     client: OpenAI,
     context: str,
@@ -324,7 +455,7 @@ def check_faithfulness(
     Validate that the answer is supported by the source context.
     Returns (approved, reason).
     """
-    prompt = """You are a strict faithfulness checker for patent question-answer pairs.
+    prompt = """You are a strict faithfulness checker for question-answer pairs derived from a technical or encyclopedia source passage.
 
 Approve only if:
 - the question is answerable from the context,
@@ -367,12 +498,19 @@ def check_question_quality(
     answer: str,
     *,
     model: str = DEFAULT_QUALITY_MODEL,
+    output_language_name: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """
     Validate that the question is retrieval-useful, specific, and not overly generic.
     Returns (approved, reason).
     """
-    prompt = """You are a strict quality checker for retrieval questions built from technical patent text.
+    lang_clause = ""
+    if output_language_name:
+        lang_clause = (
+            f"The question and answer should be written in {output_language_name} "
+            f"and must sound natural for technical readers of {output_language_name}.\n\n"
+        )
+    prompt = lang_clause + """You are a strict quality checker for retrieval questions built from technical text (e.g. patents, encyclopedia articles, or technical descriptions).
 
 Approve only if the question:
 - sounds like a realistic search or retrieval query,
@@ -764,6 +902,7 @@ def _process_sample_row(
     support_model: str,
     translation_model: str,
     max_attempts: int,
+    same_language: bool = False,
 ) -> Dict[str, Any]:
     corpus_id = row.get("id", "")
     context = row.get("context", row.get("abstract", "")) or row.get("title", "")
@@ -777,6 +916,107 @@ def _process_sample_row(
 
     try:
         client = _get_client()
+
+        if same_language:
+            row_lang = (row.get("language") or "en").strip().lower()
+            lang_name = LANG_NAMES.get(row_lang, row_lang)
+            approved_sl = False
+            q_loc = ""
+            a_loc = ""
+            supporting_text = ""
+            question_type = ""
+            last_failure = ""
+            retry_feedback: Optional[str] = None
+            retry_question: Optional[str] = None
+            retry_answer: Optional[str] = None
+
+            for _attempt in range(1, max_attempts + 1):
+                generated = generate_qa_in_language(
+                    client,
+                    context,
+                    row_lang,
+                    previous_question=retry_question,
+                    previous_answer=retry_answer,
+                    previous_feedback=retry_feedback,
+                    model=generation_model,
+                )
+                q_loc = generated["question"]
+                a_loc = generated["answer"]
+                supporting_text = generated["supporting_text"]
+                question_type = generated["question_type"]
+                retry_question = q_loc
+                retry_answer = a_loc
+
+                lang_ok, lang_reason = check_language_match(
+                    client,
+                    q_loc,
+                    a_loc,
+                    row_lang,
+                    model=support_model,
+                )
+                if not lang_ok:
+                    last_failure = f"language check failed: {lang_reason or 'wrong language'}"
+                    retry_feedback = (
+                        f"{last_failure}. Rewrite the question and answer entirely in {lang_name}."
+                    )
+                    continue
+
+                faithful_ok, faithful_reason = check_faithfulness(
+                    client,
+                    context,
+                    q_loc,
+                    a_loc,
+                    supporting_text,
+                    model=support_model,
+                )
+                if not faithful_ok:
+                    last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
+                    retry_feedback = (
+                        f"{last_failure}. Keep the answer strictly grounded in the context."
+                    )
+                    continue
+
+                quality_ok, quality_reason = check_question_quality(
+                    client,
+                    context,
+                    q_loc,
+                    a_loc,
+                    model=quality_model,
+                    output_language_name=lang_name,
+                )
+                if not quality_ok:
+                    last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
+                    retry_feedback = (
+                        f"{last_failure}. Regenerate one fresh question that is more specific "
+                        f"and more useful for retrieval, still in {lang_name}."
+                    )
+                    continue
+
+                approved_sl = True
+                break
+
+            if not approved_sl:
+                return {
+                    "index": index,
+                    "corpus_id": corpus_id,
+                    "rows": [],
+                    "status": f"skipped ({last_failure or 'validation failed'})",
+                }
+
+            return {
+                "index": index,
+                "corpus_id": corpus_id,
+                "rows": [
+                    {
+                        "corpus_id": corpus_id,
+                        "language": row_lang,
+                        "question": q_loc,
+                        "answer": a_loc,
+                    }
+                ],
+                "status": f"ok ({question_type or 'validated'} {row_lang}, same-language)",
+            }
+
         approved = False
         q_en = ""
         a_en = ""
@@ -970,9 +1210,15 @@ def run_qa_pipeline(
     translation_model: str = DEFAULT_TRANSLATION_MODEL,
     max_attempts: int = 3,
     batch_mode: bool = False,
+    same_language: bool = False,
 ) -> int:
     """
-    Sample corpus, generate Q&A in English, translate to all target languages.
+    Sample corpus and generate Q&A.
+
+    If same_language is False (default): generate in English, translate to target_languages.
+    If same_language is True: generate question and answer in each row's `language` field;
+    one output row per sampled document (no translation).
+
     Writes qac.csv (corpus_id, language, question, answer) to output_dir.
     Returns number of QAC rows written.
     """
@@ -988,7 +1234,8 @@ def run_qa_pipeline(
 
     rows = load_corpus(corpus_path)
     sampled = sample_corpus(rows, sample_size, stratify_by_language=True, seed=42)
-    print(f"Sampled {len(sampled)} documents from corpus ({len(rows)} total).")
+    mode = "same-language (per row language)" if same_language else "English + translation"
+    print(f"Sampled {len(sampled)} documents from corpus ({len(rows)} total). Mode: {mode}.")
     qac_rows: List[Dict[str, str]] = []
     results: List[Dict[str, Any]] = []
 
@@ -1011,6 +1258,7 @@ def run_qa_pipeline(
                     support_model=support_model,
                     translation_model=translation_model,
                     max_attempts=max_attempts,
+                    same_language=same_language,
                 )
                 for index, row in enumerate(sampled)
             ]
@@ -1035,6 +1283,7 @@ def run_qa_pipeline(
                 support_model=support_model,
                 translation_model=translation_model,
                 max_attempts=max_attempts,
+                same_language=same_language,
             )
             results.append(result)
             tqdm.write(f"  [{index}/{len(sampled)}] {result['corpus_id']}... {result['status']}")

@@ -9,6 +9,7 @@ from src.multi_lingual_qac.dataloaders.epo import (
     extract_epo_xml_files,
 )
 from src.multi_lingual_qac.dataloaders.wikidata import (
+    build_wikidata_corpus,
     count_wikidata_prepared_records,
     prepare_wikidata_source,
 )
@@ -61,10 +62,22 @@ def build_corpus_from_source(
             batch_mode=config.build_corpus_batch,
         )
     if config.source == "wikidata":
-        raise NotImplementedError(
-            "Wikidata corpus building is not implemented yet. "
-            "Run `uv run main.py --prepare-source WIKIDATA` for the acquisition stage."
+        stats = build_wikidata_corpus(
+            raw_pages_dir=paths.raw_pages_dir,
+            preprocessed_dir=paths.preprocessed_dir,
+            full_output_path=paths.corpus_full_csv,
+            output_path=paths.corpus_csv,
         )
+        return {
+            "xml_files": stats["languages"],
+            "documents_parsed": stats["pages_read"],
+            "documents_kept": stats["chunks_written"],
+            "all_rows": stats["pages_read"],
+            "corpus_rows": stats["chunks_written"],
+            "parse_errors": stats["pages_skipped_empty"],
+            "skipped_auxiliary": 0,
+            "workers": 1,
+        }
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
 
