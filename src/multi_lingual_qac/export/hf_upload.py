@@ -55,7 +55,12 @@ def load_corpus(corpus_path: Path) -> list[dict]:
     rows = []
     with corpus_path.open(encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            rows.append(dict(row))
+            parsed = dict(row)
+            if "_id" in parsed and "id" not in parsed:
+                parsed["id"] = parsed["_id"]
+            if "text" in parsed and "context" not in parsed:
+                parsed["context"] = parsed["text"]
+            rows.append(parsed)
     return rows
 
 

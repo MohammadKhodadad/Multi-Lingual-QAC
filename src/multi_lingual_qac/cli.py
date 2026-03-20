@@ -7,15 +7,55 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.multi_lingual_qac.config import PipelineConfig, PipelinePaths
+from src.multi_lingual_qac.preprocess.corpus import (
+    build_corpus_from_source,
+    prepare_corpus_source,
+)
 from src.multi_lingual_qac.pipeline import run_pipeline
+
+
+def _normalize_source_name(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized not in {"epo"}:
+        raise argparse.ArgumentTypeError(f"Unsupported source: {value}")
+    return normalized
 
 
 def parse_args() -> PipelineConfig:
     parser = argparse.ArgumentParser(
-        description="Multi-Lingual Chemical QAC: extract patents, preprocess to CSV."
+        description="Multi-Lingual Chemical QAC: prepare source data and build QAC."
+    )
+    parser.add_argument(
+        "--source",
+        type=_normalize_source_name,
+        default="epo",
+        help="Patent source pipeline to run for the main workflow",
+    )
+    parser.add_argument(
+        "--prepare-source",
+        type=_normalize_source_name,
+        default=None,
+        metavar="SOURCE",
+        help="Prepare raw source artifacts only, e.g. `--prepare-source EPO`",
+    )
+    parser.add_argument(
+        "--build-corpus",
+        type=_normalize_source_name,
+        default=None,
+        metavar="SOURCE",
+        help="Build corpus files only, e.g. `--build-corpus EPO`",
+    )
+    parser.add_argument(
+        "--build-corpus-batch",
+        action="store_true",
+        help="Build corpus using multiple CPU workers (default: single CPU)",
     )
     parser.add_argument("--yes", "-y", action="store_true", help="No prompts; redo all")
-    parser.add_argument("--no-extraction", action="store_true", help="Skip extraction; only preprocess")
+    parser.add_argument(
+        "--no-extraction",
+        action="store_true",
+        help="Deprecated: source preparation is now a separate command",
+    )
     parser.add_argument("--limit", type=int, default=None, help="Max patents per language (if omitted in interactive mode, you will be prompted)")
     parser.add_argument("--qa-sample", type=int, default=None, help="Sample size for Q&A generation (if omitted in interactive mode, you will be prompted; 0 = skip Q&A)")
     parser.add_argument("--qa-batch", action="store_true", help="Batch QA generation using worker threads based on available CPUs")
@@ -31,6 +71,10 @@ def parse_args() -> PipelineConfig:
     elif args.qa_no_batch:
         qa_batch = False
     return PipelineConfig(
+        source=args.source,
+        prepare_source=args.prepare_source,
+        build_corpus=args.build_corpus,
+        build_corpus_batch=args.build_corpus_batch,
         yes=args.yes,
         no_extraction=args.no_extraction,
         limit=args.limit,
@@ -49,4 +93,64 @@ def main() -> None:
 
     config = parse_args()
     paths = PipelinePaths.from_project_root(project_root)
+
+    if config.prepare_source:
+        prepare_config = PipelineConfig(
+            source=config.prepare_source,
+            prepare_source=config.prepare_source,
+            yes=config.yes,
+            no_extraction=config.no_extraction,
+            limit=config.limit,
+            qa_sample=config.qa_sample,
+            qa_batch=config.qa_batch,
+            push_hf=config.push_hf,
+            hf_repo=config.hf_repo,
+            languages=config.languages,
+        )
+        stats = prepare_corpus_source(prepare_config, paths, overwrite=True)
+        source_label = config.prepare_source.upper()
+        print(
+            f"Prepared {source_label} source files:"
+            f" {stats['xml_files']} XMLs from {stats['zip_files']} zip files"
+            f" ({stats['skipped_existing']} skipped existing, {stats['bad_zips']} bad zips)."
+        )
+        print("  Input:", paths.input_dir)
+        print("  XMLs:", paths.xml_dir)
+        return
+
+    if config.build_corpus:
+        build_config = PipelineConfig(
+            source=config.build_corpus,
+            prepare_source=config.prepare_source,
+            build_corpus=config.build_corpus,
+            build_corpus_batch=config.build_corpus_batch,
+            yes=config.yes,
+            no_extraction=config.no_extraction,
+            limit=config.limit,
+            qa_sample=config.qa_sample,
+            qa_batch=config.qa_batch,
+            push_hf=config.push_hf,
+            hf_repo=config.hf_repo,
+            languages=config.languages,
+        )
+        stats = build_corpus_from_source(build_config, paths)
+        source_label = config.build_corpus.upper()
+        print(
+            f"Built {source_label} corpus:"
+            f" parsed {stats['documents_parsed']} documents"
+            f" from {stats['xml_files']} XML files"
+            f" ({stats['parse_errors']} parse errors)."
+        )
+        if stats.get("workers"):
+            print(f"  Workers used: {stats['workers']}")
+        print(
+            f"  Chemistry-kept documents: {stats['documents_kept']}"
+            f" -> {stats['corpus_rows']} corpus rows"
+        )
+        print(f"  All parsed rows: {stats['all_rows']}")
+        print("  Parsed records:", paths.preprocessed_dir / "all_epo_records.csv")
+        print("  Corpus (full):", paths.corpus_full_csv)
+        print("  Corpus (MTEB):", paths.corpus_csv)
+        return
+
     run_pipeline(config, paths)
