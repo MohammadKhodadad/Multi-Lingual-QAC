@@ -15,6 +15,10 @@ from urllib.request import Request, urlopen
 from tqdm import tqdm
 
 from src.multi_lingual_qac.constants import DEFAULT_LANGS, DEFAULT_WIKIDATA_ENTITY_TARGET
+from src.multi_lingual_qac.dataloaders.wikipedia_clean import (
+    chunk_plain_text_multilingual,
+    clean_wikipedia_text,
+)
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 WIKIPEDIA_API_TEMPLATE = "https://{lang}.wikipedia.org/w/api.php"
@@ -546,46 +550,9 @@ def count_wikidata_prepared_records(prepared_dir: Path) -> int:
     return int(stats.get("pages_fetched", 0))
 
 
-# Chunking Wikipedia plain-text extracts for retrieval / QA (not full article HTML).
+# Chunking: see wikipedia_clean.chunk_plain_text_multilingual (sentence-aware).
 DEFAULT_CHUNK_MAX_CHARS = 3800
 DEFAULT_CHUNK_MIN_CHARS = 180
-
-
-def _chunk_plain_text(text: str, *, max_chars: int, min_chars: int) -> list[str]:
-    text = (text or "").strip()
-    if not text:
-        return []
-    if len(text) <= max_chars:
-        return [text] if len(text) >= min_chars else []
-
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-    if not paragraphs:
-        return []
-
-    chunks: list[str] = []
-    buf = ""
-    for para in paragraphs:
-        candidate = f"{buf}\n\n{para}".strip() if buf else para
-        if len(candidate) <= max_chars:
-            buf = candidate
-            continue
-        if buf and len(buf) >= min_chars:
-            chunks.append(buf)
-        elif buf and chunks:
-            chunks[-1] = (chunks[-1] + "\n\n" + buf).strip()
-        elif buf:
-            chunks.append(buf)
-        buf = para if len(para) <= max_chars else para[:max_chars]
-
-    if buf:
-        if len(buf) >= min_chars:
-            chunks.append(buf)
-        elif chunks:
-            chunks[-1] = (chunks[-1] + "\n\n" + buf).strip()
-        else:
-            chunks.append(buf)
-
-    return chunks
 
 
 WIKIDATA_CORPUS_FIELDNAMES = [
@@ -614,6 +581,9 @@ def build_wikidata_corpus(
     """
     Build corpus_full.csv + MTEB corpus.csv from gzipped JSONL page files
     produced by prepare_wikidata_source.
+
+    Each `raw_extract` is cleaned with `clean_wikipedia_text` (language-aware)
+    then chunked with `chunk_plain_text_multilingual`.
     """
     raw_pages_dir = Path(raw_pages_dir)
     preprocessed_dir = Path(preprocessed_dir)
@@ -644,14 +614,18 @@ def build_wikidata_corpus(
             for line in fh:
                 rec = json.loads(line)
                 stats["pages_read"] += 1
-                body = (rec.get("raw_extract") or "").strip()
+                raw = (rec.get("raw_extract") or "").strip()
+                if not raw:
+                    stats["pages_skipped_empty"] += 1
+                    continue
+                body = clean_wikipedia_text(raw, lang=lang)
                 if not body:
                     stats["pages_skipped_empty"] += 1
                     continue
                 qid = str(rec.get("qid", "")).strip()
                 wiki_title = str(rec.get("wiki_title", "")).strip()
                 wiki_url = str(rec.get("wiki_url", "")).strip()
-                chunks = _chunk_plain_text(
+                chunks = chunk_plain_text_multilingual(
                     body,
                     max_chars=chunk_max_chars,
                     min_chars=chunk_min_chars,

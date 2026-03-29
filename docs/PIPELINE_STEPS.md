@@ -52,7 +52,7 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 
 ## 11. Wikidata / Wikipedia (chemistry corpus)
 - **`prepare_corpus_source` + `wikidata.py`**: SPARQL entity selection, sitelinks, fetch of multilingual Wikipedia extracts; artifacts under `data/WIKIDATA/prepared/`.
-- **`build_wikidata_corpus`**: chunk page text → `data/WIKIDATA/preprocessed/corpus_full.csv` (rich rows: `id`, `qid`, `language`, `context`, …) and `data/WIKIDATA/corpus.csv` (MTEB retrieval format).
+- **`build_wikidata_corpus`**: `wikipedia_clean.clean_wikipedia_text` (per-lang noise + section heuristics) → `chunk_plain_text_multilingual` → `data/WIKIDATA/preprocessed/corpus_full.csv` and `data/WIKIDATA/corpus.csv` (MTEB retrieval format).
 
 ## 12. Wikidata Q&A and qrels (MTEB-style)
 - **Q&A** (`--source wikidata --qa-sample N`): same flow as EPO — English generation, checks, translation — via `openai_qa.run_qa_pipeline` with `same_language=False`. Output: `data/WIKIDATA/qac/qac.csv`.

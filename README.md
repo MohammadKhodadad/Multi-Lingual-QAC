@@ -72,7 +72,8 @@ src/
 │   ├── pipeline.py             # main orchestration flow
 │   ├── dataloaders/
 │   │   ├── epo.py              # EPO zip scanning + XML extraction + corpus build
-│   │   └── wikidata.py         # Wikidata/Wikipedia fetch + chunk corpus build
+│   │   ├── wikidata.py         # Wikidata/Wikipedia fetch + chunk corpus build
+│   │   └── wikipedia_clean.py  # Multilingual extract cleanup + sentence-aware chunking
 │   ├── qac_generation/
 │   │   ├── openai_qa.py              # Q&A generation (EN + translate; optional same-language mode)
 │   │   └── label_wikidata_qrels.py   # Wikidata: multilingual qrels + queries (gpt-5-nano judge)
@@ -100,7 +101,7 @@ The extracted XML directory is intended to be the source-local raw cache. It kee
 ### Wikidata data flow
 
 1. **`--prepare-source WIKIDATA`** → `data/WIKIDATA/prepared/` (entities, page JSONL, coverage).
-2. **`--build-corpus WIKIDATA`** → `preprocessed/corpus_full.csv` (full chunks + metadata) and **`corpus.csv`** (MTEB: `_id`, `title`, `text`).
+2. **`--build-corpus WIKIDATA`** → `preprocessed/corpus_full.csv` (full chunks + metadata) and **`corpus.csv`** (MTEB: `_id`, `title`, `text`). Extracts are cleaned per language (`dataloaders/wikipedia_clean.py`) then sentence-aware chunked (`chunk_plain_text_multilingual`).
 3. **`--source wikidata --qa-sample N`** → `qac/qac.csv` (English + translations; one row per language per sampled chunk).
 4. **`--label-qrels WIKIDATA`** → `qac/queries.csv`, `qac/qrels.csv`, `qrels_label_stats.json`.
 
