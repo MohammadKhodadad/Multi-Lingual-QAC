@@ -8,6 +8,11 @@ from src.multi_lingual_qac.dataloaders.epo import (
     count_epo_xml_files,
     extract_epo_xml_files,
 )
+from src.multi_lingual_qac.dataloaders.jrc_acquis import (
+    build_jrc_acquis_document_corpus,
+    count_jrc_acquis_prepared_records,
+    load_jrc_acquis_raw,
+)
 from src.multi_lingual_qac.dataloaders.wikidata import (
     build_wikidata_corpus,
     count_wikidata_prepared_records,
@@ -36,6 +41,14 @@ def prepare_corpus_source(
             target_entities=config.limit or DEFAULT_WIKIDATA_ENTITY_TARGET,
             overwrite=overwrite,
         )
+    if config.source == "jrc-acquis":
+        return load_jrc_acquis_raw(
+            input_dir=paths.input_dir,
+            output_dir=paths.prepared_dir,
+            languages=None,
+            limit=config.limit,
+            workers=config.prepare_workers,
+        )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
 
@@ -45,6 +58,8 @@ def count_source_records(config: PipelineConfig, paths: PipelinePaths) -> int:
         return count_epo_xml_files(paths.xml_dir)
     if config.source == "wikidata":
         return count_wikidata_prepared_records(paths.prepared_dir)
+    if config.source == "jrc-acquis":
+        return count_jrc_acquis_prepared_records(paths.prepared_dir)
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
 
@@ -78,6 +93,14 @@ def build_corpus_from_source(
             "skipped_auxiliary": 0,
             "workers": 1,
         }
+    if config.source == "jrc-acquis":
+        return build_jrc_acquis_document_corpus(
+            raw_jsonl_path=paths.prepared_dir / "raw_documents.jsonl",
+            preprocessed_dir=paths.preprocessed_dir,
+            full_output_path=paths.corpus_full_csv,
+            output_path=paths.corpus_csv,
+            workers=config.build_workers,
+        )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
 

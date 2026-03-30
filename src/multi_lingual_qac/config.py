@@ -45,8 +45,10 @@ class PipelinePaths:
 class PipelineConfig:
     source: str = "epo"
     prepare_source: Optional[str] = None
+    prepare_workers: int = 1
     build_corpus: Optional[str] = None
     build_corpus_batch: bool = False
+    build_workers: int = 1
     label_qrels: Optional[str] = None
     label_qrels_batch_size: int = 5
     yes: bool = False

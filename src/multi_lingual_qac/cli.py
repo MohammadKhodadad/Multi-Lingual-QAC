@@ -1,23 +1,29 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from src.multi_lingual_qac.config import PipelineConfig, PipelinePaths
+from src.multi_lingual_qac.dataloaders.jrc_acquis import (
+    count_jrc_acquis_input_files,
+    download_jrc_acquis_archives,
+)
 from src.multi_lingual_qac.preprocess.corpus import (
     build_corpus_from_source,
+    count_source_records,
     prepare_corpus_source,
 )
-from src.multi_lingual_qac.pipeline import run_pipeline
+from src.multi_lingual_qac.pipeline import ask_interactive, run_pipeline
 from src.multi_lingual_qac.qac_generation.label_wikidata_qrels import run_wikidata_qrels_labeling
 
 
 def _normalize_source_name(value: str) -> str:
-    normalized = value.strip().lower()
-    if normalized not in {"epo", "wikidata"}:
+    normalized = value.strip().lower().replace("_", "-")
+    if normalized not in {"epo", "wikidata", "jrc-acquis"}:
         raise argparse.ArgumentTypeError(f"Unsupported source: {value}")
     return normalized
 
@@ -141,9 +147,11 @@ def main() -> None:
         return
 
     if config.prepare_source:
+        prepare_workers = 1
         prepare_config = PipelineConfig(
             source=config.prepare_source,
             prepare_source=config.prepare_source,
+            prepare_workers=prepare_workers,
             yes=config.yes,
             no_extraction=config.no_extraction,
             limit=config.limit,
@@ -153,7 +161,75 @@ def main() -> None:
             hf_repo=config.hf_repo,
             languages=config.languages,
         )
-        stats = prepare_corpus_source(prepare_config, paths, overwrite=True)
+        paths.input_dir.mkdir(parents=True, exist_ok=True)
+        if config.prepare_source == "jrc-acquis":
+            raw_input_count = count_jrc_acquis_input_files(paths.input_dir)
+            if raw_input_count == 0:
+                should_download = config.yes or (
+                    ask_interactive(
+                        "No local JRC-Acquis raw files found. Download the official JRC-Acquis archives now? (y/n): ",
+                        "y",
+                    )
+                    == "y"
+                )
+                if should_download:
+                    try:
+                        dl_stats = download_jrc_acquis_archives(paths.input_dir)
+                    except ValueError as exc:
+                        print(f"Error: {exc}")
+                        raise SystemExit(1)
+                    print(
+                        f"Downloaded JRC-ACQUIS archives: {dl_stats['downloaded']} downloaded, "
+                        f"{dl_stats['skipped_existing']} already present."
+                    )
+                else:
+                    print("Created JRC-ACQUIS input folder.")
+                    print("  Input:", paths.input_dir)
+                    print("Place raw `jrc-<lang>.tgz` archives or extracted `.xml` files there, then rerun.")
+                    raise SystemExit(0)
+        existing_prepared = count_source_records(prepare_config, paths)
+        run_prepare = True
+        if existing_prepared and not config.yes:
+            redo = ask_interactive(
+                f"Prepared {config.prepare_source.upper()} data already exists ({existing_prepared} records). Redo and overwrite it? (y/n): ",
+                "n",
+            )
+            run_prepare = redo == "y"
+        if not run_prepare:
+            print("Prepare skipped.")
+            return
+        if config.prepare_source == "jrc-acquis":
+            use_multi_cpu = False
+            if not config.yes:
+                use_multi_cpu = (
+                    ask_interactive(
+                        "Do you want multi CPU for JRC-Acquis raw loading? (y/n): ",
+                        "y",
+                    )
+                    == "y"
+                )
+            if use_multi_cpu:
+                cpu_count = os.cpu_count() or 1
+                prepare_workers = max(1, min(5, cpu_count // 2))
+                print(f"Using {prepare_workers} worker(s) for JRC-Acquis prepare.")
+            prepare_config = PipelineConfig(
+                source=config.prepare_source,
+                prepare_source=config.prepare_source,
+                prepare_workers=prepare_workers,
+                yes=config.yes,
+                no_extraction=config.no_extraction,
+                limit=config.limit,
+                qa_sample=config.qa_sample,
+                qa_batch=config.qa_batch,
+                push_hf=config.push_hf,
+                hf_repo=config.hf_repo,
+                languages=config.languages,
+            )
+        try:
+            stats = prepare_corpus_source(prepare_config, paths, overwrite=True)
+        except ValueError as exc:
+            print(f"Error: {exc}")
+            raise SystemExit(1)
         source_label = config.prepare_source.upper()
         if config.prepare_source == "epo":
             print(
@@ -163,6 +239,17 @@ def main() -> None:
             )
             print("  Input:", paths.input_dir)
             print("  XMLs:", paths.xml_dir)
+        elif config.prepare_source == "jrc-acquis":
+            print(
+                f"Prepared {source_label} source files:"
+                f" loaded {stats['documents_loaded']} XML documents"
+                f" across {len(stats['languages'])} languages."
+            )
+            print("  Workers:", stats.get("workers", prepare_workers))
+            print("  Input:", paths.input_dir)
+            print("  Prepared:", paths.prepared_dir)
+            print("  Raw JSONL:", paths.prepared_dir / "raw_documents.jsonl")
+            print("  Stats:", paths.prepared_dir / "raw_load_stats.json")
         else:
             print(
                 f"Prepared {source_label} source files:"
@@ -178,11 +265,27 @@ def main() -> None:
         return
 
     if config.build_corpus:
+        build_workers = 1
+        if config.build_corpus == "jrc-acquis":
+            use_multi_cpu = config.build_corpus_batch
+            if not config.build_corpus_batch and not config.yes:
+                use_multi_cpu = (
+                    ask_interactive(
+                        "Do you want multi CPU for JRC-Acquis document build? (y/n): ",
+                        "y",
+                    )
+                    == "y"
+                )
+            if use_multi_cpu:
+                cpu_count = os.cpu_count() or 1
+                build_workers = max(1, min(5, cpu_count // 2))
+                print(f"Using {build_workers} worker(s) for JRC-Acquis build.")
         build_config = PipelineConfig(
             source=config.build_corpus,
             prepare_source=config.prepare_source,
             build_corpus=config.build_corpus,
             build_corpus_batch=config.build_corpus_batch,
+            build_workers=build_workers,
             yes=config.yes,
             no_extraction=config.no_extraction,
             limit=config.limit,
@@ -192,7 +295,11 @@ def main() -> None:
             hf_repo=config.hf_repo,
             languages=config.languages,
         )
-        stats = build_corpus_from_source(build_config, paths)
+        try:
+            stats = build_corpus_from_source(build_config, paths)
+        except ValueError as exc:
+            print(f"Error: {exc}")
+            raise SystemExit(1)
         source_label = config.build_corpus.upper()
         if config.build_corpus == "wikidata":
             print(
@@ -202,6 +309,24 @@ def main() -> None:
                 f" ({stats['parse_errors']} pages skipped empty or unchunkable)."
             )
             print(f"  Chunks: {stats['corpus_rows']} corpus rows")
+        elif config.build_corpus == "jrc-acquis":
+            print(
+                f"Built {source_label} document corpus:"
+                f" {stats['documents_written']} multilingual documents"
+                f" from {stats['celex_total']} CELEX ids."
+            )
+            print(f"  Workers: {stats.get('workers', build_workers)}")
+            print(f"  Multilingual CELEX ids: {stats['celex_multilingual']}")
+            print(f"  All language pairs: {stats['pairs_written']}")
+            print(f"  Multilingual docs: {stats['multilingual_docs_written']}")
+            print(f"  QA candidates: {stats['qa_candidates_written']}")
+            print(f"  Inspection rows: {stats['inspection_rows_written']}")
+            print("  Pairs:", paths.preprocessed_dir / "document_pairs_all.csv")
+            print("  Stats:", paths.preprocessed_dir / "document_corpus_stats.json")
+            print("  Multilingual corpus:", paths.preprocessed_dir / "corpus_multilingual.csv")
+            print("  Multilingual full:", paths.preprocessed_dir / "corpus_multilingual_full.csv")
+            print("  QA candidates:", paths.preprocessed_dir / "corpus_qa_candidates.csv")
+            print("  Inspection sample:", paths.preprocessed_dir / "inspection_sample.csv")
         else:
             print(
                 f"Built {source_label} corpus:"
