@@ -56,9 +56,9 @@ def prepare_jrc_qa_inputs(
     Workflow:
     - sample directional cross-language pairs per source language
     - select unique source documents per language
-    - expand those selections to CELEX-level multilingual groups
-    - build a subset corpus containing all available aligned documents for selected CELEX ids
-    - write pivot-generation rows that use the English document when available
+    - choose one sampled pair per selected source document
+    - build a subset corpus containing both documents from all sampled pairs
+    - write pair-level QA generation rows using the translated/target side
     - write helper CSVs into `output_dir`
     """
     corpus_full_path = Path(corpus_full_path)
@@ -160,24 +160,56 @@ def prepare_jrc_qa_inputs(
     )
 
     selected_source_rows = []
+    selected_source_rows_by_id: dict[str, dict[str, str]] = {}
     for row in _iter_csv_rows(qa_candidates_path):
         if row["id"] in selected_source_ids:
             selected_source_rows.append(row)
+            selected_source_rows_by_id[row["id"]] = row
     selected_source_rows.sort(key=lambda row: (row.get("language", ""), row.get("id", "")))
-    selected_celexes = {row.get("celex", "") for row in selected_source_rows if row.get("celex", "")}
+
+    generation_pairs: list[dict[str, str]] = []
+    generation_pairs_stats: dict[str, int] = {}
+    for lang in sorted(reservoir_by_lang):
+        sampled_lang_pairs = list(reservoir_by_lang[lang])
+        if not sampled_lang_pairs:
+            continue
+        chosen_source_ids = {
+            row["id"] for row in selected_source_rows if row.get("language", "") == lang
+        }
+        chosen_pairs_for_lang: list[dict[str, str]] = []
+        for source_id in sorted(chosen_source_ids):
+            candidates = [pair for pair in sampled_lang_pairs if pair["source_corpus_id"] == source_id]
+            if not candidates:
+                continue
+            chosen_pairs_for_lang.append(rng.choice(candidates))
+        generation_pairs.extend(chosen_pairs_for_lang)
+        generation_pairs_stats[lang] = len(chosen_pairs_for_lang)
+
+    generation_pairs.sort(
+        key=lambda row: (
+            row["source_language"],
+            row["source_corpus_id"],
+            row["target_language"],
+            row["target_corpus_id"],
+        )
+    )
+
+    corpus_subset_ids = {
+        pair["source_corpus_id"] for pair in sampled_pairs
+    } | {
+        pair["target_corpus_id"] for pair in sampled_pairs
+    }
 
     corpus_fieldnames: list[str] = []
     corpus_subset_rows: list[dict[str, str]] = []
-    docs_by_celex: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
+    docs_by_id: dict[str, dict[str, str]] = {}
     for row in _iter_csv_rows(corpus_full_path):
         if not corpus_fieldnames:
             corpus_fieldnames = list(row.keys())
-        celex = row.get("celex", "")
-        lang = row.get("language", "")
-        if celex in selected_celexes:
+        row_id = row.get("id", "")
+        if row_id in corpus_subset_ids:
             corpus_subset_rows.append(row)
-            if celex and lang and lang not in docs_by_celex[celex]:
-                docs_by_celex[celex][lang] = row
+            docs_by_id[row_id] = row
 
     corpus_subset_rows.sort(key=lambda row: (row.get("celex", ""), row.get("language", ""), row.get("id", "")))
     corpus_subset_mteb_rows = [
@@ -186,30 +218,36 @@ def prepare_jrc_qa_inputs(
     ]
 
     generation_rows: list[dict[str, str]] = []
-    pivot_language_counts: Counter[str] = Counter()
-    for celex in sorted(selected_celexes):
-        docs_for_celex = docs_by_celex.get(celex, {})
-        if not docs_for_celex:
+    generation_target_language_counts: Counter[str] = Counter()
+    for pair in generation_pairs:
+        target_row = docs_by_id.get(pair["target_corpus_id"])
+        source_row = selected_source_rows_by_id.get(pair["source_corpus_id"]) or docs_by_id.get(pair["source_corpus_id"])
+        if not target_row or not source_row:
             continue
-        target_languages = sorted(docs_for_celex.keys())
-        pivot_row = docs_for_celex.get("en")
-        if pivot_row is None:
-            pivot_row = docs_for_celex[target_languages[0]]
-        pivot_language = pivot_row.get("language", "") or "en"
-        pivot_language_counts[pivot_language] += 1
-        target_corpus_ids = {
-            lang: docs_for_celex[lang].get("id", "")
-            for lang in target_languages
-            if docs_for_celex[lang].get("id", "")
-        }
-        generation_row = dict(pivot_row)
-        generation_row["target_languages_json"] = json.dumps(target_languages, ensure_ascii=False)
-        generation_row["target_corpus_ids_json"] = json.dumps(target_corpus_ids, ensure_ascii=False)
-        generation_row["pivot_language"] = pivot_language
-        generation_row["pivot_corpus_id"] = pivot_row.get("id", "")
+        generation_row = dict(target_row)
+        generation_row["pair_id"] = pair["pair_id"]
+        generation_row["celex"] = pair["celex"]
+        generation_row["source_language"] = pair["source_language"]
+        generation_row["source_corpus_id"] = pair["source_corpus_id"]
+        generation_row["target_language"] = pair["target_language"]
+        generation_row["target_corpus_id"] = pair["target_corpus_id"]
+        generation_row["query_corpus_id"] = pair["target_corpus_id"]
+        generation_row["query_id_hint"] = pair["pair_id"]
+        generation_row["linked_corpus_ids_json"] = json.dumps(
+            [pair["source_corpus_id"], pair["target_corpus_id"]],
+            ensure_ascii=False,
+        )
         generation_rows.append(generation_row)
+        generation_target_language_counts[pair["target_language"]] += 1
 
-    generation_rows.sort(key=lambda row: (row.get("celex", ""), row.get("pivot_language", ""), row.get("id", "")))
+    generation_rows.sort(
+        key=lambda row: (
+            row.get("source_language", ""),
+            row.get("source_corpus_id", ""),
+            row.get("target_language", ""),
+            row.get("target_corpus_id", ""),
+        )
+    )
 
     sampled_pairs_path = output_dir / "sampled_pairs.csv"
     selected_sources_path = output_dir / "qa_generation_sources.csv"
@@ -233,10 +271,14 @@ def prepare_jrc_qa_inputs(
         list(generation_rows[0].keys())
         if generation_rows
         else qa_candidate_fieldnames + [
-            "target_languages_json",
-            "target_corpus_ids_json",
-            "pivot_language",
-            "pivot_corpus_id",
+            "pair_id",
+            "source_language",
+            "source_corpus_id",
+            "target_language",
+            "target_corpus_id",
+            "query_corpus_id",
+            "query_id_hint",
+            "linked_corpus_ids_json",
         ]
     )
 
@@ -261,9 +303,9 @@ def prepare_jrc_qa_inputs(
         "sampled_pairs_total": len(sampled_pairs),
         "subset_corpus_docs_total": len(corpus_subset_rows),
         "selected_source_docs_total": len(selected_source_rows),
-        "selected_celex_total": len(selected_celexes),
         "generation_units_total": len(generation_rows),
-        "pivot_languages": dict(sorted(pivot_language_counts.items())),
+        "generation_pairs_by_source_language": dict(sorted(generation_pairs_stats.items())),
+        "generation_target_languages": dict(sorted(generation_target_language_counts.items())),
         "languages": selected_sources_stats,
         "sampled_pairs_csv": str(sampled_pairs_path),
         "qa_generation_sources_csv": str(selected_sources_path),

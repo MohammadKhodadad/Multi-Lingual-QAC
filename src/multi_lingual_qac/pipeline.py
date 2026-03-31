@@ -129,13 +129,13 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     generation_units_total = int(selection_stats.get("generation_units_total", 0))
                     selected_source_docs_total = int(selection_stats.get("selected_source_docs_total", 0))
                     if generation_units_total <= 0:
-                        raise ValueError("JRC QA preparation selected zero pivot generation units.")
+                        raise ValueError("JRC QA preparation selected zero pair generation units.")
                     print(
                         "Prepared JRC QA subset:"
                         f" {selection_stats['sampled_pairs_total']} sampled directional pairs,"
                         f" {selection_stats['subset_corpus_docs_total']} corpus docs,"
                         f" {selected_source_docs_total} selected source docs,"
-                        f" {generation_units_total} pivot generation units."
+                        f" {generation_units_total} pair generation units."
                     )
                     run_qa_pipeline(
                         corpus_path=selected_sources_path,
@@ -143,7 +143,7 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                         sample_size=generation_units_total,
                         batch_mode=bool(qa_batch),
                         target_languages=[],
-                        same_language=False,
+                        same_language=True,
                         domain_hint="legal",
                     )
                 else:

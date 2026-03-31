@@ -79,33 +79,29 @@ Domain behavior:
 
 ### JRC-Acquis
 
-JRC now uses a legal pivot-generation flow.
-
-It no longer generates questions independently from each source-language document.
+JRC now uses a legal pair-level generation flow.
 
 Current process:
 
 1. `prepare_jrc_qa_inputs()` samples directional language pairs from `document_pairs_all.csv`.
 2. It selects source QA candidates by language.
-3. It expands those selections to CELEX-level multilingual groups.
-4. For each selected CELEX, it chooses the English aligned document as the pivot when available.
-5. It writes `qac/qa_generation_sources.csv`, where each row contains:
-   - the pivot document text
-   - the CELEX id
-   - `target_languages_json`
-   - `target_corpus_ids_json`
-6. `run_qa_pipeline()` reads those pivot rows.
-7. The canonical question/answer is generated from the English pivot document.
-8. The English pair is validated.
-9. The pair is translated into all aligned target languages for that CELEX group.
-10. Each translated query is written against the matching language-specific `corpus_id`.
+3. For each selected source document, it chooses one sampled pair.
+4. It writes `qac/qa_generation_sources.csv`, where each row represents one pair and uses the translated/target document as the generation side.
+5. `run_qa_pipeline()` reads those rows in same-language mode.
+6. The question/answer is generated directly from the target-side document text, in the target-side language.
+7. The generated pair is validated with the legal-domain checks.
+8. The final query is linked to both documents in the pair:
+   - the source/main-side document
+   - the translated/target-side document
+
+So JRC is no longer CELEX-wide and no longer expands one query to all aligned languages.
 
 Domain behavior:
 
 - Prompt style is legal/regulatory, not chemistry-like.
 - Questions should ask about operative meaning, condition, threshold, exception, evidence, consequence, scope, or legal effect.
 - Questions should not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like `this article` unless essential.
-- Translation checking also rejects translations that introduce label references that were not present in the English question.
+- The generated query is attached to both documents in the selected pair, not to all CELEX-aligned languages.
 
 ## Domain Hint System
 
@@ -147,6 +143,6 @@ Main intermediate files:
 
 - EPO: English generation -> translate
 - Wikidata: English generation -> translate
-- JRC: English pivot document -> generate legal query -> translate to all aligned languages
+- JRC: pick one pair -> generate legal query from the translated side -> attach that query to both pair documents
 
 The JRC setup is designed so the corpus stays natural in each language, while the query intent stays aligned across languages.

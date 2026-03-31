@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import os
 from pathlib import Path
 import sys
@@ -78,7 +79,7 @@ JRC_DATASET_CARD_ATTRIBUTION = """
 ## Data source
 
 - **Source dataset:** JRC-Acquis, a multilingual aligned corpus of European Union legal texts.
-- **This dataset:** The corpus subset, questions, and answers are derived benchmark artifacts built from JRC-Acquis document alignments using pivot-language question generation and multilingual query translation.
+- **This dataset:** The corpus subset, questions, and answers are derived benchmark artifacts built from JRC-Acquis language pairs, where one query is generated from the translated side of a selected pair and linked to both paired documents.
 - **Note:** Verify the latest upstream distribution terms and citation guidance from the official JRC-Acquis source before public redistribution.
 """
 
@@ -168,6 +169,26 @@ def load_qac(qac_path: Path) -> list[dict]:
     return rows
 
 
+def _linked_corpus_ids(row: dict, fallback_corpus_id: str) -> list[str]:
+    raw = str(row.get("linked_corpus_ids_json", "")).strip()
+    if raw:
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, list):
+            linked = []
+            seen = set()
+            for item in parsed:
+                cid = str(item).strip()
+                if cid and cid not in seen:
+                    linked.append(cid)
+                    seen.add(cid)
+            if linked:
+                return linked
+    return [fallback_corpus_id] if fallback_corpus_id else []
+
+
 def push_to_hub(
     corpus_path: Path,
     qac_path: Path,
@@ -210,13 +231,18 @@ def push_to_hub(
         lang = r.get("language", "")
         q = r.get("question", "")
         a = r.get("answer", "")
-        query_id = f"{cid}_q_{lang}" if cid in corpus_ids else f"q_{i}_{lang}"
+        query_id_hint = str(r.get("query_id_hint", "")).strip()
+        if query_id_hint:
+            query_id = f"{query_id_hint}_q_{lang}"
+        else:
+            query_id = f"{cid}_q_{lang}" if cid in corpus_ids else f"q_{i}_{lang}"
         if query_id in seen_query_ids:
             query_id = f"{cid}_q_{lang}_{i}"
         seen_query_ids.add(query_id)
 
         queries_data.append({"_id": query_id, "text": q})
-        qrels_data.append({"query-id": query_id, "corpus-id": cid, "score": 1.0})
+        for linked_corpus_id in _linked_corpus_ids(r, cid):
+            qrels_data.append({"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0})
         qac_full.append({
             "query_id": query_id,
             "corpus_id": cid,

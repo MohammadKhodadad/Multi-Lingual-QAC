@@ -441,17 +441,40 @@ Rules:
 - Ask about one operative point such as a condition, consequence, addressee, exception, scope limit, evidence requirement, procedural effect, legal threshold, or what the rule practically requires, permits, excludes, or causes.
 - The question must be answerable strictly from the passage and be specific enough for retrieval benchmarking.
 - Prefer semantically challenging questions that require understanding the operative meaning of the provision rather than surface keyword lookup.
+- Prefer questions that strong semantic retrieval should handle better than simple BM25-style term overlap.
+- Prefer the deepest answerable legal fact over the easiest extractive fact.
 - The question should still work as a strong query if article numbers, paragraph numbers, recital numbers, and annex labels were hidden.
 - Do not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article", "this regulation", "this directive", or close equivalents in {lang_name} unless the reference itself is essential.
 - Do not ask for the provision number, legal basis citation, exact title, or exact clause wording.
 - Do not simply restate the passage in question form.
+- Do not keep unusually high lexical overlap with the opening sentence or title when a more natural paraphrase is possible.
+- Do not just wrap a copied noun phrase or copied legal clause in a question template.
 - Do not ask a broad summary question when a narrower operative question is available.
 - Do not bundle multiple loosely related legal conditions into one long checklist question unless the passage presents them as one inseparable rule.
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the passage supports a better question about threshold, obligation, exception, trigger, or consequence.
+- Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
+- If both are possible, prefer asking what the rule changes, enables, limits, requires, or causes instead of what exact wording or exact list it contains.
 - Prefer grounded paraphrase over direct lexical overlap.
+- Before finalizing, check:
+  - Would this still be a strong query if legal labels were hidden?
+  - Does this ask about operative meaning or effect rather than location in the document?
+  - Would answering it require understanding the document, not just spotting copied words?
+  - Did I accidentally choose a safe literal lookup when a better semantic legal question was available?
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
 - Include supporting_text: a short quote copied from the source that justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
+
+Good style examples:
+- a question about what condition must be satisfied before authorization is possible
+- a question about what happens if the authority does not object in time
+- a question about who may submit a request or benefit from an exception
+- a question about what evidence or certificate must accompany a shipment or application
+
+Bad style examples:
+- a question beginning with the equivalent of "According to Article ..."
+- a question asking which article sets out the exception
+- a question asking only for the exact date, percentage, or listed items when the text supports a better question about threshold or consequence
+- a question that mostly copies the title or first operative sentence and turns it into a query
 
 Output valid JSON only, no markdown:
 {{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
@@ -461,7 +484,7 @@ Output valid JSON only, no markdown:
         retry_note = (
             "\n\nPrevious attempt issue to fix:\n"
             f"{previous_feedback}\n"
-            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels."
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase."
         )
     previous_attempt_note = ""
     if previous_question or previous_answer:
@@ -1246,6 +1269,24 @@ def _row_target_corpus_ids(row: Dict[str, Any]) -> Dict[str, str]:
     return result
 
 
+def _row_output_metadata(row: Dict[str, Any]) -> Dict[str, str]:
+    metadata: Dict[str, str] = {}
+    for key in (
+        "pair_id",
+        "celex",
+        "source_language",
+        "source_corpus_id",
+        "target_language",
+        "target_corpus_id",
+        "query_id_hint",
+        "linked_corpus_ids_json",
+    ):
+        value = str(row.get(key, "")).strip()
+        if value:
+            metadata[key] = value
+    return metadata
+
+
 def _process_sample_row(
     index: int,
     row: Dict[str, Any],
@@ -1281,6 +1322,7 @@ def _process_sample_row(
         if same_language:
             row_lang = (row.get("language") or "en").strip().lower()
             lang_name = LANG_NAMES.get(row_lang, row_lang)
+            row_metadata = _row_output_metadata(row)
             approved_sl = False
             q_loc = ""
             a_loc = ""
@@ -1379,6 +1421,7 @@ def _process_sample_row(
                         "language": row_lang,
                         "question": q_loc,
                         "answer": a_loc,
+                        **row_metadata,
                     }
                 ],
                 "status": f"ok ({question_type or 'validated'} {row_lang}, same-language)",
@@ -1684,8 +1727,13 @@ def run_qa_pipeline(
         qac_rows.extend(result["rows"])
 
     out_csv = output_dir / "qac.csv"
+    fieldnames = ["corpus_id", "language", "question", "answer"]
+    for row in qac_rows:
+        for key in row.keys():
+            if key not in fieldnames:
+                fieldnames.append(key)
     with out_csv.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["corpus_id", "language", "question", "answer"])
+        w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader()
         w.writerows(qac_rows)
 

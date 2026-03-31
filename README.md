@@ -109,13 +109,13 @@ Re-run **step 4** alone if you change labeling logic only; re-run **3** (and **4
 
 ### JRC-Acquis (legal / regulatory corpus)
 
-JRC now uses a **pivot-generation** QA flow:
+JRC now uses a **pair-level** QA flow:
 
 1. sample directional document pairs
-2. select CELEX-aligned multilingual groups
-3. choose the English aligned document as the pivot when available
-4. generate the canonical QA pair from that pivot text
-5. translate the question/answer to all aligned target languages for the selected CELEX group
+2. choose one sampled pair per selected source document
+3. take the translated/target side of that pair
+4. generate the question/answer from that target-side text
+5. connect the resulting query to both documents in the pair
 
 The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent.
 
