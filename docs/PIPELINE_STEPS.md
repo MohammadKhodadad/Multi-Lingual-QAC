@@ -2,6 +2,98 @@
 
 Short recap of every step implemented in the Multi-Lingual Chemical QAC pipeline.
 
+## Current JRC Flow
+
+```text
++---------------------------+
+| Raw JRC-Acquis XML        |
+| archives                  |
++---------------------------+
+              |
+              v
++---------------------------+
+| Prepare source            |
+| download / parse /        |
+| normalize                 |
++---------------------------+
+              |
+              v
++---------------------------+
+| Build document corpus     |
+| corpus_full.csv /         |
+| corpus.csv                |
++---------------------------+
+              |
+              v
++---------------------------+
+| Build document pairs      |
+| document_pairs_all.csv    |
+| grouped by CELEX          |
++---------------------------+
+              |
+              v
++---------------------------+
+| Filter QA candidates      |
+| multilingual /            |
+| quality gates             |
++---------------------------+
+              |
+              v
++---------------------------+
+| Sample directional        |
+| language pairs            |
++---------------------------+
+              |
+              v
++---------------------------+
+| Select one pair per       |
+| source document           |
++---------------------------+
+              |
+              v
++---------------------------+
+| Use translated side as    |
+| generation text           |
++---------------------------+
+              |
+              v
++---------------------------+
+| Generate question /       |
+| answer in same-language   |
+| legal mode                |
++---------------------------+
+              |
+              v
++---------------------------+
+| Validate                  |
+| language / faithfulness / |
+| legal quality             |
++---------------------------+
+       | yes                      ^ no
+       v                          |
++---------------------------+     |
+| Write qac.csv            |     |
++---------------------------+     |
+              |                   |
+              v                   |
++---------------------------+     |
+| Link one query to both   |     |
+| documents in the pair    |     |
++---------------------------+     |
+              |                   |
+              v                   |
++---------------------------+     |
+| Export corpus / queries /|     |
+| qrels / HF dataset       |     |
++---------------------------+     |
+                                  |
+                     +---------------------------+
+                     | Retry with feedback       |
+                     +---------------------------+
+                                  |
+                                  +--------------+
+```
+
 ---
 
 ## 1. Plan

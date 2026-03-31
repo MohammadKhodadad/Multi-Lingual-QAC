@@ -312,6 +312,11 @@ Rules:
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, or consequence.
 - Avoid questions whose best answer would naturally be a semicolon-separated list of several conditions, categories, or procedural branches.
 - Avoid effective-date-only, amount-only, threshold-only, or replacement-value-only questions when the text supports a better question about what the date, amount, or threshold changes legally.
+- Avoid timing-only or frequency-only questions such as when a report must be filed, how often something must be reported, or by what date an action must occur when the text supports a better question about what the obligation does, what triggers it, or what follows from failure to comply.
+- Avoid two-part questions that ask both A and B in the same sentence when one sharper sub-question is available.
+- Avoid contrastive yes/no questions that present two competing legal paths in one sentence if one branch captures the stronger retrieval need.
+- Avoid procedural questions that ask both what authority action is required and how a secondary calculation, adjustment, or follow-up detail must be handled if one of those is the clearer retrieval target.
+- Prefer a compact query with one main clause. If the question starts growing into a second clause after a comma, conjunction, or semicolon, keep only the stronger sub-question.
 - Prefer grounded paraphrase over direct lexical overlap.
 - Before finalizing, check:
   - Does this ask about what the rule means, requires, permits, excludes, proves, or causes?
@@ -319,6 +324,8 @@ Rules:
   - Would dense retrieval need semantic understanding, not just BM25-style token overlap?
   - Would the answer be a focused legal point rather than an inventory of several items?
   - Did I pick one trigger, one exception, one consequence, one addressee, or one legal effect instead of combining several?
+  - Did I accidentally ask two questions at once or force the query into two competing branches?
+  - Did I fall back to a filing date, reporting frequency, or procedural timing question when the stronger retrieval need was the obligation, trigger, or consequence?
 - The answer must be concise (1-2 sentences) and strictly grounded in the context.
 - Include a short supporting_text quote copied from the source context that justifies the answer.
 - Include a question_type chosen from: obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -466,8 +473,13 @@ Rules:
 - Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
 - Avoid deadline-only questions when the text supports a better question about what triggers the deadline, what it governs, or what happens if it is not met.
 - Avoid amount-only, threshold-only, replacement-value-only, and effective-date-only questions when the text supports a better question about what that value changes, limits, enables, or triggers legally.
+- Avoid timing-only or frequency-only questions such as when a report must be filed, how often something must be reported, or by what date an action must occur when the text supports a better question about what the obligation does, what triggers it, or what follows from non-compliance.
 - Avoid certificate/evidence/list questions that only ask for the full inventory when the text supports a better question about what the evidence is meant to show or when it is required.
 - Avoid questions whose best answer would naturally be a semicolon-separated inventory of conditions, exceptions, categories, documents, or procedural branches.
+- Avoid two-part questions that ask both A and B in the same sentence when one sharper sub-question is available.
+- Avoid contrastive yes/no questions that present two competing legal paths in one sentence if one branch captures the stronger retrieval need.
+- Avoid procedural questions that ask both what authority action is required and how a secondary calculation, adjustment, or follow-up detail must be handled if one of those is the clearer retrieval target.
+- Prefer a compact query with one main clause. If the question starts growing into a second clause after a comma, conjunction, or semicolon, keep only the stronger sub-question.
 - If both are possible, prefer asking what the rule changes, enables, limits, requires, or causes instead of what exact wording or exact list it contains.
 - Prefer grounded paraphrase over direct lexical overlap.
 - Prefer a question that can usually be answered in one focused sentence, not a question that forces a long bullet-list answer.
@@ -478,6 +490,8 @@ Rules:
   - Did I accidentally choose a safe literal lookup when a better semantic legal question was available?
   - Did I ask for too many legal conditions at once when one narrower condition, consequence, exception, or threshold would be better?
   - Would the answer become a list of several sub-rules instead of one focused legal point?
+  - Did I accidentally ask two questions at once or build a contrastive A-or-B query instead of one focused legal question?
+  - Did I fall back to a filing date, reporting frequency, or procedural timing question when the stronger retrieval need was the obligation, trigger, or consequence?
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
 - Include supporting_text: a short quote copied from the source that justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -839,11 +853,15 @@ Reject questions that:
 - ask only for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, consequence, or scope,
 - ask only for a deadline when the context supports a better question about what the deadline governs, what triggers it, or what follows from it,
 - ask only for an amount, replacement value, effective date, or numeric threshold when the context supports a better question about what that figure changes, limits, enables, or triggers,
+- ask only for a reporting frequency, filing date, update cycle, or procedural timing detail when the text supports a better question about the obligation, trigger, scope, or consequence,
 - ask for a full inventory of guarantees, certificates, conditions, or consequences when one narrower point would make a better retrieval query,
 - ask for a full inventory of authorities, exceptions, categories, documents, or powers when one narrower point would make a better retrieval query,
 - bundle multiple loosely related legal conditions into one checklist question,
 - would naturally require a semicolon-separated or bullet-list answer containing several sub-rules,
 - combine what the rule says, when it applies, its exceptions, and its consequences into one question when one sharper sub-question is available,
+- ask two distinct legal questions in one sentence joined by conjunctions or contrastive framing when one should be chosen,
+- present two competing legal paths in a yes/no or either-or formulation when one sharper path would make a cleaner query,
+- ask both what must be done and how a secondary adjustment, calculation, or follow-up step works when one sharper question should be chosen,
 - sound like a recital or provision restatement rather than a natural legal information need.
 
 Be especially strict about these failure modes:
@@ -873,6 +891,10 @@ If you reject the question:
   - `ask about the threshold or exception, not the label`
 - `pick one trigger or consequence instead of listing several conditions`
 - `ask what the date or amount changes legally, not just what it is`
+- `ask one legal question, not two joined together`
+- `drop the weaker branch and keep one sharper legal query`
+- `ask about the obligation or consequence, not just the reporting date or frequency`
+- `keep the main legal action and drop the secondary procedural detail`
 
 If you approve the question:
 - set `failure_type` to `none`
@@ -1430,7 +1452,10 @@ def _process_sample_row(
                         f"'this article' unless essential. Prefer one narrower legal point over a multi-condition "
                         f"checklist. Avoid questions whose answer becomes an inventory of conditions, exceptions, "
                         f"documents, authorities, or consequences. Avoid deadline-only, amount-only, threshold-only, "
-                        f"or list-only lookup questions when a better semantic legal question is available."
+                        f"or list-only lookup questions when a better semantic legal question is available. Ask one "
+                        f"legal question, not two joined together or one contrastive A-or-B question. Prefer the "
+                        f"main obligation, trigger, or consequence over reporting-frequency or procedural-timing "
+                        f"details, and drop secondary calculation or follow-up details when they weaken the query."
                     )
                     continue
 
