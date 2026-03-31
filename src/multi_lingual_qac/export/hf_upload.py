@@ -12,10 +12,13 @@ import csv
 import io
 import os
 from pathlib import Path
+import sys
+import time
 from typing import Optional
 
 from datasets import Dataset
 from huggingface_hub import HfApi
+from huggingface_hub.errors import HfHubHTTPError
 
 # Dataset card text: attribution and license (CC BY 4.0, derived dataset, no endorsement, scope).
 # Used for the Hugging Face dataset README so the same terms appear on the Hub.
@@ -50,9 +53,101 @@ configs:
 ---
 """
 
+GENERIC_DATASET_INTRO = (
+    "# Multi-lingual QAC retrieval dataset\n\n"
+    "Question–Answer–Context (QAC) data for multilingual retrieval benchmarking. "
+    "Configs/subsets: `corpus`, `queries`, `qrels`, `qac`. "
+    "Each config currently contains a `train` split.\n"
+)
+
+PATENT_DATASET_INTRO = (
+    "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
+    "Question–Answer–Context (QAC) data for chemistry patent retrieval, multiple languages. "
+    "Configs/subsets: `corpus`, `queries`, `qrels`, `qac` (MTEB-style). "
+    "Each config currently contains a `train` split.\n"
+)
+
+JRC_DATASET_INTRO = (
+    "# Multi-lingual JRC-Acquis QAC\n\n"
+    "Question–Answer–Context (QAC) data derived from the JRC-Acquis multilingual legal corpus. "
+    "Configs/subsets: `corpus`, `queries`, `qrels`, `qac`. "
+    "Each config currently contains a `train` split.\n"
+)
+
+JRC_DATASET_CARD_ATTRIBUTION = """
+## Data source
+
+- **Source dataset:** JRC-Acquis, a multilingual aligned corpus of European Union legal texts.
+- **This dataset:** The corpus subset, questions, and answers are derived benchmark artifacts built from JRC-Acquis document alignments using pivot-language question generation and multilingual query translation.
+- **Note:** Verify the latest upstream distribution terms and citation guidance from the official JRC-Acquis source before public redistribution.
+"""
+
+WIKIDATA_DATASET_CARD_ATTRIBUTION = """
+## Data source
+
+- **Source datasets:** Wikidata entity metadata and multilingual Wikipedia text extracts.
+- **This dataset:** The corpus, questions, and answers are derived benchmark artifacts built from those sources.
+- **Note:** Verify the latest upstream attribution and redistribution requirements for Wikidata and Wikipedia before public redistribution.
+"""
+
+
+def _build_readme(source_name: str) -> str:
+    source_name = (source_name or "").strip().lower()
+    if source_name == "epo":
+        intro = PATENT_DATASET_INTRO
+        attribution = DATASET_CARD_ATTRIBUTION
+    elif source_name == "jrc-acquis":
+        intro = JRC_DATASET_INTRO
+        attribution = JRC_DATASET_CARD_ATTRIBUTION
+    elif source_name == "wikidata":
+        intro = GENERIC_DATASET_INTRO
+        attribution = WIKIDATA_DATASET_CARD_ATTRIBUTION
+    else:
+        intro = GENERIC_DATASET_INTRO
+        attribution = ""
+    return README_YAML + intro + attribution
+
+
+def _set_csv_field_size_limit() -> None:
+    limit = sys.maxsize
+    while True:
+        try:
+            csv.field_size_limit(limit)
+            return
+        except OverflowError:
+            limit //= 10
+
+
+def _is_retryable_hf_error(exc: Exception) -> bool:
+    if isinstance(exc, HfHubHTTPError):
+        message = str(exc)
+        return any(code in message for code in ("500", "502", "503", "504"))
+    message = str(exc)
+    return "Gateway Time-out" in message or "Server error" in message
+
+
+def _with_hf_retries(action_name: str, func, *, max_attempts: int = 4):
+    last_exc: Optional[Exception] = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return func()
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= max_attempts or not _is_retryable_hf_error(exc):
+                raise
+            wait_s = min(20, 2 ** (attempt - 1) * 3)
+            print(
+                f"{action_name} failed with a transient Hub error "
+                f"(attempt {attempt}/{max_attempts}). Retrying in {wait_s}s..."
+            )
+            time.sleep(wait_s)
+    if last_exc is not None:
+        raise last_exc
+
 
 def load_corpus(corpus_path: Path) -> list[dict]:
     rows = []
+    _set_csv_field_size_limit()
     with corpus_path.open(encoding="utf-8") as f:
         for row in csv.DictReader(f):
             parsed = dict(row)
@@ -66,6 +161,7 @@ def load_corpus(corpus_path: Path) -> list[dict]:
 
 def load_qac(qac_path: Path) -> list[dict]:
     rows = []
+    _set_csv_field_size_limit()
     with qac_path.open(encoding="utf-8") as f:
         for row in csv.DictReader(f):
             rows.append(dict(row))
@@ -77,6 +173,7 @@ def push_to_hub(
     qac_path: Path,
     repo_id: str,
     *,
+    source_name: str = "",
     token: Optional[str] = None,
     private: bool = False,
 ) -> str:
@@ -132,56 +229,74 @@ def push_to_hub(
     queries_ds = Dataset.from_list(queries_data)
     qrels_ds = Dataset.from_list(qrels_data)
     qac_ds = Dataset.from_list(qac_full)
+    api = HfApi(token=token)
+
+    _with_hf_retries(
+        "Create/update dataset repo",
+        lambda: api.create_repo(
+            repo_id=repo_id,
+            repo_type="dataset",
+            private=private,
+            exist_ok=True,
+        ),
+    )
 
     # Push each subset/config separately, each with its own train split.
-    corpus_ds.push_to_hub(
-        repo_id,
-        config_name="corpus",
-        split="train",
-        data_dir="data/corpus",
-        token=token,
-        private=private,
+    _with_hf_retries(
+        "Push corpus split",
+        lambda: corpus_ds.push_to_hub(
+            repo_id,
+            config_name="corpus",
+            split="train",
+            data_dir="data/corpus",
+            token=token,
+            private=private,
+        ),
     )
-    queries_ds.push_to_hub(
-        repo_id,
-        config_name="queries",
-        split="train",
-        data_dir="data/queries",
-        token=token,
-        private=private,
+    _with_hf_retries(
+        "Push queries split",
+        lambda: queries_ds.push_to_hub(
+            repo_id,
+            config_name="queries",
+            split="train",
+            data_dir="data/queries",
+            token=token,
+            private=private,
+        ),
     )
-    qrels_ds.push_to_hub(
-        repo_id,
-        config_name="qrels",
-        split="train",
-        data_dir="data/qrels",
-        token=token,
-        private=private,
+    _with_hf_retries(
+        "Push qrels split",
+        lambda: qrels_ds.push_to_hub(
+            repo_id,
+            config_name="qrels",
+            split="train",
+            data_dir="data/qrels",
+            token=token,
+            private=private,
+        ),
     )
-    qac_ds.push_to_hub(
-        repo_id,
-        config_name="qac",
-        split="train",
-        data_dir="data/qac",
-        token=token,
-        private=private,
+    _with_hf_retries(
+        "Push qac split",
+        lambda: qac_ds.push_to_hub(
+            repo_id,
+            config_name="qac",
+            split="train",
+            data_dir="data/qac",
+            token=token,
+            private=private,
+        ),
     )
 
     # Upload dataset card (README.md) with attribution and license
-    readme_body = (
-        README_YAML
-        + "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
-        "Question–Answer–Context (QAC) data for chemistry patent retrieval, multiple languages. "
-        "Configs/subsets: `corpus`, `queries`, `qrels`, `qac` (MTEB-style). "
-        "Each config currently contains a `train` split.\n"
-        + DATASET_CARD_ATTRIBUTION
-    )
-    api = HfApi(token=token)
-    api.upload_file(
-        path_or_fileobj=io.BytesIO(readme_body.encode("utf-8")),
-        path_in_repo="README.md",
-        repo_id=repo_id,
-        repo_type="dataset",
+    readme_body = _build_readme(source_name)
+    _with_hf_retries(
+        "Upload dataset README",
+        lambda: api.upload_file(
+            path_or_fileobj=io.BytesIO(readme_body.encode("utf-8")),
+            path_in_repo="README.md",
+            repo_id=repo_id,
+            repo_type="dataset",
+        ),
     )
 
     url = f"https://huggingface.co/datasets/{repo_id}"

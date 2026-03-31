@@ -107,6 +107,20 @@ The extracted XML directory is intended to be the source-local raw cache. It kee
 
 Re-run **step 4** alone if you change labeling logic only; re-run **3** (and **4**) if `qac.csv` changes; re-run **2** onward if chunking or corpus content changes.
 
+### JRC-Acquis (legal / regulatory corpus)
+
+JRC now uses a **pivot-generation** QA flow:
+
+1. sample directional document pairs
+2. select CELEX-aligned multilingual groups
+3. choose the English aligned document as the pivot when available
+4. generate the canonical QA pair from that pivot text
+5. translate the question/answer to all aligned target languages for the selected CELEX group
+
+The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent.
+
+See `docs/QA_GENERATION_PROCESS.md` for the full current QA-generation flow across EPO, Wikidata, and JRC.
+
 ### Q&A generation (Option A)
 
 - Samples corpus (stratified by language)

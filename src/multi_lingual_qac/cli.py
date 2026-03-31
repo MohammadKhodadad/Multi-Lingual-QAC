@@ -79,6 +79,8 @@ def parse_args() -> PipelineConfig:
     )
     parser.add_argument("--limit", type=int, default=None, help="Optional source-specific limit (for Wikidata, max selected entities)")
     parser.add_argument("--qa-sample", type=int, default=None, help="Sample size for Q&A generation (if omitted in interactive mode, you will be prompted; 0 = skip Q&A)")
+    parser.add_argument("--qa-pairs-per-language", type=int, default=None, help="JRC-Acquis only: directional language-pair samples per source language before QA selection")
+    parser.add_argument("--qa-docs-per-language", type=int, default=None, help="JRC-Acquis only: selected source documents per language used to choose pivot QA generation groups")
     parser.add_argument("--qa-batch", action="store_true", help="Batch QA generation using worker threads based on available CPUs")
     parser.add_argument("--qa-no-batch", action="store_true", help="Disable batch QA generation")
     parser.add_argument("--push-hf", action="store_true", help="Push corpus + QAC to Hugging Face Hub")
@@ -102,6 +104,8 @@ def parse_args() -> PipelineConfig:
         no_extraction=args.no_extraction,
         limit=args.limit,
         qa_sample=args.qa_sample,
+        qa_pairs_per_language=args.qa_pairs_per_language,
+        qa_docs_per_language=args.qa_docs_per_language,
         qa_batch=qa_batch,
         push_hf=args.push_hf,
         hf_repo=args.hf_repo,

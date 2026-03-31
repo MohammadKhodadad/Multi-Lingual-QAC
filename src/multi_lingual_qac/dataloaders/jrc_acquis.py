@@ -53,56 +53,22 @@ RE_SPACE_AFTER_OPEN = re.compile(r"([(\[])\s+")
 RE_SPACE_BEFORE_CLOSE = re.compile(r"\s+([)\]])")
 RE_JRC_SECTION_HEADING = re.compile(r"^[IVXLC]+\s*\([^)]+\)$", re.IGNORECASE)
 RE_JRC_TITLE_WRAPPER = re.compile(r"^[IVXLC]+\s*\([^)]+\)\s+[A-ZÀ-ÖØ-Þ]+", re.IGNORECASE)
-
-JRC_PREAMBLE_MARKERS = {
-    "bg": ("съветът", "комисията", "като взе предвид", "като има предвид", "приема настоящата"),
-    "cs": ("rada", "komise", "s ohledem na", "vzhledem k tomu", "přijala tuto"),
-    "da": ("raadet", "kommissionen", "under henvisning", "ud fra følgende", "har vedtaget"),
-    "de": ("der rat", "die kommission", "gestützt auf", "auf vorschlag", "in erwägung", "hat folgende"),
-    "el": ("το συμβούλιο", "η επιτροπή", "έχοντας υπόψη", "εκτιμώντας", "εξέδωσε την παρούσα"),
-    "en": ("the council", "the commission", "having regard", "whereas", "has adopted this"),
-    "es": ("el consejo", "la comisión", "la comision", "visto", "vista", "considerando", "ha adoptado"),
-    "et": ("nõukogu", "komisjon", "võttes arvesse", "ning arvestades", "on vastu võtnud"),
-    "fi": ("neuvosto", "komissio", "ottaa huomioon", "sekä katsoo", "on antanut tämän"),
-    "fr": ("le conseil", "la commission", "vu ", "considérant", "considere", "a arrêté", "a arrete"),
-    "hu": ("a tanács", "a tanacs", "a bizottság", "tekintettel", "mivel", "elfogadta ezt"),
-    "it": ("il consiglio", "la commissione", "visto", "considerando", "ha adottato"),
-    "lt": ("taryba", "komisija", "atsižvelgdama", "kadangi", "priėmė šią"),
-    "lv": ("padome", "komisija", "ņemot vērā", "tā kā", "ir pieņēmusi"),
-    "mt": ("il-kunsill", "il-kummissjoni", "wara li kkunsidra", "billi", "adotta dan"),
-    "nl": ("de raad", "de commissie", "gelet op", "overwegende", "heeft de volgende"),
-    "pl": ("rada", "komisja", "uwzględniając", "a także mając", "przyjmuje niniejszą"),
-    "pt": ("o conselho", "a comissão", "tendo em conta", "considerando", "adotou a presente"),
-    "ro": ("consiliul", "comisia", "având în vedere", "întrucât", "a adoptat"),
-    "sk": ("rada", "komisia", "so zreteľom na", "keďže", "prijala túto"),
-    "sl": ("svet", "komisija", "ob upoštevanju", "ker", "sprejel to"),
-    "sv": ("rådet", "radet", "kommissionen", "med beaktande", "har antagit"),
-}
-
-JRC_ARTICLE_HEADING_PATTERNS = {
-    "bg": (r"^член\s+(?:\d+|първи)\b",),
-    "cs": (r"^článek\s+(?:\d+|první)\b",),
-    "da": (r"^artikel\s+(?:\d+|1)\b",),
-    "de": (r"^artikel\s+(?:\d+|1)\b",),
-    "el": (r"^άρθρο\s+(?:\d+|1)\b", r"^αρθρο\s+(?:\d+|1)\b"),
-    "en": (r"^article\s+(?:\d+|one|first)\b",),
-    "es": (r"^artículo\s+(?:\d+|primero)\b", r"^articulo\s+(?:\d+|primero)\b"),
-    "et": (r"^artikkel\s+(?:\d+|1)\b",),
-    "fi": (r"^(?:artikla\s+\d+|\d+\s+artikla)\b",),
-    "fr": (r"^article\s+(?:\d+|premier)\b",),
-    "hu": (r"^(?:\d+\.\s*cikk|cikk\s+\d+)\b",),
-    "it": (r"^articolo\s+(?:\d+|primo)\b",),
-    "lt": (r"^(?:\d+\s+straipsnis|straipsnis\s+\d+)\b",),
-    "lv": (r"^(?:\d+\.\s*pants|pants\s+\d+)\b",),
-    "mt": (r"^artikolu\s+(?:\d+|1)\b",),
-    "nl": (r"^artikel\s+(?:\d+|1)\b",),
-    "pl": (r"^artykuł\s+(?:\d+|pierwszy)\b", r"^artykul\s+(?:\d+|pierwszy)\b"),
-    "pt": (r"^artigo\s+(?:\d+|1)\b",),
-    "ro": (r"^articolul\s+(?:\d+|1)\b",),
-    "sk": (r"^článok\s+(?:\d+|prvý)\b",),
-    "sl": (r"^člen\s+(?:\d+|1)\b",),
-    "sv": (r"^artikel\s+(?:\d+|1)\b",),
-}
+RE_JRC_ARTICLE_HEADING = re.compile(
+    r"^(?:"
+    r"(?:art(?:icle|ikel|ikla|ikkel|igo|icolo|icolul|ikulu|ículo|iculo|ykuł|ykul)"
+    r"|čl(?:ánek|anok)?|člen|член|άρθρο|αρθρο|straipsnis|pants)"
+    r"\s+(?:\d+(?:[./-][\w]+)?|[ivxlcdm]+|one|first|premier|primo|primero|pierwszy|prv[yý]|els[őo]|pirmas|pirmais)"
+    r"|(?:\d+(?:[./-][\w]+)?\s+(?:cikk|artikla|straipsnis|pants))"
+    r")\b",
+    re.IGNORECASE,
+)
+RE_JRC_ARTICLE_TOKEN = re.compile(
+    r"^(?:art(?:icle|ikel|ikla|ikkel|igo|icolo|icolul|ikulu|ículo|iculo|ykuł|ykul)"
+    r"|čl(?:ánek|anok)?|člen|член|άρθρο|αρθρο|cikk|straipsnis|pants)\b",
+    re.IGNORECASE,
+)
+RE_JRC_ARTIFACT_LINE = re.compile(r"^(?:\*{5,}|\[pic\])", re.IGNORECASE)
+RE_JRC_REFERENCE_LINE = re.compile(r"^\(\d+\)\s+[A-ZÀ-ÖØ-Þ]{1,6}\b")
 
 
 def _local_name(tag: str) -> str:
@@ -123,23 +89,44 @@ def _normalize_jrc_text(text: str) -> str:
     return text.strip()
 
 
-def _article_heading_patterns(lang: str) -> tuple[re.Pattern[str], ...]:
-    patterns = JRC_ARTICLE_HEADING_PATTERNS.get(lang.lower(), JRC_ARTICLE_HEADING_PATTERNS.get("en", ()))
-    return tuple(re.compile(pattern, re.IGNORECASE) for pattern in patterns)
-
-
-def _looks_like_article_heading(text: str, lang: str) -> bool:
-    candidate = _normalize_jrc_text(text).lower()
+def _looks_like_article_heading(text: str, lang: str = "") -> bool:
+    candidate = _normalize_jrc_text(text)
     if not candidate:
         return False
-    return any(pattern.match(candidate) for pattern in _article_heading_patterns(lang))
+    match = RE_JRC_ARTICLE_HEADING.match(candidate)
+    if not match:
+        return False
+    suffix = candidate[match.end():].strip(" .:-")
+    if not suffix:
+        return True
+    return len(suffix) <= 40 and len(suffix.split()) <= 6
 
 
-def _looks_like_preamble_start(text: str, lang: str) -> bool:
-    candidate = _normalize_jrc_text(text).lower()
+def _looks_like_institution_heading(text: str) -> bool:
+    candidate = _normalize_jrc_text(text)
     if not candidate:
         return False
-    return any(candidate.startswith(marker) for marker in JRC_PREAMBLE_MARKERS.get(lang.lower(), ()))
+    letters = [ch for ch in candidate if ch.isalpha()]
+    if len(letters) < 10:
+        return False
+    upper_ratio = sum(ch.isupper() for ch in letters) / len(letters)
+    return upper_ratio >= 0.8 and len(candidate.split()) >= 2
+
+
+def _looks_like_adoption_formula(text: str) -> bool:
+    candidate = _normalize_jrc_text(text)
+    if not candidate:
+        return False
+    letters = [ch for ch in candidate if ch.isalpha()]
+    if len(letters) < 8:
+        return False
+    upper_ratio = sum(ch.isupper() for ch in letters) / len(letters)
+    return upper_ratio >= 0.7 and candidate[-1:] in {":", ".", "-"}
+
+
+def _looks_like_reference_line(text: str) -> bool:
+    candidate = _normalize_jrc_text(text)
+    return bool(RE_JRC_REFERENCE_LINE.match(candidate))
 
 
 def _clean_jrc_paragraphs(paragraphs: list[str], lang: str) -> tuple[list[str], bool]:
@@ -152,6 +139,12 @@ def _clean_jrc_paragraphs(paragraphs: list[str], lang: str) -> tuple[list[str], 
             continue
         if normalized != paragraph.strip():
             changed = True
+        if RE_JRC_ARTIFACT_LINE.match(normalized):
+            changed = True
+            continue
+        if _looks_like_reference_line(normalized):
+            changed = True
+            continue
         if RE_JRC_SECTION_HEADING.match(normalized):
             changed = True
             continue
@@ -164,9 +157,9 @@ def _trim_jrc_to_operative_body(paragraphs: list[str], lang: str) -> tuple[list[
         if not _looks_like_article_heading(paragraph, lang):
             continue
         remaining = paragraphs[idx:]
-        if idx >= 3 and len(remaining) >= 3:
+        if idx >= 1 and len(remaining) >= 2:
             remaining_chars = sum(len(part) for part in remaining)
-            if remaining_chars >= 800:
+            if remaining_chars >= 80:
                 return remaining, True
     return paragraphs, False
 
@@ -347,7 +340,13 @@ def _derive_document_title(
         candidate = _normalize_jrc_text(para)
         if not candidate:
             continue
-        if title_parts and (_looks_like_preamble_start(candidate, lang) or _looks_like_article_heading(candidate, lang)):
+        if _looks_like_reference_line(candidate):
+            continue
+        if title_parts and (
+            _looks_like_article_heading(candidate, lang)
+            or _looks_like_institution_heading(candidate)
+            or _looks_like_adoption_formula(candidate)
+        ):
             break
         if title_parts and len(candidate) > 220:
             break

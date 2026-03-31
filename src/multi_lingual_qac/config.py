@@ -55,6 +55,8 @@ class PipelineConfig:
     no_extraction: bool = False
     limit: Optional[int] = None
     qa_sample: Optional[int] = None
+    qa_pairs_per_language: Optional[int] = None
+    qa_docs_per_language: Optional[int] = None
     qa_batch: Optional[bool] = None
     push_hf: bool = False
     hf_repo: Optional[str] = None
