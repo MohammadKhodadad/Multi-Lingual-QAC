@@ -1,227 +1,162 @@
 # QAC Quality Notes
 
-Living notes for reviewing the generated Question-Answer-Context output over time.
+Living notes for reviewing the current Question-Answer-Context output.
+
+This file now tracks the **JRC-Acquis legal/regulatory QA pipeline**, not the older chemistry/patent pipeline.
 
 ## Current Snapshot
 
-- Source file reviewed: `data/google_patents/qac/qac.csv`
-- Current sample size: 449 rows
-- Unique source documents: 30
-- Languages present: `en`, `de`, `fr`, `es`, `ja`, `ko`, `zh`, `ru`, `pt`, `it`, `nl`, `ar`, `tr`, `pl`, `hi`
-- Current design: English-first generation, then translation to the other languages
-- Current validation: English language check + faithfulness check + retrieval-quality check before translation
-- Current translation behavior: each target language is translated separately with `medium` reasoning, checked for generic artifact/fluency/meaning quality, retried with failure-type feedback plus the previous failed translation, and skipped if it still fails after the retry budget
-- Current corpus gate: preprocessing now skips documents whose cleaned abstract is shorter than `50` words, so title-only and ultra-short records are excluded before Q&A generation
+- Source file reviewed: `data/JRC-ACQUIS/qac/qac.csv`
+- Current reviewed run: `44` rows
+- Current generation design: **pair-level**, same-language generation from the translated/target side of each sampled pair
+- Current linking design: one generated query is attached to **both** documents in the selected pair
+- Current domain: legal / regulatory EU documents
+- Current validation: language match + faithfulness + legal-domain question-quality checks
+
+Quick summary from the latest reviewed run:
+
+- Languages present: `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `et`, `fr`, `hu`, `it`, `lt`, `lv`, `mt`, `nl`, `pt`, `sk`, `sl`, `sv`
+- Median question length: `149`
+- 90th percentile question length: `232`
+- Median answer length: `168`
+- 90th percentile answer length: `328`
+
+## Method
+
+Current JRC review method:
+
+1. Run `uv run main.py --source JRC-ACQUIS`.
+2. Review `data/JRC-ACQUIS/qac/qac.csv`.
+3. Check broad signals:
+   - language distribution
+   - question/answer length
+   - explicit article-number / label usage
+   - generic or checklist-shaped questions
+4. Read a manual sample of generated rows.
+5. Classify problems into:
+   - overly generic
+   - article/provision lookup
+   - bundled legal conditions
+   - deadline/list/certificate lookup
+   - overly long question shape
 
 ## What Looks Good
 
-- The `en` rows are genuinely English in the current sample.
-- The answers appear grounded in the source patent abstract or context.
-- The English answers are generally concise and readable.
-- The structure is consistent across languages: one approved English QA gets translated into the target languages.
-- The current validators seem to remove obvious language failures and some unsupported outputs.
-- The latest prompt revision produces better questions when it focuses on method, ingredients, component role, technical purpose, or process effect.
-- The new preprocessing gate appears to have fixed the previous title-only failure mode in the reviewed sample.
-- Several of the latest questions are more procedural and discriminative than earlier runs, especially around production steps, mixing logic, sealing, and operating constraints.
-- The newest generation-prompt update still shows good question-shape diversity. In the current 20-question English sample, the set mixes `Why`, `Which`, `What function`, `What effect`, `How does`, `At what`, and other targeted question forms rather than clustering around one opening pattern.
-- The refined translation checker improved the quality/coverage balance compared with the previous stricter run. In the current sample, all kept documents retain full multilingual coverage across the target languages.
-- The latest `gpt-5-mini` prompt revision plus higher reasoning effort for English generation reduced the worst `purpose` / `advantages` fallback questions and improved semantic phrasing compared with the earlier `gpt-5-mini` runs.
-- The newest stricter retry-feedback update appears to help again: the latest reviewed sample keeps full multilingual coverage while shifting more English questions toward `Why`, `What property`, and `What function` framing instead of broad summary wording.
-- The latest generic translation prompt/checker update removed the need for handcrafted per-language translation hints while still improving artifact control.
-- The latest run no longer shows the earlier kept Hindi row with Korean-script leakage; the new generic artifact rules appear to be catching that class of failure.
-- The latest multilingual sample is the best overall `gpt-5-mini` run so far for end-to-end balance across English quality, translation cleanliness, and pipeline robustness.
-
-## What Still Looks Weak
-
-- Question style is more varied than before, but some mild repetition still remains around causal/rationale framing.
-- A small number of questions still use broad function/purpose framing.
-- Some questions are faithful but still a bit broad for strong retrieval benchmarking. They summarize a benefit or use case instead of isolating one narrower technical fact.
-- Some translated outputs are accurate but still feel literal rather than fully native.
-- A few target-language rows still show grammar or phrasing issues even when the meaning is preserved.
-- Coverage is better than the previous strict-check run, but some sampled documents are still skipped at the English validation stage.
-- Technical-name normalization is better than before, but should still be monitored on chemistry-heavy examples.
-- The current sample is still modest, so quality judgments are still preliminary.
-- We now validate language, faithfulness, retrieval usefulness, and translation quality, but the prompt and checker may still need tuning to improve question-form diversity further, reduce the remaining broad function/purpose cases, and catch more subtle multilingual fluency problems.
-- A few questions are still somewhat extractive or lookup-oriented, especially around exact named compounds, percentage targets, or allowed classes.
-- The latest `gpt-5-mini` run is the best `gpt-5-mini` result so far, but it still looks slightly weaker than the strongest `gpt-4.1` run for pure query quality.
-- The remaining weak cases are now more concentrated in literal list/value questions than in vague `purpose` / `advantage` questions, which is better than before but still not ideal for a dense-retrieval benchmark.
-- Coverage is no longer always full at the row level in the latest stricter multilingual runs. The current `30`-document run dropped one `hi` translation, finishing with `449` rows instead of `450`.
-- The stricter translation checker may now be slightly too strict on some low-severity Hindi phrasing or terminology choices, even when meaning is preserved.
+- The current questions are much better aligned with **legal/regulatory** text than the earlier chemistry-oriented prompts.
+- The earlier obvious `According to Article ...` / label-driven failures are largely gone in the reviewed sample.
+- The questions are now usually generated in the correct target-side language and the answer is generally grounded in the target-side document.
+- Many questions now ask about:
+  - operative meaning
+  - legal effect
+  - who may act
+  - what happens if a condition is or is not met
+  - what a rule permits or prevents
+- Several examples are strong semantic legal queries rather than clause lookup prompts.
 
 ## Example Strengths
 
-### Good: grounded and understandable
+### Good: legal effect / authority action / consequence
 
-- `US-2025325674-A1_en`
-  - Q: `What function does the DNA oligonucleotide (SEQ ID NO:1–3) perform in the autoimmune disease therapeutic agent?`
-  - A: `The DNA oligonucleotide selectively binds to IFN-γ and thereby selectively inhibits IFN-γ, producing a therapeutic effect against autoimmune diseases.`
-  - Why it is good: In the latest run, the kept multilingual rows for this example are cleaner than before, and the earlier Hindi foreign-script contamination no longer appears.
+- `32004D0009__de__en`
+  - Q: `What labour and social law matters is the Committee explicitly barred from addressing?`
+  - Why it is good: Narrow, document-specific, and clearly about scope/limitation rather than label lookup.
 
-- `US-2025327402-A1_en`
-  - Q: `Why is the evaporation area selected for its existing evaporite deposits?`
-  - A: `Because evaporite-rich areas show that natural evaporation there concentrates and deposits dissolved solids; sending metal-rich produced water to such an area and letting it evaporate causes the dissolved metals to precipitate and be recoverable.`
-  - Why it is good: This is a strong causal retrieval question. It asks why a specific site feature matters and pulls out a concrete mechanism rather than a broad process summary.
+- `32005B0532__de__et`
+  - Q: `Mida peab president tegema pärast otsuse vastuvõtmist seoses otsuse ja kaasneva resolutsiooni edastamise ja avaldamisega?`
+  - Why it is good: Concrete procedural effect; answerable, grounded, and not generic.
 
-- `WO-2025211942-A1_ko`
-  - Q: `What property of this glass substrate makes it suitable for forming fine patterns in semiconductor core substrates?`
-  - A: `Its surface roughness (Ra) is at most 10 nm, which supports the formation of fine patterns.`
-  - Why it is good: This is a good example of the newer prompt producing a property-focused question instead of defaulting to a generic mechanism or benefit question.
+- `31997L0027__en__nl`
+  - Q: `Mag een lidstaat een verzoek van de fabrikant om toepassing van de in bijlage IV beschreven procedure weigeren ... ?`
+  - Why it is good: Focuses on one operational legal issue and yields a concise yes/no rule with conditions.
 
-- `WO-2025211985-A1_ru`
-  - Q: `Why is the mixed solution evaporated to a density of 1400-1800 kg/m3 in the process of preparing the heavy well-killing fluid?`
-  - A: `The solution is evaporated to that density so the resulting filtrate has the required characteristics as a heavy well-killing fluid.`
-  - Why it is good: The question points to a specific process step and operating target instead of asking for a vague process summary.
+- `32005D0880__nl__sk`
+  - Q: `Wat gebeurt er als uit de administratieve controle van de jaarlijkse derogatiemelding blijkt dat niet aan de gestelde voorwaarden wordt voldaan?`
+  - Why it is good: Good consequence-oriented question; requires understanding what the failed control changes.
 
-- `EP-4634668-A1_fr`
-  - Q: `Which biomarker pairs are quantified in small extracellular vesicles to assess early-onset preeclampsia risk?`
-  - A: `The biomarker pairs chosen from CD10, CD63, and placental alkaline phosphatase (PLAP) are quantified.`
-  - Why it is good: This is a clear improvement in question-form diversity and asks for a concrete identifying detail rather than a broad summary.
+- `32006E0418__da__sl`
+  - Q: `Hvad skal fremgå af den specifikke finansieringsaftale ... vedrørende synligheden af EU's bidrag?`
+  - Why it is good: Focused, grounded, and clearly tied to one identifiable obligation.
 
-- `CH-720331-B1_it`
-  - Q: `How are the liquid and powder components combined in this dental whitening system before application?`
-  - A: `The liquid from the first syringe and the powder from the second syringe are mixed together using a connector between the two syringes to prepare the whitening gel.`
-  - Why it is good: The question targets a concrete mechanism and the answer is specific, procedural, and clearly grounded.
+## What Still Looks Weak
 
-- `TR-2021006663-A2_tr`
-  - Q: `Why is cold rolling performed after hot rolling or forging in the production of this steel for valves?`
-  - A: `Cold rolling is used to achieve the desired dimensions and surface quality after the steel has been hot rolled or forged.`
-  - Why it is good: The question asks about process rationale instead of just restating a material or product name, and the answer is narrow and factual.
+- Some questions still ask for **too many conditions at once**.
+- Some still behave like **literal compliance extraction** rather than strong semantic retrieval.
+- Some still ask directly for a **date, amount, threshold, or complete inventory** when a better legal-effect question seems possible.
+- A few questions are still long enough that they feel closer to an answer-shaped checklist than a clean query.
 
 ## Example Weaknesses
 
-### Weak: broad benefit / purpose framing
+### Weak: bundled conditions / checklist shape
 
-- `EP-4634126-A1_fr`
-  - Q: `What is the purpose of using at least two highly hermetic sealing elements spaced apart and formed simultaneously during the cold welding of the metallic bridge element to the substrate?`
-  - Why it is weak: It is grounded, but still framed as a broad `purpose` question. A stronger alternative would ask directly how the spaced simultaneous seals affect vacuum tightness or seal reliability.
+- `31998L0038__bg__es`
+  - Why it is weak: The question asks what Member States may and may not do from a given date. It is grounded, but still broad and partly deadline-driven.
 
-### Weak: still too extractive in places
+- `31999R1215__el__es`
+  - Why it is weak: It asks for the conditions under which an authority may withdraw a benefit. This is relevant, but still fairly checklist-like.
 
-- `WO-2025211579-A1_ko`
-  - Q: `Which pH adjuster is specified to set the enteric coating composition to pH 2.5–7.0?`
-  - Why it is weak: This is faithful and precise, but it is still mostly a direct lookup for a named ingredient rather than a more semantic query about the role or effect of that ingredient.
+- `32001R1093__cs__el`
+  - Why it is weak: It asks for multiple possible operations under one certification condition, which makes the answer list-like and easier to solve by extraction.
 
-- `DE-112023005440-T5_de`
-  - Q: `What are the required area-fraction ranges for ferrite, retained austenite and the M-A constituent in the microstructure of the high-strength cold-rolled steel sheet?`
-  - Why it is weak: This is exact and answerable, but it is mainly a range-list extraction question and still feels easier for literal matching than for dense semantic retrieval.
+- `31993R2131__fr__sv`
+  - Why it is weak: It asks which tenders are exempt from both publication and the waiting period. This is narrower than before, but still shaped like an exception inventory.
 
-### Weak: question-shape diversity still limited
+### Weak: date / amount / threshold lookup
 
-- The current sample is much more varied than the previous run, but some clustering still remains around `Why ...` rationale framing.
-  - Why it is weak: Diversity is improved, but it can still widen further so the benchmark covers more natural query forms and not just a few recurring patterns.
+- `31998R2305__en__es`
+  - Why it is weak: It asks directly when sub-quotas must be adjusted after a quota is exceeded. This is valid, but fairly close to deadline lookup.
 
-### Weak: translation fluency still uneven
+- `32003D0560__es__nl`
+  - Why it is weak: It asks when the withdrawal takes effect. This is concise, but mostly a date/effective-time lookup.
 
-- `WO-2025211983-A1_ru`
-  - Example issue: the `hi` row was dropped in the latest run because the checker flagged low-severity wording around an English-derived term for `oncological`.
-  - Why it is weak: This is preferable to keeping a clearly bad row, but it shows the stricter checker can still trade away coverage for relatively mild style issues.
+- `31992L0006__et__pt`
+  - Why it is weak: It asks for a specific maximum speed value. The number may matter, but it still leans extractive.
 
-- `DE-102024111126-A1_de`
-  - Example issue: the latest Russian row is much cleaner than before, but still reads somewhat formal and procedural rather than fully native.
-  - Why it is weak: The artifact problems are reduced, but some target-language outputs still sound translated rather than naturally authored.
-
-### Weak: stricter validation still sometimes reduces yield
-
-- In the latest `30`-document run, `29/30` documents kept full `15-language` coverage, while one `hi` row was dropped after translation retries.
-  - Why it is weak: quality control is working, but coverage can still drop if the checker rejects low-severity target-language wording that might otherwise be acceptable for retrieval use.
-
-### Weak: technical normalization still worth watching
-
-- Chemical and material names are generally better normalized than in earlier runs, but this should still be monitored in future chemistry-heavy samples where exact English rendering matters.
+- `31995R2417__el__sl`
+  - Why it is weak: It asks what amount replaces another amount. This is a very literal numeric lookup.
 
 ## Current Quality Summary
 
-- English correctness: much improved
-- Faithfulness to source: clearly improved after removing title-only and ultra-short records
-- Translation quality: clearly improved and better controlled, with stronger artifact filtering and cleaner kept rows; now solid for multilingual retrieval, though still not fully native-quality in every language
-- Retrieval usefulness: clearly better than the earlier runs, with stronger step-specific queries and noticeably better diversity of question forms
-- Overall status: best overall `gpt-5-mini` run so far and the strongest multilingual run yet; better than the earlier `gpt-5-mini` outputs in translation cleanliness and robustness, and probably the best end-to-end balance so far, though the strongest `gpt-4.1` run may still retain a slight edge on pure English query quality
+- Domain fit: clearly improved
+- Language correctness: good in the reviewed sample
+- Faithfulness: generally good
+- Article-label avoidance: much better than before
+- Retrieval usefulness: improved, but still mixed
+- Main remaining issue: some questions are still too broad, too list-like, or too literal
+
+Practical judgment:
+
+- The current JRC questions are **usable and clearly better than the earlier runs**.
+- They are not yet consistently at the level of narrow, high-value semantic legal retrieval questions.
 
 ## Recommended Next Improvements
 
-1. Keep reducing the remaining extractive `lookup` questions without pushing the model back into broad summaries.
-2. Relax or refine the translation checker slightly so it does not drop acceptable rows for low-severity Hindi wording while still rejecting real artifacts.
-3. Continue monitoring foreign-script leakage, code-mixing, and English glosses to confirm the new generic artifact rules stay effective on larger samples.
-4. Continue monitoring English normalization of technical terms.
-5. Review a larger sample before trusting the pipeline broadly.
-6. Keep periodic human review notes in this file after each generation update.
+1. Reject more aggressively when a question asks for `all conditions`, `all guarantees`, `all exceptions`, or `all consequences`.
+2. Reject more deadline-only and amount-only questions unless the number itself is truly the key retrieval target.
+3. Prefer questions about:
+   - what triggers a consequence
+   - what prevents approval
+   - what a missing document/report changes
+   - who is exempt or affected
+   - when a derogation applies
+   - what legal effect follows
+4. Penalize questions whose answer naturally becomes a semicolon-separated inventory.
+5. Keep monitoring question length so long multi-clause questions do not dominate.
 
 ## Review Log
 
 ### Review 1
 
-- Result: Better than the previous run.
-- Main improvement: `en` outputs are now genuinely English.
-- Main remaining issue: questions are still somewhat generic and repetitive.
+- Result: Initial JRC same-language sample was usable but too citation-heavy and too close to legal lookup.
+- Main improvement needed: remove article-label dependence and make questions more semantic.
 
 ### Review 2
 
 - Result: Better than Review 1.
-- Main improvement: questions are more retrieval-oriented and less stuck on the old `main feature / main components` pattern.
-- Main remaining issue: some questions still sound too document-centered or slightly generic for strong retrieval benchmarking.
+- Main improvement: article/provision-label style was reduced significantly.
+- Main remaining issue: some questions were still too broad, checklist-like, or deadline/list-oriented.
 
 ### Review 3
 
-- Result: Still usable and generally grounded, with no obvious English-language failures in the current 6-question source set.
-- Main improvement: the best questions now target method steps, ingredients, or component roles more directly.
-- Main remaining issue: several questions are still broad summary prompts rather than highly discriminative retrieval queries.
-
-### Review 4
-
-- Result: Best run so far.
-- Main improvement: title-only and ultra-short records no longer appear in the corpus, which materially improved trustworthiness of the generated QAs.
-- Main remaining issue: wording is better, but some questions still fall back to broad `advantage` or `purpose` framing instead of narrower technical facts.
-
-### Review 5
-
-- Result: Better than Review 4.
-- Main improvement: the latest prompt/judge update further reduced broad `advantage` / `purpose` questions and produced more specific step- and mechanism-focused queries.
-- Main remaining issue: the set now leans heavily toward `How does ...` framing, so diversity of high-quality question forms is the next area to improve.
-
-### Review 6
-
-- Result: Better than Review 5.
-- Main improvement: the generation-only prompt update noticeably improved question-form diversity, with strong `Why`, `Which`, `What property`, and `What function` questions now appearing in the sample.
-- Main remaining issue: a few broad `purpose`-style questions still remain and should be pushed toward more direct technical formulations.
-
-### Review 7
-
-- Result: Better than Review 6.
-- Main improvement: the latest run keeps the stronger English question diversity and shows better translation faithfulness and somewhat more natural multilingual phrasing.
-- Main remaining issue: translation fluency is still uneven across languages, with some literal wording and occasional grammar problems even when the meaning is preserved.
-
-### Review 8
-
-- Result: Mixed compared with Review 7.
-- Main improvement: the new per-language translation validation increased quality control and prevents some weak multilingual outputs from being kept automatically.
-- Main remaining issue: coverage dropped, one language row was lost, and some translated text is still not fluent enough despite passing the checker.
-
-### Review 9
-
-- Result: Better than Review 8.
-- Main improvement: the refined translation checker recovered full language coverage for the kept documents while preserving the stronger quality-control setup.
-- Main remaining issue: translation fluency is still only moderate, and the checker still misses some grammar problems and some broad English `function` wording.
-
-### Review 10
-
-- Result: Mixed relative to the best `gpt-4.1` run.
-- Main improvement: the first `gpt-5-mini` switch produced cleaner question hygiene and kept full multilingual coverage.
-- Main remaining issue: the questions became too literal and too lookup-oriented, making them less suitable for the desired dense-retrieval setting than the best `gpt-4.1` output.
-
-### Review 11
-
-- Result: Better than Review 10 and the best `gpt-5-mini` run so far.
-- Main improvement: prompt tightening plus `medium` reasoning for English generation reduced the worst broad fallback wording and improved semantic question framing.
-- Main remaining issue: a few English questions are still extractive or list/percentage oriented, so the best `gpt-4.1` run still looks slightly stronger overall.
-
-### Review 12
-
-- Result: Better than Review 11 and still the best `gpt-5-mini` run so far.
-- Main improvement: the stricter retry feedback appears to have improved English question shaping again without hurting multilingual coverage; the sample now leans more toward causal, property, and function questions and away from broad summary wording.
-- Main remaining issue: some questions are still literal lookup prompts for named compounds, permitted classes, or numeric ranges, so the strongest `gpt-4.1` run still retains a small edge in pure retrieval quality.
-
-### Review 13
-
-- Result: Better than Review 12 and the best translation-focused run so far.
-- Main improvement: the new generic translation artifact checks plus feedback-aware retries reduced obvious multilingual cleanup problems, and the earlier kept Hindi foreign-script leakage no longer appears in the reviewed sample.
-- Main remaining issue: one Hindi row was dropped in the latest `30`-document run, so the stricter checker still looks slightly over-sensitive on some low-severity target-language wording.
+- Result: Better than Review 2 and the current best JRC run so far.
+- Main improvement: stronger avoidance of article-number phrasing and better legal-domain fit.
+- Main remaining issue: some questions are still too broad or too extractive, especially around full conditions, exemptions, deadlines, or numeric replacements.

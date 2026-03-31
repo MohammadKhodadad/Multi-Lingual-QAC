@@ -57,3 +57,44 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 ## 12. Wikidata Q&A and qrels (MTEB-style)
 - **Q&A** (`--source wikidata --qa-sample N`): same flow as EPO — English generation, checks, translation — via `openai_qa.run_qa_pipeline` with `same_language=False`. Output: `data/WIKIDATA/qac/qac.csv`.
 - **Qrels + queries** (`--label-qrels WIKIDATA`): `label_wikidata_qrels.run_wikidata_qrels_labeling` groups `qac` by `corpus_id`, judges sibling chunks (same Wikidata `qid`) with **`gpt-5-nano`**, writes `qac/queries.csv` (one query id per language: `{corpus_id}_q_{lang}`) and `qac/qrels.csv` (shared relevant `corpus-id` set duplicated per query-id). Stats in `qrels_label_stats.json`.
+
+## 13. JRC-Acquis Raw Loading and Document Corpus
+- Added `dataloaders/jrc_acquis.py` for JRC-Acquis archive download, XML parsing, raw loading, and document-level corpus build.
+- Built `data/JRC-ACQUIS/preprocessed/corpus_full.csv`, `corpus.csv`, multilingual subsets, QA-candidate subsets, inspection sample, and `document_pairs_all.csv`.
+- Pairing is document-level and based on shared `celex`, so each pair is the same EU legal act in two languages.
+- Added multi-CPU support for both `--prepare-source JRC-ACQUIS` and `--build-corpus JRC-ACQUIS`.
+
+## 14. JRC-Acquis Preprocessing and Inspection
+- Replaced brittle case-specific cleanup rules with more generic legal-structure cleanup and operative-section trimming.
+- Added `docs/JRC_ACQUIS_LANGUAGE_PAIR_COUNTS.md` with the language-pair count matrix.
+- Added `docs/JRC_ACQUIS_DATA_QUALITY_NOTES.md` with corpus-scale and preprocessing-quality review notes.
+
+## 15. JRC Pair-Level Legal QA Generation
+- Added `qac_generation/jrc_acquis.py` to prepare pair-level QA inputs from `document_pairs_all.csv`.
+- Current JRC QA flow:
+  1. sample directional language pairs
+  2. select source QA candidates
+  3. choose one sampled pair per selected source document
+  4. generate the question from the translated/target side of the pair
+  5. attach the resulting query to both documents in the pair
+- JRC runs through `openai_qa.run_qa_pipeline(..., same_language=True, domain_hint="legal")`.
+- The active JRC prompt/check path is legal/regulatory, not chemistry/patent.
+
+## 16. JRC Legal Prompt and Quality Iteration
+- Tightened in-language legal generation prompts to avoid article numbers, clause lookup, and copied phrasing.
+- Tightened legal quality checking to reject:
+  - article/provision label questions
+  - broad summary questions
+  - multi-condition checklist questions
+  - deadline-only / list-only / amount-only lookup questions when a better semantic legal question exists
+- Added stronger retry feedback so rejected questions are regenerated toward one narrower legal information need.
+
+## 17. JRC QAC Review Notes
+- Replaced the old chemistry-focused `docs/QAC_QUALITY_NOTES.md` with JRC-specific QA review notes.
+- Current JRC review focuses on:
+  - language correctness
+  - faithfulness
+  - article-label avoidance
+  - broad/checklist-shaped legal questions
+  - literal deadline/list/numeric lookup questions
+- Current conclusion: the JRC questions are clearly better than the earlier runs, but still need more pressure toward narrow legal-semantic retrieval questions.
