@@ -299,18 +299,26 @@ Rules:
 - Ask about one operative point such as a condition, consequence, addressee, exception, scope limit, evidence requirement, procedural effect, legal threshold, or what the rule practically requires, permits, excludes, or causes.
 - The question must be answerable from the text and specific enough to be useful for retrieval.
 - Prefer semantically challenging questions that require understanding the operative meaning of the provision rather than surface keyword lookup.
+- Prefer the narrowest strong legal question the text supports, not the safest broad question.
+- Prefer a question whose answer can usually be given in one focused sentence, not a question that naturally turns into a multi-part inventory.
 - The question should still work as a strong query if article numbers, paragraph numbers, recital numbers, and annex labels were hidden.
 - Do not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article", "this regulation", "this directive", "this decision", or "under Article ..." unless the reference itself is essential.
 - Do not ask for the provision number, legal basis citation, exact title, or exact clause wording.
 - Do not simply restate the text in question form.
 - Do not ask a broad summary question when a narrower operative question is available.
 - Do not bundle multiple loosely related legal conditions into one long checklist question unless the source presents them as one inseparable rule.
+- Do not ask for all conditions, all exceptions, all guarantees, all consequences, or all documents at once when one narrower sub-question would be stronger.
+- Do not ask what a party or Member State may and may not do under several different conditions if one sharper question can target the key trigger, exception, refusal ground, or consequence.
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, or consequence.
+- Avoid questions whose best answer would naturally be a semicolon-separated list of several conditions, categories, or procedural branches.
+- Avoid effective-date-only, amount-only, threshold-only, or replacement-value-only questions when the text supports a better question about what the date, amount, or threshold changes legally.
 - Prefer grounded paraphrase over direct lexical overlap.
 - Before finalizing, check:
   - Does this ask about what the rule means, requires, permits, excludes, proves, or causes?
   - Would this still be a good query without article labels?
   - Would dense retrieval need semantic understanding, not just BM25-style token overlap?
+  - Would the answer be a focused legal point rather than an inventory of several items?
+  - Did I pick one trigger, one exception, one consequence, one addressee, or one legal effect instead of combining several?
 - The answer must be concise (1-2 sentences) and strictly grounded in the context.
 - Include a short supporting_text quote copied from the source context that justifies the answer.
 - Include a question_type chosen from: obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -453,10 +461,13 @@ Rules:
 - Do not ask a broad summary question when a narrower operative question is available.
 - Do not bundle multiple loosely related legal conditions into one long checklist question unless the passage presents them as one inseparable rule.
 - Do not ask one question that combines both the rule and all of its exceptions, deadlines, and follow-up consequences if one sharper sub-question would be stronger.
+- Do not ask for all conditions, all exceptions, all guarantees, all consequences, all documents, or all authorities' powers at once when one narrower sub-question would make a better query.
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the passage supports a better question about threshold, obligation, exception, trigger, or consequence.
 - Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
 - Avoid deadline-only questions when the text supports a better question about what triggers the deadline, what it governs, or what happens if it is not met.
+- Avoid amount-only, threshold-only, replacement-value-only, and effective-date-only questions when the text supports a better question about what that value changes, limits, enables, or triggers legally.
 - Avoid certificate/evidence/list questions that only ask for the full inventory when the text supports a better question about what the evidence is meant to show or when it is required.
+- Avoid questions whose best answer would naturally be a semicolon-separated inventory of conditions, exceptions, categories, documents, or procedural branches.
 - If both are possible, prefer asking what the rule changes, enables, limits, requires, or causes instead of what exact wording or exact list it contains.
 - Prefer grounded paraphrase over direct lexical overlap.
 - Prefer a question that can usually be answered in one focused sentence, not a question that forces a long bullet-list answer.
@@ -466,6 +477,7 @@ Rules:
   - Would answering it require understanding the document, not just spotting copied words?
   - Did I accidentally choose a safe literal lookup when a better semantic legal question was available?
   - Did I ask for too many legal conditions at once when one narrower condition, consequence, exception, or threshold would be better?
+  - Would the answer become a list of several sub-rules instead of one focused legal point?
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
 - Include supporting_text: a short quote copied from the source that justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -826,8 +838,12 @@ Reject questions that:
 - mainly ask the user to locate a clause instead of understand what the rule requires, permits, excludes, proves, or causes,
 - ask only for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, consequence, or scope,
 - ask only for a deadline when the context supports a better question about what the deadline governs, what triggers it, or what follows from it,
+- ask only for an amount, replacement value, effective date, or numeric threshold when the context supports a better question about what that figure changes, limits, enables, or triggers,
 - ask for a full inventory of guarantees, certificates, conditions, or consequences when one narrower point would make a better retrieval query,
+- ask for a full inventory of authorities, exceptions, categories, documents, or powers when one narrower point would make a better retrieval query,
 - bundle multiple loosely related legal conditions into one checklist question,
+- would naturally require a semicolon-separated or bullet-list answer containing several sub-rules,
+- combine what the rule says, when it applies, its exceptions, and its consequences into one question when one sharper sub-question is available,
 - sound like a recital or provision restatement rather than a natural legal information need.
 
 Be especially strict about these failure modes:
@@ -855,6 +871,8 @@ If you reject the question:
   - `remove the article reference and ask about the operative condition or effect`
   - `focus on one narrower legal consequence`
   - `ask about the threshold or exception, not the label`
+- `pick one trigger or consequence instead of listing several conditions`
+- `ask what the date or amount changes legally, not just what it is`
 
 If you approve the question:
 - set `failure_type` to `none`
@@ -1410,8 +1428,9 @@ def _process_sample_row(
                         f"in {lang_name}. Prefer asking what the rule means, requires, permits, excludes, or causes "
                         f"rather than where it is written. Do not mention article numbers, labels, or phrases like "
                         f"'this article' unless essential. Prefer one narrower legal point over a multi-condition "
-                        f"checklist, and avoid deadline-only or list-only lookup questions when a better semantic "
-                        f"question is available."
+                        f"checklist. Avoid questions whose answer becomes an inventory of conditions, exceptions, "
+                        f"documents, authorities, or consequences. Avoid deadline-only, amount-only, threshold-only, "
+                        f"or list-only lookup questions when a better semantic legal question is available."
                     )
                     continue
 

@@ -12,14 +12,18 @@ This file now tracks the **JRC-Acquis legal/regulatory QA pipeline**, not the ol
 - Current linking design: one generated query is attached to **both** documents in the selected pair
 - Current domain: legal / regulatory EU documents
 - Current validation: language match + faithfulness + legal-domain question-quality checks
+- Current reviewed prompt state: legal prompts now explicitly discourage checklist, inventory, deadline-only, amount-only, threshold-only, and label-led questions
 
 Quick summary from the latest reviewed run:
 
 - Languages present: `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `et`, `fr`, `hu`, `it`, `lt`, `lv`, `mt`, `nl`, `pt`, `sk`, `sl`, `sv`
-- Median question length: `149`
-- 90th percentile question length: `232`
-- Median answer length: `168`
-- 90th percentile answer length: `328`
+- Median question length: `150.5`
+- 90th percentile question length: `212`
+- Median answer length: `199.5`
+- 90th percentile answer length: `312`
+- Heuristic article/label mentions in questions: `1`
+- Questions with length `>= 180` chars: `8 / 44`
+- Heuristic inventory-like questions: `9 / 44`
 
 ## Method
 
@@ -44,6 +48,7 @@ Current JRC review method:
 
 - The current questions are much better aligned with **legal/regulatory** text than the earlier chemistry-oriented prompts.
 - The earlier obvious `According to Article ...` / label-driven failures are largely gone in the reviewed sample.
+- The newest run confirms that article/provision-label phrasing is no longer the main failure pattern.
 - The questions are now usually generated in the correct target-side language and the answer is generally grounded in the target-side document.
 - Many questions now ask about:
   - operative meaning
@@ -77,12 +82,21 @@ Current JRC review method:
   - Q: `Hvad skal fremgå af den specifikke finansieringsaftale ... vedrørende synligheden af EU's bidrag?`
   - Why it is good: Focused, grounded, and clearly tied to one identifiable obligation.
 
+- `31992L0006__et__pt`
+  - Q: `Millistel tingimustel võivad liikmesriigid määrata N3-kategooria mootorsõidukite kiiruspiirangu seadise maksimumkiiruseks alla 85 km/h?`
+  - Why it is good: This is a better threshold-style question than a raw value lookup because it asks when the lower maximum applies, not just what the number is.
+
+- `32005R1160__de__mt`
+  - Q: `Wie erhalten nicht-staatliche Stellen Zugriff auf die im Schengener Informationssystem gespeicherten Daten zur Überprüfung von Fahrzeugen im Zulassungsverfahren?`
+  - Why it is good: It asks about access mechanism and institutional constraint rather than merely naming an authority.
+
 ## What Still Looks Weak
 
+- The main remaining weakness is now **long multi-part legal questions**, not article-label phrasing.
 - Some questions still ask for **too many conditions at once**.
 - Some still behave like **literal compliance extraction** rather than strong semantic retrieval.
-- Some still ask directly for a **date, amount, threshold, or complete inventory** when a better legal-effect question seems possible.
-- A few questions are still long enough that they feel closer to an answer-shaped checklist than a clean query.
+- Some still ask directly for a **date, effective time, amount, threshold, or complete inventory** when a better legal-effect question seems possible.
+- A noticeable tail of questions is still long enough that they feel closer to an answer-shaped checklist than a clean query.
 
 ## Example Weaknesses
 
@@ -100,6 +114,12 @@ Current JRC review method:
 - `31993R2131__fr__sv`
   - Why it is weak: It asks which tenders are exempt from both publication and the waiting period. This is narrower than before, but still shaped like an exception inventory.
 
+- `32002L0007__en__it`
+  - Why it is weak: It is faithful, but still too long and clause-shaped. A sharper version would ask what local restrictions remain possible despite the directive.
+
+- `31964L0225__fi__sv`
+  - Why it is weak: It is legally grounded, but the query is long and reads closer to a recital restatement than to a natural retrieval query.
+
 ### Weak: date / amount / threshold lookup
 
 - `31998R2305__en__es`
@@ -112,35 +132,51 @@ Current JRC review method:
   - Why it is weak: It asks for a specific maximum speed value. The number may matter, but it still leans extractive.
 
 - `31995R2417__el__sl`
-  - Why it is weak: It asks what amount replaces another amount. This is a very literal numeric lookup.
+  - Why it is weak: It still behaves like a value-application lookup and is also overly long because it asks both timing and practical meaning together.
+
+- `32005R1648__el__it`
+  - Why it is weak: It asks both what condition is required and how the amount is calculated. That makes it a dual-part query rather than one focused legal point.
+
+### Weak: long dual-part query shape
+
+- `31999R1215__el__es`
+  - Why it is weak: It asks both under what circumstances the authority may withdraw a benefit and who may request that withdrawal.
+
+- `52006SC1370__lt__mt`
+  - Why it is weak: It is a contrastive yes/no style question with two competing policy paths embedded in one long sentence.
+
+- `31975L0323__mt__sv`
+  - Why it is weak: It is narrower than older runs, but still quite long and front-loaded with legal framing before reaching the operative condition.
 
 ## Current Quality Summary
 
 - Domain fit: clearly improved
 - Language correctness: good in the reviewed sample
 - Faithfulness: generally good
-- Article-label avoidance: much better than before
+- Article-label avoidance: much better than before and no longer the main weakness
 - Retrieval usefulness: improved, but still mixed
-- Main remaining issue: some questions are still too broad, too list-like, or too literal
+- Main remaining issue: some questions are still too long, too list-like, or too literal
 
 Practical judgment:
 
 - The current JRC questions are **usable and clearly better than the earlier runs**.
+- This run is better than the previous reviewed JRC run because the failure pattern has shifted away from article-label phrasing and toward a narrower set of residual issues.
 - They are not yet consistently at the level of narrow, high-value semantic legal retrieval questions.
 
 ## Recommended Next Improvements
 
-1. Reject more aggressively when a question asks for `all conditions`, `all guarantees`, `all exceptions`, or `all consequences`.
-2. Reject more deadline-only and amount-only questions unless the number itself is truly the key retrieval target.
-3. Prefer questions about:
+1. Reject more aggressively when a question asks for `all conditions`, `all guarantees`, `all exceptions`, `all consequences`, or other inventory-shaped outputs.
+2. Reject more dual-part questions joined by `and`, `or`, or equivalent multi-clause legal framing when one sharper sub-question is available.
+3. Reject more deadline-only, effective-date-only, amount-only, and replacement-value-only questions unless the value itself is truly the key retrieval target.
+4. Prefer questions about:
    - what triggers a consequence
    - what prevents approval
    - what a missing document/report changes
    - who is exempt or affected
    - when a derogation applies
    - what legal effect follows
-4. Penalize questions whose answer naturally becomes a semicolon-separated inventory.
-5. Keep monitoring question length so long multi-clause questions do not dominate.
+5. Penalize questions whose answer naturally becomes a semicolon-separated inventory.
+6. Keep monitoring question length so long multi-clause questions do not dominate.
 
 ## Review Log
 
@@ -160,3 +196,9 @@ Practical judgment:
 - Result: Better than Review 2 and the current best JRC run so far.
 - Main improvement: stronger avoidance of article-number phrasing and better legal-domain fit.
 - Main remaining issue: some questions are still too broad or too extractive, especially around full conditions, exemptions, deadlines, or numeric replacements.
+
+### Review 4
+
+- Result: Better than Review 3.
+- Main improvement: article/provision-label phrasing is now largely controlled; the latest run is more consistently about operative meaning and legal effect.
+- Main remaining issue: the residual failures are now concentrated in long multi-part questions and date/value/inventory-style queries.
