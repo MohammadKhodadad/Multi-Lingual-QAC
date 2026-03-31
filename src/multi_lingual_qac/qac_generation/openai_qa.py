@@ -443,6 +443,7 @@ Rules:
 - Prefer semantically challenging questions that require understanding the operative meaning of the provision rather than surface keyword lookup.
 - Prefer questions that strong semantic retrieval should handle better than simple BM25-style term overlap.
 - Prefer the deepest answerable legal fact over the easiest extractive fact.
+- Prefer one narrow legal information need over a full compliance checklist.
 - The question should still work as a strong query if article numbers, paragraph numbers, recital numbers, and annex labels were hidden.
 - Do not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article", "this regulation", "this directive", or close equivalents in {lang_name} unless the reference itself is essential.
 - Do not ask for the provision number, legal basis citation, exact title, or exact clause wording.
@@ -451,15 +452,20 @@ Rules:
 - Do not just wrap a copied noun phrase or copied legal clause in a question template.
 - Do not ask a broad summary question when a narrower operative question is available.
 - Do not bundle multiple loosely related legal conditions into one long checklist question unless the passage presents them as one inseparable rule.
+- Do not ask one question that combines both the rule and all of its exceptions, deadlines, and follow-up consequences if one sharper sub-question would be stronger.
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the passage supports a better question about threshold, obligation, exception, trigger, or consequence.
 - Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
+- Avoid deadline-only questions when the text supports a better question about what triggers the deadline, what it governs, or what happens if it is not met.
+- Avoid certificate/evidence/list questions that only ask for the full inventory when the text supports a better question about what the evidence is meant to show or when it is required.
 - If both are possible, prefer asking what the rule changes, enables, limits, requires, or causes instead of what exact wording or exact list it contains.
 - Prefer grounded paraphrase over direct lexical overlap.
+- Prefer a question that can usually be answered in one focused sentence, not a question that forces a long bullet-list answer.
 - Before finalizing, check:
   - Would this still be a strong query if legal labels were hidden?
   - Does this ask about operative meaning or effect rather than location in the document?
   - Would answering it require understanding the document, not just spotting copied words?
   - Did I accidentally choose a safe literal lookup when a better semantic legal question was available?
+  - Did I ask for too many legal conditions at once when one narrower condition, consequence, exception, or threshold would be better?
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
 - Include supporting_text: a short quote copied from the source that justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -469,12 +475,15 @@ Good style examples:
 - a question about what happens if the authority does not object in time
 - a question about who may submit a request or benefit from an exception
 - a question about what evidence or certificate must accompany a shipment or application
+- a question about what a missing report or missing objection changes legally
+- a question about when a derogation applies rather than listing every surrounding condition
 
 Bad style examples:
 - a question beginning with the equivalent of "According to Article ..."
 - a question asking which article sets out the exception
 - a question asking only for the exact date, percentage, or listed items when the text supports a better question about threshold or consequence
 - a question that mostly copies the title or first operative sentence and turns it into a query
+- a question that asks for all guarantees, all conditions, or all consequences at once when one narrower point would form a better query
 
 Output valid JSON only, no markdown:
 {{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
@@ -484,7 +493,7 @@ Output valid JSON only, no markdown:
         retry_note = (
             "\n\nPrevious attempt issue to fix:\n"
             f"{previous_feedback}\n"
-            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase."
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase. Prefer one narrower legal question over a multi-condition checklist."
         )
     previous_attempt_note = ""
     if previous_question or previous_answer:
@@ -806,6 +815,7 @@ Approve only if the question:
 - uses natural user-like wording rather than clause-lookup wording,
 - is phrased semantically rather than as an exact-match template,
 - would require meaningful semantic understanding rather than simple BM25-style overlap,
+- focuses on one strong legal information need rather than a checklist of several related points,
 - is not too generic,
 - is not nearly copied from the context verbatim,
 - and is useful for legal retrieval benchmarking.
@@ -815,6 +825,8 @@ Reject questions that:
 - explicitly mention article numbers or phrases like "this article", "this regulation", or "under Article ..." when the same issue can be asked without them,
 - mainly ask the user to locate a clause instead of understand what the rule requires, permits, excludes, proves, or causes,
 - ask only for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, consequence, or scope,
+- ask only for a deadline when the context supports a better question about what the deadline governs, what triggers it, or what follows from it,
+- ask for a full inventory of guarantees, certificates, conditions, or consequences when one narrower point would make a better retrieval query,
 - bundle multiple loosely related legal conditions into one checklist question,
 - sound like a recital or provision restatement rather than a natural legal information need.
 
@@ -1397,7 +1409,9 @@ def _process_sample_row(
                         f"that is more retrieval-useful, more specific, less citation-led, and more semantic, still "
                         f"in {lang_name}. Prefer asking what the rule means, requires, permits, excludes, or causes "
                         f"rather than where it is written. Do not mention article numbers, labels, or phrases like "
-                        f"'this article' unless essential."
+                        f"'this article' unless essential. Prefer one narrower legal point over a multi-condition "
+                        f"checklist, and avoid deadline-only or list-only lookup questions when a better semantic "
+                        f"question is available."
                     )
                     continue
 
