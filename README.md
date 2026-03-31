@@ -40,6 +40,34 @@ uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queri
 # Optional: uv run main.py --label-qrels WIKIDATA --label-qrels-batch-size 8
 ```
 
+### JRC-Acquis (legal / regulatory corpus)
+
+```bash
+uv run main.py --prepare-source JRC-ACQUIS      # download / extract / parse raw JRC-Acquis XML archives
+uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multilingual subsets, QA candidates, and document pairs
+uv run main.py --source JRC-ACQUIS              # interactive pair-level legal QA generation from sampled target-side documents
+```
+
+Typical interactive JRC QA review run:
+
+```bash
+uv run main.py --source JRC-ACQUIS
+# Example answers:
+# directional language pairs per source language: 100
+# sampled source documents per language: 2
+# batch create QAs: y
+# regenerate QAC: y
+# push to Hugging Face: n
+```
+
+JRC uses a pair-level legal QA flow:
+
+- sample directional document pairs
+- choose one sampled pair per selected source document
+- use the translated/target side as the generation text
+- generate the query in that target-side language
+- connect the final query to both documents in the pair
+
 Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A generation matches the EPO flow: **English** question/answer from the sampled corpus context, then **translation** to the configured target languages—so `qac.csv` has **one row per language** per sampled source chunk (`corpus_id` ties the translations together).
 
 **`--label-qrels WIKIDATA`** (see `qac_generation/label_wikidata_qrels.py`):
