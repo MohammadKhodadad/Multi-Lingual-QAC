@@ -326,6 +326,36 @@ def _extract_title(root: ET.Element) -> str:
     return ""
 
 
+def _extract_header_notes(root: ET.Element) -> list[str]:
+    notes: list[str] = []
+    seen: set[str] = set()
+    for elem in _iter_elements(root, "note"):
+        text = _normalize_jrc_text("".join(elem.itertext()))
+        if not text:
+            continue
+        lowered = text.lower()
+        if "http://" in lowered or "https://" in lowered:
+            continue
+        if text in seen:
+            continue
+        seen.add(text)
+        notes.append(text)
+    return notes
+
+
+def _is_header_helper_record(*, celex: str, source_name: str, title: str) -> bool:
+    celex_norm = celex.strip().lower()
+    source_norm = source_name.replace("\\", "/").strip().lower()
+    title_norm = _normalize_jrc_text(title).lower()
+    if celex_norm.startswith("jrcheader"):
+        return True
+    if source_norm.endswith("jrcheader.xml") or "/jrcheader" in source_norm:
+        return True
+    if "multilingual parallel corpus" in title_norm and "jrc-acquis" in title_norm:
+        return True
+    return False
+
+
 def _derive_document_title(
     raw_title: str,
     body_paragraphs: list[str],
@@ -433,6 +463,7 @@ def _parse_xml_record(
         "celex": _guess_celex(root, source_name=source_name),
         "language": _guess_language(root, archive_lang=archive_lang),
         "title": _extract_title(root),
+        "header_notes": _extract_header_notes(root),
         "source_archive": source_archive,
         "source_name": source_name,
         "paragraph_count": len(paragraphs),
@@ -679,8 +710,13 @@ JRC_DOCUMENT_FIELDNAMES = [
     "id",
     "language",
     "title",
+    "header_notes",
     "abstract",
     "context",
+    "generation_context",
+    "operative_context",
+    "annex_context",
+    "signature_context",
     "celex",
     "source",
     "paragraph_count",
@@ -703,6 +739,10 @@ JRC_QA_MIN_CHARS = 1500
 JRC_QA_MAX_CHARS = 30000
 JRC_QA_MIN_BODY_PARAGRAPHS = 4
 JRC_INSPECTION_SAMPLE_PER_LANGUAGE = 5
+JRC_RETRIEVAL_BODY_MAX_CHARS = 8000
+JRC_RETRIEVAL_ANNEX_MAX_CHARS = 2000
+JRC_RETRIEVAL_SIGNATURE_MAX_CHARS = 800
+JRC_RETRIEVAL_TOTAL_MAX_CHARS = 12000
 JRC_INSPECTION_FIELDNAMES = [
     *JRC_DOCUMENT_FIELDNAMES,
     "celex_language_count",
@@ -721,11 +761,35 @@ def _iter_batches(items: Iterable[Any], batch_size: int) -> Iterator[list[Any]]:
         yield batch
 
 
+def _take_paragraph_budget(
+    paragraphs: list[str],
+    *,
+    max_chars: int,
+) -> list[str]:
+    selected: list[str] = []
+    used_chars = 0
+    for paragraph in paragraphs:
+        if used_chars + len(paragraph) > max_chars and selected:
+            break
+        selected.append(paragraph)
+        used_chars += len(paragraph)
+        if used_chars >= max_chars:
+            break
+    return selected
+
+
 def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
     celex = str(row.get("celex", "")).strip()
     lang = str(row.get("language", "")).strip().lower()
+    source_name = str(row.get("source_name", ""))
     paragraphs = row.get("paragraphs") or []
     if not celex or not lang or not paragraphs:
+        return None
+    if _is_header_helper_record(
+        celex=celex,
+        source_name=source_name,
+        title=str(row.get("title", "")),
+    ):
         return None
 
     raw_body_paragraphs = [
@@ -739,15 +803,27 @@ def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
         ]
     if not raw_body_paragraphs:
         return None
+    raw_annex_paragraphs = [
+        p.get("text", "")
+        for p in paragraphs
+        if p.get("section") == "annex" and _normalize_jrc_text(p.get("text", ""))
+    ]
+    raw_signature_paragraphs = [
+        p.get("text", "")
+        for p in paragraphs
+        if p.get("section") == "signature" and _normalize_jrc_text(p.get("text", ""))
+    ]
 
     cleaned_body_paragraphs, cleaned_changed = _clean_jrc_paragraphs(raw_body_paragraphs, lang)
     if not cleaned_body_paragraphs:
         return None
-    operative_paragraphs, trimmed_to_operative = _trim_jrc_to_operative_body(cleaned_body_paragraphs, lang)
-
-    text = "\n\n".join(operative_paragraphs).strip()
-    if not text:
-        return None
+    cleaned_annex_paragraphs, _ = _clean_jrc_paragraphs(raw_annex_paragraphs, lang)
+    cleaned_signature_paragraphs, _ = _clean_jrc_paragraphs(raw_signature_paragraphs, lang)
+    header_notes = [
+        _normalize_jrc_text(str(note))
+        for note in (row.get("header_notes") or [])
+        if _normalize_jrc_text(str(note))
+    ]
 
     title = _derive_document_title(
         str(row.get("title", "")),
@@ -755,6 +831,94 @@ def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
         celex,
         lang=lang,
     )
+    operative_paragraphs, trimmed_to_operative = _trim_jrc_to_operative_body(cleaned_body_paragraphs, lang)
+
+    retrieval_body = _take_paragraph_budget(
+        cleaned_body_paragraphs,
+        max_chars=JRC_RETRIEVAL_BODY_MAX_CHARS,
+    )
+    retrieval_annex = _take_paragraph_budget(
+        cleaned_annex_paragraphs,
+        max_chars=JRC_RETRIEVAL_ANNEX_MAX_CHARS,
+    )
+    retrieval_signature = _take_paragraph_budget(
+        cleaned_signature_paragraphs,
+        max_chars=JRC_RETRIEVAL_SIGNATURE_MAX_CHARS,
+    )
+
+    full_parts = []
+    if title:
+        full_parts.append(title)
+    full_parts.extend(retrieval_body)
+    full_parts.extend(retrieval_annex)
+    full_parts.extend(retrieval_signature)
+    full_text = "\n\n".join(part for part in full_parts if part).strip()
+    if len(full_text) > JRC_RETRIEVAL_TOTAL_MAX_CHARS:
+        full_text = full_text[:JRC_RETRIEVAL_TOTAL_MAX_CHARS].rsplit("\n\n", 1)[0].strip() or full_text[
+            :JRC_RETRIEVAL_TOTAL_MAX_CHARS
+        ].strip()
+    operative_text = "\n\n".join(operative_paragraphs).strip()
+    annex_text = "\n\n".join(cleaned_annex_paragraphs).strip()
+    signature_text = "\n\n".join(cleaned_signature_paragraphs).strip()
+    if not full_text:
+        return None
+
+    article_start_idx = 0
+    for idx, paragraph in enumerate(cleaned_body_paragraphs):
+        if _looks_like_article_heading(paragraph, lang):
+            article_start_idx = idx
+            break
+
+    preamble_paragraphs = cleaned_body_paragraphs[:article_start_idx] if article_start_idx > 0 else []
+    preamble_candidates = [
+        paragraph
+        for paragraph in preamble_paragraphs
+        if not _looks_like_institution_heading(paragraph)
+        and not _looks_like_adoption_formula(paragraph)
+        and not _looks_like_reference_line(paragraph)
+        and len(paragraph) >= 60
+        and len(paragraph.split()) >= 8
+    ]
+
+    selected_preamble: list[str] = []
+    preamble_chars = 0
+    for paragraph in reversed(preamble_candidates):
+        if len(selected_preamble) >= 6:
+            break
+        if preamble_chars + len(paragraph) > 1800 and selected_preamble:
+            break
+        selected_preamble.append(paragraph)
+        preamble_chars += len(paragraph)
+    selected_preamble.reverse()
+
+    operative_focus: list[str] = []
+    operative_focus_chars = 0
+    for paragraph in operative_paragraphs:
+        if len(operative_focus) >= 18:
+            break
+        if operative_focus_chars + len(paragraph) > 3200 and operative_focus:
+            break
+        operative_focus.append(paragraph)
+        operative_focus_chars += len(paragraph)
+
+    annex_focus: list[str] = []
+    annex_focus_chars = 0
+    for paragraph in cleaned_annex_paragraphs:
+        if len(annex_focus) >= 8:
+            break
+        if annex_focus_chars + len(paragraph) > 1800 and annex_focus:
+            break
+        annex_focus.append(paragraph)
+        annex_focus_chars += len(paragraph)
+
+    generation_parts: list[str] = []
+    if title:
+        generation_parts.append(title)
+    generation_parts.extend(selected_preamble)
+    generation_parts.extend(operative_focus or operative_paragraphs[:10])
+    generation_parts.extend(annex_focus)
+    generation_context = "\n\n".join(part for part in generation_parts if part).strip() or operative_text or full_text
+
     corpus_id = f"{celex}_{lang}"
     eurovoc_ids = "|".join(row.get("eurovoc_ids") or [])
 
@@ -762,23 +926,28 @@ def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
         "celex": celex,
         "lang": lang,
         "corpus_id": corpus_id,
-        "text_length": len(text),
+        "text_length": len(full_text),
         "cleaned_formatting": cleaned_changed,
         "trimmed_to_operative": trimmed_to_operative,
         "full_row": {
             "id": corpus_id,
             "language": lang,
             "title": title,
-            "abstract": text[:800],
-            "context": text,
+            "header_notes": "\n\n".join(header_notes),
+            "abstract": generation_context[:800],
+            "context": full_text,
+            "generation_context": generation_context,
+            "operative_context": operative_text,
+            "annex_context": annex_text,
+            "signature_context": signature_text,
             "celex": celex,
             "source": "jrc-acquis",
             "paragraph_count": str(int(row.get("paragraph_count", len(paragraphs)))),
-            "body_paragraph_count": str(len(operative_paragraphs)),
+            "body_paragraph_count": str(len(cleaned_body_paragraphs)),
             "eurovoc_ids": eurovoc_ids,
             "source_archive": str(row.get("source_archive", "")),
         },
-        "mteb_row": {"_id": corpus_id, "title": title, "text": text},
+        "mteb_row": {"_id": corpus_id, "title": title, "text": full_text},
     }
 
 
