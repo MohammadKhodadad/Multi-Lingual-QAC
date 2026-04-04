@@ -1,6 +1,6 @@
 # JRC-Acquis Data Quality Notes
 
-This note summarizes the current findings from the document-level JRC-Acquis pipeline after the latest `--build-corpus JRC-ACQUIS` run.
+This note summarizes the current findings from the document-level JRC-Acquis pipeline after the latest `--build-corpus JRC-ACQUIS` run and the follow-up QA review.
 
 ## Current Outputs
 
@@ -16,183 +16,204 @@ Main generated files:
 - `data/JRC-ACQUIS/preprocessed/document_corpus_stats.json`
 - `docs/JRC_ACQUIS_LANGUAGE_PAIR_COUNTS.md`
 
-## Corpus Scale
+## Current Corpus Scale
 
 From the latest `document_corpus_stats.json`:
 
-- Total document-language rows: `462,554`
-- Total CELEX ids: `116,142`
+- Total document-language rows: `462,532`
+- Total CELEX ids: `116,120`
 - Multilingual CELEX ids: `18,033`
 - Multilingual document rows: `364,445`
-- All cross-language document pairs: `3,520,894`
-- QA candidates: `169,169`
+- All undirected CELEX document pairs: `3,520,894`
+- QA candidates after the stricter substance filter: `159,480`
 - Languages covered: `22`
 
-These numbers indicate that the corpus is large enough for a strong document-level cross-lingual retrieval benchmark.
+These numbers still support a strong document-level cross-lingual benchmark even after the stricter filtering pass.
 
 ## Pairing Structure
 
-Pairing is based on shared `celex`, so the current benchmark view is document-aligned across languages rather than paragraph-aligned.
+Pairing is still based on shared `celex`, so the benchmark remains document-aligned across languages rather than paragraph-aligned.
 
-- The full language-pair matrix is documented in `docs/JRC_ACQUIS_LANGUAGE_PAIR_COUNTS.md`.
-- The pairing table is stored in `data/JRC-ACQUIS/preprocessed/document_pairs_all.csv`.
+- The base pairing table is stored in `data/JRC-ACQUIS/preprocessed/document_pairs_all.csv`.
+- `docs/JRC_ACQUIS_LANGUAGE_PAIR_COUNTS.md` now tracks the **QA-based directional matrix** used for dataset building, not the older symmetric raw pair matrix.
 
-This is a good first benchmark structure because it is robust and simple, even though it is coarser than paragraph-level alignment.
+This is still a coarse structure, but it is stable and easy to audit.
 
 ## Current Preprocessing Behavior
 
-The current JRC preprocessing does the following:
+The current JRC preprocessing now does the following:
 
 - normalizes whitespace
 - removes formatting artifacts such as `++++`
 - removes artifact/header lines such as `[pic] ...` and `*****`
 - removes standalone reference-note lines like `(1) OJ ...`
 - derives cleaner document titles from early body paragraphs
-- attempts to trim long legal preambles and start from the operative section, usually at `Article 1` or the local equivalent
-- builds multilingual-only and QA-candidate subsets
+- extracts and classifies text into body / annex / signature zones
+- drops `jrcHeader-*` style helper/header pseudo-documents
+- keeps `header_notes` only as metadata instead of prepending them into retrieval text
+- builds longer retrieval text with a structured cap:
+  - body budget: `8000` chars
+  - annex budget: `2000` chars
+  - signature budget: `800` chars
+  - total retrieval cap: `12000` chars
+- builds a stricter QA-candidate subset using multilingual-safe paragraph/substance heuristics
 
 Important design note:
 
-- Earlier versions used a large hand-written set of language-specific preamble phrases.
-- That was replaced with more generic structural heuristics.
-- The remaining language-aware part is mainly article-heading detection across legal-writing variants such as `Article`, `Artikel`, `Člen`, `Член`, `Artigo`, `Articolo`, `Artykuł`, `1 straipsnis`, `1 artikla`, etc.
+- Earlier versions were too aggressive about trimming to `Article 1`.
+- The current version keeps richer retrieval text while using a separate `generation_context` for QA.
+- The current QA-candidate gate is now driven more by paragraph/substance signals than by shallow document length alone.
 
-This remaining language-aware logic is still generic legal-structure matching, not document-specific matching.
+## What Improved
 
-## Positive Quality Findings
+The latest build is materially cleaner than the earlier JRC corpus state.
 
-The latest build looks materially better than earlier versions.
+### Clean retrieval text
+
+- `jrcHeader-*` pseudo-documents are no longer present in `corpus_full.csv`
+- the repeated authenticity / translation disclaimer text is no longer present in retrieval `corpus.csv`
+- retrieval text now starts from real document content instead of note boilerplate
+
+### Cleaner structure
 
 - Documents with formatting cleaned: `149,975`
 - Documents trimmed to operative body: `273,731`
-- Generic fallback titles: `0`
-- Leading `++++` artifacts in QA candidates: `0`
-- Leading `[pic]` / `*****` artifact lines in QA candidates: `0`
-- Leading reference-note lines in QA candidates: `0`
+- Documents over `30,000` chars: `0`
+- Documents under `1,500` chars: `38,139`
 
-QA-candidate length summary:
+### Better QA source pool
 
-- Median characters: `4,238`
-- 90th percentile characters: `18,754`
-- Median body paragraphs: `32`
-- 90th percentile body paragraphs: `105`
+- The QA pool is now more selective: `159,480` candidates instead of the earlier broader pool
+- The stricter filter is removing many obviously weak operative structures before QA sampling
 
-These figures are in a usable range for LLM-based question generation.
+## Corpus Quality Scorecard
 
-## Sample-Level Observations
+### Compared to the earlier corpus state
 
-Many cleaned samples now start directly with operative content such as:
+Before the recent cleanup pass:
 
-- `Article 1`
-- `Artikel 1`
-- `Člen 1`
-- `Článek 1`
-- `Член 1`
-- `1 straipsnis`
-- `1 artikla`
+- Header/helper pseudo-docs still leaked into the corpus
+- note/disclaimer boilerplate still appeared at the start of many retrieval documents
+- retrieval text selection was less disciplined
+- QA candidate filtering was looser and more likely to admit low-substance documents
 
-This is a major improvement over earlier versions that often started with long institutional boilerplate.
+Current state:
 
-Examples that now trim well include Dutch, Slovene, Swedish, Portuguese, Danish, German, French, Czech, and Bulgarian documents.
+- header/helper leakage fixed
+- retrieval boilerplate leakage fixed
+- retrieval text is richer but capped
+- QA candidate filtering is stricter and more substance-aware
 
-## Remaining Quality Issues
+### Scores
 
-The corpus is usable, but not fully uniform across languages.
+Current corpus quality score by perspective:
 
-### 1. Many QA candidates still do not start at the operative section
+- Overall corpus quality now: `8.0 / 10`
+- Previous corpus quality before the recent cleanup: `6.5 / 10`
+- Retrieval text cleanliness now: `8.5 / 10`
+- Retrieval text cleanliness before: `5.5 / 10`
+- Structural alignment quality now: `8.5 / 10`
+- Structural alignment quality before: `8.5 / 10`
+- QA-source suitability now: `7.0 / 10`
+- QA-source suitability before: `6.0 / 10`
+- Cross-lingual benchmark usefulness now: `8.5 / 10`
+- Cross-lingual benchmark usefulness before: `7.5 / 10`
+- Language-uniformity of filtering now: `5.5 / 10`
+- Language-uniformity of filtering before: `6.5 / 10`
 
-From the latest QA-candidate scan:
+Interpretation:
 
-- QA candidates starting with an article heading: `93,650 / 169,169`
-
-So only about `55%` clearly start from the operative article section. The remaining roughly `45%` still begin with title-style or preamble-style content.
-
-### 2. Residual preamble/title starts remain language-skewed
-
-Languages with especially high counts of non-article starts include:
-
-- `lv`
-- `sk`
-- `hu`
-- `mt`
-- `pt`
-
-Observed non-article starts include things like:
-
-- regulation titles
-- decision titles
-- common positions
-- committee or council decisions
-- opinions and interinstitutional texts
-
-This means the current trimming logic still misses some legal-act formats.
-
-### 3. QA-candidate retention is uneven by language
-
-Retention rate = `qa_candidates_by_language / multilingual_docs_by_language`
-
-Lowest retention:
-
-- `cs`: `34.0%`
-- `sl`: `36.3%`
-- `lt`: `37.6%`
-- `da`: `37.9%`
-- `sv`: `38.3%`
-
-Highest retention:
-
-- `mt`: `87.1%`
-- `lv`: `82.6%`
-- `sk`: `76.0%`
-- `hu`: `73.9%`
-
-This indicates that the current filters do not behave evenly across languages.
-
-### 4. Some titles are still weak
-
-- Short titles remaining in QA candidates: `880`
-
-This is not a major issue, but it suggests some rows still have imperfect title extraction.
+- The corpus is clearly better than before.
+- The biggest gain is in retrieval cleanliness and removal of non-substantive junk.
+- The main new downside is that the stricter QA filter is uneven across languages.
 
 ## Current Quality Assessment
 
 Overall assessment:
 
 - Alignment quality: strong
-- Corpus cleanliness: good
-- Generic preprocessing quality: clearly improved
-- QA readiness: usable, but uneven
+- Corpus cleanliness: clearly improved
+- Retrieval corpus quality: good
+- QA readiness: usable, but now visibly more selective and uneven by language
 - Cross-lingual benchmark potential: high
 
 Practical interpretation:
 
-- The current JRC data is good enough to proceed with a first document-level benchmark.
-- It is not yet ideal if the goal is maximally content-focused question generation across all languages.
+- The current JRC corpus is good enough to continue benchmark construction.
+- It is meaningfully better than the earlier version for retrieval.
+- The main remaining weakness is not raw corpus dirt anymore; it is QA-pool balance and downstream question sharpness.
+
+## Current Main Risks
+
+### 1. QA-candidate retention is now uneven by language
+
+Retention rate = `qa_candidates_by_language / multilingual_docs_by_language`
+
+Lowest retention:
+
+- `cs`: `31.8%`
+- `et`: `33.3%`
+- `sl`: `34.7%`
+- `lt`: `36.0%`
+- `da`: `37.5%`
+
+Highest retention:
+
+- `mt`: `82.5%`
+- `sk`: `65.3%`
+- `lv`: `61.9%`
+- `hu`: `59.0%`
+- `pt`: `50.8%`
+
+This indicates that the current substance thresholds are still interacting with language formatting differences, not just document quality.
+
+### 2. The new QA gate is stricter, but probably too harsh for some languages
+
+Current QA rejection reasons:
+
+- `too_few_medium_operative_paragraphs`: `179,056`
+- `too_few_operative_chars`: `159,860`
+- `too_many_short_operative_paragraphs`: `117,753`
+- `too_short`: `6,121`
+- `too_few_body_paragraphs`: `821`
+
+This means the new heuristic is mostly acting on paragraph-shape and operative-density, not on trivial short-document rejection.
+
+### 3. Corpus quality improved more than QA quality
+
+The corpus-side cleanup worked well, but the follow-up QA run still produced some dual-part, list-shaped, or value/procedure-heavy questions. So the current preprocessing/filtering improvement should be judged mainly as a **corpus-quality win**, not as a complete fix for QA quality.
 
 ## Recommended Next Improvements
 
-Before large-scale JRC question generation, the most useful remaining preprocessing work is:
+The most useful next steps are now:
 
-1. Improve generic detection of operative starts for additional legal-act formats beyond standard article-based openings.
-2. Reduce residual title/preamble starts in the languages with the highest miss rates.
-3. Recheck the QA-candidate balance by language after each preprocessing refinement.
+1. Tune the multilingual substance thresholds so QA retention is less skewed across languages.
+2. Keep the current retrieval cleanup in place; it appears to be the right direction.
+3. Tighten question-generation prompts and validation against:
+   - dual-part questions
+   - checklist / inventory questions
+   - timing-only or value-only lookup questions
+4. Recheck per-language QA retention after each threshold change.
 
 ## Recommendation For Benchmark Construction
 
 The current best path is:
 
 1. Keep the document-level benchmark structure based on shared `celex`.
-2. Generate questions only from `corpus_qa_candidates.csv`.
-3. Use documents with the same `celex` in the other languages as relevant documents.
-4. Decide later whether same-language documents should also remain in qrels or whether evaluation should be strictly cross-lingual.
+2. Build the dataset from the stricter QA candidate pool.
+3. Use the QA-based directional pair matrix in `docs/JRC_ACQUIS_LANGUAGE_PAIR_COUNTS.md` as the relevant planning table.
+4. Continue using the sampled QA subset for JRC benchmark construction, while treating the current substance filter as a tunable component rather than final policy.
 
 ## Bottom Line
 
-The JRC-Acquis preprocessing is now in a good intermediate state:
+The JRC-Acquis corpus is now in a clearly better state than before:
 
-- large
-- aligned
-- mostly clean
-- much better than the initial raw-document build
+- still large
+- still aligned
+- cleaner for retrieval
+- less polluted by helper/header artifacts
+- more selective for QA generation
 
-The benchmark can already move forward from here, but one more generic preprocessing refinement would likely improve the eventual question quality and make language behavior more consistent.
+Compared with the earlier corpus state, the current build is a real improvement and deserves a higher corpus-quality score.
+
+The main remaining issue is now **not corpus dirt**, but **how evenly the stricter QA-source filter behaves across the 22 languages** and whether the improved pool yields consistently sharper legal questions.

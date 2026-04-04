@@ -22,11 +22,28 @@ Because of that, it is worth filtering document quality before we sample QA pair
 
 Work these in order:
 
-1. Remove obviously weak document types.
-2. Add a substance score for the remaining documents.
-3. Tighten QA-candidate filtering so weak documents do not enter the QA pool.
-4. Add reporting so every build tells us how much was filtered and why.
+1. Tune the current multilingual substance thresholds so the QA pool is less skewed by language.
+2. Add manual accepted vs rejected inspection samples.
+3. Add amendment-heavy detection that works across many languages.
+4. Decide whether amendment filtering should affect only QA candidates or the broader retrieval corpus.
 5. Rebuild and manually inspect examples before the next QA run.
+
+## Already Completed
+
+These cleanup steps are now done:
+
+- dropped `jrcHeader-*` style helper/header pseudo-documents from the corpus
+- stopped prepending `header_notes` into retrieval `context`
+- added a structured retrieval-text cap so body text dominates over annex/signature tail text
+- expanded reference-line cleanup to remove bracketed citation/editorial notes such as `[1] OJ ...`
+- tightened the QA-candidate filter using multilingual-safe paragraph/substance heuristics
+- added `qa_rejection_reasons` reporting to `document_corpus_stats.json`
+- updated the language-pair table to the QA-based directional matrix used for dataset building
+
+What this means:
+
+- retrieval corpus quality is clearly better than before
+- the main remaining issue is now uneven QA filtering across languages, not raw header/boilerplate leakage
 
 ## TODOs
 
@@ -95,31 +112,36 @@ Implementation idea:
 - add a helper such as `_score_document_substance(...)`
 - use the score to decide QA eligibility
 
-### 4. Raise the QA-candidate floor
+### 4. Tune the QA-candidate floor
 
-TODO:
-- make the QA-candidate filter stricter than the current minimum
+Status:
+- initial multilingual-safe tightening is already implemented
 
 Current floor:
 - minimum chars: `1500`
-- minimum body paragraphs: `4`
+- minimum body paragraphs: `8`
+- minimum operative chars: `1200`
+- minimum medium operative paragraphs: `5`
+- max short operative ratio: `0.55`
 
-Possible stricter floor:
-- require more substantive body paragraphs
-- require a minimum number of medium-length paragraphs
-- require stronger operative coverage
+Current issue:
+- retention is now uneven across languages, so the next step is tuning rather than simply making the filter harsher
 
 Why:
-- some documents pass the current filter but are still too weak for good question generation
+- some documents are now filtered for the right reason, but the thresholds still appear to interact with language formatting differences
 
 Implementation idea:
-- extend `_is_jrc_qa_candidate(...)`
-- keep the retrieval corpus broader if needed, but make the QA pool stricter
+- tune the current thresholds using per-language retention review
+- keep the retrieval corpus broader if needed, but make the QA pool stricter and more balanced
 
 ### 5. Exclude repeated boilerplate from quality scoring
 
+Status:
+- retrieval-text leakage from `header_notes` is already fixed
+- bracketed editorial citation lines are now filtered during paragraph cleaning
+
 TODO:
-- ensure repeated authenticity/translation boilerplate does not help a document pass quality filters
+- ensure any remaining repeated boilerplate does not help a document pass quality filters
 
 Why:
 - we already removed note boilerplate from retrieval `context`, but similar repeated structure should also not count as evidence that a document is substantive
@@ -129,8 +151,11 @@ Implementation idea:
 
 ### 6. Add explicit reporting for filtered document classes
 
+Status:
+- QA rejection reasons are already reported in `document_corpus_stats.json`
+
 TODO:
-- write build stats for each exclusion reason
+- expand reporting to cover more exclusion classes when new filters are added
 
 Useful counters:
 - dropped as header/helper
@@ -161,8 +186,9 @@ Why:
 
 Implementation idea:
 - add one inspection file under `data/JRC-ACQUIS/preprocessed/`
+- this is now one of the highest-priority remaining tasks because the filter is cleaner but still uneven
 
-### 8. Re-review retrieval quality after rebuild
+### 8. Re-review retrieval and QA quality after rebuild
 
 TODO:
 - after implementing the filters, rebuild and review the resulting corpus again
@@ -172,20 +198,21 @@ Review questions:
 - do sampled documents support stronger legal questions?
 - are we removing too many multilingual documents?
 - are any languages disproportionately harmed by the new heuristics?
+- are dual-part and list-shaped legal questions still the main remaining failure pattern?
 
 Why:
 - legal corpora are language-skewed, so a rule that looks good globally may still hurt some languages
 
-## Suggested First Work Package
+## Suggested Next Work Package
 
-Start with this bundle first:
+Start with this bundle next:
 
-1. title-based weak-act filter
-2. amendment-density body filter
-3. stronger QA-candidate filter
-4. stats counters for what was removed
+1. tune the current QA thresholds using per-language retention
+2. add accepted vs rejected inspection samples
+3. add conservative amendment-density body detection
+4. expand stats counters for the new exclusion reasons
 
-That should give the biggest quality gain with the least complexity.
+That should give the biggest quality gain with the least risk of overfitting to English-only patterns.
 
 ## Success Criteria
 
@@ -195,4 +222,4 @@ We should consider this cleanup successful if the next build shows:
 - better manual inspection samples
 - fewer short or procedural-only QA sources
 - stronger question quality in the next JRC QA run
-- stable multilingual coverage despite stricter filtering
+- more stable multilingual coverage despite stricter filtering

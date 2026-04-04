@@ -68,7 +68,19 @@ RE_JRC_ARTICLE_TOKEN = re.compile(
     re.IGNORECASE,
 )
 RE_JRC_ARTIFACT_LINE = re.compile(r"^(?:\*{5,}|\[pic\])", re.IGNORECASE)
-RE_JRC_REFERENCE_LINE = re.compile(r"^\(\d+\)\s+[A-ZÀ-ÖØ-Þ]{1,6}\b")
+RE_JRC_REFERENCE_LINE = re.compile(
+    r"^(?:"
+    r"[\[(]\d+[\])]\s+(?:"
+    r"(?:OJ|JO|ABl\.?|GU|EGT|EE|COM|SEC|SWD|CNS|COD|C[ -]?\d+)\b"
+    r"|No constitutional requirements indicated\b"
+    r"|Keine verfassungsrechtlichen Vorschriften angegeben\b"
+    r"|Aucune exigence constitutionnelle indiquée\b"
+    r"|Non sono indicate norme costituzionali\b"
+    r"|No se han indicado requisitos constitucionales\b"
+    r")"
+    r")",
+    re.IGNORECASE,
+)
 
 
 def _local_name(tag: str) -> str:
@@ -737,7 +749,12 @@ JRC_PAIR_FIELDNAMES = [
 
 JRC_QA_MIN_CHARS = 1500
 JRC_QA_MAX_CHARS = 30000
-JRC_QA_MIN_BODY_PARAGRAPHS = 4
+JRC_QA_MIN_BODY_PARAGRAPHS = 8
+JRC_QA_MIN_OPERATIVE_CHARS = 1200
+JRC_QA_MIN_MEDIUM_OPERATIVE_PARAGRAPHS = 5
+JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS = 120
+JRC_QA_SHORT_PARAGRAPH_MAX_CHARS = 60
+JRC_QA_MAX_SHORT_OPERATIVE_RATIO = 0.55
 JRC_INSPECTION_SAMPLE_PER_LANGUAGE = 5
 JRC_RETRIEVAL_BODY_MAX_CHARS = 8000
 JRC_RETRIEVAL_ANNEX_MAX_CHARS = 2000
@@ -1022,14 +1039,58 @@ def _build_jrc_pair_batch(items: list[tuple[str, list[tuple[str, str]]]]) -> dic
     }
 
 
-def _is_jrc_qa_candidate(row: dict[str, str]) -> bool:
+def _split_jrc_paragraphs(text: str) -> list[str]:
+    paragraphs: list[str] = []
+    for part in str(text or "").split("\n\n"):
+        normalized = _normalize_jrc_text(part)
+        if normalized:
+            paragraphs.append(normalized)
+    return paragraphs
+
+
+def _assess_jrc_qa_candidate(row: dict[str, str]) -> dict[str, Any]:
     context = row.get("context", "") or ""
     body_paragraph_count = int(row.get("body_paragraph_count", "0") or 0)
-    return (
-        len(context) >= JRC_QA_MIN_CHARS
-        and len(context) <= JRC_QA_MAX_CHARS
-        and body_paragraph_count >= JRC_QA_MIN_BODY_PARAGRAPHS
+    operative_paragraphs = _split_jrc_paragraphs(row.get("operative_context", ""))
+    operative_chars = sum(len(paragraph) for paragraph in operative_paragraphs)
+    medium_operative_paragraphs = sum(
+        1 for paragraph in operative_paragraphs if len(paragraph) >= JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS
     )
+    short_operative_paragraphs = sum(
+        1 for paragraph in operative_paragraphs if len(paragraph) <= JRC_QA_SHORT_PARAGRAPH_MAX_CHARS
+    )
+    short_operative_ratio = (
+        short_operative_paragraphs / len(operative_paragraphs) if operative_paragraphs else 1.0
+    )
+
+    reasons: list[str] = []
+    if len(context) < JRC_QA_MIN_CHARS:
+        reasons.append("too_short")
+    if len(context) > JRC_QA_MAX_CHARS:
+        reasons.append("too_long")
+    if body_paragraph_count < JRC_QA_MIN_BODY_PARAGRAPHS:
+        reasons.append("too_few_body_paragraphs")
+    if operative_chars < JRC_QA_MIN_OPERATIVE_CHARS:
+        reasons.append("too_few_operative_chars")
+    if medium_operative_paragraphs < JRC_QA_MIN_MEDIUM_OPERATIVE_PARAGRAPHS:
+        reasons.append("too_few_medium_operative_paragraphs")
+    if short_operative_ratio > JRC_QA_MAX_SHORT_OPERATIVE_RATIO:
+        reasons.append("too_many_short_operative_paragraphs")
+
+    return {
+        "is_candidate": not reasons,
+        "reasons": reasons,
+        "context_chars": len(context),
+        "body_paragraph_count": body_paragraph_count,
+        "operative_chars": operative_chars,
+        "operative_paragraph_count": len(operative_paragraphs),
+        "medium_operative_paragraphs": medium_operative_paragraphs,
+        "short_operative_ratio": round(short_operative_ratio, 4),
+    }
+
+
+def _is_jrc_qa_candidate(row: dict[str, str]) -> bool:
+    return bool(_assess_jrc_qa_candidate(row)["is_candidate"])
 
 
 def _set_csv_field_size_limit() -> None:
@@ -1195,6 +1256,7 @@ def build_jrc_acquis_document_corpus(
     qa_candidates_written = 0
     multilingual_docs_by_language: Counter[str] = Counter()
     qa_candidates_by_language: Counter[str] = Counter()
+    qa_rejection_reasons: Counter[str] = Counter()
     inspection_rows_written = 0
     inspection_rows_by_language: Counter[str] = Counter()
 
@@ -1242,8 +1304,8 @@ def build_jrc_acquis_document_corpus(
             multilingual_docs_written += 1
             multilingual_docs_by_language[lang] += 1
 
-            is_qa_candidate = _is_jrc_qa_candidate(row)
-            if is_qa_candidate:
+            qa_assessment = _assess_jrc_qa_candidate(row)
+            if qa_assessment["is_candidate"]:
                 qa_writer.writerow({field: row.get(field, "") for field in JRC_DOCUMENT_FIELDNAMES})
                 qa_candidates_written += 1
                 qa_candidates_by_language[lang] += 1
@@ -1257,6 +1319,9 @@ def build_jrc_acquis_document_corpus(
                     )
                     inspection_rows_written += 1
                     inspection_rows_by_language[lang] += 1
+            else:
+                for reason in qa_assessment["reasons"]:
+                    qa_rejection_reasons[reason] += 1
 
     avg_chars_by_lang = {
         lang: round(body_chars_by_lang[lang] / count, 2)
@@ -1277,6 +1342,7 @@ def build_jrc_acquis_document_corpus(
         "inspection_rows_by_language": dict(sorted(inspection_rows_by_language.items())),
         "avg_body_chars_by_language": avg_chars_by_lang,
         "languages_per_celex_distribution": dict(sorted(languages_per_celex.items())),
+        "qa_rejection_reasons": dict(sorted(qa_rejection_reasons.items())),
         "docs_under_1500_chars": docs_short,
         "docs_over_30000_chars": docs_long,
         "docs_with_formatting_cleaned": formatting_cleaned,
@@ -1292,6 +1358,11 @@ def build_jrc_acquis_document_corpus(
             "min_chars": JRC_QA_MIN_CHARS,
             "max_chars": JRC_QA_MAX_CHARS,
             "min_body_paragraphs": JRC_QA_MIN_BODY_PARAGRAPHS,
+            "min_operative_chars": JRC_QA_MIN_OPERATIVE_CHARS,
+            "min_medium_operative_paragraphs": JRC_QA_MIN_MEDIUM_OPERATIVE_PARAGRAPHS,
+            "medium_paragraph_min_chars": JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS,
+            "short_paragraph_max_chars": JRC_QA_SHORT_PARAGRAPH_MAX_CHARS,
+            "max_short_operative_ratio": JRC_QA_MAX_SHORT_OPERATIVE_RATIO,
         },
         "workers": workers,
     }
