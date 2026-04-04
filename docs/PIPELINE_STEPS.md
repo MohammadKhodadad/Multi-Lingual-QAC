@@ -180,6 +180,8 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - multi-condition checklist questions
   - deadline-only / list-only / amount-only lookup questions when a better semantic legal question exists
 - Added stronger retry feedback so rejected questions are regenerated toward one narrower legal information need.
+- Added visible per-attempt QA logging so failed language / faithfulness / quality checks can be seen in the terminal during JRC runs.
+- Added Hugging Face export columns for `corpus_language` and `question_language` in the pushed dataset configs.
 
 ## 17. JRC QAC Review Notes
 - Replaced the old chemistry-focused `docs/QAC_QUALITY_NOTES.md` with JRC-specific QA review notes.
@@ -191,7 +193,8 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - literal deadline/list/numeric lookup questions
 - Latest review snapshot:
   - latest sample wrote `22/22` rows
-  - latest sample covered `12` languages
-  - average question length was about `152` chars
-  - average answer length was about `197` chars
-- Current conclusion: the JRC questions are better and more stable than the earlier runs, but still need more pressure toward narrow single-focus legal-semantic retrieval questions, especially to suppress joined questions and exact-formula/value/timing lookups.
+  - latest sample covered `13` languages
+  - average question length was about `131` chars
+  - average answer length was about `178` chars
+  - `6/22` rows were visibly rejected once and improved on retry
+- Current conclusion: the JRC questions are now clearly better than the previous reviewed `22`-row sample. The main remaining weakness has shifted from raw exact-value lookup toward residual condition-list / inventory-style legal questions.

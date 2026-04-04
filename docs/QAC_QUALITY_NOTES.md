@@ -12,20 +12,24 @@ This file tracks the **JRC-Acquis legal/regulatory QA pipeline**, not the older 
 - Current linking design: one generated query is attached to **both** documents in the selected pair
 - Current domain: legal / regulatory EU documents
 - Current validation: language match + faithfulness + legal-domain question-quality checks
-- Current reviewed prompt state: legal prompts now explicitly discourage checklist, inventory, deadline-only, amount-only, threshold-only, exact-phrase, and joined two-part questions
-- Current score: `6.5 / 10`
+- Current reviewed prompt state: legal prompts now explicitly discourage checklist, inventory, deadline-only, amount-only, threshold-only, exact-phrase, joined two-part, and exact-code / exact-value lookup questions; the QA loop now also logs checker-triggered retries
+- Current score: `7.2 / 10`
 
 Quick summary from the latest reviewed run:
 
-- Languages present: `bg`, `de`, `el`, `en`, `es`, `fi`, `hu`, `it`, `lt`, `lv`, `pl`, `sl`
-- Average question length: `152.1`
-- Average answer length: `196.7`
+- Languages present: `cs`, `el`, `es`, `et`, `fi`, `fr`, `hu`, `lt`, `lv`, `pl`, `pt`, `sl`, `sv`
+- Average question length: `131.2`
+- Median question length: `129`
+- Average answer length: `177.5`
+- Median answer length: `184.5`
 - Heuristic article/label mentions in questions: `0`
 - Full yield for the run: `22 / 22`
+- Questions with length `>= 180` chars: `3 / 22`
+- Checker-triggered retry wins: `6 / 22`
 - Main residual failure patterns:
-  - joined / two-part legal questions
-  - timing / value lookup questions
-  - exact-formula or exact-phrase lookup questions
+  - condition / inventory-shaped legal questions
+  - some remaining broad procedural questions
+  - a smaller number of lookup-shaped questions that still pass after rewrite
 
 Important comparison note:
 
@@ -37,17 +41,17 @@ Important comparison note:
 
 Latest reviewed run score by perspective:
 
-- Overall: `6.5 / 10`
-- Legal-domain fit: `8.0 / 10`
+- Overall: `7.2 / 10`
+- Legal-domain fit: `8.5 / 10`
 - Faithfulness / grounding: `8.5 / 10`
 - Article-label avoidance: `9.5 / 10`
 - Language correctness: `8.5 / 10`
-- Retrieval usefulness: `6.5 / 10`
-- Question sharpness / single-focus: `6.0 / 10`
-- Natural query style: `6.5 / 10`
-- Resistance to checklist / inventory shape: `6.0 / 10`
-- Resistance to timing / value lookup: `5.5 / 10`
-- Resistance to exact-formula / exact-phrase lookup: `5.5 / 10`
+- Retrieval usefulness: `7.0 / 10`
+- Question sharpness / single-focus: `6.8 / 10`
+- Natural query style: `7.0 / 10`
+- Resistance to checklist / inventory shape: `6.5 / 10`
+- Resistance to timing / value lookup: `6.8 / 10`
+- Resistance to exact-formula / exact-phrase lookup: `7.0 / 10`
 - Pipeline robustness for this run: `8.5 / 10`
 
 Interpretation:
@@ -82,6 +86,7 @@ Current JRC review method:
 - The current questions remain much better aligned with **legal/regulatory** text than the earlier chemistry-oriented prompts.
 - The obvious `According to Article ...` / label-led failures are still largely gone.
 - The newest run reached full yield: `22 / 22` rows were written.
+- The tighter generator + checker combination now catches and rewrites several weak first-attempt questions instead of letting them pass immediately.
 - The questions are usually generated in the correct target-side language and the answers are generally grounded in the target-side document.
 - Many questions now ask about:
   - legal effect
@@ -89,73 +94,62 @@ Current JRC review method:
   - what authority or party may act
   - what condition must be met
   - what happens when a requirement is or is not satisfied
-- The current corpus cleanup appears to have helped with grounding and general usefulness, even though question shaping still needs work.
+- The current corpus cleanup appears to have helped with grounding and general usefulness, and the latest QA iteration materially improved question length and reduced the worst literal lookup shapes.
 
 ## Example Strengths
 
 ### Good: legal effect / condition / consequence
 
-- `32003D0467__da__pl`
-  - Q: `Co prawnie oznacza umieszczenie państwa członkowskiego na liście uznanych za oficjalnie wolne od gruźlicy?`
-  - Why it is good: Narrow, grounded, and about the legal significance of recognition rather than a label lookup.
+- `31995D0568__es__fi`
+  - Q: `¿Qué efecto tiene la limitación de la competencia de la Comisión para aprobar modificaciones de los Anexos sobre las sustancias que no estén ya reguladas por la legislación comunitaria pertinente?`
+  - Why it is good: The retry moved this away from literal scope wording and toward the legal effect of the limitation.
 
-- `32003R1351__el__et`
-  - Q: `Τι γίνεται με τις ποσότητες που προορίζονται για τους μη παραδοσιακούς εισαγωγείς όταν αυτές δεν χορηγούνται;`
-  - Why it is good: Consequence-oriented and tied to one concrete legal mechanism.
+- `32006R1003__es__hu`
+  - Q: `¿Qué efecto jurídico tiene el importe fijado en el anexo para la importación de melaza cuando se suspenden los derechos de importación?`
+  - Why it is good: It now asks for the legal effect of the amount instead of asking only for the number.
 
-- `31981R2180__bg__lt`
-  - Q: `При какво условие държава-членка може да получи разрешение за приспособяване на броя на местата за свине в рамките на план за развитие на стопанството?`
-  - Why it is good: Focuses on the condition that triggers a permission rather than merely asking for a number.
+- `32000D0532__et__lt`
+  - Q: `Mis õiguslikku tagajärge toob kaasa see, kui jäätmes on ühe või mitme R60/R61 märgistusega reproduktsiooni mõjutava aine üldkontsentratsioon vähemalt 0,5%?`
+  - Why it is good: A former threshold lookup was rewritten into a legal-consequence question.
 
-- `31996L0097__it__pl`
-  - Q: `Cosa consente la direttiva a un datore di lavoro nei confronti di persone che hanno raggiunto l'età pensionabile prevista da un regime professionale ma non ancora l'età pensionabile legale?`
-  - Why it is good: It asks about what the directive permits in one legal situation and yields a grounded answer.
+- `31992R0684__nl__pt`
+  - Q: `Aplica-se o regulamento a uma transportadora estabelecida num Estado‑membro que utilize autocarros matriculados noutro Estado‑membro?`
+  - Why it is good: This is much cleaner than a literal article extraction and asks one direct applicability question.
 
-- `52005PC0571__it__sl`
-  - Q: `Quale condizione finanziaria deve essere soddisfatta prima che l'aiuto a fondo perduto sia messo a disposizione della Georgia in almeno due rate?`
-  - Why it is good: Focused on one precondition for action, which is a strong legal retrieval shape.
+- `32003R1651__et__pl`
+  - Q: `Kas juurdepääsu keeldimise otsuse vastu võib esitada kaebuse Euroopa Ombudsmani poole?`
+  - Why it is good: The retry collapsed a broader procedural question into one focused appeal-right question.
 
 ## What Still Looks Weak
 
-- The main remaining weakness is now **joined / two-part and lookup-shaped legal questions**, not article-label phrasing.
-- Some questions still ask for **too many conditions at once**.
-- Some still behave like **literal compliance extraction** rather than strong semantic retrieval.
-- Some still ask directly for a **date, duration, value, wording, or full inventory** when a better legal-effect question seems possible.
-- The corpus-side cleanup improved the source material more than the prompt changes improved the final question shapes.
+- The main remaining weakness is now **condition / inventory-shaped legal questions**, not article-label phrasing.
+- Some questions still ask for **a bundle of conditions or definitions** instead of one narrower legal point.
+- Some still behave like **safe procedural extraction** rather than the strongest semantic retrieval question available.
+- A few questions are still a bit broad even after the latest retries.
+- The latest prompt + checker pass materially improved output quality, but it did not fully solve condition-inventory shape.
 
 ## Example Weaknesses
 
-### Weak: joined / two-part legal question
+### Weak: condition / inventory shape
 
-- `32005H0256__fi__pl`
-  - Why it is weak: It asks both **who** grants discharge and **on whose recommendation** it happens. One of those should be kept and the other dropped.
+- `31999R2337__fr__it`
+  - Why it is weak: It still asks for a bundle of issuance conditions, even though it is cleaner than a duration-only lookup.
 
-- `31996L0021__fi__pt`
-  - Why it is weak: It asks both whether non-compliant products may remain on sale and what limiting condition applies, which makes the answer dual-part.
+- `31967R0422__lt__sl`
+  - Why it is weak: It still asks for the full set of conditions for qualifying as a dependent child, which keeps the answer somewhat list-shaped.
 
-### Weak: timing / value lookup
+### Weak: still somewhat broad / procedural
 
-- `32006HB0001__de__es`
-  - Why it is weak: It asks only for the maximum duration of a mandate, which is mainly a value lookup.
+- `31999D0468__el__lv`
+  - Why it is weak: It is usable, but still a bit broad and procedural compared with the sharper legal-effect questions in the same sample.
 
-- `32006R0807__es__lv`
-  - Why it is weak: It asks only for the validity period of export certificates, which is still mostly a timing lookup.
+- `32001R1112__cs__sk`
+  - Why it is weak: It is better than the earlier exact-code lookup, but it still remains a weaker exception/period question than the strongest rows.
 
-- `52005SC0011__lt__sv`
-  - Why it is weak: It asks for the nature and size of corrective measures in a way that leans toward extracting prescribed values and targets.
+### Weak: residual multi-condition question
 
-### Weak: exact-formula / exact-phrase lookup
-
-- `32004R0687__mt__sl`
-  - Why it is weak: It asks for the exact English wording the official veterinarian must enter, which is closer to form-text retrieval than to legal-semantic retrieval.
-
-### Weak: long condition inventory
-
-- `31996R1676__de__en`
-  - Why it is weak: It asks for the full set of conditions under which a customs valuation method may be allowed, producing a long checklist answer rather than one sharp legal point.
-
-- `31991L0663__lv__ro`
-  - Why it is weak: It asks for the whole bundle of circumstances under which vehicles are not treated as a different type, which still pushes the answer toward inventory form.
+- `31998L0093__et__lv`
+  - Why it is weak: It still asks two related obligations together instead of fully isolating one legal point.
 
 ## Current Quality Summary
 
@@ -164,30 +158,29 @@ Current JRC review method:
 - Faithfulness: generally good
 - Article-label avoidance: strong and no longer the main weakness
 - Yield stability: improved in the newest run
-- Retrieval usefulness: usable, but still held back by joined and lookup-shaped questions
-- Main remaining issue: some questions are still dual-part, list-shaped, timing/value-oriented, or exact-formula-oriented
+- Retrieval usefulness: now clearly better than the previous `22`-row sample
+- Main remaining issue: some questions are still condition-list or inventory-shaped, even after the stronger retries
 
 Practical judgment:
 
-- The current JRC questions are **usable**, but this newest sample is still not consistently at the level of narrow, high-value semantic legal retrieval questions.
-- The run is operationally better because it reached full `22/22` yield.
-- The corpus and candidate-pool cleanup helped, but the remaining question-shape issues are still visible enough that the QA score should stay moderate.
-- Current score: `6.5 / 10`
+- The current JRC questions are **usable and meaningfully better than the previous reviewed `22`-row sample**.
+- The run is operationally stronger because it reached full `22/22` yield and the checker now visibly rewrites several weak first drafts.
+- The remaining issue is no longer mainly raw lookup/value questions; it is more often condition-list shape and a smaller number of broad procedural queries.
+- Current score: `7.2 / 10`
 
 ## Recommended Next Improvements
 
-1. Reject more dual-part questions joined by `and`, `or`, or equivalent multi-clause legal framing when one sharper sub-question is available.
-2. Reject more timing-only, duration-only, effective-date-only, amount-only, and threshold-only questions unless that value is truly the key retrieval target.
-3. Reject exact-formula / exact-phrase questions when the stronger retrieval need is about legal effect, authorization, condition, or consequence.
-4. Reject more inventory-style questions about covered categories, listed elements, or full sets of conditions when one narrower legal point is available.
-5. Prefer questions about:
+1. Reject more condition-list and inventory-style questions when one narrower legal point is available.
+2. Reject more procedural questions that are correct but still broader than the strongest available legal-effect query.
+3. Keep the current pressure against exact value/code/period lookups; that part improved and should remain in place.
+4. Prefer questions about:
    - what triggers a consequence
    - what prevents approval
    - what a missing document/report changes
    - who is exempt or affected
    - when a derogation applies
    - what legal effect follows
-6. Penalize questions whose answer naturally becomes a semicolon-separated inventory.
+5. Penalize questions whose answer naturally becomes a semicolon-separated inventory.
 
 ## Review Log
 
@@ -222,6 +215,12 @@ Practical judgment:
 
 ### Review 6
 
-- Result: Newest current review with `22/22` yield.
+- Result: Earlier `22/22` reviewed run before the latest checker/generation tightening.
 - Main improvement: the run was stable, article-label phrasing remained controlled, and several questions were still legally grounded and single-point.
-- Main remaining issue: the remaining errors are now concentrated in joined/two-part questions, timing/value lookups, exact-formula questions, and long condition inventories.
+- Main remaining issue: the remaining errors were concentrated in joined/two-part questions, timing/value lookups, exact-formula questions, and long condition inventories.
+
+### Review 7
+
+- Result: Better than Review 6.
+- Main improvement: question length dropped materially, several exact value/threshold lookups were rewritten into legal-effect questions, and the new logs show multiple weak first attempts being rejected and repaired.
+- Main remaining issue: the weakest rows are now more often condition-list or inventory-shaped questions rather than exact code/value lookups.

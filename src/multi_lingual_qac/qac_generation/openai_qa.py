@@ -413,19 +413,29 @@ Rules:
 - Do not ask for all conditions, all exceptions, all guarantees, all consequences, all documents, or all authorities' powers at once when one narrower sub-question would make a better query.
 - Do not ask both the purpose of a rule and the situations where it applies when one of those is the stronger standalone retrieval need.
 - Do not ask both the condition for an action and the maximum duration, end-point, or later procedural detail of that action when one of those should be chosen.
+- Do not ask both what a legal category, device, authority, procedure, or remedy is and what it must contain, receive, do, or produce when one of those is the stronger standalone retrieval need.
+- Do not ask both what label, wording, or mention appears and what legal effect, condition, or consequence surrounds it when the stronger retrieval need is the legal effect, condition, or consequence.
+- Do not ask both who acts and by what deadline or time limit when one of those should be chosen as the stronger retrieval need.
+- Do not ask both what must be done and what effect that action has when one narrower legal point would make the cleaner query.
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the passage supports a better question about threshold, obligation, exception, trigger, or consequence.
 - Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
 - Avoid deadline-only questions when the text supports a better question about what triggers the deadline, what it governs, or what happens if it is not met.
 - Avoid amount-only, threshold-only, replacement-value-only, and effective-date-only questions when the text supports a better question about what that value changes, limits, enables, or triggers legally.
+- Avoid threshold or value questions whose best answer is only the number itself when the passage supports a better question about what crossing that threshold causes, permits, blocks, or changes legally.
+- Avoid exact code, category-code, document-code, or abbreviated-label questions when the stronger retrieval need is what that code classifies, permits, blocks, exempts, or changes legally.
 - Avoid timing-only or frequency-only questions such as when a report must be filed, how often something must be reported, or by what date an action must occur when the text supports a better question about what the obligation does, what triggers it, or what follows from non-compliance.
 - Avoid certificate/evidence/list questions that only ask for the full inventory when the text supports a better question about what the evidence is meant to show or when it is required.
 - Avoid questions whose best answer would naturally be a semicolon-separated inventory of conditions, exceptions, categories, documents, or procedural branches.
+- Avoid questions whose best answer would naturally become a list of alternative remedies, alternative compliance paths, or several actions joined by "or" when one narrower legal effect or requirement can be asked instead.
 - Avoid two-part questions that ask both A and B in the same sentence when one sharper sub-question is available.
 - Avoid joined questions built around equivalents of "and", "or", "as well as", or "until when" when the answer would need to cover two legal points rather than one.
 - Avoid contrastive yes/no questions that present two competing legal paths in one sentence if one branch captures the stronger retrieval need.
 - Avoid procedural questions that ask both what authority action is required and how a secondary calculation, adjustment, or follow-up detail must be handled if one of those is the clearer retrieval target.
 - Prefer a compact query with one main clause. If the question starts growing into a second clause after a comma, conjunction, or semicolon, keep only the stronger sub-question.
+- Prefer a question that is usually under roughly 18 words in English-equivalent length unless a slightly longer wording is clearly necessary for legal precision.
+- If two versions are possible, prefer the shorter version that still preserves the strongest legal point.
 - If both are possible, prefer asking what the rule changes, enables, limits, requires, or causes instead of what exact wording or exact list it contains.
+- If both are possible, prefer asking what a date, amount, threshold, code, or period does legally instead of asking only for its literal value.
 - Prefer grounded paraphrase over direct lexical overlap.
 - Prefer a question that can usually be answered in one focused sentence, not a question that forces a long bullet-list answer.
 - Before finalizing, check:
@@ -439,6 +449,10 @@ Rules:
   - Did I fall back to a filing date, reporting frequency, or procedural timing question when the stronger retrieval need was the obligation, trigger, or consequence?
   - Am I asking for both purpose and applicability when only one should remain?
   - Am I asking for both a condition and a duration/end-point when only one should remain?
+  - Am I asking both what something is and what it must do/contain/receive, when only one sharper legal point should remain?
+  - Would the answer mainly be a list of alternative remedies, alternative actions, or several branches joined by "or"?
+  - Am I asking only for a code, value, threshold, amount, or duration when I should ask what that detail changes legally?
+  - Can I remove a second clause and keep the stronger legal question?
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
 - Include supporting_text: a short quote copied from the source that justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -455,8 +469,11 @@ Bad style examples:
 - a question beginning with the equivalent of "According to Article ..."
 - a question asking which article sets out the exception
 - a question asking only for the exact date, percentage, or listed items when the text supports a better question about threshold or consequence
+- a question asking only for an exact code, numeric threshold, amount, or validity period when the stronger query would ask what that detail classifies, permits, limits, or changes legally
+- a question asking only for the exact wording or exact label entry when the stronger query would ask what that entry certifies, permits, or changes legally
 - a question that mostly copies the title or first operative sentence and turns it into a query
 - a question that asks for all guarantees, all conditions, or all consequences at once when one narrower point would form a better query
+- a question that asks for two actions, two authorities, or two legal branches in the same sentence when one branch would make the cleaner query
 
 Output valid JSON only, no markdown:
 {{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
@@ -466,7 +483,7 @@ Output valid JSON only, no markdown:
         retry_note = (
             "\n\nPrevious attempt issue to fix:\n"
             f"{previous_feedback}\n"
-            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase. Prefer one narrower legal question over a multi-condition checklist. If the last attempt asked both A and B, keep only the stronger legal point."
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase. Prefer one narrower legal question over a multi-condition checklist. If the last attempt asked both A and B, keep only the stronger legal point. If the last attempt would be answered by a list of alternatives or remedies, keep only the main legal effect, requirement, or consequence. If the last attempt asked only for a code, value, threshold, amount, or duration, rewrite it to ask what that detail changes legally. Prefer the shorter single-clause version when possible."
         )
     previous_attempt_note = ""
     if previous_question or previous_answer:
@@ -793,6 +810,12 @@ Approve only if the question:
 - is not nearly copied from the context verbatim,
 - and is useful for legal retrieval benchmarking.
 
+Approval standard:
+- Reject the question if there is a clearly sharper, more semantic, more single-focus legal query available from the same context.
+- Reject the question if a user could answer it mainly by copying one quoted span, one code, one number, one date, or one listed item without really understanding the legal effect.
+- Approve borderline cases only when the current question already looks like the strongest realistic legal retrieval query the passage supports.
+- When in doubt between approve vs reject for a borderline legal question, reject.
+
 Reject questions that:
 - are led by article, paragraph, recital, annex, or provision labels,
 - explicitly mention article numbers or phrases like "this article", "this regulation", or "under Article ..." when the same issue can be asked without them,
@@ -800,15 +823,24 @@ Reject questions that:
 - ask only for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, consequence, or scope,
 - ask only for a deadline when the context supports a better question about what the deadline governs, what triggers it, or what follows from it,
 - ask only for an amount, replacement value, effective date, or numeric threshold when the context supports a better question about what that figure changes, limits, enables, or triggers,
+- ask for a threshold, percentage, amount, or concentration only as a number when the stronger retrieval need is what crossing that threshold changes legally,
+- ask only for a code, category code, annex code, document code, or abbreviated label when the stronger retrieval need is what that code classifies, permits, blocks, exempts, or changes legally,
 - ask only for a reporting frequency, filing date, update cycle, or procedural timing detail when the text supports a better question about the obligation, trigger, scope, or consequence,
 - ask for a full inventory of guarantees, certificates, conditions, or consequences when one narrower point would make a better retrieval query,
 - ask for a full inventory of authorities, exceptions, categories, documents, or powers when one narrower point would make a better retrieval query,
+- ask for all remedies, all appeal routes, all alternative compliance paths, or all alternative actions when one narrower consequence, entitlement, or required action would make a better retrieval query,
+- ask for several concrete treatment methods, disposal methods, measures, routes, or procedural options in one answer when one main required action or legal consequence would make a stronger query,
 - bundle multiple loosely related legal conditions into one checklist question,
 - would naturally require a semicolon-separated or bullet-list answer containing several sub-rules,
+- would naturally require an answer built around several alternative branches joined by "or",
 - combine what the rule says, when it applies, its exceptions, and its consequences into one question when one sharper sub-question is available,
 - ask two distinct legal questions in one sentence joined by conjunctions or contrastive framing when one should be chosen,
+- ask both who acts and by what deadline, or who acts and under what time limit, when one of those should be chosen as the stronger retrieval need,
+- ask both what must be done and what effect that action has when one narrower legal point would make the cleaner query,
 - ask both the purpose of a rule and the situations where it applies when one stronger standalone question is available,
 - ask both the condition for an action and its duration, end-point, or secondary follow-up detail when one should be chosen,
+- ask both what a legal category, procedure, device, authority, or remedy is and what it must contain, receive, do, or produce when one stronger standalone question is available,
+- ask both what wording or label must appear and what legal effect surrounds it when the stronger question should focus on the effect or condition,
 - present two competing legal paths in a yes/no or either-or formulation when one sharper path would make a cleaner query,
 - ask both what must be done and how a secondary adjustment, calculation, or follow-up step works when one sharper question should be chosen,
 - sound like a recital or provision restatement rather than a natural legal information need.
@@ -821,6 +853,13 @@ Be especially strict about these failure modes:
 5. bundled-facts
 6. weak-query-shape
 7. legalistic-lookup
+
+Typical legal examples to reject:
+- a question asking for the exact validity period in days when the stronger question is what the validity period governs legally
+- a question asking for the exact numeric threshold when the stronger question is what happens once that threshold is reached
+- a question asking for an exact code or listed code value when the stronger question is what legal class, exemption, or treatment that code determines
+- a question asking both which body adopts a measure and by when it must do so
+- a question asking for all listed waste types, all listed remedies, or all listed disposal methods instead of one main obligation or consequence
 
 If you reject the question:
 - set `failure_type` to exactly one of:
@@ -846,6 +885,10 @@ If you reject the question:
 - `keep the main legal action and drop the secondary procedural detail`
 - `if the question asks both condition and duration, keep only one`
 - `if the question asks both purpose and applicability, keep only the stronger one`
+- `if the answer would list several remedies or alternatives, pick the main legal effect`
+- `if the question asks both what something is and what it must do, keep only one`
+- `ask what the code or threshold changes legally, not just what its value is`
+- `if the question asks who acts and by when, keep only the stronger legal point`
 
 If you approve the question:
 - set `failure_type` to `none`
@@ -1237,12 +1280,14 @@ def _process_sample_row(
 
     try:
         client = _get_client()
+        attempt_logs: List[str] = []
 
         if same_language:
             row_lang = (row.get("language") or "en").strip().lower()
             lang_name = LANG_NAMES.get(row_lang, row_lang)
             row_metadata = _row_output_metadata(row)
             approved_sl = False
+            approved_attempt = 0
             q_loc = ""
             a_loc = ""
             supporting_text = ""
@@ -1279,6 +1324,9 @@ def _process_sample_row(
                 )
                 if not lang_ok:
                     last_failure = f"language check failed: {lang_reason or 'wrong language'}"
+                    attempt_logs.append(
+                        f"attempt {_attempt}/{max_attempts}: language rejected - {lang_reason or 'wrong language'}"
+                    )
                     retry_feedback = (
                         f"{last_failure}. Rewrite the question and answer entirely in {lang_name}."
                     )
@@ -1295,6 +1343,9 @@ def _process_sample_row(
                 )
                 if not faithful_ok:
                     last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
+                    attempt_logs.append(
+                        f"attempt {_attempt}/{max_attempts}: faithfulness rejected - {faithful_reason or 'not grounded enough'}"
+                    )
                     retry_feedback = (
                         f"{last_failure}. Keep the answer strictly grounded in the context."
                     )
@@ -1311,6 +1362,9 @@ def _process_sample_row(
                 )
                 if not quality_ok:
                     last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
+                    attempt_logs.append(
+                        f"attempt {_attempt}/{max_attempts}: quality rejected - {quality_reason or 'question not useful enough'}"
+                    )
                     retry_feedback = (
                         f"{last_failure}. Use the better direction above if present. Regenerate one fresh question "
                         f"that is more retrieval-useful, more specific, less citation-led, and more semantic, still "
@@ -1323,12 +1377,19 @@ def _process_sample_row(
                         f"legal question, not two joined together or one contrastive A-or-B question. Prefer the "
                         f"main obligation, trigger, or consequence over reporting-frequency or procedural-timing "
                         f"details, and drop secondary calculation or follow-up details when they weaken the query. "
-                        f"If the previous attempt asked both purpose and applicability, or both condition and duration, "
-                        f"keep only the stronger legal point."
+                        f"If the previous attempt asked both purpose and applicability, both condition and duration, "
+                        f"or both what something is and what it must do, keep only the stronger legal point. If the "
+                        f"answer would mainly become a list of remedies, alternatives, or branches joined by 'or', "
+                        f"ask for the main legal effect instead."
                     )
                     continue
 
                 approved_sl = True
+                approved_attempt = _attempt
+                if _attempt > 1:
+                    attempt_logs.append(
+                        f"attempt {_attempt}/{max_attempts}: accepted after retries"
+                    )
                 break
 
             if not approved_sl:
@@ -1336,12 +1397,14 @@ def _process_sample_row(
                     "index": index,
                     "corpus_id": corpus_id,
                     "rows": [],
+                    "attempt_logs": attempt_logs,
                     "status": f"skipped ({last_failure or 'validation failed'})",
                 }
 
             return {
                 "index": index,
                 "corpus_id": corpus_id,
+                "attempt_logs": attempt_logs,
                 "rows": [
                     {
                         "corpus_id": corpus_id,
@@ -1351,10 +1414,11 @@ def _process_sample_row(
                         **row_metadata,
                     }
                 ],
-                "status": f"ok ({question_type or 'validated'} {row_lang}, same-language)",
+                "status": f"ok ({question_type or 'validated'} {row_lang}, same-language, attempt {approved_attempt}/{max_attempts})",
             }
 
         approved = False
+        approved_attempt = 0
         q_en = ""
         a_en = ""
         supporting_text = ""
@@ -1389,6 +1453,9 @@ def _process_sample_row(
             )
             if not lang_ok:
                 last_failure = f"language check failed: {lang_reason or 'not English enough'}"
+                attempt_logs.append(
+                    f"attempt {_attempt}/{max_attempts}: language rejected - {lang_reason or 'not English enough'}"
+                )
                 retry_feedback = (
                     f"{last_failure}. The output must be natural English only."
                 )
@@ -1405,6 +1472,9 @@ def _process_sample_row(
             )
             if not faithful_ok:
                 last_failure = f"faithfulness check failed: {faithful_reason or 'not grounded enough'}"
+                attempt_logs.append(
+                    f"attempt {_attempt}/{max_attempts}: faithfulness rejected - {faithful_reason or 'not grounded enough'}"
+                )
                 retry_feedback = (
                     f"{last_failure}. Remove unsupported details and keep the answer strictly grounded in the context."
                 )
@@ -1420,6 +1490,9 @@ def _process_sample_row(
             )
             if not quality_ok:
                 last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
+                attempt_logs.append(
+                    f"attempt {_attempt}/{max_attempts}: quality rejected - {quality_reason or 'question not useful enough'}"
+                )
                 retry_feedback = (
                     f"{last_failure}. Use the better direction above if present. Regenerate one fresh question "
                     f"that is more retrieval-useful, more specific, less generic, and less surface-aligned. "
@@ -1428,6 +1501,11 @@ def _process_sample_row(
                 continue
 
             approved = True
+            approved_attempt = _attempt
+            if _attempt > 1:
+                attempt_logs.append(
+                    f"attempt {_attempt}/{max_attempts}: accepted after retries"
+                )
             break
 
         if not approved:
@@ -1435,6 +1513,7 @@ def _process_sample_row(
                 "index": index,
                 "corpus_id": corpus_id,
                 "rows": [],
+                "attempt_logs": attempt_logs,
                 "status": f"skipped ({last_failure or 'validation failed'})",
             }
 
@@ -1535,14 +1614,16 @@ def _process_sample_row(
         return {
             "index": index,
             "corpus_id": corpus_id,
+            "attempt_logs": attempt_logs,
             "rows": qac_rows,
-            "status": f"ok ({question_type or 'validated'} en + {translation_status})",
+            "status": f"ok ({question_type or 'validated'} en + {translation_status}, attempt {approved_attempt}/{max_attempts})",
         }
     except Exception as exc:
         return {
             "index": index,
             "corpus_id": corpus_id,
             "rows": [],
+            "attempt_logs": [],
             "status": f"error: {exc}",
         }
 
@@ -1619,6 +1700,8 @@ def run_qa_pipeline(
             for completed, future in enumerate(progress, start=1):
                 result = future.result()
                 results.append(result)
+                for log_line in result.get("attempt_logs", []):
+                    tqdm.write(f"     {result['corpus_id']}: {log_line}")
                 tqdm.write(
                     f"  [{completed}/{len(sampled)}] {result['corpus_id']}... {result['status']}"
                 )
@@ -1640,6 +1723,8 @@ def run_qa_pipeline(
                 domain_hint=domain_hint,
             )
             results.append(result)
+            for log_line in result.get("attempt_logs", []):
+                tqdm.write(f"     {result['corpus_id']}: {log_line}")
             tqdm.write(f"  [{index}/{len(sampled)}] {result['corpus_id']}... {result['status']}")
 
     for result in sorted(results, key=lambda item: item["index"]):

@@ -35,22 +35,26 @@ These numbers still support a strong document-level cross-lingual benchmark even
 From the latest `data/JRC-ACQUIS/qac/qac.csv` review:
 
 - QAC rows written: `22 / 22`
-- Languages represented in the latest sample: `12`
-- Average question length: `152.1` chars
-- Median question length: `148` chars
-- Average answer length: `196.7` chars
+- Languages represented in the latest sample: `13`
+- Average question length: `131.2` chars
+- Median question length: `129` chars
+- Average answer length: `177.5` chars
+- Median answer length: `184.5` chars
+- Questions `>= 180` chars: `3 / 22`
+- Checker-triggered retry wins: `6 / 22`
 
 What improved in the newest sample:
 
-- the run completed with full yield instead of losing one row to malformed JSON
-- several questions are now more clearly single-focus than in the earlier review
-- most rows are still legally grounded and language-correct
+- the run again completed with full yield
+- several earlier exact value / threshold / literal-scope questions were rewritten into legal-effect questions
+- the latest sample is noticeably shorter and cleaner than the previous `22`-row review
+- the new attempt logs show the tighter checker now rejecting and repairing several weak first drafts instead of letting them pass immediately
 
 What still remains visible:
 
-- some questions are still joined/two-part instead of fully reducing to one legal point
-- some questions still ask for an exact formula, fixed wording, value, or time period instead of the stronger legal consequence or condition
-- the corpus-side cleanup is now ahead of the QA-question quality, so the benchmark still benefits more from corpus improvements than from question-shape improvements
+- some questions are still condition-list or inventory-shaped instead of fully reducing to one legal point
+- some questions are still broad procedural queries rather than the sharpest legal-effect question available
+- the biggest remaining weakness is now more about residual condition bundling than about raw exact-value lookup
 
 ## Pairing Structure
 
@@ -125,7 +129,7 @@ Current state:
 - retrieval boilerplate leakage fixed
 - retrieval text is richer but capped
 - QA candidate filtering is stricter and more substance-aware
-- latest QA run reached full yield, but still contains a few joined or lookup-shaped legal questions
+- latest QA run reached full yield, and the latest sample is shorter and more semantic, but still contains a few condition-list or broad procedural questions
 
 ### Scores
 
@@ -146,21 +150,21 @@ Current corpus quality score by perspective:
 
 Latest QA-output score by perspective:
 
-- Overall QA output quality now: `6.5 / 10`
-- Previous QA output quality before the latest prompt tightening: `6.0 / 10`
-- Single-focus legal question quality now: `6.0 / 10`
-- Single-focus legal question quality before: `5.0 / 10`
+- Overall QA output quality now: `7.2 / 10`
+- Previous QA output quality before the latest prompt tightening: `6.5 / 10`
+- Single-focus legal question quality now: `6.8 / 10`
+- Single-focus legal question quality before: `6.0 / 10`
 - Language correctness and faithfulness now: `8.5 / 10`
-- Language correctness and faithfulness before: `8.0 / 10`
+- Language correctness and faithfulness before: `8.5 / 10`
 - Yield stability now: `8.5 / 10`
-- Yield stability before: `7.0 / 10`
+- Yield stability before: `8.5 / 10`
 
 Interpretation:
 
 - The corpus is clearly better than before.
 - The biggest gain is in retrieval cleanliness and removal of non-substantive junk.
 - The main new downside is that the stricter QA filter is uneven across languages.
-- QA output quality also improved, but more modestly than the corpus itself.
+- QA output quality also improved again, and this latest gain is now visible in both question shape and retry behavior.
 
 ## Current Quality Assessment
 
@@ -169,7 +173,7 @@ Overall assessment:
 - Alignment quality: strong
 - Corpus cleanliness: clearly improved
 - Retrieval corpus quality: good
-- QA readiness: usable, with better full-run stability, but still visibly uneven by language and not yet consistently single-focus in question shape
+- QA readiness: usable and clearly improved, with better rewrite behavior, but still visibly uneven by language and not yet consistently free of condition-list shape
 - Cross-lingual benchmark potential: high
 
 Practical interpretation:
@@ -214,9 +218,9 @@ Current QA rejection reasons:
 
 This means the new heuristic is mostly acting on paragraph-shape and operative-density, not on trivial short-document rejection.
 
-### 3. Corpus quality improved more than QA quality
+### 3. Corpus quality still improved more than QA quality, but the QA side is now catching up
 
-The corpus-side cleanup worked well, and the latest QA run now reaches full yield. But the follow-up QA output still contains some dual-part, formula/text-lookup, or value/time-period-heavy questions. So the current preprocessing/filtering improvement should still be judged mainly as a **corpus-quality win**, with only a partial QA-quality improvement so far.
+The corpus-side cleanup remains the bigger structural win. But the latest QA iteration now shows a real downstream gain too: the sample is shorter, more semantic, and several exact lookup questions were rewritten into legal-effect questions after checker rejection. The remaining QA weakness is now more concentrated in condition-list / inventory-shaped questions rather than in raw value or phrase lookup.
 
 ## Recommended Next Improvements
 
@@ -225,10 +229,9 @@ The most useful next steps are now:
 1. Tune the multilingual substance thresholds so QA retention is less skewed across languages.
 2. Keep the current retrieval cleanup in place; it appears to be the right direction.
 3. Tighten question-generation prompts and validation against:
-   - dual-part questions
    - checklist / inventory questions
-   - timing-only or value-only lookup questions
-   - exact-formula / exact-phrase lookup questions
+   - broad procedural questions when a sharper legal-effect question exists
+   - residual multi-condition questions
 4. Recheck per-language QA retention after each threshold change.
 
 ## Recommendation For Benchmark Construction
@@ -252,4 +255,4 @@ The JRC-Acquis corpus is now in a clearly better state than before:
 
 Compared with the earlier corpus state, the current build is a real improvement and deserves a higher corpus-quality score.
 
-The latest QA sample is also somewhat better than before and now completes at full yield, but the main remaining issue is still **not corpus dirt**. It is **how evenly the stricter QA-source filter behaves across the 22 languages** and whether the improved pool yields consistently sharper single-focus legal questions.
+The latest QA sample is clearly better than the previous reviewed `22`-row run and now shows the checker actively repairing weak first drafts. The main remaining issue is still **not corpus dirt**. It is **how evenly the stricter QA-source filter behaves across the 22 languages** and whether the improved pool can move from residual condition-list questions to consistently sharp single-focus legal questions.

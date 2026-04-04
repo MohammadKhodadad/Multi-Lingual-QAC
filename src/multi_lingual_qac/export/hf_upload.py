@@ -189,6 +189,26 @@ def _linked_corpus_ids(row: dict, fallback_corpus_id: str) -> list[str]:
     return [fallback_corpus_id] if fallback_corpus_id else []
 
 
+def _infer_language(value: str) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+    parts = [part for part in raw.replace("-", "_").split("_") if part]
+    if not parts:
+        return ""
+    candidate = parts[-1]
+    if 2 <= len(candidate) <= 5 and candidate.isalpha():
+        return candidate
+    return ""
+
+
+def _corpus_language(row: dict) -> str:
+    explicit = str(row.get("language", "") or row.get("lang", "")).strip().lower()
+    if explicit:
+        return explicit
+    return _infer_language(row.get("id", "") or row.get("_id", ""))
+
+
 def push_to_hub(
     corpus_path: Path,
     qac_path: Path,
@@ -214,8 +234,17 @@ def push_to_hub(
 
     # Corpus: MTEB format (_id, title, text)
     corpus_ids = {r["id"] for r in corpus_rows}
+    corpus_language_by_id = {
+        r["id"]: _corpus_language(r)
+        for r in corpus_rows
+    }
     corpus_data = [
-        {"_id": r["id"], "title": r.get("title", ""), "text": r.get("context", r.get("abstract", ""))}
+        {
+            "_id": r["id"],
+            "title": r.get("title", ""),
+            "text": r.get("context", r.get("abstract", "")),
+            "corpus_language": corpus_language_by_id.get(r["id"], ""),
+        }
         for r in corpus_rows
     ]
 
@@ -228,9 +257,10 @@ def push_to_hub(
     seen_query_ids = set()
     for i, r in enumerate(qac_rows):
         cid = r.get("corpus_id", "")
-        lang = r.get("language", "")
+        lang = str(r.get("language", "")).strip().lower()
         q = r.get("question", "")
         a = r.get("answer", "")
+        corpus_lang = corpus_language_by_id.get(cid, _infer_language(cid))
         query_id_hint = str(r.get("query_id_hint", "")).strip()
         if query_id_hint:
             query_id = f"{query_id_hint}_q_{lang}"
@@ -240,13 +270,20 @@ def push_to_hub(
             query_id = f"{cid}_q_{lang}_{i}"
         seen_query_ids.add(query_id)
 
-        queries_data.append({"_id": query_id, "text": q})
+        queries_data.append({
+            "_id": query_id,
+            "text": q,
+            "question_language": lang,
+            "corpus_language": corpus_lang,
+        })
         for linked_corpus_id in _linked_corpus_ids(r, cid):
             qrels_data.append({"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0})
         qac_full.append({
             "query_id": query_id,
             "corpus_id": cid,
             "language": lang,
+            "question_language": lang,
+            "corpus_language": corpus_lang,
             "question": q,
             "answer": a,
         })

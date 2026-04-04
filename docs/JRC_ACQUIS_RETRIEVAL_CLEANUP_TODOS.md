@@ -27,6 +27,7 @@ Work these in order:
 3. Add amendment-heavy detection that works across many languages.
 4. Decide whether amendment filtering should affect only QA candidates or the broader retrieval corpus.
 5. Rebuild and manually inspect examples before the next QA run.
+6. Keep the current QA-shaping improvements in place and verify whether the remaining weak rows are truly source-document issues or mostly residual condition-list generation issues.
 
 ## Already Completed
 
@@ -39,11 +40,14 @@ These cleanup steps are now done:
 - tightened the QA-candidate filter using multilingual-safe paragraph/substance heuristics
 - added `qa_rejection_reasons` reporting to `document_corpus_stats.json`
 - updated the language-pair table to the QA-based directional matrix used for dataset building
+- added per-attempt QA rejection logging so retry reasons are visible during JRC generation
+- tightened the legal QA generation + quality-check prompts against exact value/code lookup and multi-clause legal questions
+- added `corpus_language` and `question_language` columns to the Hugging Face export path
 
 What this means:
 
 - retrieval corpus quality is clearly better than before
-- the main remaining issue is now uneven QA filtering across languages, not raw header/boilerplate leakage
+- the main remaining issue is now uneven QA filtering across languages plus residual condition-list / inventory-shaped QA questions, not raw header/boilerplate leakage
 
 ## TODOs
 
@@ -198,7 +202,7 @@ Review questions:
 - do sampled documents support stronger legal questions?
 - are we removing too many multilingual documents?
 - are any languages disproportionately harmed by the new heuristics?
-- are dual-part and list-shaped legal questions still the main remaining failure pattern?
+- are condition-list and inventory-shaped legal questions still the main remaining failure pattern after the new checker/generation tightening?
 
 Why:
 - legal corpora are language-skewed, so a rule that looks good globally may still hurt some languages
@@ -211,6 +215,7 @@ Start with this bundle next:
 2. add accepted vs rejected inspection samples
 3. add conservative amendment-density body detection
 4. expand stats counters for the new exclusion reasons
+5. review whether the remaining weak QA rows come from weak source documents or from still-fixable condition-list generation
 
 That should give the biggest quality gain with the least risk of overfitting to English-only patterns.
 
@@ -222,4 +227,5 @@ We should consider this cleanup successful if the next build shows:
 - better manual inspection samples
 - fewer short or procedural-only QA sources
 - stronger question quality in the next JRC QA run
+- fewer residual condition-list / inventory-shaped questions after retries
 - more stable multilingual coverage despite stricter filtering
