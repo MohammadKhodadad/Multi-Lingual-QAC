@@ -285,64 +285,6 @@ Rules:
 - Output valid JSON only, no markdown:
   {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
 """
-    if domain == "legal":
-        prompt = """You are an expert at creating retrieval questions from multilingual legal and regulatory passages, especially EU legislation, decisions, directives, regulations, opinions, and procedural acts.
-
-The source context may be in any language, but your output must be in English only.
-
-Generate exactly ONE question-answer pair from the context.
-
-Rules:
-- Output must be natural English only.
-- The question must read like a realistic retrieval query that a lawyer, policy reader, regulator, compliance analyst, legal researcher, or informed practitioner might type.
-- Prefer one substantive legal information need, not a clause lookup.
-- Ask about one operative point such as a condition, consequence, addressee, exception, scope limit, evidence requirement, procedural effect, legal threshold, or what the rule practically requires, permits, excludes, or causes.
-- The question must be answerable from the text and specific enough to be useful for retrieval.
-- Prefer semantically challenging questions that require understanding the operative meaning of the provision rather than surface keyword lookup.
-- Prefer the narrowest strong legal question the text supports, not the safest broad question.
-- Prefer a question whose answer can usually be given in one focused sentence, not a question that naturally turns into a multi-part inventory.
-- The question should still work as a strong query if article numbers, paragraph numbers, recital numbers, and annex labels were hidden.
-- Do not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article", "this regulation", "this directive", "this decision", or "under Article ..." unless the reference itself is essential.
-- Do not ask for the provision number, legal basis citation, exact title, or exact clause wording.
-- Do not simply restate the text in question form.
-- Do not ask a broad summary question when a narrower operative question is available.
-- Do not bundle multiple loosely related legal conditions into one long checklist question unless the source presents them as one inseparable rule.
-- Do not ask for all conditions, all exceptions, all guarantees, all consequences, or all documents at once when one narrower sub-question would be stronger.
-- Do not ask what a party or Member State may and may not do under several different conditions if one sharper question can target the key trigger, exception, refusal ground, or consequence.
-- Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, or consequence.
-- Avoid questions whose best answer would naturally be a semicolon-separated list of several conditions, categories, or procedural branches.
-- Avoid effective-date-only, amount-only, threshold-only, or replacement-value-only questions when the text supports a better question about what the date, amount, or threshold changes legally.
-- Avoid timing-only or frequency-only questions such as when a report must be filed, how often something must be reported, or by what date an action must occur when the text supports a better question about what the obligation does, what triggers it, or what follows from failure to comply.
-- Avoid two-part questions that ask both A and B in the same sentence when one sharper sub-question is available.
-- Avoid contrastive yes/no questions that present two competing legal paths in one sentence if one branch captures the stronger retrieval need.
-- Avoid procedural questions that ask both what authority action is required and how a secondary calculation, adjustment, or follow-up detail must be handled if one of those is the clearer retrieval target.
-- Prefer a compact query with one main clause. If the question starts growing into a second clause after a comma, conjunction, or semicolon, keep only the stronger sub-question.
-- Prefer grounded paraphrase over direct lexical overlap.
-- Before finalizing, check:
-  - Does this ask about what the rule means, requires, permits, excludes, proves, or causes?
-  - Would this still be a good query without article labels?
-  - Would dense retrieval need semantic understanding, not just BM25-style token overlap?
-  - Would the answer be a focused legal point rather than an inventory of several items?
-  - Did I pick one trigger, one exception, one consequence, one addressee, or one legal effect instead of combining several?
-  - Did I accidentally ask two questions at once or force the query into two competing branches?
-  - Did I fall back to a filing date, reporting frequency, or procedural timing question when the stronger retrieval need was the obligation, trigger, or consequence?
-- The answer must be concise (1-2 sentences) and strictly grounded in the context.
-- Include a short supporting_text quote copied from the source context that justifies the answer.
-- Include a question_type chosen from: obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
-- Good style examples:
-  - "What condition must be satisfied before the import can be authorized?"
-  - "What happens if the authority does not object within the stated period?"
-  - "Who may submit a request to stop the infringement?"
-  - "What evidence has to accompany the shipment at first marketing?"
-- Bad style examples:
-  - "According to Article 6, what conditions apply?"
-  - "Under Article 4(1), how must the court treat the list?"
-  - "What does this article require for authorization?"
-  - "Which article sets out the exception?"
-
-Output valid JSON only, no markdown:
-{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
-"""
     retry_note = ""
     if previous_feedback:
         retry_note = (
@@ -469,6 +411,8 @@ Rules:
 - Do not bundle multiple loosely related legal conditions into one long checklist question unless the passage presents them as one inseparable rule.
 - Do not ask one question that combines both the rule and all of its exceptions, deadlines, and follow-up consequences if one sharper sub-question would be stronger.
 - Do not ask for all conditions, all exceptions, all guarantees, all consequences, all documents, or all authorities' powers at once when one narrower sub-question would make a better query.
+- Do not ask both the purpose of a rule and the situations where it applies when one of those is the stronger standalone retrieval need.
+- Do not ask both the condition for an action and the maximum duration, end-point, or later procedural detail of that action when one of those should be chosen.
 - Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the passage supports a better question about threshold, obligation, exception, trigger, or consequence.
 - Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
 - Avoid deadline-only questions when the text supports a better question about what triggers the deadline, what it governs, or what happens if it is not met.
@@ -477,6 +421,7 @@ Rules:
 - Avoid certificate/evidence/list questions that only ask for the full inventory when the text supports a better question about what the evidence is meant to show or when it is required.
 - Avoid questions whose best answer would naturally be a semicolon-separated inventory of conditions, exceptions, categories, documents, or procedural branches.
 - Avoid two-part questions that ask both A and B in the same sentence when one sharper sub-question is available.
+- Avoid joined questions built around equivalents of "and", "or", "as well as", or "until when" when the answer would need to cover two legal points rather than one.
 - Avoid contrastive yes/no questions that present two competing legal paths in one sentence if one branch captures the stronger retrieval need.
 - Avoid procedural questions that ask both what authority action is required and how a secondary calculation, adjustment, or follow-up detail must be handled if one of those is the clearer retrieval target.
 - Prefer a compact query with one main clause. If the question starts growing into a second clause after a comma, conjunction, or semicolon, keep only the stronger sub-question.
@@ -492,6 +437,8 @@ Rules:
   - Would the answer become a list of several sub-rules instead of one focused legal point?
   - Did I accidentally ask two questions at once or build a contrastive A-or-B query instead of one focused legal question?
   - Did I fall back to a filing date, reporting frequency, or procedural timing question when the stronger retrieval need was the obligation, trigger, or consequence?
+  - Am I asking for both purpose and applicability when only one should remain?
+  - Am I asking for both a condition and a duration/end-point when only one should remain?
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
 - Include supporting_text: a short quote copied from the source that justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
@@ -519,7 +466,7 @@ Output valid JSON only, no markdown:
         retry_note = (
             "\n\nPrevious attempt issue to fix:\n"
             f"{previous_feedback}\n"
-            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase. Prefer one narrower legal question over a multi-condition checklist."
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase. Prefer one narrower legal question over a multi-condition checklist. If the last attempt asked both A and B, keep only the stronger legal point."
         )
     previous_attempt_note = ""
     if previous_question or previous_answer:
@@ -860,6 +807,8 @@ Reject questions that:
 - would naturally require a semicolon-separated or bullet-list answer containing several sub-rules,
 - combine what the rule says, when it applies, its exceptions, and its consequences into one question when one sharper sub-question is available,
 - ask two distinct legal questions in one sentence joined by conjunctions or contrastive framing when one should be chosen,
+- ask both the purpose of a rule and the situations where it applies when one stronger standalone question is available,
+- ask both the condition for an action and its duration, end-point, or secondary follow-up detail when one should be chosen,
 - present two competing legal paths in a yes/no or either-or formulation when one sharper path would make a cleaner query,
 - ask both what must be done and how a secondary adjustment, calculation, or follow-up step works when one sharper question should be chosen,
 - sound like a recital or provision restatement rather than a natural legal information need.
@@ -895,6 +844,8 @@ If you reject the question:
 - `drop the weaker branch and keep one sharper legal query`
 - `ask about the obligation or consequence, not just the reporting date or frequency`
 - `keep the main legal action and drop the secondary procedural detail`
+- `if the question asks both condition and duration, keep only one`
+- `if the question asks both purpose and applicability, keep only the stronger one`
 
 If you approve the question:
 - set `failure_type` to `none`
@@ -949,7 +900,6 @@ def translate_qa(
     """
     if not target_langs:
         return {}
-    domain = _normalize_domain_hint(domain_hint)
     lang_list = ", ".join(LANG_NAMES.get(l, l) for l in target_langs)
     prompt = f"""Translate the following English retrieval question and answer pair into these languages: {lang_list}.
 
@@ -975,32 +925,6 @@ Avoid translation artifacts:
 - do not leak words from unrelated languages or scripts into the translation
 - if a technical term can stay in Latin script, integrate it naturally into an otherwise target-language sentence
 - if the English answer contains multiple supported facts, preserve them cleanly without turning the translation into a glossary or note
-- prefer one polished final phrasing, not an exploratory or half-edited wording
-
-Output valid JSON only:
-{{"translations": {{"de": {{"question": "...", "answer": "..."}}, "fr": {{...}}, ...}}}}
-
-Languages to include: {json.dumps(target_langs)}
-"""
-    if domain == "legal":
-        prompt = f"""Translate the following English legal/regulatory retrieval question and answer pair into these languages: {lang_list}.
-
-For each language, produce a natural, native-sounding legal retrieval-style translation.
-Use the source context to resolve ambiguity and preserve the original information need exactly.
-Keep the same meaning, level of specificity, legal effect, and operative focus as the English question.
-Do not make the question more generic than the original.
-Do not simplify the question into a keyword-heavy or literal surface-form restatement.
-Do not introduce article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article" or "under Article ..." if they are not present in the English question.
-Preserve dates, numbers, thresholds, legal conditions, exceptions, scope limits, entities, and required evidence exactly when they matter.
-Keep the answer faithful to the English answer and consistent with the source context.
-Do not add explanation, background, or extra legal implications not present in the English pair or source context.
-Prefer natural target-language legal phrasing over word-for-word translation.
-Avoid translation artifacts:
-- choose one natural term, not slash-separated alternatives like `X/Y`
-- do not leave editor-style repair traces or synonym bundles
-- do not include unnecessary English glosses in parentheses
-- rewrite into natural target-language syntax instead of following English word order too closely
-- keep the text fully in the target language except for unavoidable identifiers, abbreviations, citations, or proper nouns
 - prefer one polished final phrasing, not an exploratory or half-edited wording
 
 Output valid JSON only:
@@ -1069,7 +993,6 @@ def check_translation_quality(
     Returns structured quality signals for approval and retry decisions.
     """
     target_lang_name = LANG_NAMES.get(target_lang, target_lang)
-    domain = _normalize_domain_hint(domain_hint)
     prompt = f"""You are a strict but practical translation quality checker for multilingual patent retrieval data.
 
 The source context may be in any language. The reference question and answer are in English.
@@ -1136,62 +1059,6 @@ Approval policy:
 Output valid JSON only:
 {{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "terminology_ok": true, "artifact_ok": true, "fluency_ok": true, "grammar_ok": true, "severity": "low", "failure_type": "none", "better_direction": "", "reason": "..."}}
 """
-    if domain == "legal":
-        prompt = f"""You are a strict but practical translation quality checker for multilingual legal/regulatory retrieval data.
-
-The source context may be in any language. The reference question and answer are in English.
-The candidate translation must be in {target_lang_name}.
-
-Judge these dimensions separately:
-- `language_ok`: the translated question and answer are clearly written in {target_lang_name}
-- `meaning_ok`: the meaning matches the English question and English answer closely
-- `technical_ok`: dates, numbers, thresholds, scope conditions, exceptions, entities, and required evidence are preserved
-- `specificity_ok`: the translated question keeps the same information need and specificity and does not become more generic
-- `terminology_ok`: the translation uses appropriate legal/regulatory terminology and register for {target_lang_name}
-- `artifact_ok`: the translation does not contain repair artifacts such as slash-separated alternatives, unnecessary English glosses, editor-style synonym bundles, or gratuitous code mixing
-- `fluency_ok`: the translation sounds natural enough for a native legal/policy reader and is not clearly word-for-word or grammatically broken
-- `grammar_ok`: grammar, agreement, case, morphology, and local sentence form are acceptable for {target_lang_name}
-- `label_reference_ok`: the translation does not introduce article/provision labels or phrases like "this article" or "under Article ..." if they are absent from the English question
-
-Severity guidelines:
-- `high`: wrong language, meaning drift, introduced label references, dropped or altered legal details, or much more generic wording
-- `medium`: meaning is mostly correct but there are clear grammar problems or awkward/literal phrasing
-- `low`: minor stiffness or small fluency issues only
-
-Choose exactly one `failure_type`:
-- `none`
-- `wrong-language`
-- `meaning-error`
-- `missing-technical-detail`
-- `too-generic`
-- `unnatural-phrasing`
-- `grammar-morphology`
-- `terminology-register`
-- `translation-artifact`
-- `introduced-label-reference`
-
-If you reject:
-- keep `reason` short and concrete
-- provide `better_direction` as ONE short actionable repair hint
-- examples:
-  - `rewrite more naturally for legal phrasing`
-  - `restore the missing legal detail exactly`
-  - `keep the question as specific as the English original`
-  - `remove the added article reference`
-  - `use natural legal register in {target_lang_name}`
-
-Approval policy:
-- Reject when `language_ok`, `meaning_ok`, `technical_ok`, `specificity_ok`, or `label_reference_ok` is false.
-- Reject when `terminology_ok` is false.
-- Reject when `artifact_ok` is false.
-- Reject when `grammar_ok` is false and severity is `medium` or `high`.
-- Reject when `fluency_ok` is false and severity is `medium` or `high`.
-- Approve when the only issue is minor fluency stiffness with `severity = low`.
-
-Output valid JSON only:
-{{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "terminology_ok": true, "artifact_ok": true, "fluency_ok": true, "grammar_ok": true, "label_reference_ok": true, "severity": "low", "failure_type": "none", "better_direction": "", "reason": "..."}}
-"""
-
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -1455,7 +1322,9 @@ def _process_sample_row(
                         f"or list-only lookup questions when a better semantic legal question is available. Ask one "
                         f"legal question, not two joined together or one contrastive A-or-B question. Prefer the "
                         f"main obligation, trigger, or consequence over reporting-frequency or procedural-timing "
-                        f"details, and drop secondary calculation or follow-up details when they weaken the query."
+                        f"details, and drop secondary calculation or follow-up details when they weaken the query. "
+                        f"If the previous attempt asked both purpose and applicability, or both condition and duration, "
+                        f"keep only the stronger legal point."
                     )
                     continue
 
@@ -1551,19 +1420,11 @@ def _process_sample_row(
             )
             if not quality_ok:
                 last_failure = f"quality check failed: {quality_reason or 'question not useful enough'}"
-                if _normalize_domain_hint(domain_hint) == "legal":
-                    retry_feedback = (
-                        f"{last_failure}. Use the better direction above if present. Regenerate one fresh question "
-                        f"that is more retrieval-useful, more specific, less label-driven, and less surface-aligned. "
-                        f"Ask about the operative condition, exception, threshold, evidence requirement, or "
-                        f"consequence without mentioning article numbers or labels."
-                    )
-                else:
-                    retry_feedback = (
-                        f"{last_failure}. Use the better direction above if present. Regenerate one fresh question "
-                        f"that is more retrieval-useful, more specific, less generic, and less surface-aligned. "
-                        f"Prefer one narrower technical fact over a broad summary or literal lookup."
-                    )
+                retry_feedback = (
+                    f"{last_failure}. Use the better direction above if present. Regenerate one fresh question "
+                    f"that is more retrieval-useful, more specific, less generic, and less surface-aligned. "
+                    f"Prefer one narrower technical fact over a broad summary or literal lookup."
+                )
                 continue
 
             approved = True

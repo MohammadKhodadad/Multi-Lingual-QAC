@@ -189,4 +189,9 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - article-label avoidance
   - broad/checklist-shaped legal questions
   - literal deadline/list/numeric lookup questions
-- Current conclusion: the JRC questions are clearly better than the earlier runs, but still need more pressure toward narrow legal-semantic retrieval questions.
+- Latest review snapshot:
+  - latest sample wrote `22/22` rows
+  - latest sample covered `12` languages
+  - average question length was about `152` chars
+  - average answer length was about `197` chars
+- Current conclusion: the JRC questions are better and more stable than the earlier runs, but still need more pressure toward narrow single-focus legal-semantic retrieval questions, especially to suppress joined questions and exact-formula/value/timing lookups.
