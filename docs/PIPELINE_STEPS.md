@@ -202,3 +202,31 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - `17/44` generation units were visibly rejected and then accepted on retry
   - the new legal-shape checker visibly rejected several weak rows before acceptance
 - Current conclusion: the JRC questions are better than the previous reviewed run, but the main remaining weakness is still accepted condition-list / inventory / procedural-limit legal questions rather than article-label phrasing.
+
+## 18. MTEB Evaluation and Comparison Reports
+- Added `src/multi_lingual_qac/mteb/` with a custom Hugging Face-backed MTEB retrieval task.
+- Added `--evaluate-mteb` to `main.py` / `cli.py` so saved benchmark data can be evaluated directly from the command line.
+- The default MTEB dataset is `MohammadKhodadad/multi-lingual-qac`.
+- Running `uv run main.py --evaluate-mteb` with no model arguments now uses the built-in multilingual default model list:
+  - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
+  - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`
+  - `intfloat/multilingual-e5-large`
+  - `BAAI/bge-m3`
+- Evaluation outputs are written to `reports/mteb/` with `summary.json`, `summary.csv`, and `summary.md`.
+- MTEB model downloads are cached locally in `.cache/huggingface/` so repeated runs do not depend on the user-profile cache.
+- Added a second reporting-only command, `uv run main.py --generate-mteb-tables`, which reads saved MTEB summaries and writes standalone comparison tables to `reports/mteb_tables/`.
+- Table generation now also works when `summary.json` is missing by falling back to the raw per-model `*_retrieval.json` files already written inside `reports/mteb/`.
+- Comparison outputs now include:
+  - `model_comparison.json`
+  - `model_comparison.csv`
+  - `model_comparison.md`
+  - `model_comparison.tex`
+- Latest partial CPU comparison snapshot:
+  - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2062`
+  - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.1340`
+- Next MTEB work package:
+  - finish the default model sweep
+  - rerun the strongest models on GPU hardware
+  - record hardware metadata with benchmark outputs
+  - extend the comparison set with larger GPU-oriented multilingual models once the baseline sweep is complete
+- This separates expensive benchmark execution from lightweight report regeneration, so model tables can be rebuilt without rerunning embeddings.

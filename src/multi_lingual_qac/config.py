@@ -60,4 +60,11 @@ class PipelineConfig:
     qa_batch: Optional[bool] = None
     push_hf: bool = False
     hf_repo: Optional[str] = None
+    evaluate_mteb_models: tuple[str, ...] = ()
+    mteb_dataset_repo: str = "MohammadKhodadad/multi-lingual-qac"
+    mteb_output_dir: Optional[str] = None
+    mteb_batch_size: int = 32
+    generate_mteb_tables: bool = False
+    mteb_results_dir: Optional[str] = None
+    mteb_tables_dir: Optional[str] = None
     languages: tuple[str, ...] = tuple(DEFAULT_LANGS)

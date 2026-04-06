@@ -12,6 +12,13 @@ from src.multi_lingual_qac.dataloaders.jrc_acquis import (
     count_jrc_acquis_input_files,
     download_jrc_acquis_archives,
 )
+from src.multi_lingual_qac.mteb import (
+    DEFAULT_MTEB_DATASET_REPO,
+    DEFAULT_MTEB_MODELS,
+    DEFAULT_MTEB_TABLES_DIR,
+    generate_mteb_comparison_tables,
+    run_mteb_evaluation,
+)
 from src.multi_lingual_qac.preprocess.corpus import (
     build_corpus_from_source,
     count_source_records,
@@ -85,6 +92,50 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--qa-no-batch", action="store_true", help="Disable batch QA generation")
     parser.add_argument("--push-hf", action="store_true", help="Push corpus + QAC to Hugging Face Hub")
     parser.add_argument("--hf-repo", type=str, default=None, help="Hugging Face repo ID (e.g. username/multi-lingual-chemical-qac); required if --push-hf")
+    parser.add_argument(
+        "--evaluate-mteb",
+        nargs="*",
+        metavar="MODEL",
+        help=(
+            "Evaluate embedding models against the pushed HF retrieval dataset via MTEB. "
+            "If no models are provided, uses the built-in multilingual default set."
+        ),
+    )
+    parser.add_argument(
+        "--mteb-dataset-repo",
+        type=str,
+        default=DEFAULT_MTEB_DATASET_REPO,
+        help=f"Hugging Face dataset repo to evaluate with MTEB (default: {DEFAULT_MTEB_DATASET_REPO})",
+    )
+    parser.add_argument(
+        "--mteb-output-dir",
+        type=str,
+        default=None,
+        help="Directory for MTEB results and summary reports (default: reports/mteb)",
+    )
+    parser.add_argument(
+        "--mteb-batch-size",
+        type=int,
+        default=32,
+        help="Batch size passed to sentence-transformers encoding during MTEB evaluation",
+    )
+    parser.add_argument(
+        "--generate-mteb-tables",
+        action="store_true",
+        help="Generate model comparison tables from saved MTEB results without rerunning evaluation",
+    )
+    parser.add_argument(
+        "--mteb-results-dir",
+        type=str,
+        default=None,
+        help="Directory containing saved MTEB results and summary.json (default: reports/mteb)",
+    )
+    parser.add_argument(
+        "--mteb-tables-dir",
+        type=str,
+        default=None,
+        help=f"Directory for generated comparison tables (default: {DEFAULT_MTEB_TABLES_DIR})",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -109,6 +160,19 @@ def parse_args() -> PipelineConfig:
         qa_batch=qa_batch,
         push_hf=args.push_hf,
         hf_repo=args.hf_repo,
+        evaluate_mteb_models=tuple(
+            args.evaluate_mteb
+            if args.evaluate_mteb is not None and len(args.evaluate_mteb) > 0
+            else DEFAULT_MTEB_MODELS
+            if args.evaluate_mteb is not None
+            else ()
+        ),
+        mteb_dataset_repo=args.mteb_dataset_repo,
+        mteb_output_dir=args.mteb_output_dir,
+        mteb_batch_size=max(1, args.mteb_batch_size),
+        generate_mteb_tables=args.generate_mteb_tables,
+        mteb_results_dir=args.mteb_results_dir,
+        mteb_tables_dir=args.mteb_tables_dir,
     )
 
 
@@ -119,6 +183,33 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.evaluate_mteb_models:
+        output_dir = config.mteb_output_dir or (project_root / "reports" / "mteb")
+        summaries = run_mteb_evaluation(
+            list(config.evaluate_mteb_models),
+            dataset_repo=config.mteb_dataset_repo,
+            output_dir=output_dir,
+            batch_size=config.mteb_batch_size,
+        )
+        print("MTEB evaluation finished.")
+        print(f"  Dataset: {config.mteb_dataset_repo}")
+        print(f"  Output: {output_dir}")
+        for item in summaries:
+            print(f"  {item.model_name}: {item.main_score:.4f}")
+        return
+
+    if config.generate_mteb_tables:
+        results_dir = config.mteb_results_dir or (project_root / "reports" / "mteb")
+        tables_dir = config.mteb_tables_dir or (project_root / DEFAULT_MTEB_TABLES_DIR)
+        generated_dir = generate_mteb_comparison_tables(
+            results_dir=results_dir,
+            output_dir=tables_dir,
+        )
+        print("MTEB comparison tables generated.")
+        print(f"  Source results: {results_dir}")
+        print(f"  Output: {generated_dir}")
+        return
+
     active_source = (
         config.prepare_source
         or config.build_corpus

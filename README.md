@@ -68,6 +68,86 @@ JRC uses a pair-level legal QA flow:
 - generate the query in that target-side language
 - connect the final query to both documents in the pair
 
+### MTEB benchmark and report generation
+
+Run the benchmark with the built-in default multilingual model set:
+
+```bash
+uv run main.py --evaluate-mteb
+```
+
+Default benchmark settings:
+
+- dataset: `MohammadKhodadad/multi-lingual-qac`
+- models:
+  - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
+  - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`
+  - `intfloat/multilingual-e5-large`
+  - `BAAI/bge-m3`
+- model cache folder: `.cache/huggingface`
+- output folder: `reports/mteb`
+
+Run the benchmark with specific models:
+
+```bash
+uv run main.py --evaluate-mteb sentence-transformers/all-MiniLM-L6-v2 BAAI/bge-m3
+```
+
+Override the dataset repo or output folder:
+
+```bash
+uv run main.py --evaluate-mteb --mteb-dataset-repo MohammadKhodadad/multi-lingual-qac --mteb-output-dir reports/my_mteb_run
+```
+
+After the benchmark finishes, generate comparison tables from the saved results without rerunning evaluation:
+
+```bash
+uv run main.py --generate-mteb-tables
+```
+
+That reads from `reports/mteb` and writes comparison tables to `reports/mteb_tables`.
+
+If a long benchmark run is still in progress or stopped early, table generation can also fall back to the raw per-model MTEB result JSON files already written under `reports/mteb/**`.
+
+Point comparison-table generation at a different benchmark run if needed:
+
+```bash
+uv run main.py --generate-mteb-tables --mteb-results-dir reports/my_mteb_run --mteb-tables-dir reports/my_mteb_tables
+```
+
+Benchmark outputs:
+
+- `reports/mteb/summary.json`
+- `reports/mteb/summary.csv`
+- `reports/mteb/summary.md`
+
+Comparison-table outputs:
+
+- `reports/mteb_tables/model_comparison.json`
+- `reports/mteb_tables/model_comparison.csv`
+- `reports/mteb_tables/model_comparison.md`
+- `reports/mteb_tables/model_comparison.tex`
+
+Current partial CPU results from the latest run:
+
+- `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2062`
+- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.1340`
+
+Suggested next steps:
+
+- finish the full default model sweep so the comparison table includes `intfloat/multilingual-e5-large` and `BAAI/bge-m3`
+- rerun the strongest models on GPU hardware for faster turnaround and cleaner large-model coverage
+- record hardware details for each benchmark batch (CPU vs GPU, GPU type, batch size) alongside the reports
+- add a second comparison run focused on larger GPU-oriented multilingual encoders after the default baseline sweep is stable
+- optionally add incremental summary writing per completed model so long runs always leave a top-level `summary.json`
+
+Recommended flow:
+
+```bash
+uv run main.py --evaluate-mteb
+uv run main.py --generate-mteb-tables
+```
+
 Use `--source wikidata` for the main run so paths point at `data/WIKIDATA/`. Q&A generation matches the EPO flow: **English** question/answer from the sampled corpus context, then **translation** to the configured target languages—so `qac.csv` has **one row per language** per sampled source chunk (`corpus_id` ties the translations together).
 
 **`--label-qrels WIKIDATA`** (see `qac_generation/label_wikidata_qrels.py`):
@@ -107,6 +187,9 @@ src/
 │   │   └── label_wikidata_qrels.py   # Wikidata: multilingual qrels + queries (gpt-5-nano judge)
 │   ├── export/
 │   │   └── hf_upload.py        # Hugging Face / MTEB upload
+│   ├── mteb/
+│   │   ├── __init__.py         # MTEB entrypoints / exports
+│   │   └── evaluation.py       # benchmark execution + comparison table generation
 │   └── preprocess/
 │       └── corpus.py           # source-specific corpus preparation helpers
 ```
