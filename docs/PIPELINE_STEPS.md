@@ -67,7 +67,8 @@ Short recap of every step implemented in the Multi-Lingual Chemical QAC pipeline
 +---------------------------+
 | Validate                  |
 | language / faithfulness / |
-| legal quality             |
+| legal quality /           |
+| legal shape               |
 +---------------------------+
        | yes                      ^ no
        v                          |
@@ -181,7 +182,9 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - deadline-only / list-only / amount-only lookup questions when a better semantic legal question exists
 - Added stronger retry feedback so rejected questions are regenerated toward one narrower legal information need.
 - Added visible per-attempt QA logging so failed language / faithfulness / quality checks can be seen in the terminal during JRC runs.
+- Added a dedicated legal-shape checker after the general quality checker to reject broad legal-shape, condition-list, menu-of-measures, definition-inventory, date-value-lookup, and multi-branch question forms.
 - Added Hugging Face export columns for `corpus_language` and `question_language` in the pushed dataset configs.
+- Cleaned `openai_qa.py` so the same-language path is now explicitly JRC/legal-only in this branch and dead prompt branches were removed.
 
 ## 17. JRC QAC Review Notes
 - Replaced the old chemistry-focused `docs/QAC_QUALITY_NOTES.md` with JRC-specific QA review notes.
@@ -192,9 +195,10 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - broad/checklist-shaped legal questions
   - literal deadline/list/numeric lookup questions
 - Latest review snapshot:
-  - latest sample wrote `22/22` rows
-  - latest sample covered `13` languages
-  - average question length was about `131` chars
-  - average answer length was about `178` chars
-  - `6/22` rows were visibly rejected once and improved on retry
-- Current conclusion: the JRC questions are now clearly better than the previous reviewed `22`-row sample. The main remaining weakness has shifted from raw exact-value lookup toward residual condition-list / inventory-style legal questions.
+  - latest sample wrote `43/44` rows
+  - latest sample covered `20` languages
+  - average question length was about `139` chars
+  - average answer length was about `186` chars
+  - `17/44` generation units were visibly rejected and then accepted on retry
+  - the new legal-shape checker visibly rejected several weak rows before acceptance
+- Current conclusion: the JRC questions are better than the previous reviewed run, but the main remaining weakness is still accepted condition-list / inventory / procedural-limit legal questions rather than article-label phrasing.

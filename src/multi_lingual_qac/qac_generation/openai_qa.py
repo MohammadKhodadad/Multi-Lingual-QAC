@@ -1,12 +1,12 @@
 """
 OpenAI-based Q&A generation.
 
-Default pipeline (`same_language=False`, including Wikidata via `pipeline.py`):
+Default pipeline (`same_language=False`, used for EPO and Wikidata):
 generate question and answer in English from the corpus context, validate, then
 translate to all target languages.
 
-Optional `same_language=True`: generate and validate Q&A in each row's
-`language` field (no translation step); for experiments or direct API use.
+JRC pipeline (`same_language=True`): generate and validate Q&A in each row's
+language without translation.
 """
 
 from __future__ import annotations
@@ -136,8 +136,7 @@ def generate_qa_english(
     Generate one validated-target Q&A pair in English from the given context.
     Returns question, answer, and supporting_text.
     """
-    domain = _normalize_domain_hint(domain_hint)
-    prompt = """You are an expert at creating retrieval questions from chemistry, patent, legal, regulatory, encyclopedia, or technical passages.
+    prompt = """You are an expert at creating retrieval questions from patent, legal, regulatory, encyclopedia, or technical passages.
 
 The source context may be in any language, but your output must be in English only.
 
@@ -145,7 +144,7 @@ Generate exactly ONE question-answer pair from the context.
 
 Rules:
 - Output must be in natural English only.
-- Do not copy the source language unless a chemical name, formula, identifier, or proper noun should remain unchanged.
+- Do not copy the source language unless a technical term, formula, identifier, or proper noun should remain unchanged.
 - The question must read like a realistic retrieval query that a researcher, engineer, lawyer, policy reader, compliance reader, or technical reader might actually type into a search system.
 - Prefer short, natural, user-like wording over patent-summary or clause-lookup wording.
 - Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, material relationship, mechanism, effect, functional role, obligation, requirement, exception, applicability, legal effect, threshold, or consequence.
@@ -185,10 +184,10 @@ Rules:
 - Preserve technical terms only when they are necessary for faithfulness or the question would become unnatural or ambiguous without them.
 - Prefer grounded paraphrase over direct lexical overlap.
 - Avoid spec-sheet questions when a more semantic alternative exists, especially:
-  - exact wt% or mol-ratio lookups
-  - exact temperature, density, time, or concentration range lookups
+  - exact value or ratio lookups
+  - exact range lookups
   - exact component inventory or long named-list lookups
-  - exact "what does the composition contain" questions
+  - exact "what does it contain/include" questions
 - A numeric question is acceptable only when the number itself is the important retrieval target and the context does not support a better question about function, rationale, or effect.
 - In legal or regulatory text, a numeric question is acceptable only when the number itself is the important retrieval target and there is no better question about threshold, obligation, exception, trigger, or consequence.
 - Avoid broad fallback wording like:
@@ -252,32 +251,24 @@ Rules:
 - Include a short supporting_text quote copied from the source context that justifies the answer.
 - Include a question_type chosen from: purpose, application, composition, method, property, advantage, operating_condition, material_relationship, other.
 - Good style examples:
-  - "How does the treatment improve hair growth when heat is applied afterward?"
-  - "Where would these microcapsules be used in fragranced consumer goods?"
   - "What does the shape deformation layer do when the artificial nail is pressed onto the natural nail?"
   - "Why is cold rolling performed after hot rolling or forging in this steel production process?"
-  - "What function does sodium bicarbonate serve in the enteric coating composition?"
-  - "Which biomarker pairs are measured to assess early-onset preeclampsia risk?"
-  - "At what density is the mixed solution evaporated before filtration?"
-  - "What property of the glass substrate supports fine pattern formation?"
+  - "What function does the buffer layer serve in the device structure?"
   - "What condition must be satisfied before the import can be authorized?"
   - "What happens if the authority does not object within the stated period?"
   - "Who may submit a request to stop the infringement?"
   - "What evidence has to accompany the shipment at first marketing?"
 - Bad style examples:
-  - "What are the recommended application methods for the preparation described in the invention?"
-  - "What type of products can include the microcapsules mentioned in the invention?"
-  - "What is the application of 8-(4-trifluoromethoxy)benzyloamino-2'-deoxyadenosine?"
-  - "What types of products can utilize the hair dye composition described in the text?"
-  - "What is the role of the benzoxazole derivatives in detecting GHB in beverages?"
+  - "What are the recommended application methods described in the invention?"
+  - "What type of products can include the component mentioned in the invention?"
+  - "What is the application of [named compound/component]?"
+  - "What types of products can utilize the composition described in the text?"
+  - "What is the role of the component in the process?" when the context supports a more specific function or effect question
   - "What is the main technical advantage of this method?"
   - "What is the purpose of the process?"
   - "How does the method work?" when the context supports a more specific `Why`, `Which`, `What function`, `What condition`, or `At what` question
-  - "What SiO2/Li2O and SiO2/Al2O3 mol ratios does the glass composition require?" when the context also supports a better question about why the composition enables the target property
-  - "What are the specified weight percent ranges for silicon and manganese?" when the context also supports a better question about the role or effect of the composition
-  - "Which specific fungicides are named as component (2)?" when the context also supports a better question about selection logic, interaction, or functional grouping
-  - "What is the purpose of flowing a portion of metal-rich produced water to an evaporation area ...?" when the better question is about what this step causes or why it enables metal recovery
-  - "What advantages does the DNA oligonucleotide ... offer ...?" when the better question is about the concrete storage or biosafety property
+  - "What exact ratios or ranges are specified?" when the context also supports a better question about why the values matter
+  - "Which specific items are listed?" when the context also supports a better question about role, interaction, or functional grouping
   - "According to Article 6, what conditions apply?"
   - "Under Article 4(1), how must the court treat the list?"
   - "What does this article require for authorization?"
@@ -335,58 +326,12 @@ def generate_qa_in_language(
     previous_answer: Optional[str] = None,
     previous_feedback: Optional[str] = None,
     model: str = DEFAULT_GENERATION_MODEL,
-    domain_hint: Optional[str] = None,
 ) -> Dict[str, str]:
     """
     Generate one Q&A pair in the same language as the corpus row (target_lang_code).
     """
     lang_name = LANG_NAMES.get(target_lang_code.lower(), target_lang_code)
-    domain = _normalize_domain_hint(domain_hint)
-    prompt = f"""You are an expert at creating retrieval questions from legal, regulatory, encyclopedia, or technical passages.
-
-The source context is written mainly in {lang_name} (BCP-47 code: {target_lang_code}).
-You MUST write the question, answer, and supporting_text entirely in {lang_name}.
-
-Rules:
-- Natural, fluent {lang_name} only. Keep chemical names, formulas, identifiers, units, and proper nouns as appropriate (they may stay in Latin script or standard notation).
-- The question must read like a realistic search query a researcher, lawyer, policy reader, compliance reader, or informed user would type.
-- Prefer a specific question about one concrete point the passage supports best, such as: rule, requirement, scope, definition, obligation, exception, applicability, procedure, method, property, use, safety, history, comparison, legal effect, consequence, or evidence threshold.
-- The question must be answerable strictly from the passage and be specific enough for retrieval benchmarking.
-- Prefer semantically challenging questions over trivial keyword overlap with the first sentence.
-- Do not copy a long span from the source verbatim into the question.
-- Do not turn the title alone into the question.
-- For legal or regulatory passages, prefer questions that require understanding what a provision means, when it applies, what it allows or forbids, who it binds, what condition triggers a consequence, what evidence or requirement must be satisfied, or what practical effect follows.
-- For legal or regulatory passages, prefer one operative clause, condition, exception, addressee, definition, effect, threshold, or consequence rather than broad document-summary wording.
-- When possible, ask about:
-  - what condition must be met
-  - what happens if a condition is or is not met
-  - who is allowed, required, exempted, or affected
-  - what a rule applies to or excludes
-  - what evidence, certificate, or showing is required
-  - what legal or procedural effect follows
-- Prefer the substance of the rule over the citation label. Do not make the question mainly about locating "Article X" or "paragraph Y" if the same point can be asked as a natural information need.
-- Do not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article", "this regulation", "this directive", or close equivalents in {lang_name} unless the reference itself is essential.
-- Avoid citation-led openings such as:
-  - "According to Article ..."
-  - "Under Article ..."
-  - "Per Article ..."
-  - close equivalents in {lang_name}
-  unless the article number itself is essential to the information need.
-- Avoid clause-lookup questions that mainly ask for an exact provision number, exact title, exact legal basis citation, or exact article-reference wording when the same passage supports a better question about meaning, obligation, condition, exception, or effect.
-- The question should still make sense as a strong query if the legal labels were hidden from the reader.
-- Avoid questions that only ask for a raw date, raw percentage, raw ratio, or raw named list when the passage supports a better question about what that detail controls, permits, changes, or requires.
-- Avoid bundling multiple loosely related legal conditions into one long checklist question unless the passage presents them as one inseparable rule.
-- Prefer shorter, natural query wording over long recital-like phrasing copied from the text.
-- A good legal retrieval question should still make sense if article numbers are hidden.
-- The answer must be concise (1-2 sentences) and fully grounded in the context.
-- Include supporting_text: a short quote copied from the source that justifies the answer.
-- Include question_type: one of purpose, application, composition, method, property, safety, history, obligation, scope, requirement, other.
-
-Output valid JSON only, no markdown:
-{{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
-"""
-    if domain == "legal":
-        prompt = f"""You are an expert at creating retrieval questions from multilingual legal and regulatory passages, especially EU legislation, decisions, directives, regulations, opinions, and procedural acts.
+    prompt = f"""You are an expert at creating retrieval questions from multilingual legal and regulatory passages, especially EU legislation, decisions, directives, regulations, opinions, and procedural acts.
 
 The source context is written mainly in {lang_name} (BCP-47 code: {target_lang_code}).
 You MUST write the question, answer, and supporting_text entirely in {lang_name}.
@@ -536,7 +481,7 @@ Decide whether BOTH the question and answer are written mainly in English.
 Approve only if:
 - both are natural English,
 - they are not primarily written in another language,
-- they are not mixed-language outputs except for unavoidable chemical names, formulas, identifiers, or proper nouns.
+- they are not mixed-language outputs except for unavoidable technical terms, formulas, identifiers, or proper nouns.
 
 Output valid JSON only:
 {"approved": true, "reason": "..."}
@@ -578,7 +523,7 @@ Decide whether BOTH the question and answer are written mainly in {lang_name} (l
 Approve only if:
 - both are natural {lang_name},
 - they are not primarily in a different language,
-- chemical names, formulas, units, identifiers, and proper nouns may appear in Latin script or standard notation when normal for that field.
+- technical terms, formulas, units, identifiers, and proper nouns may appear in Latin script or standard notation when normal for that field.
 
 Output valid JSON only:
 {{"approved": true, "reason": "..."}}
@@ -732,10 +677,10 @@ Also reject questions that:
 - in legal text, point directly to article/provision labels instead of asking about the operative condition, exception, threshold, or consequence.
 
 Treat these as common extractive failure modes:
-- exact wt% / mol-ratio lookup
-- exact temperature / density / time / concentration range lookup
+- exact value or ratio lookup
+- exact range or threshold lookup
 - exact ingredient inventory or long named-list lookup
-- direct "what does the composition contain" lookup
+- direct "what does it contain/include" lookup
 - direct "what values are specified for X and Y" lookup
 
 Do NOT reject all numeric questions automatically.
@@ -813,6 +758,9 @@ Approve only if the question:
 Approval standard:
 - Reject the question if there is a clearly sharper, more semantic, more single-focus legal query available from the same context.
 - Reject the question if a user could answer it mainly by copying one quoted span, one code, one number, one date, or one listed item without really understanding the legal effect.
+- Reject the question if it mainly asks for a bundle of eligibility conditions, issuance conditions, recognition conditions, reporting conditions, or applicability conditions when one trigger, exception, exclusion, consequence, or entitlement would make a sharper query.
+- Reject the question if it mainly asks for a definition plus its included elements, a category plus its contents, or a measure plus all its listed forms when one narrower legal effect, obligation, exclusion, or consequence would make a sharper query.
+- Reject the question if it mainly asks for until what date, for how long, from when to when, or at what threshold a right/benefit/status applies when the passage supports a better question about the legal consequence, exclusion, or entitlement boundary.
 - Approve borderline cases only when the current question already looks like the strongest realistic legal retrieval query the passage supports.
 - When in doubt between approve vs reject for a borderline legal question, reject.
 
@@ -821,15 +769,22 @@ Reject questions that:
 - explicitly mention article numbers or phrases like "this article", "this regulation", or "under Article ..." when the same issue can be asked without them,
 - mainly ask the user to locate a clause instead of understand what the rule requires, permits, excludes, proves, or causes,
 - ask only for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, consequence, or scope,
+- ask mainly for what things are included in a definition, category, device class, or status when the stronger retrieval need is what legal role, obligation, exclusion, or consequence that definition/category creates,
 - ask only for a deadline when the context supports a better question about what the deadline governs, what triggers it, or what follows from it,
 - ask only for an amount, replacement value, effective date, or numeric threshold when the context supports a better question about what that figure changes, limits, enables, or triggers,
 - ask for a threshold, percentage, amount, or concentration only as a number when the stronger retrieval need is what crossing that threshold changes legally,
+- ask only until what date a right, payment, entitlement, status, or benefit lasts when the stronger query is about when or why that right ends, continues, or is excluded,
 - ask only for a code, category code, annex code, document code, or abbreviated label when the stronger retrieval need is what that code classifies, permits, blocks, exempts, or changes legally,
 - ask only for a reporting frequency, filing date, update cycle, or procedural timing detail when the text supports a better question about the obligation, trigger, scope, or consequence,
 - ask for a full inventory of guarantees, certificates, conditions, or consequences when one narrower point would make a better retrieval query,
 - ask for a full inventory of authorities, exceptions, categories, documents, or powers when one narrower point would make a better retrieval query,
 - ask for all remedies, all appeal routes, all alternative compliance paths, or all alternative actions when one narrower consequence, entitlement, or required action would make a better retrieval query,
 - ask for several concrete treatment methods, disposal methods, measures, routes, or procedural options in one answer when one main required action or legal consequence would make a stronger query,
+- ask which measures must be taken, which methods may be used, or which routes are available when the answer is mainly a menu of actions and the passage supports a better question about the main obligation, prohibition, or consequence,
+- ask generally what conditions must be met, what conditions apply, what conditions are required, or under what conditions something happens when one narrower trigger, refusal ground, exception, effect, or entitlement can be asked instead,
+- ask for the full set of conditions for recognition, qualification, issuance, inclusion, approval, authorization, eligibility, or entitlement when the passage supports a better single-point legal question,
+- ask both whether something is allowed and what conditions apply when one of those should be chosen as the stronger retrieval need,
+- ask both whether something applies and what responsibility, consequence, or condition follows when one narrower legal point would make the cleaner query,
 - bundle multiple loosely related legal conditions into one checklist question,
 - would naturally require a semicolon-separated or bullet-list answer containing several sub-rules,
 - would naturally require an answer built around several alternative branches joined by "or",
@@ -860,6 +815,12 @@ Typical legal examples to reject:
 - a question asking for an exact code or listed code value when the stronger question is what legal class, exemption, or treatment that code determines
 - a question asking both which body adopts a measure and by when it must do so
 - a question asking for all listed waste types, all listed remedies, or all listed disposal methods instead of one main obligation or consequence
+- a question asking generally what conditions must be met for a certificate, status, authorization, or benefit when the passage supports a better question about one decisive condition, exception, or refusal ground
+- a question asking for all conditions that make a child, product, vehicle, operator, or applicant qualify for a status when one sharper entitlement or exclusion question is available
+- a question asking whether something applies and also what responsibility or consequence follows
+- a question asking what counts as a device/facility/category and listing all included items instead of asking what that category must be able to do or what legal duty it creates
+- a question asking which measures must be taken when the answer is just a list of treatment/destruction/refusal options
+- a question asking until what date a payment, entitlement, or right lasts instead of asking when or why that right ends
 
 If you reject the question:
 - set `failure_type` to exactly one of:
@@ -878,7 +839,12 @@ If you reject the question:
   - `focus on one narrower legal consequence`
   - `ask about the threshold or exception, not the label`
 - `pick one trigger or consequence instead of listing several conditions`
+- `do not ask for all conditions; ask for one trigger, exception, exclusion, or refusal ground`
+- `replace the general conditions question with one sharper entitlement or exclusion question`
+- `do not ask for a definition plus its list of items; ask what legal role or obligation that category creates`
+- `do not ask which measures are available; ask for the main required action or consequence`
 - `ask what the date or amount changes legally, not just what it is`
+- `do not ask until what date the right lasts; ask when or why it ends or is excluded`
 - `ask one legal question, not two joined together`
 - `drop the weaker branch and keep one sharper legal query`
 - `ask about the obligation or consequence, not just the reporting date or frequency`
@@ -889,6 +855,8 @@ If you reject the question:
 - `if the question asks both what something is and what it must do, keep only one`
 - `ask what the code or threshold changes legally, not just what its value is`
 - `if the question asks who acts and by when, keep only the stronger legal point`
+- `if the question asks what conditions must be met, keep only the strongest condition, exception, or consequence`
+- `if the question asks for included items or listed measures, keep only the strongest legal duty, effect, or exclusion`
 
 If you approve the question:
 - set `failure_type` to `none`
@@ -898,6 +866,112 @@ Output valid JSON only:
 {"approved": true, "reason": "...", "failure_type": "none", "better_direction": ""}
 """
 
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Context:\n{context[:5000]}\n\n"
+                    f"Question: {question}\n\n"
+                    f"Answer: {answer}"
+                ),
+            },
+        ],
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+    approved = bool(data.get("approved", False))
+    reason = str(data.get("reason", "")).strip()
+    failure_type = str(data.get("failure_type", "")).strip()
+    better_direction = str(data.get("better_direction", "")).strip()
+    if failure_type and failure_type != "none":
+        reason = f"{failure_type}: {reason}" if reason else failure_type
+    if better_direction:
+        reason = f"{reason} Better direction: {better_direction}".strip()
+    return approved, reason
+
+
+def check_legal_question_shape(
+    client: OpenAI,
+    context: str,
+    question: str,
+    answer: str,
+    *,
+    model: str = DEFAULT_QUALITY_MODEL,
+    output_language_name: Optional[str] = None,
+) -> Tuple[bool, str]:
+    """
+    Validate that a legal question has a sharp single-focus shape rather than a
+    checklist, menu, definition inventory, or shallow lookup.
+    Returns (approved, reason).
+    """
+    lang_clause = ""
+    if output_language_name:
+        lang_clause = (
+            f"The question and answer are written in {output_language_name} "
+            f"and should be judged as natural legal retrieval text in {output_language_name}.\n\n"
+        )
+    prompt = lang_clause + """You are a strict shape checker for legal/regulatory retrieval questions.
+
+Your task is NOT to judge factual correctness or language. Judge only whether the question has the right retrieval shape.
+
+Approve only if the question:
+- asks for one strong legal point,
+- is shaped like a focused legal retrieval need,
+- avoids checklist, menu, and inventory structure,
+- avoids broad definition-plus-membership shape,
+- avoids date/value/code lookup shape when a stronger legal-effect question is available,
+- and is the sharpest realistic legal question supported by the passage.
+
+Reject questions that:
+- ask which measures must be taken, which methods may be used, or which routes/remedies are available when the answer is mainly a menu of actions,
+- ask what conditions must be met, what conditions apply, or under what conditions something happens when one trigger, exception, refusal ground, exclusion, entitlement, or consequence would be sharper,
+- ask who/what counts as something or what is included in a category when the answer is mainly a definition inventory or membership list,
+- ask until what date / for how long / from when to when a right, payment, status, or benefit applies when the stronger question is about when or why it ends, continues, or is excluded,
+- ask for an exact threshold, amount, code, period, or listed item when the stronger question is what that detail changes legally,
+- ask a yes/no or applicability question and then also ask for the consequence, condition, or responsibility,
+- ask a consequence question whose answer naturally becomes a list of several alternative branches instead of one decisive legal point.
+
+Shape test:
+- If the best answer naturally reads like a list, menu, checklist, or a set of parallel branches, reject.
+- If the best answer can be one focused legal point, and the question is aimed at that point, approve.
+- If a sharper single-issue reformulation is obvious from the passage, reject the current question.
+
+Typical rejects:
+- "Which measures must the Member State take ... ?"
+- "What conditions must be met for ... ?"
+- "Who counts as a dependent child?"
+- "What facilities are included in ... ?"
+- "Until what date does the entitlement last?"
+- "What amount/code/threshold applies ... ?" when the stronger question is the legal effect of that detail
+
+Typical approves:
+- "What consequence follows if the requirement is not met?"
+- "When must entry be refused?"
+- "What exclusion applies in this case?"
+- "What legal effect does this limitation produce?"
+- "Which authority is responsible once X happens?" if that is the one decisive legal point
+
+If you reject the question:
+- set `failure_type` to exactly one of:
+  - `condition-list`
+  - `menu-of-measures`
+  - `definition-inventory`
+  - `date-value-lookup`
+  - `multi-branch`
+  - `broad-legal-shape`
+- keep `reason` short and concrete
+- provide `better_direction` as ONE short actionable hint
+
+If you approve the question:
+- set `failure_type` to `none`
+- set `better_direction` to an empty string
+
+Output valid JSON only:
+{"approved": true, "reason": "...", "failure_type": "none", "better_direction": ""}
+"""
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -936,7 +1010,6 @@ def translate_qa(
     previous_translated_question: Optional[str] = None,
     previous_translated_answer: Optional[str] = None,
     model: str = DEFAULT_TRANSLATION_MODEL,
-    domain_hint: Optional[str] = None,
 ) -> Dict[str, Tuple[str, str]]:
     """
     Translate (question, answer) to target languages. Returns {lang: (q, a)}.
@@ -954,7 +1027,7 @@ Preserve the semantic difficulty of the original question.
 Do not simplify the question into a keyword-heavy or literal surface-form restatement.
 Prefer natural target-language phrasing over word-for-word translation.
 Do not omit or alter numbers, units, ranges, formulas, identifiers, or named technical materials.
-Preserve chemical names, abbreviations, symbols, and patent-style identifiers when translating them would be incorrect or unnatural.
+Preserve technical terms, abbreviations, symbols, and patent-style identifiers when translating them would be incorrect or unnatural.
 Keep the answer faithful to the English answer and consistent with the source context.
 Do not add explanation, background, or extra claims not present in the English pair or source context.
 If the English question is technical and concise, keep the target-language question technical and concise too.
@@ -964,7 +1037,7 @@ Avoid translation artifacts:
 - do not include unnecessary English glosses in parentheses
 - avoid code-mixed verbs or phrasing when the target language has a normal technical equivalent
 - rewrite into natural target-language syntax instead of following English word order too closely
-- keep the text fully in the target language except for unavoidable chemical names, formulas, units, identifiers, abbreviations, or proper nouns
+- keep the text fully in the target language except for unavoidable technical terms, formulas, units, identifiers, abbreviations, or proper nouns
 - do not leak words from unrelated languages or scripts into the translation
 - if a technical term can stay in Latin script, integrate it naturally into an otherwise target-language sentence
 - if the English answer contains multiple supported facts, preserve them cleanly without turning the translation into a glossary or note
@@ -1029,7 +1102,6 @@ def check_translation_quality(
     target_lang: str,
     *,
     model: str = DEFAULT_QUALITY_MODEL,
-    domain_hint: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Validate that a translated QA pair is fluent, faithful, and in the target language.
@@ -1128,7 +1200,6 @@ Output valid JSON only:
     artifact_ok = bool(data.get("artifact_ok", True))
     fluency_ok = bool(data.get("fluency_ok", False))
     grammar_ok = bool(data.get("grammar_ok", True))
-    label_reference_ok = bool(data.get("label_reference_ok", True))
     severity = str(data.get("severity", "high")).strip().lower() or "high"
     if severity not in {"low", "medium", "high"}:
         severity = "high"
@@ -1144,7 +1215,6 @@ Output valid JSON only:
         "grammar-morphology",
         "terminology-register",
         "translation-artifact",
-        "introduced-label-reference",
     }:
         failure_type = "meaning-error"
     better_direction = str(data.get("better_direction", "")).strip()
@@ -1155,7 +1225,6 @@ Output valid JSON only:
         and specificity_ok
         and terminology_ok
         and artifact_ok
-        and label_reference_ok
     )
     if approved and not grammar_ok and severity in {"medium", "high"}:
         approved = False
@@ -1169,7 +1238,6 @@ Output valid JSON only:
         or (not specificity_ok)
         or (not terminology_ok)
         or (not artifact_ok)
-        or (not label_reference_ok)
         or ((not grammar_ok) and severity in {"medium", "high"})
         or ((not fluency_ok) and severity in {"medium", "high"})
     )
@@ -1188,7 +1256,6 @@ Output valid JSON only:
         "artifact_ok": artifact_ok,
         "fluency_ok": fluency_ok,
         "grammar_ok": grammar_ok,
-        "label_reference_ok": label_reference_ok,
     }
 
 
@@ -1306,7 +1373,6 @@ def _process_sample_row(
                     previous_answer=retry_answer,
                     previous_feedback=retry_feedback,
                     model=generation_model,
-                    domain_hint=domain_hint,
                 )
                 q_loc = generated["question"]
                 a_loc = generated["answer"]
@@ -1381,6 +1447,26 @@ def _process_sample_row(
                         f"or both what something is and what it must do, keep only the stronger legal point. If the "
                         f"answer would mainly become a list of remedies, alternatives, or branches joined by 'or', "
                         f"ask for the main legal effect instead."
+                    )
+                    continue
+
+                shape_ok, shape_reason = check_legal_question_shape(
+                    client,
+                    context,
+                    q_loc,
+                    a_loc,
+                    model=quality_model,
+                    output_language_name=lang_name,
+                )
+                if not shape_ok:
+                    last_failure = f"legal shape check failed: {shape_reason or 'question shape not useful enough'}"
+                    attempt_logs.append(
+                        f"attempt {_attempt}/{max_attempts}: legal-shape rejected - {shape_reason or 'question shape not useful enough'}"
+                    )
+                    retry_feedback = (
+                        f"{last_failure}. Regenerate one fresh legal retrieval question in {lang_name} that asks for exactly one "
+                        f"focused legal point. Do not ask for a menu of measures, a bundle of conditions, a definition plus "
+                        f"its listed members, or a date/value/code lookup when a sharper legal-effect question is available."
                     )
                     continue
 
@@ -1500,6 +1586,26 @@ def _process_sample_row(
                 )
                 continue
 
+            if _normalize_domain_hint(domain_hint) == "legal":
+                shape_ok, shape_reason = check_legal_question_shape(
+                    client,
+                    context,
+                    q_en,
+                    a_en,
+                    model=quality_model,
+                )
+                if not shape_ok:
+                    last_failure = f"legal shape check failed: {shape_reason or 'question shape not useful enough'}"
+                    attempt_logs.append(
+                        f"attempt {_attempt}/{max_attempts}: legal-shape rejected - {shape_reason or 'question shape not useful enough'}"
+                    )
+                    retry_feedback = (
+                        f"{last_failure}. Regenerate one fresh legal retrieval question that asks for exactly one focused legal point. "
+                        f"Do not ask for a menu of measures, a bundle of conditions, a definition plus its listed members, or a "
+                        f"date/value/code lookup when a sharper legal-effect question is available."
+                    )
+                    continue
+
             approved = True
             approved_attempt = _attempt
             if _attempt > 1:
@@ -1543,7 +1649,6 @@ def _process_sample_row(
                     previous_translated_question=retry_q,
                     previous_translated_answer=retry_a,
                     model=translation_model,
-                    domain_hint=domain_hint,
                 )
                 if lang not in trans:
                     lang_failure = "translation missing"
@@ -1562,7 +1667,6 @@ def _process_sample_row(
                     a,
                     lang,
                     model=quality_model,
-                    domain_hint=domain_hint,
                 )
                 if not trans_check["approved"]:
                     reason = str(trans_check.get("reason", "")).strip()
@@ -1648,8 +1752,8 @@ def run_qa_pipeline(
     Sample corpus and generate Q&A.
 
     If same_language is False (default): generate in English, translate to target_languages.
-    If same_language is True: generate question and answer in each row's `language` field;
-    one output row per sampled document (no translation).
+    If same_language is True: generate legal question and answer in each row's `language`
+    field; one output row per sampled document (no translation).
 
     Writes qac.csv (corpus_id, language, question, answer) to output_dir.
     Returns number of QAC rows written.
@@ -1663,6 +1767,10 @@ def run_qa_pipeline(
         quality_model = model
         support_model = model
         translation_model = model
+    if same_language and _normalize_domain_hint(domain_hint) != "legal":
+        raise ValueError(
+            "same_language mode is only supported for legal/JRC generation in this branch."
+        )
     output_dir.mkdir(parents=True, exist_ok=True)
 
     rows = load_corpus(corpus_path)

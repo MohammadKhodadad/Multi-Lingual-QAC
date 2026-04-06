@@ -6,6 +6,7 @@ Goal:
 - improve the quality of the JRC retrieval corpus before the next QA-generation round
 - reduce low-value legal acts such as pure amendments, corrigenda, and boilerplate-heavy records
 - keep the benchmark focused on documents that support stronger retrieval questions
+- keep the accepted QA set focused on sharp single-point legal retrieval questions
 
 ## Why This Matters
 
@@ -23,11 +24,11 @@ Because of that, it is worth filtering document quality before we sample QA pair
 Work these in order:
 
 1. Tune the current multilingual substance thresholds so the QA pool is less skewed by language.
-2. Add manual accepted vs rejected inspection samples.
-3. Add amendment-heavy detection that works across many languages.
-4. Decide whether amendment filtering should affect only QA candidates or the broader retrieval corpus.
-5. Rebuild and manually inspect examples before the next QA run.
-6. Keep the current QA-shaping improvements in place and verify whether the remaining weak rows are truly source-document issues or mostly residual condition-list generation issues.
+2. Tighten the legal QA checker against accepted condition-list / inventory / procedural-limit question shapes.
+3. Add manual accepted vs rejected inspection samples.
+4. Add amendment-heavy detection that works across many languages.
+5. Decide whether amendment filtering should affect only QA candidates or the broader retrieval corpus.
+6. Rebuild and manually inspect examples before the next QA run.
 
 ## Already Completed
 
@@ -42,12 +43,14 @@ These cleanup steps are now done:
 - updated the language-pair table to the QA-based directional matrix used for dataset building
 - added per-attempt QA rejection logging so retry reasons are visible during JRC generation
 - tightened the legal QA generation + quality-check prompts against exact value/code lookup and multi-clause legal questions
+- added a dedicated legal-shape checker for broad legal shape, condition-list, menu-of-measures, and definition-inventory failures
 - added `corpus_language` and `question_language` columns to the Hugging Face export path
+- removed dead same-language prompt branches from `openai_qa.py` so the JRC legal path is explicit
 
 What this means:
 
 - retrieval corpus quality is clearly better than before
-- the main remaining issue is now uneven QA filtering across languages plus residual condition-list / inventory-shaped QA questions, not raw header/boilerplate leakage
+- the main remaining issue is now uneven QA filtering across languages plus accepted condition-list / inventory / procedural-limit QA questions, not raw header/boilerplate leakage
 
 ## TODOs
 
@@ -192,7 +195,28 @@ Implementation idea:
 - add one inspection file under `data/JRC-ACQUIS/preprocessed/`
 - this is now one of the highest-priority remaining tasks because the filter is cleaner but still uneven
 
-### 8. Re-review retrieval and QA quality after rebuild
+### 8. Tighten accepted QA-shape filtering
+
+TODO:
+- reject more accepted questions whose best answer naturally becomes:
+- a list of conditions
+- a list of documents or required items
+- a pair of validity / limit rules
+- a form-field instruction copied from one clause
+
+Why:
+- the newest `43/44` review shows that the legal-shape checker is helping, but many of these rows still pass
+- this is now a more important bottleneck than raw corpus dirt
+
+Implementation idea:
+- add stricter legal examples and repair hints to the checker for:
+- `what conditions must be met`
+- `which documents/handlingar/items must be sent`
+- `what limits apply`
+- `how must X be indicated`
+- treat list-shaped answers as a stronger reject signal even when the question is otherwise grounded
+
+### 9. Re-review retrieval and QA quality after rebuild
 
 TODO:
 - after implementing the filters, rebuild and review the resulting corpus again
@@ -202,7 +226,7 @@ Review questions:
 - do sampled documents support stronger legal questions?
 - are we removing too many multilingual documents?
 - are any languages disproportionately harmed by the new heuristics?
-- are condition-list and inventory-shaped legal questions still the main remaining failure pattern after the new checker/generation tightening?
+- are accepted condition-list, inventory, and procedural-limit legal questions still the main remaining failure pattern after the new checker/generation tightening?
 
 Why:
 - legal corpora are language-skewed, so a rule that looks good globally may still hurt some languages
@@ -212,10 +236,11 @@ Why:
 Start with this bundle next:
 
 1. tune the current QA thresholds using per-language retention
-2. add accepted vs rejected inspection samples
-3. add conservative amendment-density body detection
-4. expand stats counters for the new exclusion reasons
-5. review whether the remaining weak QA rows come from weak source documents or from still-fixable condition-list generation
+2. tighten the legal QA checker against accepted condition-list / inventory / procedural-limit questions
+3. add accepted vs rejected inspection samples
+4. add conservative amendment-density body detection
+5. expand stats counters for the new exclusion reasons
+6. review whether the remaining weak QA rows come from weak source documents or from still-fixable condition-list generation
 
 That should give the biggest quality gain with the least risk of overfitting to English-only patterns.
 
@@ -227,5 +252,5 @@ We should consider this cleanup successful if the next build shows:
 - better manual inspection samples
 - fewer short or procedural-only QA sources
 - stronger question quality in the next JRC QA run
-- fewer residual condition-list / inventory-shaped questions after retries
+- fewer accepted condition-list / inventory / procedural-limit questions after retries
 - more stable multilingual coverage despite stricter filtering
