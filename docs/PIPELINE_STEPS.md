@@ -216,6 +216,8 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 - MTEB model downloads are cached locally in `.cache/huggingface/` so repeated runs do not depend on the user-profile cache.
 - Added a second reporting-only command, `uv run main.py --generate-mteb-tables`, which reads saved MTEB summaries and writes standalone comparison tables to `reports/mteb_tables/`.
 - Table generation now also works when `summary.json` is missing by falling back to the raw per-model `*_retrieval.json` files already written inside `reports/mteb/`.
+- After local table generation, the CLI can ask whether the generated benchmark report artifacts should also be uploaded to a dataset repo under `benchmark_outputs/mteb_tables/`.
+- That upload now also refreshes a `## Leaderboard` section in the dataset `README.md`, replacing the previous generated leaderboard block instead of appending duplicates.
 - Comparison outputs now include:
   - `model_comparison.json`
   - `model_comparison.csv`

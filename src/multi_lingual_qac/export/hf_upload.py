@@ -18,13 +18,13 @@ import time
 from typing import Optional
 
 from datasets import Dataset
-from huggingface_hub import HfApi
-from huggingface_hub.errors import HfHubHTTPError
+from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub.errors import EntryNotFoundError, HfHubHTTPError
 
 # Dataset card text: attribution and license (CC BY 4.0, derived dataset, no endorsement, scope).
 # Used for the Hugging Face dataset README so the same terms appear on the Hub.
 DATASET_CARD_ATTRIBUTION = """
-## Data source and license
+## Data Source And License
 
 - **Source dataset:** Patent text (titles, abstracts) in this dataset is derived from **Google Patents Public Data** on BigQuery (`patents-public-data.patents.publications`), provided by IFI CLAIMS Patent Services and Google. See [Marketplace](https://console.cloud.google.com/marketplace/product/google_patents_public_datasets/google-patents-public-data) and [announcement](https://cloud.google.com/blog/topics/public-datasets/google-patents-public-datasets-connecting-public-paid-and-private-patent-data).
 - **License:** That source data is made available under [**CC BY 4.0**](https://creativecommons.org/licenses/by/4.0/) (Creative Commons Attribution 4.0).
@@ -54,29 +54,37 @@ configs:
 ---
 """
 
+COMMON_DATASET_STRUCTURE = """
+## Dataset Structure
+
+- `corpus`: retrieval documents
+- `queries`: benchmark queries
+- `qrels`: relevance judgments
+- `qac`: full question-answer-context rows for inspection and analysis
+
+Each config currently contains a `train` split.
+"""
+
 GENERIC_DATASET_INTRO = (
-    "# Multi-lingual QAC retrieval dataset\n\n"
-    "Question–Answer–Context (QAC) data for multilingual retrieval benchmarking. "
-    "Configs/subsets: `corpus`, `queries`, `qrels`, `qac`. "
-    "Each config currently contains a `train` split.\n"
+    "# Multi-lingual QAC Retrieval Dataset\n\n"
+    "## Overview\n\n"
+    "Question–Answer–Context (QAC) data for multilingual retrieval benchmarking.\n\n"
 )
 
 PATENT_DATASET_INTRO = (
-    "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
-    "Question–Answer–Context (QAC) data for chemistry patent retrieval, multiple languages. "
-    "Configs/subsets: `corpus`, `queries`, `qrels`, `qac` (MTEB-style). "
-    "Each config currently contains a `train` split.\n"
+    "# Multi-lingual Chemical QAC\n\n"
+    "## Overview\n\n"
+    "Question–Answer–Context (QAC) data for chemistry patent retrieval across multiple languages.\n\n"
 )
 
 JRC_DATASET_INTRO = (
     "# Multi-lingual JRC-Acquis QAC\n\n"
-    "Question–Answer–Context (QAC) data derived from the JRC-Acquis multilingual legal corpus. "
-    "Configs/subsets: `corpus`, `queries`, `qrels`, `qac`. "
-    "Each config currently contains a `train` split.\n"
+    "## Overview\n\n"
+    "Question–Answer–Context (QAC) data derived from the JRC-Acquis multilingual legal corpus.\n\n"
 )
 
 JRC_DATASET_CARD_ATTRIBUTION = """
-## Data source
+## Data Source
 
 - **Source dataset:** JRC-Acquis, a multilingual aligned corpus of European Union legal texts.
 - **This dataset:** The corpus subset, questions, and answers are derived benchmark artifacts built from JRC-Acquis language pairs, where one query is generated from the translated side of a selected pair and linked to both paired documents.
@@ -84,12 +92,15 @@ JRC_DATASET_CARD_ATTRIBUTION = """
 """
 
 WIKIDATA_DATASET_CARD_ATTRIBUTION = """
-## Data source
+## Data Source
 
 - **Source datasets:** Wikidata entity metadata and multilingual Wikipedia text extracts.
 - **This dataset:** The corpus, questions, and answers are derived benchmark artifacts built from those sources.
 - **Note:** Verify the latest upstream attribution and redistribution requirements for Wikidata and Wikipedia before public redistribution.
 """
+
+LEADERBOARD_START = "<!-- BEGIN MTEB LEADERBOARD -->"
+LEADERBOARD_END = "<!-- END MTEB LEADERBOARD -->"
 
 
 def _build_readme(source_name: str) -> str:
@@ -106,7 +117,7 @@ def _build_readme(source_name: str) -> str:
     else:
         intro = GENERIC_DATASET_INTRO
         attribution = ""
-    return README_YAML + intro + attribution
+    return README_YAML + intro + COMMON_DATASET_STRUCTURE + "\n" + attribution
 
 
 def _set_csv_field_size_limit() -> None:
@@ -144,6 +155,80 @@ def _with_hf_retries(action_name: str, func, *, max_attempts: int = 4):
             time.sleep(wait_s)
     if last_exc is not None:
         raise last_exc
+
+
+def _download_repo_readme(repo_id: str, token: str) -> str:
+    try:
+        readme_path = hf_hub_download(
+            repo_id=repo_id,
+            filename="README.md",
+            repo_type="dataset",
+            token=token,
+        )
+        return Path(readme_path).read_text(encoding="utf-8")
+    except EntryNotFoundError:
+        return ""
+
+
+def _leaderboard_section_body(leaderboard_md: str, artifact_path: str) -> str:
+    lines = leaderboard_md.strip().splitlines()
+    if lines and lines[0].startswith("# "):
+        lines = lines[1:]
+        while lines and not lines[0].strip():
+            lines = lines[1:]
+    if lines and lines[0].strip() == "## Leaderboard":
+        lines = lines[1:]
+        while lines and not lines[0].strip():
+            lines = lines[1:]
+    body = "\n".join(lines).strip()
+    section_lines = [
+        "## Leaderboard",
+        "",
+        f"Latest generated benchmark comparison tables are also available under `{artifact_path}`.",
+    ]
+    if body:
+        section_lines.extend(["", body])
+    return "\n".join(section_lines).strip() + "\n"
+
+
+def _replace_or_append_leaderboard(readme_body: str, leaderboard_body: str) -> str:
+    block = f"{LEADERBOARD_START}\n{leaderboard_body}{LEADERBOARD_END}\n"
+    if LEADERBOARD_START in readme_body and LEADERBOARD_END in readme_body:
+        prefix, remainder = readme_body.split(LEADERBOARD_START, 1)
+        _, suffix = remainder.split(LEADERBOARD_END, 1)
+        updated = prefix.rstrip() + "\n\n" + block + suffix.lstrip()
+        return updated.rstrip() + "\n"
+    if readme_body.strip():
+        return readme_body.rstrip() + "\n\n" + block
+    return block
+
+
+def _update_dataset_readme_leaderboard(
+    *,
+    api: HfApi,
+    repo_id: str,
+    token: str,
+    leaderboard_md_path: Path,
+    artifact_path: str,
+) -> None:
+    if not leaderboard_md_path.is_file():
+        raise ValueError(f"Missing leaderboard markdown file: {leaderboard_md_path}")
+
+    current_readme = _download_repo_readme(repo_id, token)
+    leaderboard_body = _leaderboard_section_body(
+        leaderboard_md_path.read_text(encoding="utf-8"),
+        artifact_path,
+    )
+    updated_readme = _replace_or_append_leaderboard(current_readme, leaderboard_body)
+    _with_hf_retries(
+        "Upload dataset README with leaderboard",
+        lambda: api.upload_file(
+            path_or_fileobj=io.BytesIO(updated_readme.encode("utf-8")),
+            path_in_repo="README.md",
+            repo_id=repo_id,
+            repo_type="dataset",
+        ),
+    )
 
 
 def load_corpus(corpus_path: Path) -> list[dict]:
@@ -365,3 +450,50 @@ def push_to_hub(
     url = f"https://huggingface.co/datasets/{repo_id}"
     print(f"Pushed to {url}")
     return url
+
+
+def upload_benchmark_outputs(
+    local_dir: Path,
+    repo_id: str,
+    *,
+    path_in_repo: str,
+    token: Optional[str] = None,
+    private: bool = False,
+) -> str:
+    """Upload generated benchmark artifacts to a Hugging Face dataset repo."""
+    local_dir = Path(local_dir)
+    if not local_dir.is_dir():
+        raise ValueError(f"Benchmark output directory does not exist: {local_dir}")
+
+    token = token or os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    if not token:
+        raise ValueError("Set HF_TOKEN in .env for Hugging Face upload.")
+
+    api = HfApi(token=token)
+    _with_hf_retries(
+        "Create/update dataset repo",
+        lambda: api.create_repo(
+            repo_id=repo_id,
+            repo_type="dataset",
+            private=private,
+            exist_ok=True,
+        ),
+    )
+    _with_hf_retries(
+        "Upload benchmark outputs",
+        lambda: api.upload_folder(
+            folder_path=str(local_dir),
+            path_in_repo=path_in_repo,
+            repo_id=repo_id,
+            repo_type="dataset",
+            commit_message=f"Update {path_in_repo}",
+        ),
+    )
+    _update_dataset_readme_leaderboard(
+        api=api,
+        repo_id=repo_id,
+        token=token,
+        leaderboard_md_path=local_dir / "model_comparison.md",
+        artifact_path=path_in_repo,
+    )
+    return f"https://huggingface.co/datasets/{repo_id}/tree/main/{path_in_repo}"

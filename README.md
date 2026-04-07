@@ -107,6 +107,10 @@ uv run main.py --generate-mteb-tables
 
 That reads from `reports/mteb` and writes comparison tables to `reports/mteb_tables`.
 
+After local generation, the CLI can also ask whether you want to upload the generated files to a Hugging Face dataset repo under `benchmark_outputs/mteb_tables/`. The prompt accepts either a dataset repo ID such as `MohammadKhodadad/multi-lingual-qac` or a full dataset URL.
+
+If uploaded, the dataset `README.md` on Hugging Face is also refreshed with a `## Leaderboard` section built from the latest `model_comparison.md`. This section is replaced in place on later uploads rather than appended repeatedly.
+
 If a long benchmark run is still in progress or stopped early, table generation can also fall back to the raw per-model MTEB result JSON files already written under `reports/mteb/**`.
 
 Point comparison-table generation at a different benchmark run if needed:
@@ -127,6 +131,7 @@ Comparison-table outputs:
 - `reports/mteb_tables/model_comparison.csv`
 - `reports/mteb_tables/model_comparison.md`
 - `reports/mteb_tables/model_comparison.tex`
+- Hugging Face dataset artifact path: `benchmark_outputs/mteb_tables/`
 
 Current partial CPU results from the latest run:
 

@@ -401,7 +401,6 @@ def _latex_escape(text: str) -> str:
 
 def _build_markdown_comparison(
     dataset_repo: str,
-    results_path: Path,
     ranked: list[ModelEvaluationSummary],
 ) -> str:
     best = _best_metric_values(ranked, COMPARISON_METRICS)
@@ -409,12 +408,15 @@ def _build_markdown_comparison(
     lines = [
         "# MTEB Model Comparison",
         "",
+        "## Leaderboard",
+        "",
+        "### Overview",
+        "",
         f"- Dataset: `{dataset_repo}`",
-        f"- Source results: `{results_path}`",
         f"- Models compared: `{len(ranked)}`",
         f"- Best model by `{DEFAULT_MTEB_MAIN_SCORE}`: `{top.model_name}` ({top.main_score:.4f})",
         "",
-        "## Ranking",
+        "### Ranking",
         "",
         "| Rank | Model | Main score | nDCG@10 | MAP@10 | MRR@10 | Hit@10 | Recall@10 | Time (s) |",
         "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
@@ -451,7 +453,7 @@ def _build_markdown_comparison(
     lines.extend(
         [
             "",
-            "## Metric Winners",
+            "### Metric Winners",
             "",
             "| Metric | Best model | Score |",
             "| --- | --- | ---: |",
@@ -601,7 +603,7 @@ def generate_mteb_comparison_tables(
             writer.writerow(row)
 
     comparison_md.write_text(
-        _build_markdown_comparison(dataset_repo, results_path, ranked),
+        _build_markdown_comparison(dataset_repo, ranked),
         encoding="utf-8",
     )
     comparison_tex.write_text(

@@ -24,11 +24,12 @@ Because of that, it is worth filtering document quality before we sample QA pair
 Work these in order:
 
 1. Tune the current multilingual substance thresholds so the QA pool is less skewed by language.
-2. Tighten the legal QA checker against accepted condition-list / inventory / procedural-limit question shapes.
-3. Add manual accepted vs rejected inspection samples.
-4. Add amendment-heavy detection that works across many languages.
-5. Decide whether amendment filtering should affect only QA candidates or the broader retrieval corpus.
-6. Rebuild and manually inspect examples before the next QA run.
+2. Expand JRC relevance mapping from one sampled pair to CELEX-group multilingual relevance sets.
+3. Tighten the legal QA checker against accepted condition-list / inventory / procedural-limit question shapes.
+4. Add manual accepted vs rejected inspection samples.
+5. Add amendment-heavy detection that works across many languages.
+6. Decide whether amendment filtering should affect only QA candidates or the broader retrieval corpus.
+7. Rebuild and manually inspect examples before the next QA run.
 
 ## Already Completed
 
@@ -216,7 +217,35 @@ Implementation idea:
 - `how must X be indicated`
 - treat list-shaped answers as a stronger reject signal even when the question is otherwise grounded
 
-### 9. Re-review retrieval and QA quality after rebuild
+### 9. Expand pair-level relevance to CELEX-group multilingual relevance
+
+TODO:
+- stop limiting each generated JRC query to only the two documents in the sampled pair
+- map each generated query to all cleaned retained translations of the same `celex`
+- support at least two explicit modes:
+- sampled-group relevance: all translations of the same `celex` present in the sampled benchmark corpus
+- full-group relevance: all cleaned retained translations of the same `celex` present in the broader cleaned corpus
+- add reporting so we can see how many relevant documents each query gets under each mode
+
+Why:
+- the current export already shows that many sampled `celex` acts have more than two retained translations in the sampled corpus
+- in the broader cleaned corpus, many sampled acts have roughly `19-22` translations available
+- limiting qrels to a single pair undercounts correct cross-lingual retrieval and makes the supervision more arbitrary than the corpus alignment actually supports
+- the benchmark unit is really a multilingual legal act, not just one bilingual pair
+
+Implementation idea:
+- keep `corpus` rows document-language specific; do not merge several translations into one corpus row
+- group cleaned retained corpus rows by `celex`
+- during JRC export, replace `linked_corpus_ids_json = [source, target]` with a CELEX-driven relevant-document set
+- keep the sampled pair for generation provenance, but decouple relevance mapping from that pair
+- add corpus metadata such as `celex_group_size` or `document_group_id` if that helps downstream inspection
+- compare metrics between:
+- pair-only qrels
+- sampled-group qrels
+- full-group qrels
+- document which mode becomes the default and why
+
+### 10. Re-review retrieval and QA quality after rebuild
 
 TODO:
 - after implementing the filters, rebuild and review the resulting corpus again
@@ -236,11 +265,12 @@ Why:
 Start with this bundle next:
 
 1. tune the current QA thresholds using per-language retention
-2. tighten the legal QA checker against accepted condition-list / inventory / procedural-limit questions
-3. add accepted vs rejected inspection samples
-4. add conservative amendment-density body detection
-5. expand stats counters for the new exclusion reasons
-6. review whether the remaining weak QA rows come from weak source documents or from still-fixable condition-list generation
+2. expand JRC qrels from sampled pairs to CELEX-group multilingual relevance sets
+3. tighten the legal QA checker against accepted condition-list / inventory / procedural-limit questions
+4. add accepted vs rejected inspection samples
+5. add conservative amendment-density body detection
+6. expand stats counters for the new exclusion reasons
+7. review whether the remaining weak QA rows come from weak source documents or from still-fixable condition-list generation
 
 That should give the biggest quality gain with the least risk of overfitting to English-only patterns.
 
@@ -254,3 +284,5 @@ We should consider this cleanup successful if the next build shows:
 - stronger question quality in the next JRC QA run
 - fewer accepted condition-list / inventory / procedural-limit questions after retries
 - more stable multilingual coverage despite stricter filtering
+- more than two relevant cleaned documents for many JRC queries where the same `celex` is available in multiple retained languages
+- a documented, auditable default relevance mode for JRC (`pair`, `sampled-group`, or `full-group`)

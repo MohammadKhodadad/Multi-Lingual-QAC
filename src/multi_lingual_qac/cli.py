@@ -12,6 +12,7 @@ from src.multi_lingual_qac.dataloaders.jrc_acquis import (
     count_jrc_acquis_input_files,
     download_jrc_acquis_archives,
 )
+from src.multi_lingual_qac.export.hf_upload import upload_benchmark_outputs
 from src.multi_lingual_qac.mteb import (
     DEFAULT_MTEB_DATASET_REPO,
     DEFAULT_MTEB_MODELS,
@@ -24,7 +25,7 @@ from src.multi_lingual_qac.preprocess.corpus import (
     count_source_records,
     prepare_corpus_source,
 )
-from src.multi_lingual_qac.pipeline import ask_interactive, run_pipeline
+from src.multi_lingual_qac.pipeline import ask_interactive, ask_text, run_pipeline
 from src.multi_lingual_qac.qac_generation.label_wikidata_qrels import run_wikidata_qrels_labeling
 
 
@@ -33,6 +34,16 @@ def _normalize_source_name(value: str) -> str:
     if normalized not in {"epo", "wikidata", "jrc-acquis"}:
         raise argparse.ArgumentTypeError(f"Unsupported source: {value}")
     return normalized
+
+
+def _normalize_hf_dataset_repo(value: str) -> str:
+    raw = value.strip()
+    if not raw:
+        return ""
+    marker = "huggingface.co/datasets/"
+    if marker in raw:
+        raw = raw.split(marker, 1)[1]
+    return raw.strip().strip("/")
 
 
 def parse_args() -> PipelineConfig:
@@ -208,6 +219,42 @@ def main() -> None:
         print("MTEB comparison tables generated.")
         print(f"  Source results: {results_dir}")
         print(f"  Output: {generated_dir}")
+        repo_id = _normalize_hf_dataset_repo(config.mteb_dataset_repo)
+        should_upload = config.yes
+        if not config.yes:
+            should_upload = (
+                ask_interactive(
+                    f"Do you want to upload the benchmark outputs to Hugging Face? (default: {repo_id}) (y/n): ",
+                    "n",
+                )
+                == "y"
+            )
+        if should_upload:
+            if not config.yes:
+                entered_repo = input(
+                    f"Hugging Face dataset repo ID or URL for benchmark outputs [{repo_id}]: "
+                ).strip()
+                if entered_repo:
+                    repo_id = _normalize_hf_dataset_repo(entered_repo)
+                elif not repo_id:
+                    repo_id = _normalize_hf_dataset_repo(
+                        ask_text(
+                            "Hugging Face dataset repo ID or URL for benchmark outputs: "
+                        )
+                    )
+            hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+            if not hf_token:
+                print("  Hugging Face benchmark outputs: skipped (HF_TOKEN not set)")
+            else:
+                repo_tree_url = upload_benchmark_outputs(
+                    generated_dir,
+                    repo_id,
+                    path_in_repo="benchmark_outputs/mteb_tables",
+                    token=hf_token,
+                )
+                print(f"  Hugging Face benchmark outputs: {repo_tree_url}")
+        else:
+            print("  Hugging Face benchmark outputs: skipped")
         return
 
     active_source = (
