@@ -66,7 +66,7 @@ JRC uses a pair-level legal QA flow:
 - choose one sampled pair per selected source document
 - use the translated/target side as the generation text
 - generate the query in that target-side language
-- connect the final query to both documents in the pair
+- connect the final query to all retained sampled translations for the same `celex`
 
 ### MTEB benchmark and report generation
 

@@ -57,8 +57,9 @@ def prepare_jrc_qa_inputs(
     - sample directional cross-language pairs per source language
     - select unique source documents per language
     - choose one sampled pair per selected source document
-    - build a subset corpus containing both documents from all sampled pairs
-    - write pair-level QA generation rows using the translated/target side
+    - build a subset corpus containing all retained sampled translations
+    - write QA generation rows using one chosen translated/target side
+    - map each generated query to all sampled retained translations for the same CELEX
     - write helper CSVs into `output_dir`
     """
     corpus_full_path = Path(corpus_full_path)
@@ -212,6 +213,11 @@ def prepare_jrc_qa_inputs(
             docs_by_id[row_id] = row
 
     corpus_subset_rows.sort(key=lambda row: (row.get("celex", ""), row.get("language", ""), row.get("id", "")))
+    subset_docs_by_celex: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in corpus_subset_rows:
+        celex = row.get("celex", "")
+        if celex:
+            subset_docs_by_celex[celex].append(row)
     corpus_subset_mteb_rows = [
         {"_id": row["id"], "title": row.get("title", ""), "text": row.get("context", "")}
         for row in corpus_subset_rows
@@ -219,11 +225,18 @@ def prepare_jrc_qa_inputs(
 
     generation_rows: list[dict[str, str]] = []
     generation_target_language_counts: Counter[str] = Counter()
+    relevant_docs_per_generation_unit: Counter[int] = Counter()
     for pair in generation_pairs:
         target_row = docs_by_id.get(pair["target_corpus_id"])
         source_row = selected_source_rows_by_id.get(pair["source_corpus_id"]) or docs_by_id.get(pair["source_corpus_id"])
         if not target_row or not source_row:
             continue
+        linked_docs = subset_docs_by_celex.get(pair["celex"], [])
+        linked_corpus_ids = [row["id"] for row in linked_docs if row.get("id", "")]
+        linked_languages = [row.get("language", "") for row in linked_docs if row.get("language", "")]
+        if not linked_corpus_ids:
+            linked_corpus_ids = [pair["source_corpus_id"], pair["target_corpus_id"]]
+            linked_languages = [pair["source_language"], pair["target_language"]]
         generation_row = dict(target_row)
         generation_row["pair_id"] = pair["pair_id"]
         generation_row["celex"] = pair["celex"]
@@ -233,12 +246,12 @@ def prepare_jrc_qa_inputs(
         generation_row["target_corpus_id"] = pair["target_corpus_id"]
         generation_row["query_corpus_id"] = pair["target_corpus_id"]
         generation_row["query_id_hint"] = pair["pair_id"]
-        generation_row["linked_corpus_ids_json"] = json.dumps(
-            [pair["source_corpus_id"], pair["target_corpus_id"]],
-            ensure_ascii=False,
-        )
+        generation_row["linked_corpus_ids_json"] = json.dumps(linked_corpus_ids, ensure_ascii=False)
+        generation_row["linked_languages_json"] = json.dumps(linked_languages, ensure_ascii=False)
+        generation_row["linked_corpus_count"] = str(len(linked_corpus_ids))
         generation_rows.append(generation_row)
         generation_target_language_counts[pair["target_language"]] += 1
+        relevant_docs_per_generation_unit[len(linked_corpus_ids)] += 1
 
     generation_rows.sort(
         key=lambda row: (
@@ -279,6 +292,8 @@ def prepare_jrc_qa_inputs(
             "query_corpus_id",
             "query_id_hint",
             "linked_corpus_ids_json",
+            "linked_languages_json",
+            "linked_corpus_count",
         ]
     )
 
@@ -306,6 +321,9 @@ def prepare_jrc_qa_inputs(
         "generation_units_total": len(generation_rows),
         "generation_pairs_by_source_language": dict(sorted(generation_pairs_stats.items())),
         "generation_target_languages": dict(sorted(generation_target_language_counts.items())),
+        "relevant_docs_per_generation_unit": {
+            str(count): freq for count, freq in sorted(relevant_docs_per_generation_unit.items())
+        },
         "languages": selected_sources_stats,
         "sampled_pairs_csv": str(sampled_pairs_path),
         "qa_generation_sources_csv": str(selected_sources_path),

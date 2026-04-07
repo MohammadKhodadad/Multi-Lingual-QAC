@@ -169,7 +169,7 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   2. select source QA candidates
   3. choose one sampled pair per selected source document
   4. generate the question from the translated/target side of the pair
-  5. attach the resulting query to both documents in the pair
+  5. attach the resulting query to all retained sampled translations for the same `celex`
 - JRC runs through `openai_qa.run_qa_pipeline(..., same_language=True, domain_hint="legal")`.
 - The active JRC prompt/check path is legal/regulatory, not chemistry/patent.
 
