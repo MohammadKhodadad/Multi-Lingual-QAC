@@ -37,7 +37,7 @@ These cleanup steps are now done:
 
 - dropped `jrcHeader-*` style helper/header pseudo-documents from the corpus
 - stopped prepending `header_notes` into retrieval `context`
-- added a structured retrieval-text cap so body text dominates over annex/signature tail text
+- added a structured retrieval-text cap and removed signature tail text from retrieval `context`
 - expanded reference-line cleanup to remove bracketed citation/editorial notes such as `[1] OJ ...`
 - tightened the QA-candidate filter using multilingual-safe paragraph/substance heuristics
 - added `qa_rejection_reasons` reporting to `document_corpus_stats.json`

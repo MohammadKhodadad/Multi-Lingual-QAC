@@ -758,7 +758,6 @@ JRC_QA_MAX_SHORT_OPERATIVE_RATIO = 0.55
 JRC_INSPECTION_SAMPLE_PER_LANGUAGE = 5
 JRC_RETRIEVAL_BODY_MAX_CHARS = 8000
 JRC_RETRIEVAL_ANNEX_MAX_CHARS = 2000
-JRC_RETRIEVAL_SIGNATURE_MAX_CHARS = 800
 JRC_RETRIEVAL_TOTAL_MAX_CHARS = 12000
 JRC_INSPECTION_FIELDNAMES = [
     *JRC_DOCUMENT_FIELDNAMES,
@@ -858,17 +857,11 @@ def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
         cleaned_annex_paragraphs,
         max_chars=JRC_RETRIEVAL_ANNEX_MAX_CHARS,
     )
-    retrieval_signature = _take_paragraph_budget(
-        cleaned_signature_paragraphs,
-        max_chars=JRC_RETRIEVAL_SIGNATURE_MAX_CHARS,
-    )
-
     full_parts = []
     if title:
         full_parts.append(title)
     full_parts.extend(retrieval_body)
     full_parts.extend(retrieval_annex)
-    full_parts.extend(retrieval_signature)
     full_text = "\n\n".join(part for part in full_parts if part).strip()
     if len(full_text) > JRC_RETRIEVAL_TOTAL_MAX_CHARS:
         full_text = full_text[:JRC_RETRIEVAL_TOTAL_MAX_CHARS].rsplit("\n\n", 1)[0].strip() or full_text[

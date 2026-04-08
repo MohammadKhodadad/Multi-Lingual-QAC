@@ -77,17 +77,16 @@ The current JRC preprocessing now does the following:
 - extracts and classifies text into body / annex / signature zones
 - drops `jrcHeader-*` style helper/header pseudo-documents
 - keeps `header_notes` only as metadata instead of prepending them into retrieval text
-- builds longer retrieval text with a structured cap:
+- builds longer retrieval text with a structured cap while excluding signature tail text from retrieval `context`:
   - body budget: `8000` chars
   - annex budget: `2000` chars
-  - signature budget: `800` chars
   - total retrieval cap: `12000` chars
 - builds a stricter QA-candidate subset using multilingual-safe paragraph/substance heuristics
 
 Important design note:
 
 - Earlier versions were too aggressive about trimming to `Article 1`.
-- The current version keeps richer retrieval text while using a separate `generation_context` for QA.
+- The current version keeps richer retrieval text from body plus limited annex while using a separate `generation_context` for QA.
 - The current QA-candidate gate is now driven more by paragraph/substance signals than by shallow document length alone.
 
 ## What Improved

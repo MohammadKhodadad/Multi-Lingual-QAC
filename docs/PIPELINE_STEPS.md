@@ -159,6 +159,7 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 
 ## 14. JRC-Acquis Preprocessing and Inspection
 - Replaced brittle case-specific cleanup rules with more generic legal-structure cleanup and operative-section trimming.
+- Retrieval `context` now uses body plus capped annex text and no longer appends signature tail text.
 - Added `docs/JRC_ACQUIS_LANGUAGE_PAIR_COUNTS.md` with the language-pair count matrix.
 - Added `docs/JRC_ACQUIS_DATA_QUALITY_NOTES.md` with corpus-scale and preprocessing-quality review notes.
 

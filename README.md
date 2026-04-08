@@ -48,6 +48,8 @@ uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multili
 uv run main.py --source JRC-ACQUIS              # interactive pair-level legal QA generation from sampled target-side documents
 ```
 
+The JRC retrieval corpus keeps body text plus a capped annex slice and excludes signature tail text from the main retrieval `context`.
+
 Typical interactive JRC QA review run:
 
 ```bash
@@ -231,7 +233,7 @@ JRC now uses a **pair-level** QA flow:
 2. choose one sampled pair per selected source document
 3. take the translated/target side of that pair
 4. generate the question/answer from that target-side text
-5. connect the resulting query to both documents in the pair
+5. connect the resulting query to all retained sampled translations for the same `celex`
 
 The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent.
 

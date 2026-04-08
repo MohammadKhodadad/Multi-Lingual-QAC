@@ -90,11 +90,9 @@ Current process:
 5. `run_qa_pipeline()` reads those rows in same-language mode.
 6. The question/answer is generated directly from the target-side document text, in the target-side language.
 7. The generated pair is validated with the legal-domain checks.
-8. The final query is linked to both documents in the pair:
-   - the source/main-side document
-   - the translated/target-side document
+8. The final query is linked to all retained sampled translations for the same `celex` in the sampled subset corpus.
 
-So JRC is no longer CELEX-wide and no longer expands one query to all aligned languages.
+So JRC now uses one chosen target-side translation for generation while expanding the final relevance set across the retained sampled translations of that legal act.
 
 Domain behavior:
 
