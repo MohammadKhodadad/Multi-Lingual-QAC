@@ -61,11 +61,11 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
         if config.source == "jrc-acquis":
             if qa_pairs_per_language is None:
                 qa_pairs_per_language = ask_int(
-                    "How many directional language pairs should be sampled per source language for JRC QA prep? Enter 0 to skip: "
+                    "How many multilingual CELEX-group source documents should be sampled per source language for JRC QA prep? Enter 0 to skip: "
                 )
             if qa_pairs_per_language > 0 and qa_docs_per_language is None:
                 qa_docs_per_language = ask_int(
-                    "How many sampled source documents per language should be selected for JRC question generation? Enter 0 to skip: "
+                    "How many sampled source documents per language should be retained for JRC question generation? Enter 0 to skip: "
                 )
             qa_sample = qa_docs_per_language or 0
         else:
@@ -120,7 +120,6 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     selection_stats = prepare_jrc_qa_inputs(
                         corpus_full_path=paths.preprocessed_dir / "corpus_multilingual_full.csv",
                         qa_candidates_path=paths.preprocessed_dir / "corpus_qa_candidates.csv",
-                        pair_path=paths.preprocessed_dir / "document_pairs_all.csv",
                         output_dir=paths.qac_dir,
                         pairs_per_language=qa_pairs_per_language or 0,
                         generation_docs_per_language=qa_docs_per_language or 0,
@@ -129,13 +128,13 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     generation_units_total = int(selection_stats.get("generation_units_total", 0))
                     selected_source_docs_total = int(selection_stats.get("selected_source_docs_total", 0))
                     if generation_units_total <= 0:
-                        raise ValueError("JRC QA preparation selected zero pair generation units.")
+                        raise ValueError("JRC QA preparation selected zero generation units.")
                     print(
                         "Prepared JRC QA subset:"
-                        f" {selection_stats['sampled_pairs_total']} sampled directional pairs,"
+                        f" {selection_stats['sampled_source_docs_total']} sampled source docs,"
                         f" {selection_stats['subset_corpus_docs_total']} corpus docs,"
                         f" {selected_source_docs_total} selected source docs,"
-                        f" {generation_units_total} pair generation units."
+                        f" {generation_units_total} generation units."
                     )
                     run_qa_pipeline(
                         corpus_path=selected_sources_path,

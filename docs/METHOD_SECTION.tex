@@ -1,53 +1,190 @@
 \section{Contributions}
 
-We introduce a practical pipeline for constructing a multilingual chemistry retrieval benchmark from public patent text. Our work makes four main contributions. First, we build a chemistry-focused multilingual corpus from Google Patents Public Data on BigQuery by filtering patents with chemistry-relevant CPC/IPC prefixes and optional SureChEMBL matches, then retaining localized patent text across a diverse set of target languages. Second, we cache a richer raw patent dump that preserves not only localized titles and abstracts but also descriptions, claims, HTML claim markup, and classification metadata, so subsequent corpus-design experiments can be performed offline without repeatedly querying BigQuery. Third, we formulate benchmark supervision as question--answer--context (QAC) triplets designed for retrieval rather than general-purpose question answering, with the goal of producing queries that target concrete technical content in patent abstracts and, when available, claims rather than relying only on short summaries. Fourth, we adopt an English-first generation strategy followed by controlled multilingual translation, and export the resulting data in a format directly usable for retrieval evaluation, including corpus, queries, qrels, and full QAC triplets suitable for Hugging Face distribution and MTEB-style benchmarking.
+We introduce a benchmark-construction pipeline for multilingual legal retrieval using the JRC-Acquis corpus. Our work makes five main contributions. First, we construct a document-level multilingual retrieval corpus from aligned European Union legal texts by treating \texttt{CELEX} as the cross-lingual document anchor and preserving one retrieval document per \((\texttt{CELEX}, \texttt{language})\) combination. Second, we develop a legal-text preprocessing procedure that removes non-substantive artifacts, separates body, annex, and signature material, and distinguishes between retrieval context and QA-generation context rather than exposing the model to a single undifferentiated text field. Third, we introduce a \texttt{CELEX}-group sampling and subset-construction strategy that selects source documents from a stricter QA-candidate pool, chooses one target-side document realization for each retained source document, and builds a retained multilingual subset over which the final relevance labels are defined. Fourth, we formulate supervision through same-language legal question--answer generation from selected target-side document realizations, together with a staged validation stack that filters language errors, faithfulness failures, weak retrieval questions, and undesirable legal question shapes. Fifth, we package the resulting benchmark in standard retrieval form---\texttt{corpus}, \texttt{queries}, \texttt{qrels}, and \texttt{qac}---and evaluate it through a Hugging Face-backed MTEB retrieval setup with multilingual encoder baselines and comparison reports.
 
 \section{Method}
 
-Our method converts multilingual chemistry patents into a retrieval benchmark through four stages: patent extraction, corpus construction, English question--answer generation with validation, and multilingual projection of approved pairs.
+Our method converts multilingual JRC-Acquis documents into a retrieval benchmark through a sequence of corpus preparation, document alignment, QA-candidate selection, subset construction for generation, same-language legal QA generation, retrieval packaging, and downstream benchmarking. The construction procedure is summarized in Figure~\ref{fig:jrc-method-overview}.
 
-\subsection{Patent Extraction}
+\begin{figure}[t]
+\centering
+\fbox{
+\parbox{0.95\linewidth}{
+\centering
+Raw JRC-Acquis XML archives $\rightarrow$ document preparation and structural cleaning $\rightarrow$ retrieval-context construction $\rightarrow$ \texttt{CELEX}-based multilingual grouping $\rightarrow$ QA-candidate filtering $\rightarrow$ sampled subset construction $\rightarrow$ same-language legal QA generation and validation $\rightarrow$ query linking and dataset packaging $\rightarrow$ MTEB-style benchmarking
+}
+}
+\caption{Overview of the JRC-Acquis benchmark construction pipeline.}
+\label{fig:jrc-method-overview}
+\end{figure}
 
-We source patents from the public BigQuery tables in Google Patents Public Data. Given a target language set $\mathcal{L}$, we query the patent publications table and retain documents that are likely to be chemistry-related. The chemistry filter combines patent classification constraints with an optional chemistry-specific database match. In particular, we keep patents whose CPC or IPC codes begin with chemistry-relevant prefixes such as \texttt{C}, \texttt{A61K}, or \texttt{A61P}, and we may additionally require or include matches from the SureChEMBL-linked table. This produces a pool of recent chemistry patents with multilingual metadata and localized text fields.
+\subsection{Task Definition}
 
-For each retained publication, we write a rich raw cache that preserves localized titles, abstracts, descriptions, plain-text claims, HTML claims, and core metadata such as publication number, family identifier, country code, publication date, and classification codes. This design separates the expensive retrieval step from later corpus engineering: once the raw dump is created, alternative context definitions can be explored without touching BigQuery again. Empirically, however, the multilingual coverage of fields is highly uneven. In our current Google Patents dump, localized titles and abstracts are widely available across the target languages, whereas localized descriptions and claims are much sparser and, in practice, are dominated by English.
-
-\subsection{Corpus Construction}
-
-We convert the raw patent dump into per-language corpus files. For each language $\ell \in \mathcal{L}$, we select the localized title and abstract associated with $\ell$, deduplicate by publication number, normalize the text, and discard records that do not provide enough technical substance. Text normalization consists of HTML entity decoding and whitespace cleanup. To remove low-information entries, we exclude documents whose cleaned abstract contains fewer than 50 words. When claim text is available, we additionally parse the first claim and use it as an optional context enrichment feature. This step filters out title-only records and very short abstracts while preserving the ability to compare abstract-only and claim-augmented corpus variants offline from the same raw cache.
-
-For each surviving document, we define the retrieval context as a structured concatenation of title, abstract, and, when available, the first claim:
+We study multilingual legal document retrieval. Let \(c\) denote a \texttt{CELEX} identifier and let \(\mathcal{L}_c\) be the set of languages in which the corresponding legal act is available. For each \(\ell \in \mathcal{L}_c\), we construct a document \(d_{c,\ell}\). The benchmark corpus is therefore
 \[
-\texttt{context} = \texttt{title} \; || \; \texttt{abstract} \; || \; \texttt{first\_claim}.
+\mathcal{D} = \{ d_{c,\ell} \mid c \in \mathcal{C}, \ell \in \mathcal{L}_c \}.
 \]
-The claim component is not the full claims section. Instead, we extract and clean only the first claim, either from the localized plain-text field or from the HTML claims field when that representation is the only available source. This provides a compact claim-level view of the invention while avoiding the severe length and noise increase that would come from concatenating the full claims section. Because claim availability is much weaker than abstract availability in the public dataset, claim-augmented variants must be handled carefully to avoid collapsing multilingual coverage. We then merge all language-specific files into a single multilingual corpus while preserving document identifiers, language labels, publication metadata, and source provenance.
+The benchmark is supervised through question--answer--context triplets. We first group documents by shared \texttt{CELEX}, which defines multilingual document-level realizations of the same legal act. From a sampled multilingual \texttt{CELEX} group, we select one target-language document as the generation context and produce one question \(q_{c,\ell_t}\) and one answer \(a_{c,\ell_t}\) in that language. Documents that share the same \texttt{CELEX} are treated as language-specific realizations of the same legal act, that is, as document-level cross-lingual counterparts rather than paragraph-aligned translations. After generation, relevance is assigned to the retained sampled documents that share the same \texttt{CELEX}. Thus, generation is based on one selected document realization, while relevance labels are assigned at the \texttt{CELEX} level within the sampled multilingual subset. The final benchmark is exported as \((\texttt{corpus}, \texttt{queries}, \texttt{qrels}, \texttt{qac})\).
 
-\subsection{English-First QAC Generation}
+This formulation makes the benchmark retrieval-oriented rather than extractive-question-answering-oriented. The objective is not to recover a quoted clause or article label, but to retrieve the correct legal document from a multilingual corpus using a realistic legal information need.
 
-We generate supervision from the corpus using an English-first strategy. Rather than generating independent questions in every language, we first sample source documents from the multilingual corpus and ask a language model to produce exactly one English question--answer pair for each selected context. This choice gives us one canonical information need per document and avoids uncontrolled drift in question intent across languages.
+\subsection{Source Corpus and Document Alignment}
 
-The prompt is designed for retrieval-oriented question construction instead of generic reading-comprehension generation. In particular, it encourages questions that target specific technical content such as material function, process rationale, operating condition, component role, or mechanism, while discouraging vague summaries and overly literal extraction. The answer is required to remain concise and grounded in the provided context.
+Our source collection is JRC-Acquis, a multilingual corpus of European Union legal and regulatory texts. We use \texttt{CELEX} as the primary document identifier because it provides a stable link between language versions of the same legal act. This yields a natural document-level alignment scheme: all documents sharing the same \texttt{CELEX} are treated as parallel realizations of a single underlying act.
 
-\subsection{Validation of Generated English Pairs}
+We intentionally adopt document-level rather than paragraph-level alignment. Paragraph-level alignment would provide finer-grained supervision, but it is substantially harder to construct robustly across the full multilingual corpus and would introduce an additional alignment layer whose errors would propagate into retrieval labels. By contrast, \texttt{CELEX}-level alignment is coarse but stable, auditable, and scalable. This choice is especially appropriate for a benchmark whose relevance judgments are meant to capture document retrieval rather than span extraction.
 
-Generated English pairs are filtered by a sequence of validation checks before they are admitted into the benchmark. The first check enforces that the generated pair is genuinely in English. The second check evaluates faithfulness: the question must be answerable from the source context, the answer must be supported by the context, and the supporting evidence must correspond to the claimed answer. The third check evaluates retrieval usefulness. This stage rejects questions that are too generic, too broad, nearly copied from the source text, or dominated by literal value/list lookup when the same context supports a stronger semantic query.
+\subsection{Document Preparation and Text Normalization}
 
-This validation stack serves two purposes. First, it reduces hallucinated or weakly supported supervision. Second, it shapes the benchmark toward harder and more realistic retrieval behavior by preferring focused technical questions over shallow lexical matching.
+Each raw XML document is parsed into structured paragraph records together with document metadata. We then normalize the textual content with the goal of preserving operative legal substance while removing artifacts that are useful neither for retrieval nor for QA generation. The normalization procedure removes repeated formatting markers, image placeholders, reference-note boilerplate, and helper or header pseudo-documents that do not correspond to real legal acts. It also preserves header notes as metadata rather than prepending them into the retrieval text.
 
-\subsection{Multilingual Projection by Translation}
+The parser separates paragraphs into body, annex, and signature zones. This distinction is methodologically important because these zones play different roles in the construction pipeline. The body typically contains the operative legal content. Annex material may contain relevant definitional or procedural detail, but can also add substantial length and redundancy. Signature material is often structurally regular and weakly informative for retrieval, so we exclude signature-tail text from the retrieval context. When the original title is noisy or uninformative, we derive a cleaner title from early substantive body paragraphs.
 
-Once an English pair passes validation, we project it into the target languages through translation. The translation stage preserves the original information need rather than regenerating new questions independently in each language. This keeps cross-lingual evaluation aligned: each language version corresponds to the same source document and the same underlying retrieval target.
+At a high level, the preparation stage follows the procedure below:
+\begin{enumerate}
+\item parse a raw XML document into paragraph-level units and metadata;
+\item remove helper records and normalize formatting artifacts;
+\item classify paragraphs into body, annex, and signature zones;
+\item derive a document title and trim the body to its operative legal content when needed;
+\item construct separate text views for retrieval and for QA generation.
+\end{enumerate}
 
-Each translated pair is checked with a multilingual quality validator that looks for common failure modes such as generic translation artifacts, fluency problems, meaning drift, and corruption of technical terminology, numbers, or units. When a translation fails, the system retries using structured feedback from the previous failure. Pairs that still fail after the retry budget are skipped rather than kept with low quality. This conservative design trades some coverage for more reliable multilingual supervision.
+\subsection{Retrieval and Generation Context Construction}
 
-\subsection{Benchmark Packaging}
+We distinguish between three text views of each document: the full cleaned document record, the retrieval context, and the QA-generation context. This separation is central to the method. A retrieval document should be rich enough to support document retrieval, whereas a generation prompt should emphasize the most substantive legal material and suppress distracting structure.
 
-The final benchmark is exported in retrieval format with four components: \texttt{corpus}, \texttt{queries}, \texttt{qrels}, and \texttt{qac}. The corpus contains multilingual patent contexts. The queries split contains one query per approved language-specific question. The qrels link each query to its originating patent document with a positive relevance label. The qac split preserves the full question--answer--context supervision for analysis and downstream reuse.
+The retrieval context is built from the cleaned title, bounded body text, and a bounded annex slice:
+\[
+x^{\mathrm{ret}}_{c,\ell} =
+\texttt{title}
+\; || \;
+\texttt{body}_{\leq 8000}
+\; || \;
+\texttt{annex}_{\leq 2000},
+\]
+with a final cap of \(12000\) characters on the concatenated retrieval text. This construction preserves the main operative content while limiting the long-tail noise introduced by very large documents and annex-heavy acts.
 
-This representation supports both benchmark evaluation and dataset inspection. In particular, it allows dense retrieval experiments over the multilingual patent corpus while retaining the full generative supervision used to create the benchmark.
+For QA generation, we use a different text view:
+\[
+x^{\mathrm{gen}}_{c,\ell} =
+\texttt{title}
+\; || \;
+\texttt{selected\_preamble}
+\; || \;
+\texttt{operative\_focus}
+\; || \;
+\texttt{annex\_focus}.
+\]
+The selected preamble is a bounded subset of substantive pre-article paragraphs. The operative focus contains the early operative paragraphs most likely to support a strong legal question, and the annex focus contributes a bounded amount of annex detail when present. Concretely, we retain up to six preamble paragraphs with a budget of approximately \(1800\) characters, up to eighteen operative paragraphs with a budget of approximately \(3200\) characters, and up to eight annex paragraphs with a budget of approximately \(1800\) characters. This two-context design avoids the failure mode in which retrieval text is too noisy for generation, while still allowing retrieval evaluation over richer document representations.
 
-\subsection{Design Rationale}
+\subsection{Multilingual CELEX Group Construction}
 
-Three design decisions are central to our method. First, we separate raw acquisition from corpus construction by caching a rich patent dump once and then iterating offline on context design. Second, we currently favor title and abstract as the multilingual backbone of the benchmark, and treat first-claim augmentation as an experimental option because claims are much less available than abstracts in Google Patents BigQuery. Third, we generate in English first and translate afterward, while also using explicit validators at multiple stages, because patent text is technically dense and multilingual translation errors can easily produce low-quality benchmark entries if left unchecked.
+After document preparation, we group all retained documents by \texttt{CELEX}. Each multilingual \texttt{CELEX} group contains the available language-specific realizations of one legal act. This grouped representation is the main cross-lingual structure used by the benchmark. It lets us reason about which documents belong together without assuming paragraph-level alignment or forcing the method to treat the source corpus as an explicit table of bilingual links.
 
-Overall, the method is intended to produce a multilingual chemistry benchmark that is practical to build, faithful to the underlying patent text, and directly compatible with standard retrieval evaluation pipelines.
+For QA generation, we additionally keep track of a sampling direction, that is, a source language used for sampling control and a target language used for query generation. This directional choice is an operational detail of the sampling procedure, but the conceptual unit remains the multilingual \texttt{CELEX} group.
+
+\subsection{QA-Candidate Filtering}
+
+Not every aligned document is a good source for QA generation. Some documents are too short, too fragmented, too dominated by non-operative structure, or too weakly substantive to support a focused legal retrieval query. We therefore apply a QA-candidate filter that is stricter than the filter used to retain retrieval documents.
+
+The QA filter is based on paragraph-shape and operative-density criteria rather than on raw length alone. A document is admitted to the QA candidate pool only if all of the following conditions hold: (i) its retrieval context length lies between \(1500\) and \(30000\) characters; (ii) it contains at least \(8\) body paragraphs; (iii) its operative portion contains at least \(1200\) characters; (iv) it contains at least \(5\) operative paragraphs of length at least \(120\) characters; and (v) the proportion of very short operative paragraphs, defined as paragraphs of at most \(60\) characters, does not exceed \(0.55\). These criteria are intended to reject records whose apparent length is driven by formatting residue, shallow headings, or fragmentary legal structure.
+
+Methodologically, this stage separates two goals that are often conflated. The retrieval corpus should remain broad enough to represent the multilingual document space, whereas the QA source pool should be narrow enough to support strong question generation. This separation is important because a benchmark can tolerate some coarse or weak documents in the corpus, but it cannot tolerate low-substance documents as sources of supervision.
+
+\subsection{Sampling Strategy for QA Generation}
+
+We construct QA generation units in four steps. First, for each source language, we sample a set of multilingual \texttt{CELEX} groups together with a target-language direction for generation. Second, from those sampled groups, we identify the unique source-side documents and retain a bounded number of them for QA generation. Third, for each retained source document, we choose one target-language document realization from the same sampled \texttt{CELEX} group; this chosen document defines the actual generation context. Fourth, we build a retained multilingual subset corpus containing all sampled source-side and target-side documents from the selected groups.
+
+This retained subset is used later for relevance construction. As a result, the generated query is not evaluated only against the one document realization that produced it, but against the retained sampled documents that share the same \texttt{CELEX}. This keeps the generation step simple while still producing cross-lingual relevance labels over a multilingual subset of the corpus.
+
+The procedure serves two purposes. It prevents heavily connected documents or frequent \texttt{CELEX} groups from dominating the supervision set, and it avoids generating many near-duplicate queries for multiple language realizations of the same legal act. The result is a controlled set of generation units together with a transparent sampled subset over which later qrels are defined.
+
+\subsection{Same-Language Legal QA Generation}
+
+Given one sampled multilingual \texttt{CELEX} group and one selected target-side document realization \(d_{c,\ell_t}\), we generate the question and answer directly from the target-side generation context \(x^{\mathrm{gen}}_{c,\ell_t}\) and in the target language \(\ell_t\). This same-language design is deliberate. In multilingual legal text, translation-based query projection can preserve coarse meaning while still degrading legal naturalness, clause scope, or the choice of the most salient legal point. Direct generation in the target language better matches how a lawyer, policy analyst, or compliance reader would formulate a query in that language.
+
+The generator is instructed to produce exactly one question--answer pair. The question should express one sharp legal information need rather than a checklist, inventory, citation lookup, or broad summary. Preferred question types concern operative conditions, exceptions, addressees, evidentiary requirements, legal consequences, applicability limits, thresholds, or what a rule requires, permits, excludes, or causes in practice. The answer should be concise, directly grounded in the selected document context, and sufficient to justify why the linked documents are relevant.
+
+The generation loop can be summarized as follows:
+\begin{enumerate}
+\item select one target-language document realization from a sampled \texttt{CELEX} group and read its generation context;
+\item generate one question--answer pair in the target language;
+\item validate the draft through the staged checker stack;
+\item if validation fails, regenerate with structured feedback;
+\item after at most three attempts, either accept the output or discard the generation unit.
+\end{enumerate}
+
+To make the flow explicit, Algorithm~\ref{alg:jrc-generation-loop} summarizes the generation and validation procedure for one sampled generation instance.
+
+% Requires \usepackage[ruled,vlined]{algorithm2e} in the main paper preamble.
+\begin{algorithm}[t]
+\caption{Generation and validation loop for one JRC generation instance}
+\label{alg:jrc-generation-loop}
+\DontPrintSemicolon
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\Input{sampled \texttt{CELEX} group, selected target-language document $d_{c,\ell_t}$, retry budget $T=3$}
+\Output{accepted QA output with linked relevant documents, or rejection}
+
+Build target-side generation context $x^{\mathrm{gen}}_{c,\ell_t}$\;
+
+\For{$t \leftarrow 1$ \KwTo $T$}{
+    Generate one question--answer pair $(q,a)$ in language $\ell_t$\;
+    \If{language validation fails}{
+        create retry feedback\;
+        \Continue\;
+    }
+    \If{faithfulness / answerability validation fails}{
+        create retry feedback\;
+        \Continue\;
+    }
+    \If{legal retrieval-quality validation fails}{
+        create retry feedback\;
+        \Continue\;
+    }
+    \If{legal-shape validation fails}{
+        create retry feedback\;
+        \Continue\;
+    }
+    Accept $(q,a)$\;
+    Link the query to retained sampled documents for the same \texttt{CELEX}\;
+    Write outputs to \texttt{qac}, \texttt{queries}, and \texttt{qrels}\;
+    \Return accepted generation unit\;
+}
+
+Discard the generation unit\;
+\end{algorithm}
+
+\subsection{Validation and Iterative Quality Control}
+
+Every generated QA draft is validated sequentially before it is allowed into the benchmark. The first stage is language validation, which checks whether the output is genuinely written in the intended target language. The second stage is faithfulness validation, which tests whether the question is answerable from the provided context and whether the answer is actually supported by that context. The third stage is legal retrieval-quality validation, which rejects weak questions that are too broad, too generic, too extractive, or too close to copied legal phrasing.
+
+We then apply a dedicated legal-shape validator. This final stage is designed to reject failure modes that are especially common in legal corpora: condition-list questions, document or item inventories, deadline-only or value-only lookups, exact code or label lookups, and multi-branch questions that really ask two or more legal questions at once. A draft is approved only if it reads like a realistic legal retrieval query centered on one substantive legal point.
+
+If a draft fails at any stage, the system records structured feedback and uses that feedback to guide regeneration. The failed question is not lightly edited; instead, the model is asked to generate a fresh corrected output that removes the diagnosed weakness. This retry mechanism is conservative: once the fixed retry budget is exhausted, the generation unit is skipped rather than admitted with uncertain quality.
+
+\subsection{Query Linking and Relevance Construction}
+
+Once a question--answer output is accepted, we convert it into retrieval supervision. The generated query is anchored on the sampled target-side document, but its relevance set is defined at the \texttt{CELEX} level within the retained sampled subset. If multiple retained sampled realizations of the same \texttt{CELEX} are present in the subset, the query is linked to all of them; if only two sampled documents are retained, this reduces to a bilingual case.
+
+This relevance construction reflects the central cross-lingual assumption of the benchmark: the same underlying legal act should be retrievable through semantically equivalent language-specific realizations. The positive labels are therefore document-level relevance judgments, not paragraph-level evidence labels. They indicate that the linked documents instantiate the same legal act and support the same underlying information need at the level of document retrieval.
+
+\subsection{Dataset Packaging and Release Format}
+
+We release the benchmark in four coordinated components. The \texttt{corpus} split contains the multilingual retrieval documents. The \texttt{queries} split contains one approved query per accepted generation unit. The \texttt{qrels} split maps each query to its positively relevant document identifiers. The \texttt{qac} split preserves the richer question--answer metadata for inspection, auditing, and downstream analysis.
+
+This packaging serves two purposes. First, it makes the dataset directly compatible with standard retrieval tooling, including MTEB-style evaluation pipelines. Second, it preserves the construction trace from legal document to generated question and answer, which is important for quality analysis and future benchmark refinement. Hugging Face release is therefore not just a distribution choice, but part of the reproducible benchmark specification.
+
+\subsection{Benchmark Evaluation Protocol}
+
+After dataset construction, we evaluate the released benchmark through a Hugging Face-backed MTEB retrieval pipeline. The evaluation task reads the released \texttt{corpus}, \texttt{queries}, and \texttt{qrels} splits directly from the dataset repository and wraps them as a custom retrieval task. Query languages are inferred from the released query metadata and mapped into the language labels expected by the evaluation framework, so the resulting task remains multilingual without requiring a separate manually curated evaluation manifest.
+
+We evaluate multilingual sentence-embedding models under a common retrieval protocol and report standard ranking metrics, with nDCG@10 used as the main score. In the current benchmarking setup, the default model set includes \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}, \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2}, \texttt{intfloat/multilingual-e5-large}, and \texttt{BAAI/bge-m3}. Model artifacts are cached locally to keep repeated runs reproducible and independent of user-level caches. Evaluation outputs are written as structured summary reports, and comparison tables are generated afterward from the saved result files rather than by rerunning the benchmark.
+
+This evaluation stage is downstream from benchmark construction, but it is part of the end-to-end workflow of the dataset. It provides a standardized way to test whether the released \texttt{corpus}/\texttt{queries}/\texttt{qrels} package behaves as a usable multilingual legal retrieval benchmark rather than only as a generated dataset artifact.
+
+\subsection{Design Rationale and Construction Limitations}
+
+Three design decisions are central to the method. First, we use document-level \texttt{CELEX} alignment because it provides a stable and auditable multilingual anchor, even though it is coarser than paragraph-level supervision. Second, we separate retrieval context from generation context because the text that is best for retrieval is not necessarily the text that is best for generating a focused legal query. Third, we generate directly in the target language rather than translating English questions, because legal query quality depends strongly on language-specific phrasing and on selecting the right operative point. A related design choice is that relevance is defined over a retained sampled subset rather than over the full raw corpus, which keeps the benchmark construction trace auditable and tightly tied to the selected multilingual \texttt{CELEX} structure.
+
+The construction procedure also has known limitations. Relevance remains document-level and therefore coarse relative to span-level or paragraph-level legal retrieval. QA-candidate filtering can behave unevenly across languages because paragraph structure and formatting conventions vary across the corpus. Finally, even with a dedicated legal-shape validator, some accepted questions may still remain structurally weaker than the ideal single-focus legal retrieval query. These limitations do not invalidate the benchmark, but they define the main axes along which the construction procedure can be improved.

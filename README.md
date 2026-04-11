@@ -62,13 +62,13 @@ uv run main.py --source JRC-ACQUIS
 # push to Hugging Face: n
 ```
 
-JRC uses a pair-level legal QA flow:
+JRC uses a CELEX-group-based legal QA flow:
 
-- sample directional document pairs
-- choose one sampled pair per selected source document
-- use the translated/target side as the generation text
+- group multilingual documents by `celex`
+- sample source-side documents from multilingual `celex` groups
+- choose one target-language document realization as the generation text
 - generate the query in that target-side language
-- connect the final query to all retained sampled translations for the same `celex`
+- connect the final query to all retained sampled documents for the same `celex`
 
 ### MTEB benchmark and report generation
 
