@@ -236,7 +236,7 @@ JRC now uses a **CELEX-group-based** QA flow:
 5. validate it with language, faithfulness, retrieval-quality, and legal-shape checks
 6. connect the resulting query to all retained sampled document realizations for the same `celex`
 
-The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, and legal-shape stages so that provision-led wording, list/inventory questions, and multi-part legal questions can be filtered with targeted feedback rather than one monolithic blacklist.
+The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, and legal-shape stages so that provision-led wording, status/label questions, content-list questions, and multi-part legal questions can be filtered with targeted feedback rather than one monolithic blacklist.
 
 See `docs/QA_GENERATION_PROCESS.md` for the full current QA-generation flow across EPO, Wikidata, and JRC.
 

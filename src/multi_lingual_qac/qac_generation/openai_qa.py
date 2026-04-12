@@ -367,6 +367,7 @@ Do not ask:
 - whether something is mandatory or voluntary and how it is characterized, defined, or formulated, when one stronger legal point should be chosen;
 - a definition plus its included elements, a category plus its contents, or a label plus the legal effect around it;
 - what status, label, or category is assigned to a person, product, authority, or act when the answer would mainly be the assigned label rather than the legal consequence of that status;
+- what an analysis, report, application, declaration, or document must contain when the answer would mainly become a list of required contents rather than one legal effect, function, or consequence;
 - a question whose best answer would naturally become a checklist, menu, definition inventory, semicolon-separated list, or several alternative branches.
 
 Before finalizing, check:
@@ -374,6 +375,7 @@ Before finalizing, check:
 - Would answering it require understanding the legal effect, not just copying words?
 - Would the best answer become a list, menu, or two-part answer? If yes, rewrite.
 - Am I asking mainly for a status, label, category, or mandatory/voluntary characterization instead of the legal effect of that classification?
+- Am I asking what something must contain or include when I should ask what that content requirement does legally or why it matters?
 - Can I remove a second clause and keep the stronger legal question?
 - If the draft asks for a date, amount, threshold, code, or item, can I instead ask what that detail changes legally?
 
@@ -405,7 +407,7 @@ Output valid JSON only, no markdown:
         retry_note = (
             "\n\nPrevious attempt issue to fix:\n"
             f"{previous_feedback}\n"
-            f"Regenerate so the issue is fixed; keep everything in {lang_name}. Ask about one decisive legal point, not a list, menu, definition inventory, or two-part question. Do not lead the query with article, paragraph, recital, annex, or provision labels when a substance-first wording is possible. If the last attempt asked both A and B, keep only the stronger legal point. If the last attempt asked mainly for a status, label, category, or mandatory/voluntary characterization, rewrite it to ask for the legal effect, obligation, exclusion, scope limit, or consequence instead. If the last attempt would be answered by several items, branches, or alternatives, rewrite it so the answer becomes one focused legal consequence, requirement, trigger, exception, scope limit, or evidentiary function. If the last attempt asked only for a code, value, threshold, amount, duration, or listed item, rewrite it to ask what that detail changes legally. Prefer the shorter single-clause version when possible. Keep supporting_text as one tight directly supporting excerpt."
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}. Ask about one decisive legal point, not a list, menu, definition inventory, or two-part question. Do not lead the query with article, paragraph, recital, annex, or provision labels when a substance-first wording is possible. If the last attempt asked both A and B, keep only the stronger legal point. If the last attempt asked mainly for a status, label, category, or mandatory/voluntary characterization, rewrite it to ask for the legal effect, obligation, exclusion, scope limit, or consequence instead. If the last attempt asked what an analysis, report, application, declaration, or document must contain, rewrite it to ask what that content requirement proves, enables, limits, or requires legally instead of listing contents. If the last attempt would be answered by several items, branches, or alternatives, rewrite it so the answer becomes one focused legal consequence, requirement, trigger, exception, scope limit, or evidentiary function. If the last attempt asked only for a code, value, threshold, amount, duration, or listed item, rewrite it to ask what that detail changes legally. If the last attempt bundled an action with a deadline or later procedural detail, keep only the stronger legal point. Prefer the shorter single-clause version when possible. Keep supporting_text as one tight directly supporting excerpt."
         )
     previous_attempt_note = ""
     if previous_question or previous_answer:
@@ -698,7 +700,9 @@ Reject if:
 - the question is mainly driven by article labels, clause numbers, provision references, or citation wording;
 - the question can be answered mainly by copying one span, code, date, number, threshold, or listed item instead of understanding the legal effect;
 - the question mainly asks what status, label, category, or mandatory/voluntary characterization applies when the stronger retrieval need is the legal effect, obligation, exclusion, or consequence created by that classification;
+- the question mainly asks what an analysis, report, application, declaration, or document must contain when the answer is mostly a contents list rather than one legal effect, evidentiary function, or consequence;
 - the question combines a classification choice with a second ask such as how it is formulated, defined, or described;
+- the question combines a legal action with its deadline, time limit, or later procedural detail when one sharper legal point should be chosen;
 - the question is document-led, recital-like, or provision-like rather than a natural legal information need;
 - the question reads like a recital/provision restatement instead of a natural legal information need.
 
@@ -797,7 +801,7 @@ Approve only if the question:
 Reject if the question is mainly:
 - `condition-list`: asks for conditions, criteria, or applicability factors when one stronger trigger, exception, refusal ground, exclusion, entitlement boundary, or consequence should be chosen;
 - `menu-of-measures`: asks which measures, methods, routes, remedies, or actions are available or required when the answer is mainly a menu;
-- `definition-inventory`: asks who/what counts as something, what is included in a category, or what status/label/category is assigned when the answer is mainly a membership list, included-items list, or assigned label;
+- `definition-inventory`: asks who/what counts as something, what is included in a category, what status/label/category is assigned, or what a report/document/application must contain when the answer is mainly a membership list, included-items list, assigned label, or contents list;
 - `date-value-lookup`: asks for a date, duration, amount, threshold, code, period, or listed item when the stronger question is what that detail changes legally;
 - `multi-branch`: asks two legal points at once, contrasts two legal paths, or would naturally require several branches, alternatives, sub-rules, or both an action and its deadline/detail in the answer;
 - `broad-legal-shape`: broad, diffuse, or general in a way that misses the sharper single legal point available in the passage.
@@ -806,7 +810,9 @@ Decision rule:
 - If the best answer naturally becomes a checklist, menu, inventory, or branch structure, reject.
 - If the question asks both A and B, reject and keep only the stronger legal point.
 - If the question asks who/what is included, what counts as something, which measures are available, or what conditions apply, reject whenever the answer naturally becomes members, measures, or conditions rather than one decisive legal point.
+- If the question asks what a report, analysis, declaration, application, or document must contain, reject whenever the answer mainly becomes contents rather than one decisive legal effect, evidentiary function, or consequence.
 - If the question asks what status/label/category applies, or whether something is mandatory/voluntary and how it is characterized, reject whenever the answer mainly becomes a label plus description instead of one decisive legal consequence.
+- If the answer naturally becomes "may do X, and must do so by Y" or a similar action-plus-deadline bundle, reject and keep only the stronger legal point.
 - If a materially sharper single-issue reformulation exists, reject.
 - If the question is already aimed at one decisive legal point, approve.
 
