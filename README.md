@@ -44,8 +44,8 @@ uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queri
 
 ```bash
 uv run main.py --prepare-source JRC-ACQUIS      # download / extract / parse raw JRC-Acquis XML archives
-uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multilingual subsets, QA candidates, and document pairs
-uv run main.py --source JRC-ACQUIS              # interactive pair-level legal QA generation from sampled target-side documents
+uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multilingual subsets, and QA candidates
+uv run main.py --source JRC-ACQUIS              # interactive CELEX-group-based legal QA generation from sampled target-side documents
 ```
 
 The JRC retrieval corpus keeps body text plus a capped annex slice and excludes signature tail text from the main retrieval `context`.
@@ -227,15 +227,16 @@ Re-run **step 4** alone if you change labeling logic only; re-run **3** (and **4
 
 ### JRC-Acquis (legal / regulatory corpus)
 
-JRC now uses a **pair-level** QA flow:
+JRC now uses a **CELEX-group-based** QA flow:
 
-1. sample directional document pairs
-2. choose one sampled pair per selected source document
-3. take the translated/target side of that pair
-4. generate the question/answer from that target-side text
-5. connect the resulting query to all retained sampled translations for the same `celex`
+1. group multilingual legal documents by `celex`
+2. sample source-side documents from multilingual `celex` groups
+3. choose one target-language document realization from the same group
+4. generate one same-language legal question/answer from that target-side text
+5. validate it with language, faithfulness, retrieval-quality, and legal-shape checks
+6. connect the resulting query to all retained sampled document realizations for the same `celex`
 
-The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent.
+The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, and legal-shape stages so that provision-led wording, list/inventory questions, and multi-part legal questions can be filtered with targeted feedback rather than one monolithic blacklist.
 
 See `docs/QA_GENERATION_PROCESS.md` for the full current QA-generation flow across EPO, Wikidata, and JRC.
 

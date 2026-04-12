@@ -336,89 +336,66 @@ def generate_qa_in_language(
 The source context is written mainly in {lang_name} (BCP-47 code: {target_lang_code}).
 You MUST write the question, answer, and supporting_text entirely in {lang_name}.
 
-Rules:
+Goal:
+- Write one strong legal retrieval question.
+- The best question asks about one decisive legal point: one consequence, one trigger, one exclusion, one permission, one obligation, one evidentiary function, one scope limit, or one entitlement boundary.
+- Prefer the strongest semantic legal question the passage supports, not the safest extractive one.
+
+Core rules:
 - Natural, fluent {lang_name} only.
-- The question must read like a realistic search query a lawyer, policy reader, regulator, compliance analyst, legal researcher, or informed practitioner would type.
-- Prefer one substantive legal information need, not a clause lookup.
-- Ask about one operative point such as a condition, consequence, addressee, exception, scope limit, evidence requirement, procedural effect, legal threshold, or what the rule practically requires, permits, excludes, or causes.
-- The question must be answerable strictly from the passage and be specific enough for retrieval benchmarking.
-- Prefer semantically challenging questions that require understanding the operative meaning of the provision rather than surface keyword lookup.
-- Prefer questions that strong semantic retrieval should handle better than simple BM25-style term overlap.
-- Prefer the deepest answerable legal fact over the easiest extractive fact.
-- Prefer one narrow legal information need over a full compliance checklist.
-- The question should still work as a strong query if article numbers, paragraph numbers, recital numbers, and annex labels were hidden.
-- Do not mention article numbers, paragraph numbers, recital numbers, annex labels, or phrases like "this article", "this regulation", "this directive", or close equivalents in {lang_name} unless the reference itself is essential.
-- Do not ask for the provision number, legal basis citation, exact title, or exact clause wording.
-- Do not simply restate the passage in question form.
-- Do not keep unusually high lexical overlap with the opening sentence or title when a more natural paraphrase is possible.
-- Do not just wrap a copied noun phrase or copied legal clause in a question template.
-- Do not ask a broad summary question when a narrower operative question is available.
-- Do not bundle multiple loosely related legal conditions into one long checklist question unless the passage presents them as one inseparable rule.
-- Do not ask one question that combines both the rule and all of its exceptions, deadlines, and follow-up consequences if one sharper sub-question would be stronger.
-- Do not ask for all conditions, all exceptions, all guarantees, all consequences, all documents, or all authorities' powers at once when one narrower sub-question would make a better query.
-- Do not ask both the purpose of a rule and the situations where it applies when one of those is the stronger standalone retrieval need.
-- Do not ask both the condition for an action and the maximum duration, end-point, or later procedural detail of that action when one of those should be chosen.
-- Do not ask both what a legal category, device, authority, procedure, or remedy is and what it must contain, receive, do, or produce when one of those is the stronger standalone retrieval need.
-- Do not ask both what label, wording, or mention appears and what legal effect, condition, or consequence surrounds it when the stronger retrieval need is the legal effect, condition, or consequence.
-- Do not ask both who acts and by what deadline or time limit when one of those should be chosen as the stronger retrieval need.
-- Do not ask both what must be done and what effect that action has when one narrower legal point would make the cleaner query.
-- Avoid questions that only ask for a raw date, percentage, ratio, or listed items when the passage supports a better question about threshold, obligation, exception, trigger, or consequence.
-- Avoid questions that mainly ask for a literal span, enumerated list, or short quoted phrase when the passage supports a better question about meaning, effect, applicability, or consequence.
-- Avoid deadline-only questions when the text supports a better question about what triggers the deadline, what it governs, or what happens if it is not met.
-- Avoid amount-only, threshold-only, replacement-value-only, and effective-date-only questions when the text supports a better question about what that value changes, limits, enables, or triggers legally.
-- Avoid threshold or value questions whose best answer is only the number itself when the passage supports a better question about what crossing that threshold causes, permits, blocks, or changes legally.
-- Avoid exact code, category-code, document-code, or abbreviated-label questions when the stronger retrieval need is what that code classifies, permits, blocks, exempts, or changes legally.
-- Avoid timing-only or frequency-only questions such as when a report must be filed, how often something must be reported, or by what date an action must occur when the text supports a better question about what the obligation does, what triggers it, or what follows from non-compliance.
-- Avoid certificate/evidence/list questions that only ask for the full inventory when the text supports a better question about what the evidence is meant to show or when it is required.
-- Avoid questions whose best answer would naturally be a semicolon-separated inventory of conditions, exceptions, categories, documents, or procedural branches.
-- Avoid questions whose best answer would naturally become a list of alternative remedies, alternative compliance paths, or several actions joined by "or" when one narrower legal effect or requirement can be asked instead.
-- Avoid two-part questions that ask both A and B in the same sentence when one sharper sub-question is available.
-- Avoid joined questions built around equivalents of "and", "or", "as well as", or "until when" when the answer would need to cover two legal points rather than one.
-- Avoid contrastive yes/no questions that present two competing legal paths in one sentence if one branch captures the stronger retrieval need.
-- Avoid procedural questions that ask both what authority action is required and how a secondary calculation, adjustment, or follow-up detail must be handled if one of those is the clearer retrieval target.
-- Prefer a compact query with one main clause. If the question starts growing into a second clause after a comma, conjunction, or semicolon, keep only the stronger sub-question.
-- Prefer a question that is usually under roughly 18 words in English-equivalent length unless a slightly longer wording is clearly necessary for legal precision.
-- If two versions are possible, prefer the shorter version that still preserves the strongest legal point.
-- If both are possible, prefer asking what the rule changes, enables, limits, requires, or causes instead of what exact wording or exact list it contains.
-- If both are possible, prefer asking what a date, amount, threshold, code, or period does legally instead of asking only for its literal value.
+- The question must read like a realistic search query a lawyer, regulator, policy reader, compliance analyst, or legal researcher would type.
+- The question must be answerable strictly from the passage and specific enough for retrieval benchmarking.
+- The question should still work if article numbers, paragraph numbers, recital numbers, and annex labels were hidden.
+- Do not let article, paragraph, recital, annex, or provision labels lead the query when the same issue can be asked in substance-first wording.
 - Prefer grounded paraphrase over direct lexical overlap.
-- Prefer a question that can usually be answered in one focused sentence, not a question that forces a long bullet-list answer.
-- Before finalizing, check:
-  - Would this still be a strong query if legal labels were hidden?
-  - Does this ask about operative meaning or effect rather than location in the document?
-  - Would answering it require understanding the document, not just spotting copied words?
-  - Did I accidentally choose a safe literal lookup when a better semantic legal question was available?
-  - Did I ask for too many legal conditions at once when one narrower condition, consequence, exception, or threshold would be better?
-  - Would the answer become a list of several sub-rules instead of one focused legal point?
-  - Did I accidentally ask two questions at once or build a contrastive A-or-B query instead of one focused legal question?
-  - Did I fall back to a filing date, reporting frequency, or procedural timing question when the stronger retrieval need was the obligation, trigger, or consequence?
-  - Am I asking for both purpose and applicability when only one should remain?
-  - Am I asking for both a condition and a duration/end-point when only one should remain?
-  - Am I asking both what something is and what it must do/contain/receive, when only one sharper legal point should remain?
-  - Would the answer mainly be a list of alternative remedies, alternative actions, or several branches joined by "or"?
-  - Am I asking only for a code, value, threshold, amount, or duration when I should ask what that detail changes legally?
-  - Can I remove a second clause and keep the stronger legal question?
+- Prefer one compact main clause over a long joined question.
+- Prefer a question whose answer can usually be stated in one focused sentence.
+
+Do ask about:
+- what a rule requires, permits, excludes, proves, limits, changes, or causes;
+- one decisive condition for authorization, refusal, eligibility, or entitlement;
+- one legal consequence of non-compliance, objection, recognition, inclusion, exclusion, or expiry;
+- one evidentiary function of a certificate, report, declaration, or document;
+- one scope boundary, exception, or trigger.
+
+Do not ask:
+- for article numbers, provision labels, exact clause wording, titles, or legal basis citations;
+- for a raw date, amount, threshold, code, period, percentage, or listed item when a better question can ask what that detail changes legally;
+- what must be notified, reported, submitted, included, listed, or communicated when the answer would naturally become several items or steps;
+- for a full inventory of conditions, exceptions, guarantees, documents, powers, remedies, categories, or measures;
+- both the rule and its exception, both purpose and applicability, both condition and duration, both action and consequence, or any other two-part combination when one sharper legal point should be chosen;
+- whether something is mandatory or voluntary and how it is characterized, defined, or formulated, when one stronger legal point should be chosen;
+- a definition plus its included elements, a category plus its contents, or a label plus the legal effect around it;
+- what status, label, or category is assigned to a person, product, authority, or act when the answer would mainly be the assigned label rather than the legal consequence of that status;
+- a question whose best answer would naturally become a checklist, menu, definition inventory, semicolon-separated list, or several alternative branches.
+
+Before finalizing, check:
+- Does this ask about one decisive legal point?
+- Would answering it require understanding the legal effect, not just copying words?
+- Would the best answer become a list, menu, or two-part answer? If yes, rewrite.
+- Am I asking mainly for a status, label, category, or mandatory/voluntary characterization instead of the legal effect of that classification?
+- Can I remove a second clause and keep the stronger legal question?
+- If the draft asks for a date, amount, threshold, code, or item, can I instead ask what that detail changes legally?
+
+Answer requirements:
 - The answer must be concise (1-2 sentences) and fully grounded in the context.
-- Include supporting_text: a short quote copied from the source that justifies the answer.
+- Include supporting_text: a short tight quote copied from one relevant part of the source that directly justifies the answer.
 - Include question_type: one of obligation, requirement, scope, exception, consequence, evidence, definition, procedure, other.
 
 Good style examples:
+- a question about what happens if the requirement is not met
 - a question about what condition must be satisfied before authorization is possible
-- a question about what happens if the authority does not object in time
-- a question about who may submit a request or benefit from an exception
-- a question about what evidence or certificate must accompany a shipment or application
-- a question about what a missing report or missing objection changes legally
-- a question about when a derogation applies rather than listing every surrounding condition
+- a question about what a certificate or report is meant to prove
+- a question about when an exclusion or derogation applies
+- a question about what legal effect follows from a threshold or timing rule
 
 Bad style examples:
 - a question beginning with the equivalent of "According to Article ..."
 - a question asking which article sets out the exception
-- a question asking only for the exact date, percentage, or listed items when the text supports a better question about threshold or consequence
-- a question asking only for an exact code, numeric threshold, amount, or validity period when the stronger query would ask what that detail classifies, permits, limits, or changes legally
-- a question asking only for the exact wording or exact label entry when the stronger query would ask what that entry certifies, permits, or changes legally
-- a question that mostly copies the title or first operative sentence and turns it into a query
-- a question that asks for all guarantees, all conditions, or all consequences at once when one narrower point would form a better query
-- a question that asks for two actions, two authorities, or two legal branches in the same sentence when one branch would make the cleaner query
+- a question asking for all conditions, all documents, or all consequences at once
+- a question asking both a restriction and its exception
+- a question asking for a definition plus its list of included items
+- a question asking only for the exact date, amount, threshold, code, or listed items
 
 Output valid JSON only, no markdown:
 {{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
@@ -428,7 +405,7 @@ Output valid JSON only, no markdown:
         retry_note = (
             "\n\nPrevious attempt issue to fix:\n"
             f"{previous_feedback}\n"
-            f"Regenerate so the issue is fixed; keep everything in {lang_name}. For legal or regulatory text, ask about the operative rule without explicitly pointing to article numbers or labels. Prefer a query that requires understanding the provision rather than matching a copied phrase. Prefer one narrower legal question over a multi-condition checklist. If the last attempt asked both A and B, keep only the stronger legal point. If the last attempt would be answered by a list of alternatives or remedies, keep only the main legal effect, requirement, or consequence. If the last attempt asked only for a code, value, threshold, amount, or duration, rewrite it to ask what that detail changes legally. Prefer the shorter single-clause version when possible."
+            f"Regenerate so the issue is fixed; keep everything in {lang_name}. Ask about one decisive legal point, not a list, menu, definition inventory, or two-part question. Do not lead the query with article, paragraph, recital, annex, or provision labels when a substance-first wording is possible. If the last attempt asked both A and B, keep only the stronger legal point. If the last attempt asked mainly for a status, label, category, or mandatory/voluntary characterization, rewrite it to ask for the legal effect, obligation, exclusion, scope limit, or consequence instead. If the last attempt would be answered by several items, branches, or alternatives, rewrite it so the answer becomes one focused legal consequence, requirement, trigger, exception, scope limit, or evidentiary function. If the last attempt asked only for a code, value, threshold, amount, duration, or listed item, rewrite it to ask what that detail changes legally. Prefer the shorter single-clause version when possible. Keep supporting_text as one tight directly supporting excerpt."
         )
     previous_attempt_note = ""
     if previous_question or previous_answer:
@@ -563,13 +540,19 @@ def check_faithfulness(
     domain = _normalize_domain_hint(domain_hint)
     prompt = """You are a strict faithfulness checker for question-answer pairs derived from a technical or encyclopedia source passage.
 
-Approve only if:
-- the question is answerable from the context,
-- the answer is fully supported by the context,
-- the answer does not add unsupported details,
-- the supporting_text is relevant evidence from the context.
+Goal:
+- Approve only fully grounded QA pairs.
 
-Reject if the answer is generic, speculative, partially unsupported, or not clearly grounded.
+Approve only if:
+- the question is answerable from the context;
+- the answer is fully supported by the context;
+- the answer does not add missing facts, implications, causes, conditions, or conclusions;
+- the supporting_text is a relevant quote from the context that genuinely supports the answer.
+
+Reject if:
+- the answer is generic, speculative, overstated, partially unsupported, or drifts beyond the text;
+- the answer leaves the impression that the text says more than it actually says;
+- the supporting_text is irrelevant, too weak, or does not support the claimed point.
 
 Output valid JSON only:
 {"approved": true, "reason": "..."}
@@ -577,13 +560,25 @@ Output valid JSON only:
     if domain == "legal":
         prompt = """You are a strict faithfulness checker for question-answer pairs derived from a legal or regulatory source passage.
 
-Approve only if:
-- the question is answerable from the context,
-- the answer is fully supported by the context,
-- the answer does not add unsupported legal implications or extra conditions,
-- the supporting_text is relevant evidence from the context.
+Goal:
+- Approve only fully grounded legal QA pairs.
 
-Reject if the answer overstates what the rule means, adds missing exceptions or consequences, is generic, speculative, partially unsupported, or not clearly grounded.
+Approve only if:
+- the question is answerable from the context;
+- the answer is fully supported by the context;
+- the answer states only what the text supports about the rule, condition, exception, scope, consequence, procedure, or entitlement;
+- faithful paraphrase is allowed when every substantive claim remains traceable to the context;
+- the answer does not add unsupported legal implications, missing exceptions, extra conditions, hidden limits, or downstream consequences;
+- the supporting_text is a relevant quote from the context that genuinely supports the answer.
+
+Reject if:
+- the answer overstates what the rule means or how far it extends;
+- the answer adds an exception, consequence, condition, procedural effect, entitlement boundary, cross-article implication, or legal implication not supported by the text;
+- the answer is generic, speculative, partly supported, or materially looser than the source;
+- the supporting_text is irrelevant, too weak, or does not support the claimed legal point.
+
+Borderline rule:
+- If the answer could mislead a reader into believing the law says more than the passage actually says, reject.
 
 Output valid JSON only:
 {"approved": true, "reason": "..."}
@@ -634,193 +629,35 @@ def check_question_quality(
     domain = _normalize_domain_hint(domain_hint)
     prompt = lang_clause + """You are a strict quality checker for retrieval questions built from technical, legal, regulatory, or encyclopedia text.
 
+Goal:
+- Approve only strong retrieval questions.
+
 Approve only if the question:
-- sounds like a realistic search or retrieval query,
-- is specific enough to distinguish the document,
-- asks about a concrete point from the context,
-- uses natural user-like wording rather than document-summary or clause-lookup wording,
-- is phrased semantically rather than as an obvious exact-match template,
-- would be easier for a strong semantic retriever than for naive keyword matching,
-- is not too generic,
-- is not nearly copied from the context verbatim,
+- sounds like a realistic user retrieval query;
+- is specific enough to distinguish the document;
+- asks about one concrete point from the context;
+- is phrased semantically, not as an exact-match lookup;
+- is natural rather than document-centered;
+- is not nearly copied from the context;
 - and is useful for retrieval benchmarking.
 
-Reject questions that are broad or repetitive patterns such as:
-- "What is the main object of the invention?"
-- "What is the main feature?"
-- "What are the main components?"
-- "What are the applications ...?" when a more specific application question is possible
-- "What is the composition ...?" when a more targeted material or component question is possible
-- "What is the main technical advantage ...?" when a narrower effect, property, operating condition, or mechanism question is possible
-- "What is the advantage ...?" when the answer would bundle multiple benefits instead of one fact
-- "What is the purpose ...?" when the question does not name a specific step, component, material, or operation
-- "What advantages does ... offer ...?" when the answer mainly bundles several benefits that could be asked about more concretely
-unless the context is too short for a better question.
+Reject if the question is mainly:
+- `title-lift`: the title or opening phrase turned into a question;
+- `high-overlap`: too close to the source wording and still easy by exact matching;
+- `overly-extractive`: mostly a raw value, list, span, threshold, range, or table lookup when a better semantic question is available;
+- `broad-summary`: a broad purpose/advantage/application/feature summary when a narrower question is available;
+- `bundled-facts`: several loosely related facts joined together instead of one core information need;
+- `weak-query-shape`: understandable, but not shaped like a strong realistic retrieval query;
+- `legalistic-lookup`: for legal text, driven mainly by article/provision lookup rather than substantive meaning.
 
-For legal or regulatory passages, also reject questions that:
-- are led mainly by a citation such as "According to Article X" or "Under Article Y" when the same issue can be asked without the citation
-- mainly ask the user to look up a clause number, legal basis citation, or provision label
-- explicitly mention article numbers, paragraph numbers, recital numbers, annex labels, "this article", "this regulation", "this directive", or similar label-based wording when the same question can be asked without them
-- ask only for an exact date, percentage, ratio, or listed items when the passage supports a better question about consequence, applicability, threshold, obligation, exception, or legal effect
-- ask for multiple conditions or compliance criteria at once when one narrower condition or consequence would make a better retrieval query
-- sound like a recital or provision restatement rather than a natural legal information need
-- could not survive removal of article labels because the query depends on those labels more than on the operative content
+Guidance:
+- Do not reject numeric questions automatically. Reject them only when the number, date, range, code, or listed item is a shallow lookup and the context supports a better question about effect, role, condition, threshold meaning, or consequence.
+- Reject document-centered wording such as "according to the invention" or "in the text" when a more natural query is possible.
+- Reject broad templates such as "What is the purpose of ...?" or "What are the advantages of ...?" when they lead to a broad summary instead of one sharper point.
+- For legal text, reject questions led mainly by article labels, clause numbers, or provision references when the same issue can be asked without them.
 
-Also reject questions that:
-- mostly reuse a title phrase or a distinctive noun phrase from the source with only light reformatting,
-- depend mainly on exact keyword overlap rather than semantic understanding,
-- ask directly for the name, application, or advantage of a named entity when a more functional or effect-based question is possible.
-- ask vaguely about "the method" or "the process" without identifying what part of it is being asked about, even though the context contains a more specific step or condition.
-- are primarily spec-sheet or table-lookup questions when the same context supports a better semantic question about rationale, role, effect, mechanism, implication, or process purpose.
-- ask only for raw values, ranges, ratios, or enumerated lists even though the document provides enough context to ask what those details enable, affect, control, or explain.
-- in legal text, ask only for the literal cited clause instead of what the clause means, requires, permits, excludes, or causes.
-- in legal text, point directly to article/provision labels instead of asking about the operative condition, exception, threshold, or consequence.
-
-Treat these as common extractive failure modes:
-- exact value or ratio lookup
-- exact range or threshold lookup
-- exact ingredient inventory or long named-list lookup
-- direct "what does it contain/include" lookup
-- direct "what values are specified for X and Y" lookup
-
-Do NOT reject all numeric questions automatically.
-Approve them only when the number or range itself is genuinely the most retrieval-worthy fact in the context and no clearly better semantic question is available.
-
-Also reject document-centered wording such as:
-- "described in the invention"
-- "mentioned in the invention"
-- "according to the invention"
-- "in the text"
-
-Also reject broad template openings such as:
-- "What is the application of ..."
-- "What are the advantages of ..."
-- "What advantages does ..."
-- "What is the benefit of ..."
-- "What is the main technical advantage of ..."
-- "What is the purpose of ..."
-- "What types of products ..."
-- "What is the role of ..."
-when they lead to a broad summary question instead of a sharper technical query.
-
-Be especially strict about these two failure modes:
-1. title-lift: the question is basically the title or first source phrase converted into a question
-2. high-overlap paraphrase: the question keeps too much surface wording from the source and would still be easy for exact-match retrieval
-3. overly-extractive: the question is safe and specific but mainly asks for a literal value/list/span rather than a semantic technical point that the same context supports
-4. broad-summary: the question asks for a broad purpose/advantage/benefit summary instead of one narrower technical fact
-5. bundled-facts: the question asks for multiple loosely related facts at once instead of one core information need
-6. weak-query-shape: the question is understandable but not phrased like a strong retrieval query a user would naturally type
-7. legalistic-lookup: in legal or regulatory text, the question is driven mainly by article/provision lookup rather than substantive understanding of the rule
-
-Approve borderline cases only if the question is clearly more natural, more specific, and less surface-aligned than those failure modes.
-
-If you reject the question:
-- set `failure_type` to exactly one of:
-  - `title-lift`
-  - `high-overlap`
-  - `overly-extractive`
-  - `broad-summary`
-  - `bundled-facts`
-  - `weak-query-shape`
-  - `legalistic-lookup`
-- keep `reason` short and concrete
-- provide `better_direction` as ONE short actionable hint for regeneration, for example:
-  - `ask about why the step is used`
-  - `ask about the component's role`
-  - `ask about the effect, not the raw value`
-  - `ask what the condition enables`
-  - `focus on one narrower technical fact`
-  - `ask what the rule requires or causes, not where it is written`
-  - `remove the article reference and ask about the operative condition or effect`
-
-If you approve the question:
-- set `failure_type` to `none`
-- set `better_direction` to an empty string
-
-Output valid JSON only:
-{"approved": true, "reason": "...", "failure_type": "none", "better_direction": ""}
-"""
-    if domain == "legal":
-        prompt = lang_clause + """You are a strict quality checker for retrieval questions built from legal and regulatory text.
-
-Approve only if the question:
-- sounds like a realistic legal or policy retrieval query,
-- is specific enough to distinguish the document,
-- asks about one operative point from the context,
-- uses natural user-like wording rather than clause-lookup wording,
-- is phrased semantically rather than as an exact-match template,
-- would require meaningful semantic understanding rather than simple BM25-style overlap,
-- focuses on one strong legal information need rather than a checklist of several related points,
-- is not too generic,
-- is not nearly copied from the context verbatim,
-- and is useful for legal retrieval benchmarking.
-
-Approval standard:
-- Reject the question if there is a clearly sharper, more semantic, more single-focus legal query available from the same context.
-- Reject the question if a user could answer it mainly by copying one quoted span, one code, one number, one date, or one listed item without really understanding the legal effect.
-- Reject the question if it mainly asks for a bundle of eligibility conditions, issuance conditions, recognition conditions, reporting conditions, or applicability conditions when one trigger, exception, exclusion, consequence, or entitlement would make a sharper query.
-- Reject the question if it mainly asks for a definition plus its included elements, a category plus its contents, or a measure plus all its listed forms when one narrower legal effect, obligation, exclusion, or consequence would make a sharper query.
-- Reject the question if it mainly asks for until what date, for how long, from when to when, or at what threshold a right/benefit/status applies when the passage supports a better question about the legal consequence, exclusion, or entitlement boundary.
-- Approve borderline cases only when the current question already looks like the strongest realistic legal retrieval query the passage supports.
-- When in doubt between approve vs reject for a borderline legal question, reject.
-
-Reject questions that:
-- are led by article, paragraph, recital, annex, or provision labels,
-- explicitly mention article numbers or phrases like "this article", "this regulation", or "under Article ..." when the same issue can be asked without them,
-- mainly ask the user to locate a clause instead of understand what the rule requires, permits, excludes, proves, or causes,
-- ask only for a raw date, percentage, ratio, or listed items when the text supports a better question about threshold, obligation, exception, trigger, consequence, or scope,
-- ask mainly for what things are included in a definition, category, device class, or status when the stronger retrieval need is what legal role, obligation, exclusion, or consequence that definition/category creates,
-- ask only for a deadline when the context supports a better question about what the deadline governs, what triggers it, or what follows from it,
-- ask only for an amount, replacement value, effective date, or numeric threshold when the context supports a better question about what that figure changes, limits, enables, or triggers,
-- ask for a threshold, percentage, amount, or concentration only as a number when the stronger retrieval need is what crossing that threshold changes legally,
-- ask only until what date a right, payment, entitlement, status, or benefit lasts when the stronger query is about when or why that right ends, continues, or is excluded,
-- ask only for a code, category code, annex code, document code, or abbreviated label when the stronger retrieval need is what that code classifies, permits, blocks, exempts, or changes legally,
-- ask only for a reporting frequency, filing date, update cycle, or procedural timing detail when the text supports a better question about the obligation, trigger, scope, or consequence,
-- ask for a full inventory of guarantees, certificates, conditions, or consequences when one narrower point would make a better retrieval query,
-- ask for a full inventory of authorities, exceptions, categories, documents, or powers when one narrower point would make a better retrieval query,
-- ask for all remedies, all appeal routes, all alternative compliance paths, or all alternative actions when one narrower consequence, entitlement, or required action would make a better retrieval query,
-- ask for several concrete treatment methods, disposal methods, measures, routes, or procedural options in one answer when one main required action or legal consequence would make a stronger query,
-- ask which measures must be taken, which methods may be used, or which routes are available when the answer is mainly a menu of actions and the passage supports a better question about the main obligation, prohibition, or consequence,
-- ask generally what conditions must be met, what conditions apply, what conditions are required, or under what conditions something happens when one narrower trigger, refusal ground, exception, effect, or entitlement can be asked instead,
-- ask for the full set of conditions for recognition, qualification, issuance, inclusion, approval, authorization, eligibility, or entitlement when the passage supports a better single-point legal question,
-- ask both whether something is allowed and what conditions apply when one of those should be chosen as the stronger retrieval need,
-- ask both whether something applies and what responsibility, consequence, or condition follows when one narrower legal point would make the cleaner query,
-- bundle multiple loosely related legal conditions into one checklist question,
-- would naturally require a semicolon-separated or bullet-list answer containing several sub-rules,
-- would naturally require an answer built around several alternative branches joined by "or",
-- combine what the rule says, when it applies, its exceptions, and its consequences into one question when one sharper sub-question is available,
-- ask two distinct legal questions in one sentence joined by conjunctions or contrastive framing when one should be chosen,
-- ask both who acts and by what deadline, or who acts and under what time limit, when one of those should be chosen as the stronger retrieval need,
-- ask both what must be done and what effect that action has when one narrower legal point would make the cleaner query,
-- ask both the purpose of a rule and the situations where it applies when one stronger standalone question is available,
-- ask both the condition for an action and its duration, end-point, or secondary follow-up detail when one should be chosen,
-- ask both what a legal category, procedure, device, authority, or remedy is and what it must contain, receive, do, or produce when one stronger standalone question is available,
-- ask both what wording or label must appear and what legal effect surrounds it when the stronger question should focus on the effect or condition,
-- present two competing legal paths in a yes/no or either-or formulation when one sharper path would make a cleaner query,
-- ask both what must be done and how a secondary adjustment, calculation, or follow-up step works when one sharper question should be chosen,
-- sound like a recital or provision restatement rather than a natural legal information need.
-
-Be especially strict about these failure modes:
-1. title-lift
-2. high-overlap
-3. overly-extractive
-4. broad-summary
-5. bundled-facts
-6. weak-query-shape
-7. legalistic-lookup
-
-Typical legal examples to reject:
-- a question asking for the exact validity period in days when the stronger question is what the validity period governs legally
-- a question asking for the exact numeric threshold when the stronger question is what happens once that threshold is reached
-- a question asking for an exact code or listed code value when the stronger question is what legal class, exemption, or treatment that code determines
-- a question asking both which body adopts a measure and by when it must do so
-- a question asking for all listed waste types, all listed remedies, or all listed disposal methods instead of one main obligation or consequence
-- a question asking generally what conditions must be met for a certificate, status, authorization, or benefit when the passage supports a better question about one decisive condition, exception, or refusal ground
-- a question asking for all conditions that make a child, product, vehicle, operator, or applicant qualify for a status when one sharper entitlement or exclusion question is available
-- a question asking whether something applies and also what responsibility or consequence follows
-- a question asking what counts as a device/facility/category and listing all included items instead of asking what that category must be able to do or what legal duty it creates
-- a question asking which measures must be taken when the answer is just a list of treatment/destruction/refusal options
-- a question asking until what date a payment, entitlement, or right lasts instead of asking when or why that right ends
+Borderline rule:
+- Approve borderline cases only if the question already looks like the strongest realistic retrieval query supported by the passage.
 
 If you reject the question:
 - set `failure_type` to exactly one of:
@@ -833,30 +670,61 @@ If you reject the question:
   - `legalistic-lookup`
 - keep `reason` short and concrete
 - provide `better_direction` as ONE short actionable hint
-- examples:
-  - `ask what the rule requires or causes, not where it is written`
-  - `remove the article reference and ask about the operative condition or effect`
-  - `focus on one narrower legal consequence`
-  - `ask about the threshold or exception, not the label`
-- `pick one trigger or consequence instead of listing several conditions`
-- `do not ask for all conditions; ask for one trigger, exception, exclusion, or refusal ground`
-- `replace the general conditions question with one sharper entitlement or exclusion question`
-- `do not ask for a definition plus its list of items; ask what legal role or obligation that category creates`
-- `do not ask which measures are available; ask for the main required action or consequence`
-- `ask what the date or amount changes legally, not just what it is`
-- `do not ask until what date the right lasts; ask when or why it ends or is excluded`
-- `ask one legal question, not two joined together`
-- `drop the weaker branch and keep one sharper legal query`
-- `ask about the obligation or consequence, not just the reporting date or frequency`
-- `keep the main legal action and drop the secondary procedural detail`
-- `if the question asks both condition and duration, keep only one`
-- `if the question asks both purpose and applicability, keep only the stronger one`
-- `if the answer would list several remedies or alternatives, pick the main legal effect`
-- `if the question asks both what something is and what it must do, keep only one`
-- `ask what the code or threshold changes legally, not just what its value is`
-- `if the question asks who acts and by when, keep only the stronger legal point`
-- `if the question asks what conditions must be met, keep only the strongest condition, exception, or consequence`
-- `if the question asks for included items or listed measures, keep only the strongest legal duty, effect, or exclusion`
+
+If you approve the question:
+- set `failure_type` to `none`
+- set `better_direction` to an empty string
+
+Output valid JSON only:
+{"approved": true, "reason": "...", "failure_type": "none", "better_direction": ""}
+"""
+    if domain == "legal":
+        prompt = lang_clause + """You are a strict quality checker for retrieval questions built from legal and regulatory text.
+
+Goal:
+- Approve only the strongest realistic legal retrieval questions.
+
+Approve only if the question:
+- sounds like a realistic legal or policy retrieval query;
+- asks about one operative legal point from the context;
+- is specific enough to distinguish the document;
+- is semantic rather than clause-lookup driven;
+- would still be strong if article, recital, paragraph, and annex labels were hidden;
+- is not nearly copied from the source;
+- and is useful for legal retrieval benchmarking.
+
+Reject if:
+- there is a clearly sharper, more single-focus legal query available from the same passage;
+- the question is mainly driven by article labels, clause numbers, provision references, or citation wording;
+- the question can be answered mainly by copying one span, code, date, number, threshold, or listed item instead of understanding the legal effect;
+- the question mainly asks what status, label, category, or mandatory/voluntary characterization applies when the stronger retrieval need is the legal effect, obligation, exclusion, or consequence created by that classification;
+- the question combines a classification choice with a second ask such as how it is formulated, defined, or described;
+- the question is document-led, recital-like, or provision-like rather than a natural legal information need;
+- the question reads like a recital/provision restatement instead of a natural legal information need.
+
+Map the main failure to exactly one `failure_type`:
+- `title-lift`: mostly the title or opening legal phrase turned into a question
+- `high-overlap`: too close to the source wording
+- `overly-extractive`: mainly asks for a raw value, code, date, threshold, list, duration, or label when a better legal-effect question is available
+- `broad-summary`: asks for a broad purpose, role, or general summary instead of one sharper legal point
+- `bundled-facts`: asks for multiple conditions, branches, or legal points at once
+- `weak-query-shape`: understandable but not phrased like a strong realistic legal retrieval query
+- `legalistic-lookup`: driven mainly by provision lookup or citation wording
+
+Borderline rule:
+- Approve borderline cases if the current wording already looks like a realistic legal retrieval query and no clearly better single-focus alternative is available.
+
+If you reject the question:
+- set `failure_type` to exactly one of:
+  - `title-lift`
+  - `high-overlap`
+  - `overly-extractive`
+  - `broad-summary`
+  - `bundled-facts`
+  - `weak-query-shape`
+  - `legalistic-lookup`
+- keep `reason` short and concrete
+- provide `better_direction` as ONE short actionable hint
 
 If you approve the question:
 - set `failure_type` to `none`
@@ -915,31 +783,34 @@ def check_legal_question_shape(
         )
     prompt = lang_clause + """You are a strict shape checker for legal/regulatory retrieval questions.
 
-Your task is NOT to judge factual correctness or language. Judge only whether the question has the right retrieval shape.
+Your task is NOT to judge factual correctness or language. Judge only whether the question has the right legal retrieval shape.
+
+Goal:
+- Approve only questions that target one decisive legal point.
 
 Approve only if the question:
-- asks for one strong legal point,
-- is shaped like a focused legal retrieval need,
-- avoids checklist, menu, and inventory structure,
-- avoids broad definition-plus-membership shape,
-- avoids date/value/code lookup shape when a stronger legal-effect question is available,
-- and is the sharpest realistic legal question supported by the passage.
+- is shaped like a focused legal retrieval need;
+- asks about one main trigger, exception, exclusion, consequence, scope boundary, entitlement boundary, obligation, or responsible authority;
+- can be answered with one focused legal point rather than a list, menu, checklist, inventory, or set of alternative branches;
+- and already looks like the sharpest realistic legal question supported by the passage.
 
-Reject questions that:
-- ask which measures must be taken, which methods may be used, or which routes/remedies are available when the answer is mainly a menu of actions,
-- ask what conditions must be met, what conditions apply, or under what conditions something happens when one trigger, exception, refusal ground, exclusion, entitlement, or consequence would be sharper,
-- ask who/what counts as something or what is included in a category when the answer is mainly a definition inventory or membership list,
-- ask until what date / for how long / from when to when a right, payment, status, or benefit applies when the stronger question is about when or why it ends, continues, or is excluded,
-- ask for an exact threshold, amount, code, period, or listed item when the stronger question is what that detail changes legally,
-- ask a yes/no or applicability question and then also ask for the consequence, condition, or responsibility,
-- ask a consequence question whose answer naturally becomes a list of several alternative branches instead of one decisive legal point.
+Reject if the question is mainly:
+- `condition-list`: asks for conditions, criteria, or applicability factors when one stronger trigger, exception, refusal ground, exclusion, entitlement boundary, or consequence should be chosen;
+- `menu-of-measures`: asks which measures, methods, routes, remedies, or actions are available or required when the answer is mainly a menu;
+- `definition-inventory`: asks who/what counts as something, what is included in a category, or what status/label/category is assigned when the answer is mainly a membership list, included-items list, or assigned label;
+- `date-value-lookup`: asks for a date, duration, amount, threshold, code, period, or listed item when the stronger question is what that detail changes legally;
+- `multi-branch`: asks two legal points at once, contrasts two legal paths, or would naturally require several branches, alternatives, sub-rules, or both an action and its deadline/detail in the answer;
+- `broad-legal-shape`: broad, diffuse, or general in a way that misses the sharper single legal point available in the passage.
 
-Shape test:
-- If the best answer naturally reads like a list, menu, checklist, or a set of parallel branches, reject.
-- If the best answer can be one focused legal point, and the question is aimed at that point, approve.
-- If a sharper single-issue reformulation is obvious from the passage, reject the current question.
+Decision rule:
+- If the best answer naturally becomes a checklist, menu, inventory, or branch structure, reject.
+- If the question asks both A and B, reject and keep only the stronger legal point.
+- If the question asks who/what is included, what counts as something, which measures are available, or what conditions apply, reject whenever the answer naturally becomes members, measures, or conditions rather than one decisive legal point.
+- If the question asks what status/label/category applies, or whether something is mandatory/voluntary and how it is characterized, reject whenever the answer mainly becomes a label plus description instead of one decisive legal consequence.
+- If a materially sharper single-issue reformulation exists, reject.
+- If the question is already aimed at one decisive legal point, approve.
 
-Typical rejects:
+Examples to reject:
 - "Which measures must the Member State take ... ?"
 - "What conditions must be met for ... ?"
 - "Who counts as a dependent child?"
@@ -947,7 +818,7 @@ Typical rejects:
 - "Until what date does the entitlement last?"
 - "What amount/code/threshold applies ... ?" when the stronger question is the legal effect of that detail
 
-Typical approves:
+Examples to approve:
 - "What consequence follows if the requirement is not met?"
 - "When must entry be refused?"
 - "What exclusion applies in this case?"
