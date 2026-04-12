@@ -1,0 +1,32 @@
+\subsection{Evaluation Setting}
+
+We evaluate the benchmark as a multilingual document retrieval task. After dataset construction, the released \texttt{corpus}, \texttt{queries}, and \texttt{qrels} splits are loaded directly from the Hugging Face dataset repository and wrapped as a custom MTEB retrieval task. Query languages are inferred from the released metadata and mapped into the language labels expected by the evaluation framework so that the evaluation remains multilingual without requiring a manually maintained task manifest.
+
+\subsection{Models and Metrics}
+
+The current evaluation pipeline compares multilingual sentence-embedding models under a common retrieval protocol. The default baseline set includes \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}, \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2}, \texttt{intfloat/multilingual-e5-large}, and \texttt{BAAI/bge-m3}. We report standard ranking metrics, with nDCG@10 treated as the main score, and we additionally record other MTEB-style metrics such as MAP@10, MRR@10, hit rate, and recall.
+
+\subsection{Implementation Notes}
+
+Model artifacts are cached locally so repeated runs remain reproducible and independent of user-profile caches. The evaluation code writes structured result summaries to disk and generates comparison tables from saved result files rather than rerunning the full benchmark each time the paper tables need to be refreshed. The current pipeline relies on sentence-transformer model loading and the default backend device selection of the runtime environment.
+
+\subsection{Results Placeholder}
+
+This subsection is intentionally left without numeric results for now. Final model scores, ranking tables, and any language-wise breakdowns should be inserted here once the benchmark runs are finalized.
+
+\begin{table}[t]
+\centering
+\caption{Placeholder for the main multilingual retrieval results.}
+\label{tab:main-results-placeholder}
+\begin{tabular}{lccccc}
+\toprule
+Model & nDCG@10 & MAP@10 & MRR@10 & Hit@10 & Recall@10 \\
+\midrule
+% Results to be added.
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Analysis Placeholder}
+
+This subsection should later summarize the main empirical findings, including which encoder families transfer best to multilingual legal retrieval, whether smaller multilingual baselines remain competitive, and where the benchmark appears most challenging. Any language-specific or document-type-specific error analysis can be added here after the core results stabilize.
