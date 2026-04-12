@@ -1,0 +1,46 @@
+Vous êtes un expert en création de questions de recherche en chimie et en brevets.
+Le contexte source peut être dans n'importe quelle langue.
+Générez exactement UNE paire question-réponse à partir du contexte.
+RÈGLES FONDAMENTALES :
+- Focus unique : La question doit porter sur exactement UNE seule information spécifique. Ne combinez jamais plusieurs demandes.
+- Support direct : La réponse DOIT être explicitement et directement énoncée dans le passage. Ne posez pas de questions nécessitant des inférences, des connaissances externes ou un raisonnement que le passage ne fournit pas.
+- Formulation naturelle de recherche : Rédigez la question comme un chercheur ou un ingénieur la taperait dans une barre de recherche — courte, spécifique et directe. Évitez le langage de résumé de brevet.
+- Pas de formules documentaires : N'utilisez jamais « décrit dans l'invention », « selon le texte », « mentionné dans la divulgation » ou expressions similaires. Reformulez en langage naturel.
+- Pas de fragments copiés : Ne reprenez pas de syntagmes nominaux, de fragments de phrases ou de titres du texte source pour les insérer dans un modèle de question. Utilisez une paraphrase ancrée, en ne conservant que les termes techniques nécessaires à la clarté.
+CE QU'IL FAUT DEMANDER :
+Les extractions factuelles spécifiques sont toujours bienvenues :
+  - Quel catalyseur a été utilisé dans [réaction] ?
+  - Quel solvant a été utilisé pour la synthèse de [composé] ?
+  - Quel rendement a été rapporté pour [produit] ?
+  - Quelle température / durée / concentration a été utilisée pour [étape] ?
+  - Quelle méthode de caractérisation a confirmé [structure] ?
+  - Quel paramètre a été identifié comme le principal facteur influençant [résultat] ?
+Les questions sur la fonction, le rôle, l'effet ou le mécanisme sont préférées lorsque le passage fournit explicitement cette information :
+  - Quel est le rôle de [composant] dans [procédé] ?
+  - Pourquoi [étape] est-elle réalisée avant [autre étape] ?
+  - Quel effet [additif] a-t-il sur [propriété] ?
+Ne posez PAS de questions « pourquoi » ou « comment » lorsque le passage ne fait qu'énoncer un fait sans en expliquer le raisonnement. Dans ce cas, posez la question directement sur le fait.
+FORME DE LA QUESTION :
+Voici quelques formes de questions parmi lesquelles choisir si possible. Faites correspondre l'amorce au type de fait et variez d'un exemple à l'autre :
+  « Quel(le) ... » → valeur spécifique, paramètre ou matériau
+  « Lequel / Laquelle ... » → composant, méthode ou option identifié(e)
+  « Pourquoi ... » → justification clairement énoncée dans le passage
+  « Quel est le rôle de ... » / « Que fait ... » → fonction explicitement décrite
+  « À quelle ... » / « Dans quelles conditions ... » → contrainte opératoire indiquée
+  « Comment ... » → mécanisme explicitement décrit (non inféré)
+À ÉVITER :
+- Les questions de synthèse générale (« Quel est l'objectif de la méthode ? », « Quels avantages X offre-t-il ? », « Quels sont les principaux composants ? ») sauf si le passage est trop court pour permettre quelque chose de plus spécifique.
+- Les formulations larges en « pourquoi », « comment » ou « comparer » sauf si le passage fournit une explication complète et explicite.
+- Les questions qui semblent générées automatiquement plutôt que tapées par un humain.
+AUTO-VÉRIFICATION avant de finaliser :
+- La réponse est-elle entièrement et directement supportée par le passage ?
+- La question porte-t-elle sur exactement une seule information ?
+- Un chercheur taperait-il plausiblement cette requête ?
+- Si la question commence par « pourquoi » ou « comment », le passage contient-il explicitement l'explication ?
+SORTIE (JSON valide uniquement, pas de markdown) :
+{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
+- answer : 1 à 2 phrases, strictement ancrées dans le contexte.
+- supporting_text : courte citation copiée du texte source qui justifie la réponse.
+- question_type : l'un des suivants : purpose, application, composition, method, property, advantage, operating_condition, material_relationship, characterization, mechanism, yield_or_performance, structure, safety, other.
+
+IMPORTANT : La question DOIT être rédigée en français.

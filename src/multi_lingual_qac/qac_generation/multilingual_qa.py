@@ -154,104 +154,31 @@ def _pick_context(
 
 
 # ---------------------------------------------------------------------------
-# Q&A generation (language-aware)
+# Prompt loading
 # ---------------------------------------------------------------------------
 
-_BASE_PROMPT = """You are an expert at creating chemistry and patent retrieval questions.
+_PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
+_prompt_cache: Dict[str, str] = {}
 
-The source context may be in any language.
 
-Generate exactly ONE question-answer pair from the context.
+def _load_prompt(lang: str) -> str:
+    """Load the generation prompt for *lang* from prompts/{lang}.txt."""
+    if lang in _prompt_cache:
+        return _prompt_cache[lang]
+    prompt_path = _PROMPTS_DIR / f"{lang}.txt"
+    if not prompt_path.exists():
+        raise FileNotFoundError(
+            f"Prompt file not found: {prompt_path}. "
+            f"Available: {[p.name for p in _PROMPTS_DIR.glob('*.txt')]}"
+        )
+    text = prompt_path.read_text(encoding="utf-8").strip()
+    _prompt_cache[lang] = text
+    return text
 
-Rules:
-- Do not copy the source language unless a chemical name, formula, identifier, or proper noun should remain unchanged.
-- The question must read like a realistic retrieval query that a researcher, engineer, or technical reader might actually type into a search system.
-- Prefer short, natural, user-like wording over patent-summary wording.
-- Prefer a specific question about one of these: purpose, application, composition, method step, property, technical advantage, operating condition, material relationship, mechanism, effect, or functional role.
-- The question must be answerable from the text and specific enough to be useful for retrieval.
-- Prefer semantically challenging questions that dense retrieval should handle better than simple keyword matching.
-- For this task, semantic reformulation is more important than choosing the easiest extractive fact.
-- First look for a question about rationale, role, effect, mechanism, interaction, implication, or process purpose tied to a specific step.
-- Only fall back to exact ranges, exact ratios, exact named lists, or exact composition tables when the context does not support a stronger semantic question.
-- If both are possible, prefer the question that requires understanding what the detail does or why it matters, not the one that only asks for the raw value.
-- Prefer a question about one core technical fact, not a bundled summary of multiple advantages or multiple properties, unless the source presents them as one inseparable claim.
-- Ask about function, effect, mechanism, role, use condition, or technical implication when possible, not just surface wording.
-- Vary the question form across examples. Do not default to "How does ..." if another natural opening fits the fact better.
-- Match the question opening to the fact type. Use forms such as:
-  - "Why is ..." for step rationale or process purpose tied to a specific step
-  - "Which ..." for identified biomarker pairs, materials, components, or options
-  - "What function does ..." for a component's role
-  - "What condition ..." or "At what ..." for operating constraints or measured ranges
-  - "What property allows ..." for enabling characteristics
-  - "How does ..." for mechanism, effect, or interaction only when that is the most natural form
-- If you choose a method-style question, name the actual step, material, condition, or operation from the context.
-- Do not ask vague questions like "What is the purpose of the method?" or "What is something about the process?" when the method contains a specific named step that can be asked about directly.
-- Avoid making the question easy for exact-match retrieval by simply lifting the most distinctive nouns from the source into a template question.
-- Preserve technical terms only when they are necessary for faithfulness or the question would become unnatural or ambiguous without them.
-- Prefer grounded paraphrase over direct lexical overlap.
-- Avoid spec-sheet questions when a more semantic alternative exists, especially:
-  - exact wt% or mol-ratio lookups
-  - exact temperature, density, time, or concentration range lookups
-  - exact component inventory or long named-list lookups
-  - exact "what does the composition contain" questions
-- A numeric question is acceptable only when the number itself is the important retrieval target and the context does not support a better question about function, rationale, or effect.
-- Avoid broad fallback wording like:
-  - "What is the purpose of ..."
-  - "What advantages does ... offer ..."
-  - "What benefits does ... provide ..."
-  when you can instead ask what a step achieves, why it is done, what a component does, or what effect it has.
-- Avoid turning classification/grouping text into a weak taxonomy question if the same text supports a more functional question.
-- When the context contains both "what it is" and "what it does", prefer "what it does".
-- Avoid generic questions such as:
-  - "What is the main object of the invention?"
-  - "What is the main feature of the invention?"
-  - "What are the main components?"
-  unless the text is too short for anything better.
-- Avoid document-centered phrasing such as:
-  - "described in the invention"
-  - "mentioned in the invention"
-  - "according to the invention"
-  - "in the text"
-  - "described in the text"
-  - "described in the present disclosure"
-  - "used in the invention"
-  Rewrite those into natural user-style wording instead.
-- Do not begin the question with broad template wording such as:
-  - "What is the application of ..."
-  - "What are the advantages of ..."
-  - "What is the benefit of ..."
-  - "What is the main technical advantage of ..."
-  - "What is the purpose of ..."
-  - "What types of products ..."
-  - "What is the role of ..." when it only asks for a broad use summary
-- Avoid these patterns especially when a more specific question can be asked about:
-  - one process step
-  - one operating condition
-  - one material property
-  - one mechanism
-  - one component interaction
-- Do not turn the title into a question.
-- Do not simply wrap a copied title phrase or copied noun phrase in a question template.
-- If a title-like wording comes to mind first, rewrite it into a more natural and more semantically reformulated question.
-- Do not copy a sentence from the context nearly verbatim.
-- Do not just wrap a copied noun phrase in a question template.
-- Do not keep unusually high word overlap with the opening sentence or title unless a few technical anchor terms must remain for clarity.
-- Do not make the question artificially difficult or obscure just to reduce word overlap.
-- Before finalizing, ask yourself:
-  - Did I choose the deepest answerable fact rather than the easiest extractive fact?
-  - Would this still look like a good query if the exact numbers or list items were hidden?
-  - Does this require some semantic understanding rather than simple table lookup?
-  - Did I accidentally ask for a broad purpose/advantage summary when a narrower technical question was available?
-- If the question starts with "What is the purpose of" or "What advantages does", rewrite it unless no narrower question is possible.
-- If the answer to those checks is no, regenerate a better question.
-- The answer must be concise (1-2 sentences) and strictly grounded in the context.
-- Include a short supporting_text quote copied from the source context that justifies the answer.
-- Include a question_type chosen from: purpose, application, composition, method, property, advantage, operating_condition, material_relationship, other.
-- Output valid JSON only, no markdown:
-  {{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}}
 
-IMPORTANT: You MUST write the question in {lang_name}. The question must sound natural and fluent to a native {lang_name} speaker. The answer should be in English.
-"""
+# ---------------------------------------------------------------------------
+# Q&A generation (language-aware)
+# ---------------------------------------------------------------------------
 
 
 def generate_qa_in_language(
@@ -268,8 +195,7 @@ def generate_qa_in_language(
     Generate one Q&A pair where the question is in *target_lang* and the
     answer is in English.
     """
-    lang_name = LANG_NAMES[target_lang]
-    prompt = _BASE_PROMPT.format(lang_name=lang_name)
+    prompt = _load_prompt(target_lang)
 
     retry_note = ""
     if previous_feedback:

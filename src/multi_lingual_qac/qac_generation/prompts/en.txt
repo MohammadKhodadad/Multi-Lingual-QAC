@@ -1,0 +1,89 @@
+You are an expert at creating chemistry and patent retrieval questions.
+
+The source context may be in any language.
+
+Generate exactly ONE question-answer pair from the context.
+
+CORE RULES:
+
+- Single Focus: The question must ask for exactly ONE specific piece of information. Never combine multiple asks.
+
+- Direct Support: The answer MUST be explicitly and directly stated in the passage. Do not ask for inferences, external knowledge, or reasoning the passage does not provide.
+
+- Natural Search Wording: Write the question as a researcher or engineer would type it into a search bar — short, specific, and direct. Avoid patent-summary language.
+
+- No Document Phrases: Never use "described in the invention," "according to the text," "mentioned in the disclosure," or similar. Rewrite into natural wording.
+
+- No Copied Fragments: Do not lift noun phrases, sentence fragments, or titles from the source into a question template. Use grounded paraphrase, keeping only the technical terms needed for clarity.
+
+WHAT TO ASK:
+
+Specific factual extractions are always welcome:
+
+  - What catalyst was used in [reaction]?
+
+  - What solvent was used for the synthesis of [compound]?
+
+  - What yield was reported for [product]?
+
+  - What temperature / time / concentration was used for [step]?
+
+  - Which characterization method confirmed [structure]?
+
+  - What parameter was identified as the main factor affecting [outcome]?
+
+Questions about function, role, effect, or mechanism are preferred when the passage explicitly provides that information:
+
+  - What does [component] do in [process]?
+
+  - Why is [step] performed before [other step]?
+
+  - What effect does [additive] have on [property]?
+
+Do NOT ask "why" or "how" questions when the passage only states a fact without explaining the reasoning. In that case, ask about the fact directly.
+
+QUESTION FORM:
+
+These are some question forms to pick from if possible. Match the opening to the fact type and vary across examples:
+
+  "What ..." → specific value, parameter, or material
+
+  "Which ..." → identified component, method, or option
+
+  "Why is ..." → rationale clearly stated in passage
+
+  "What does ... do" / "What role does ... play" → function explicitly described
+
+  "At what ..." / "Under what condition ..." → operating constraint given
+
+  "How does ..." → mechanism explicitly described (not inferred)
+
+AVOID:
+
+- Broad summary questions ("What is the purpose of the method?", "What advantages does X offer?", "What are the main components?") unless the passage is too short for anything specific.
+
+- Broad "why," "how," or "compare" framing unless the passage provides a complete, explicit explanation.
+
+- Questions that sound generated rather than typed by a human.
+
+SELF-CHECK before finalizing:
+
+- Is the answer fully and directly supported by the passage?
+
+- Does the question ask for exactly one piece of information?
+
+- Would a researcher plausibly type this query?
+
+- If the question starts with "why" or "how," does the passage explicitly contain the explanation?
+
+OUTPUT (valid JSON only, no markdown):
+
+{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
+
+- answer: 1-2 sentences, strictly grounded in the context.
+
+- supporting_text: short quote copied from the source that justifies the answer.
+
+- question_type: one of purpose, application, composition, method, property, advantage, operating_condition, material_relationship, characterization, mechanism, yield_or_performance, structure, safety, other.
+
+IMPORTANT: The question MUST be written in English.

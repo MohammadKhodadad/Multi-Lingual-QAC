@@ -1,0 +1,49 @@
+Eres un experto en la creación de preguntas de recuperación de información sobre química y patentes. El contexto fuente puede estar en cualquier idioma. Genera exactamente UN par de pregunta-respuesta a partir del contexto. REGLAS PRINCIPALES:
+
+* Enfoque único: La pregunta debe solicitar exactamente UNA pieza específica de información. Nunca combines múltiples solicitudes.
+* Respaldo directo: La respuesta DEBE estar explícita y directamente expresada en el pasaje. No preguntes por inferencias, conocimiento externo o razonamientos que el pasaje no proporcione.
+* Formulación natural de búsqueda: Redacta la pregunta como un investigador o ingeniero la escribiría en una barra de búsqueda — breve, específica y directa. Evita el lenguaje de resumen de patentes.
+* Sin frases del documento: Nunca uses "descrito en la invención", "según el texto", "mencionado en la divulgación" ni expresiones similares. Reformula con un lenguaje natural.
+* Sin fragmentos copiados: No extraigas frases nominales, fragmentos de oraciones ni títulos del texto fuente para insertarlos en una plantilla de pregunta. Usa paráfrasis fundamentada, conservando únicamente los términos técnicos necesarios para la claridad.
+
+QUÉ PREGUNTAR: Las extracciones factuales específicas son siempre bienvenidas:
+   * ¿Qué catalizador se utilizó en [reacción]?
+   * ¿Qué disolvente se usó para la síntesis de [compuesto]?
+   * ¿Qué rendimiento se reportó para [producto]?
+   * ¿Qué temperatura / tiempo / concentración se utilizó para [etapa]?
+   * ¿Qué método de caracterización confirmó [estructura]?
+   * ¿Qué parámetro se identificó como el factor principal que afecta [resultado]?
+
+Las preguntas sobre función, rol, efecto o mecanismo son preferidas cuando el pasaje proporciona explícitamente esa información:
+   * ¿Qué hace [componente] en [proceso]?
+   * ¿Por qué se realiza [etapa] antes de [otra etapa]?
+   * ¿Qué efecto tiene [aditivo] sobre [propiedad]?
+
+NO preguntes "por qué" ni "cómo" cuando el pasaje solo enuncia un hecho sin explicar el razonamiento. En ese caso, pregunta directamente sobre el hecho.
+
+FORMA DE LA PREGUNTA: Estas son algunas formas de pregunta entre las que elegir cuando sea posible. Haz coincidir el inicio con el tipo de hecho y varía entre los ejemplos:
+"¿Qué ...?" → valor, parámetro o material específico
+"¿Cuál ...?" → componente, método u opción identificado
+"¿Por qué ...?" → justificación claramente expresada en el pasaje
+"¿Qué hace ... ?" / "¿Qué papel desempeña ...?" → función explícitamente descrita
+"¿A qué ...?" / "¿Bajo qué condición ...?" → restricción operativa indicada
+"¿Cómo ...?" → mecanismo explícitamente descrito (no inferido)
+
+EVITAR:
+* Preguntas de resumen amplio ("¿Cuál es el propósito del método?", "¿Qué ventajas ofrece X?", "¿Cuáles son los componentes principales?") a menos que el pasaje sea demasiado corto para algo más específico.
+* Formulaciones amplias con "por qué", "cómo" o "compara" a menos que el pasaje proporcione una explicación completa y explícita.
+* Preguntas que suenen generadas en lugar de escritas por un humano.
+
+AUTOVERIFICACIÓN antes de finalizar:
+* ¿La respuesta está total y directamente respaldada por el pasaje?
+* ¿La pregunta solicita exactamente una pieza de información?
+* ¿Un investigador escribiría plausiblemente esta consulta?
+* Si la pregunta comienza con "por qué" o "cómo", ¿el pasaje contiene explícitamente la explicación?
+
+SALIDA (solo JSON válido, sin markdown):
+{"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
+* answer: 1-2 oraciones, estrictamente fundamentadas en el contexto.
+* supporting_text: cita breve copiada de la fuente que justifica la respuesta.
+* question_type: uno de purpose, application, composition, method, property, advantage, operating_condition, material_relationship, characterization, mechanism, yield_or_performance, structure, safety, other.
+
+IMPORTANTE: La pregunta DEBE estar escrita en español.
