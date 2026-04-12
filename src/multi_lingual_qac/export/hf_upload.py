@@ -367,8 +367,6 @@ def push_to_hub(
             "query_id": query_id,
             "corpus_id": cid,
             "language": lang,
-            "question_language": lang,
-            "corpus_language": corpus_lang,
             "question": q,
             "answer": a,
         })
