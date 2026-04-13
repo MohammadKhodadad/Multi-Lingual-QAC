@@ -1,0 +1,125 @@
+\section{Appendix: Prompt and Validation Design}
+
+This appendix summarizes the high-level design of the legal QA generation and validation stack used for JRC-Acquis. The goal is not to reproduce the raw prompts verbatim, but to document the functional roles of the generator and each checker, together with the kinds of outputs they are intended to accept or reject.
+
+\subsection{Generator Role}
+
+The generator is designed to produce exactly one question--answer pair from a selected target-language legal passage. Its central target is a \emph{single decisive legal point}. In practice, this means the generator is pushed toward questions about obligations, exclusions, triggers, exceptions, evidentiary functions, scope limits, responsible authorities, or concrete legal consequences.
+
+At a high level, the generator is intended to create questions such as:
+\begin{itemize}
+\item what legal consequence follows if a requirement is not satisfied;
+\item when a refusal, exclusion, or derogation applies;
+\item what a certificate, declaration, or report is meant to prove;
+\item what legal effect a threshold, timing rule, or scope limit produces.
+\end{itemize}
+
+By contrast, the generator is instructed to avoid question shapes such as:
+\begin{itemize}
+\item provision-led or citation-led questions built around article numbers rather than substantive meaning;
+\item list questions asking for all conditions, all documents, all measures, or all exceptions;
+\item status or category questions whose answer is mainly the assigned label rather than the legal consequence of that label;
+\item content-list questions that ask what a report, declaration, or application must contain when the answer would mainly become an inventory;
+\item coupled questions that ask both a rule and its exception, both an action and its deadline, or other coordinated A+B combinations.
+\end{itemize}
+
+\paragraph{Generator examples.}
+Examples of the intended accepted style include:
+\begin{itemize}
+\item ``What consequence follows if the reporting requirement is not met?''
+\item ``What must the certificate prove before the authorization can be granted?''
+\item ``When does the exclusion apply to the imported goods?''
+\end{itemize}
+
+Examples of generator outputs that should be avoided include:
+\begin{itemize}
+\item ``According to Article 5, what is the applicable threshold?''
+\item ``What documents, certificates, and supporting statements must be submitted?''
+\item ``Is the measure mandatory and how is it characterized?''
+\item ``What must the application contain and by what date must it be filed?''
+\end{itemize}
+
+\subsection{Language Checker}
+
+The language checker has the narrowest role in the stack. It does not judge whether a question is useful, faithful, or well shaped. It only verifies that the generated question and answer are written mainly in the intended language and are not substantially mixed with another language except for unavoidable technical terms, identifiers, formulas, or proper nouns.
+
+This separation is important because language correctness is treated independently from retrieval quality. A question may be fluent but weak, or strong in intent but written in the wrong language. The language checker is meant to isolate the latter failure mode only.
+
+\subsection{Faithfulness Checker}
+
+The faithfulness checker is responsible for grounding. It asks whether the question is answerable from the supplied passage, whether the answer is fully supported by that passage, and whether the quoted supporting text genuinely justifies the answer. For legal text, this checker is deliberately conservative: it rejects answers that introduce unsupported legal implications, additional conditions, hidden exceptions, broadened scope, or downstream consequences not licensed by the passage.
+
+\paragraph{Faithfulness examples.}
+Examples that should be accepted by the faithfulness checker include:
+\begin{itemize}
+\item a concise paraphrase of a legal condition when every substantive claim remains traceable to the source;
+\item an answer explaining the legal effect of a rule, supported by a short directly relevant quote.
+\end{itemize}
+
+Examples that should be rejected include:
+\begin{itemize}
+\item an answer that infers an additional exception not stated in the passage;
+\item an answer that overstates the scope of a right or obligation;
+\item a supporting quote that is related to the document topic but does not actually support the claimed legal point.
+\end{itemize}
+
+\subsection{Retrieval-Quality Checker}
+
+The retrieval-quality checker judges whether the draft behaves like a strong realistic retrieval query. Its role is not primarily to enforce single-focus question shape, but to reject weak retrieval formulations such as title lifts, copied clause wording, broad summaries, overly extractive lookups, provision-led phrasing, and document-centered wording that does not sound like a natural legal information need.
+
+This checker therefore answers the question: \emph{if the QA pair is faithful, is the question still a good retrieval query?} It is designed to reject outputs that are technically grounded but too literal, too citation-driven, too broad, or too close to the source wording to serve as high-quality retrieval supervision.
+
+\paragraph{Retrieval-quality examples.}
+Examples that should usually be accepted include:
+\begin{itemize}
+\item ``What legal effect does this threshold produce?''
+\item ``When must the competent authority refuse recognition?''
+\item ``What exclusion prevents the authorization from applying in this case?''
+\end{itemize}
+
+Examples that should usually be rejected include:
+\begin{itemize}
+\item a question that mostly restates the title or opening clause of the document;
+\item a question that can be answered by copying one number, date, or threshold without understanding its legal role;
+\item a question led mainly by ``According to Article X'' when a substance-first formulation is available;
+\item a broad query such as ``What is the purpose of this regulation?'' when the passage supports a much sharper legal point.
+\end{itemize}
+
+\subsection{Legal-Shape Checker}
+
+The legal-shape checker is the final structural filter. Its job is to reject questions that may be grounded and superficially plausible, but whose answer shape is still weak for legal retrieval. In particular, it rejects condition lists, menu-of-measures questions, definition inventories, date/value/code lookups, content-list questions, status-label questions, and multi-branch questions whose answers naturally become menus, inventories, or coordinated bundles.
+
+The main design principle is that a strong legal retrieval question should be answerable by one focused legal point rather than by a checklist, a catalog of items, or several parallel branches.
+
+\paragraph{Legal-shape examples.}
+Examples that should be accepted include:
+\begin{itemize}
+\item ``What consequence follows if the requirement is not met?''
+\item ``When must entry be refused?''
+\item ``What exclusion applies in this situation?''
+\item ``Which authority is responsible once the triggering condition occurs?'' when that is the single decisive point.
+\end{itemize}
+
+Examples that should be rejected include:
+\begin{itemize}
+\item ``What conditions must be met for authorization?''
+\item ``Which measures must the Member State take?''
+\item ``Who counts as a dependent child?''
+\item ``What facilities are included in the category?''
+\item ``What must the declaration contain?''
+\item ``Until what date does the entitlement last?'' when the stronger question is the legal effect of that timing rule;
+\item ``What may the authority do, and by when must it notify the applicant?'' because it bundles a main action with a procedural deadline.
+\end{itemize}
+
+\subsection{Grouped View of the Stack}
+
+The checker stack is intentionally separated by function:
+\begin{itemize}
+\item the generator aims for one decisive legal question;
+\item the language checker filters wrong-language or mixed-language outputs;
+\item the faithfulness checker filters unsupported or over-claimed answers;
+\item the retrieval-quality checker filters weak retrieval formulations;
+\item the legal-shape checker filters structurally weak legal question forms such as lists, inventories, and multi-branch bundles.
+\end{itemize}
+
+This separation matters because the same rejected row should not be explained in four different ways. Instead, each stage is meant to remove a distinct class of failure and provide targeted retry feedback for regeneration.
