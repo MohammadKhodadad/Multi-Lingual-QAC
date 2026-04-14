@@ -230,11 +230,13 @@ Re-run **step 4** alone if you change labeling logic only; re-run **3** (and **4
 JRC now uses a **CELEX-group-based** QA flow:
 
 1. group multilingual legal documents by `celex`
-2. sample source-side documents from multilingual `celex` groups
-3. choose one target-language document realization from the same group
-4. generate one same-language legal question/answer from that target-side text
-5. validate it with language, faithfulness, retrieval-quality, and legal-shape checks
-6. connect the resulting query to all retained sampled document realizations for the same `celex`
+2. sample a broader source-side pool per language from multilingual `celex` groups
+3. retain a smaller question-generation set per language from that sampled pool
+4. build the final retrieval corpus from the sampled source pool plus all same-`celex` document realizations for the selected question-generation set
+5. choose one target-language document realization from each selected generation group
+6. generate one same-language legal question/answer from that target-side text
+7. validate it with language, faithfulness, retrieval-quality, and legal-shape checks
+8. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
 
 The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, and legal-shape stages so that provision-led wording, status/label questions, content-list questions, and multi-part legal questions can be filtered with targeted feedback rather than one monolithic blacklist.
 

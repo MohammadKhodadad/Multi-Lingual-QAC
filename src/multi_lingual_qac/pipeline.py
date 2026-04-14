@@ -126,14 +126,16 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     )
                     selected_sources_path = paths.qac_dir / "qa_generation_sources.csv"
                     generation_units_total = int(selection_stats.get("generation_units_total", 0))
-                    selected_source_docs_total = int(selection_stats.get("selected_source_docs_total", 0))
+                    sampled_source_pool_total = int(selection_stats.get("sampled_source_pool_docs_total", 0))
+                    selected_generation_docs_total = int(selection_stats.get("selected_generation_source_docs_total", 0))
+                    final_retrieval_corpus_total = int(selection_stats.get("final_retrieval_corpus_docs_total", 0))
                     if generation_units_total <= 0:
                         raise ValueError("JRC QA preparation selected zero generation units.")
                     print(
-                        "Prepared JRC QA subset:"
-                        f" {selection_stats['sampled_source_docs_total']} sampled source docs,"
-                        f" {selection_stats['subset_corpus_docs_total']} corpus docs,"
-                        f" {selected_source_docs_total} selected source docs,"
+                        "Prepared JRC QA benchmark inputs:"
+                        f" {sampled_source_pool_total} sampled source-pool docs,"
+                        f" {selected_generation_docs_total} selected generation docs,"
+                        f" {final_retrieval_corpus_total} final retrieval-corpus docs,"
                         f" {generation_units_total} generation units."
                     )
                     run_qa_pipeline(

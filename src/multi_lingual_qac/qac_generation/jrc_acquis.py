@@ -57,7 +57,8 @@ def prepare_jrc_qa_inputs(
     - sample source-side QA candidates per language from multilingual CELEX groups
     - retain a bounded number of source documents per language
     - choose one target-language realization per selected source document
-    - build a subset corpus containing the retained CELEX groups
+    - build a retrieval corpus from the sampled source pool plus all retained
+      CELEX-linked positives for the selected generation units
     - write QA generation rows using the chosen target-side document
     - map each generated query to all retained sampled documents for the same CELEX
     - write helper CSVs into `output_dir`
@@ -125,7 +126,6 @@ def prepare_jrc_qa_inputs(
 
     sampled_source_rows: list[dict[str, str]] = []
     selected_source_rows: list[dict[str, str]] = []
-    selected_source_rows_by_id: dict[str, dict[str, str]] = {}
     selected_sources_stats: dict[str, dict[str, int]] = {}
     for lang in sorted(reservoir_by_lang):
         sampled_lang_rows = list(reservoir_by_lang[lang])
@@ -138,10 +138,6 @@ def prepare_jrc_qa_inputs(
             chosen_rows = list(sampled_lang_rows)
         chosen_rows.sort(key=lambda row: row.get("id", ""))
         selected_source_rows.extend(chosen_rows)
-        for row in chosen_rows:
-            row_id = row.get("id", "")
-            if row_id:
-                selected_source_rows_by_id[row_id] = row
         selected_sources_stats[lang] = {
             "available_source_docs": int(available_source_docs_by_lang[lang]),
             "sampled_source_docs": len(sampled_lang_rows),
@@ -151,14 +147,30 @@ def prepare_jrc_qa_inputs(
     sampled_source_rows.sort(key=lambda row: (row.get("language", ""), row.get("id", "")))
     selected_source_rows.sort(key=lambda row: (row.get("language", ""), row.get("id", "")))
 
+    sampled_source_pool_ids = {
+        row.get("id", "")
+        for row in sampled_source_rows
+        if row.get("id", "")
+    }
     selected_celexes = {
         row.get("celex", "")
         for row in selected_source_rows
         if row.get("celex", "")
     }
-    corpus_subset_rows = [
-        row for row in all_corpus_rows if row.get("celex", "") in selected_celexes
-    ]
+    final_corpus_rows_by_id: dict[str, dict[str, str]] = {}
+    for sampled_source_id in sampled_source_pool_ids:
+        row = docs_by_id.get(sampled_source_id)
+        if row is not None:
+            final_corpus_rows_by_id[sampled_source_id] = row
+
+    for row in all_corpus_rows:
+        row_id = row.get("id", "")
+        if not row_id or row_id in final_corpus_rows_by_id:
+            continue
+        if row.get("celex", "") in selected_celexes:
+            final_corpus_rows_by_id[row_id] = row
+
+    corpus_subset_rows = list(final_corpus_rows_by_id.values())
     corpus_subset_rows.sort(key=lambda row: (row.get("celex", ""), row.get("language", ""), row.get("id", "")))
     subset_docs_by_celex: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row in corpus_subset_rows:
@@ -263,19 +275,27 @@ def prepare_jrc_qa_inputs(
     else:
         _write_csv(selected_sources_path, generation_row_fieldnames, [])
 
-    if corpus_subset_rows:
-        _write_csv(corpus_subset_full_path, list(corpus_subset_rows[0].keys()), corpus_subset_rows)
-    else:
-        _write_csv(corpus_subset_full_path, corpus_fieldnames, [])
+    _write_csv(corpus_subset_full_path, corpus_fieldnames, corpus_subset_rows)
     _write_csv(corpus_subset_path, ["_id", "title", "text"], corpus_subset_mteb_rows)
+
+    avg_relevant_docs_per_generation_unit = (
+        sum(count * freq for count, freq in relevant_docs_per_generation_unit.items()) / len(generation_rows)
+        if generation_rows
+        else 0.0
+    )
 
     stats = {
         "pairs_per_language_requested": pairs_per_language,
         "generation_docs_per_language_requested": generation_docs_per_language,
+        "sampled_source_pool_docs_total": len(sampled_source_rows),
         "sampled_source_docs_total": len(sampled_source_rows),
-        "subset_corpus_docs_total": len(corpus_subset_rows),
+        "selected_generation_source_docs_total": len(selected_source_rows),
         "selected_source_docs_total": len(selected_source_rows),
+        "selected_generation_celex_groups_total": len(selected_celexes),
+        "final_retrieval_corpus_docs_total": len(corpus_subset_rows),
+        "subset_corpus_docs_total": len(corpus_subset_rows),
         "generation_units_total": len(generation_rows),
+        "avg_relevant_docs_per_generation_unit": avg_relevant_docs_per_generation_unit,
         "generation_units_by_source_language": dict(sorted(generation_rows_by_source_language.items())),
         "generation_target_languages": dict(sorted(generation_target_language_counts.items())),
         "relevant_docs_per_generation_unit": {
