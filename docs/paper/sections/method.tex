@@ -47,18 +47,16 @@ At a high level, the preparation stage follows the procedure below:
 
 \subsection{Retrieval and Generation Context Construction}
 
-We distinguish between three text views of each document: the full cleaned document record, the retrieval context, and the QA-generation context. This separation is central to the method. A retrieval document should be rich enough to support document retrieval, whereas a generation prompt should emphasize the most substantive legal material and suppress distracting structure.
+We distinguish between three text views of each document: the full cleaned document record, the retrieval context, and the QA-generation context. This separation is central to the method. A retrieval document should be compact enough to resemble the bounded text budget typically used by encoder retrieval systems, whereas a generation prompt should emphasize the most substantive legal material and suppress distracting structure.
 
-The retrieval context is built from the cleaned title, bounded body text, and a bounded annex slice:
+The retrieval context is built from the cleaned title and a bounded slice of operative body text:
 \[
 x^{\mathrm{ret}}_{c,\ell} =
 \texttt{title}
 \; || \;
-\texttt{body}_{\leq 8000}
-\; || \;
-\texttt{annex}_{\leq 2000},
+\texttt{operative\_body}_{\leq 1800},
 \]
-with a final cap of \(12000\) characters on the concatenated retrieval text. This construction preserves the main operative content while limiting the long-tail noise introduced by very large documents and annex-heavy acts.
+with a final cap of approximately \(2200\) characters on the concatenated retrieval text, which serves as a rough character-level proxy for an encoder input of about \(512\) tokens. We intentionally exclude annex and signature material from this retrieval view so that the released corpus focuses on the core operative rule text rather than schedules, inventories, and other citation-heavy attached material.
 
 For QA generation, we use a different text view:
 \[

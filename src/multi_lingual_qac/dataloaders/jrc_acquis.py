@@ -756,9 +756,13 @@ JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS = 120
 JRC_QA_SHORT_PARAGRAPH_MAX_CHARS = 60
 JRC_QA_MAX_SHORT_OPERATIVE_RATIO = 0.55
 JRC_INSPECTION_SAMPLE_PER_LANGUAGE = 5
-JRC_RETRIEVAL_BODY_MAX_CHARS = 8000
-JRC_RETRIEVAL_ANNEX_MAX_CHARS = 2000
-JRC_RETRIEVAL_TOTAL_MAX_CHARS = 12000
+# Approximate a compact 512-token retrieval representation using characters.
+JRC_RETRIEVAL_BODY_MAX_CHARS = 1800
+JRC_RETRIEVAL_TOTAL_MAX_CHARS = 2200
+# Previous broader retrieval settings kept here for easy rollback:
+# JRC_RETRIEVAL_BODY_MAX_CHARS = 8000
+# JRC_RETRIEVAL_ANNEX_MAX_CHARS = 2000
+# JRC_RETRIEVAL_TOTAL_MAX_CHARS = 12000
 JRC_INSPECTION_FIELDNAMES = [
     *JRC_DOCUMENT_FIELDNAMES,
     "celex_language_count",
@@ -850,18 +854,19 @@ def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
     operative_paragraphs, trimmed_to_operative = _trim_jrc_to_operative_body(cleaned_body_paragraphs, lang)
 
     retrieval_body = _take_paragraph_budget(
-        cleaned_body_paragraphs,
+        operative_paragraphs,
         max_chars=JRC_RETRIEVAL_BODY_MAX_CHARS,
     )
-    retrieval_annex = _take_paragraph_budget(
-        cleaned_annex_paragraphs,
-        max_chars=JRC_RETRIEVAL_ANNEX_MAX_CHARS,
-    )
+    # Previous retrieval builder kept annex text as well:
+    # retrieval_annex = _take_paragraph_budget(
+    #     cleaned_annex_paragraphs,
+    #     max_chars=JRC_RETRIEVAL_ANNEX_MAX_CHARS,
+    # )
     full_parts = []
     if title:
         full_parts.append(title)
     full_parts.extend(retrieval_body)
-    full_parts.extend(retrieval_annex)
+    # full_parts.extend(retrieval_annex)
     full_text = "\n\n".join(part for part in full_parts if part).strip()
     if len(full_text) > JRC_RETRIEVAL_TOTAL_MAX_CHARS:
         full_text = full_text[:JRC_RETRIEVAL_TOTAL_MAX_CHARS].rsplit("\n\n", 1)[0].strip() or full_text[
