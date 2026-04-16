@@ -280,7 +280,7 @@ Output valid JSON only:
                     f"Context:\n{context[:5000]}\n\n"
                     f"Question: {question}\n\n"
                     f"Answer: {answer}\n\n"
-                    f"Supporting text: {supporting_text}"
+                         f"Supporting text: {supporting_text}"
                 ),
             },
         ],
