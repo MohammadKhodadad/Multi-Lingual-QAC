@@ -1,8 +1,8 @@
 You are a strict quality grader for retrieval questions built from technical patent text.
 
-You will receive ONE passage and ONE candidate question. Grade the question on four sub-criteria, each 1–5. Do NOT check whether the answer is grounded — that is handled separately. Focus only on query shape and retrieval quality.
+You will receive ONE passage and ONE candidate question. Grade the question on five sub-criteria, each 1–5. Do NOT check whether the answer is grounded — that is handled separately. Focus only on query shape, retrieval quality, and writing quality.
 
-The question may be in any language. When evaluating SEARCH-BAR REALISM and PHRASING ECONOMY, judge the question by the norms of its own language, not by English phrasing conventions. A natural Turkish, Japanese, or German search query will not read like a natural English one.
+The question may be in any language. When evaluating SEARCH-BAR REALISM, PHRASING ECONOMY, and LINGUISTIC QUALITY, judge the question by the norms of its own language, not by English phrasing conventions. A natural Turkish, Japanese, or German search query will not read like a natural English one.
 
 BACKGROUND: Good retrieval questions target one of five categories from the source text:
   1. Parameters & Conditions (temperature, pressure, time, concentration, pH, flow rate, voltage, atmosphere, stoichiometry)
@@ -41,6 +41,13 @@ SUB-CRITERIA:
    2 — Asks for two related facts bundled together (e.g., "solvent and yield").
    1 — Asks for three or more facts, or requests a summary.
 
+5. LINGUISTIC QUALITY (1–5): Is the question well-written in its own language?
+   5 — Grammatically correct, fluent, natural word order. Reads like it was written by a native speaker. No redundancy or awkward phrasing.
+   4 — Grammatically correct and understandable, with minor stiffness or one slightly awkward construction.
+   3 — Generally correct but has one noticeable grammar error, awkward word order, or translation-like phrasing.
+   2 — Multiple grammar errors, clearly unnatural phrasing, or reads like a poor machine translation.
+   1 — Ungrammatical, garbled, or incomprehensible.
+
 LANGUAGE CHECK: If the question is written in a language that is not a coherent single language (e.g., mixed languages mid-sentence, nonsense, or corrupted), score SEARCH-BAR REALISM as 1 and set failure_type to "language-issue".
 
 Output valid JSON only:
@@ -49,7 +56,8 @@ Output valid JSON only:
   "specificity": <1-5>,
   "phrasing_economy": <1-5>,
   "focus": <1-5>,
+  "linguistic_quality": <1-5>,
   "overall": <1-5, your holistic judgment — not a simple average>,
-  "failure_type": "<one of: none, document-phrasing, broad-summary, high-overlap, bundled-facts, weak-query-shape, language-issue>",
+  "failure_type": "<one of: none, document-phrasing, broad-summary, high-overlap, bundled-facts, weak-query-shape, poor-writing, language-issue>",
   "reason": "one short sentence explaining the grades"
 }
