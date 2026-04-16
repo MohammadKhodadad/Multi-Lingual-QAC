@@ -1,28 +1,68 @@
-Du bist ein Experte für die Erstellung von Fragen zur Chemie- und Patentrecherche. Der Quellkontext kann in jeder Sprache vorliegen. Erzeuge genau EIN Frage-Antwort-Paar aus dem Kontext. KERNREGELN:
+Sie sind ein Experte für die Erstellung technischer Fragen zur Dokumentenrecherche in Chemie und Patenten.
 
-* Einzelfokus: Die Frage muss nach genau EINER bestimmten Information fragen. Niemals mehrere Fragen kombinieren.
-* Direkte Belegbarkeit: Die Antwort MUSS explizit und direkt in der Passage genannt sein. Frage nicht nach Schlussfolgerungen, externem Wissen oder Überlegungen, die die Passage nicht liefert.
-* Natürliche Suchformulierung: Formuliere die Frage so, wie ein Forscher oder Ingenieur sie in eine Suchleiste eingeben würde — kurz, präzise und direkt. Vermeide patentzusammenfassende Sprache.
-* Keine Dokumentphrasen: Verwende niemals „in der Erfindung beschrieben", „laut dem Text", „in der Offenlegung erwähnt" oder Ähnliches. Formuliere in natürlicher Sprache um.
-* Keine kopierten Textfragmente: Übernimm keine Nominalphrasen, Satzfragmente oder Titel aus der Quelle in eine Frageschablone. Verwende fundierte Umschreibungen und behalte nur die Fachbegriffe bei, die für die Klarheit notwendig sind. WAS GEFRAGT WERDEN SOLL: Spezifische Faktenextraktionen sind immer willkommen:
-   * Welcher Katalysator wurde bei [Reaktion] verwendet?
-   * Welches Lösungsmittel wurde für die Synthese von [Verbindung] eingesetzt?
-   * Welche Ausbeute wurde für [Produkt] berichtet?
-   * Welche Temperatur / Zeit / Konzentration wurde für [Schritt] verwendet?
-   * Welche Charakterisierungsmethode bestätigte [Struktur]?
-   * Welcher Parameter wurde als Haupteinflussfaktor auf [Ergebnis] identifiziert? Fragen zu Funktion, Rolle, Wirkung oder Mechanismus werden bevorzugt, wenn die Passage diese Information explizit liefert:
-   * Was bewirkt [Komponente] in [Prozess]?
-   * Warum wird [Schritt] vor [anderem Schritt] durchgeführt?
-   * Welchen Einfluss hat [Zusatzstoff] auf [Eigenschaft]? Stelle KEINE „Warum"- oder „Wie"-Fragen, wenn die Passage nur eine Tatsache nennt, ohne die Begründung zu erklären. Frage in diesem Fall direkt nach der Tatsache. FRAGEFORM: Dies sind einige Frageformen, aus denen nach Möglichkeit gewählt werden sollte. Passe den Fragebeginn an den Faktentyp an und variiere über die Beispiele hinweg: „Was ..." → spezifischer Wert, Parameter oder Material „Welcher/Welche/Welches ..." → identifizierte Komponente, Methode oder Option „Warum wird ..." → Begründung, die klar in der Passage genannt ist „Was bewirkt ..." / „Welche Rolle spielt ..." → Funktion, die explizit beschrieben ist „Bei welcher ..." / „Unter welcher Bedingung ..." → angegebene Betriebsbedingung „Wie funktioniert ..." → Mechanismus, der explizit beschrieben ist (nicht abgeleitet) VERMEIDEN:
-* Breite Zusammenfassungsfragen („Was ist der Zweck der Methode?", „Welche Vorteile bietet X?", „Was sind die Hauptbestandteile?"), es sei denn, die Passage ist zu kurz für etwas Spezifischeres.
-* Breite „Warum"-, „Wie"- oder „Vergleichs"-Formulierungen, es sei denn, die Passage liefert eine vollständige, explizite Erklärung.
-* Fragen, die generiert klingen, statt von einem Menschen eingetippt. SELBSTPRÜFUNG vor der Finalisierung:
-* Wird die Antwort vollständig und direkt durch die Passage gestützt?
-* Fragt die Frage nach genau einer Information?
-* Würde ein Forscher diese Suchanfrage plausiblerweise eingeben?
-* Wenn die Frage mit „Warum" oder „Wie" beginnt — enthält die Passage die Erklärung explizit? AUSGABE (nur gültiges JSON, kein Markdown): {"question": "...", "answer": "...", "supporting_text": "...", "question_type": "..."}
-* answer: 1–2 Sätze, strikt auf den Kontext gestützt.
-* supporting_text: kurzes Zitat aus der Quelle, das die Antwort belegt.
-* question_type: einer von purpose, application, composition, method, property, advantage, operating_condition, material_relationship, characterization, mechanism, yield_or_performance, structure, safety, other.
+Der Quellkontext kann in beliebiger Sprache vorliegen. Die Fragen und Antworten MÜSSEN auf Deutsch verfasst werden. Bewahren Sie chemische Namen, Verbindungsbezeichnungen (z. B. „Compound 3a"), Handelsnamen, Reagenzienabkürzungen sowie alle numerischen Werte, Einheiten und Bereiche in ihrer ursprünglichen Form — übersetzen, runden oder umformatieren Sie diese nicht.
 
-WICHTIG: Die Frage MUSS auf Deutsch verfasst sein.
+Erzeugen Sie genau DREI Frage-Antwort-Paare aus dem Kontext. Jedes soll sich auf eine andere Tatsache beziehen.
+
+KERNREGELN:
+- Einzelner Fokus: Jede Frage muss nach genau EINER spezifischen Information fragen. Kombinieren Sie niemals mehrere Anliegen (z. B. fragen Sie nicht in derselben Frage nach einem Lösungsmittel und einer Ausbeute).
+- Vollständige direkte Stützung: Die Antwort muss vollständig in einem zusammenhängenden Abschnitt der Passage enthalten sein. Wenn irgendein Teil der Antwort eine Schlussfolgerung, eine Kombination über Sätze hinweg oder externes Wissen erfordert — auch nur einen kleinen Schritt — verwerfen Sie die Frage. Teilweise Stützung ist nicht akzeptabel.
+- Numerische Treue: Geben Sie alle Zahlen, Einheiten, Bereiche und Toleranzen genau so wieder, wie sie in der Quelle erscheinen (z. B. „85–87°C", nicht „etwa 86°C" oder „85 bis 87 Grad").
+- Natürliche Suchformulierung: Formulieren Sie jede Frage so, wie ein Forscher oder Ingenieur sie in eine Suchleiste eingeben würde — kurz, spezifisch und direkt. Vermeiden Sie Patentzusammenfassungs-Sprache und lange Nominalphrasen.
+- Keine Dokumentformeln: Verwenden Sie niemals „in der Erfindung beschrieben", „gemäß dem Text", „in der Offenbarung erwähnt" oder Ähnliches. Formulieren Sie in natürlicher Sprache um.
+- Paraphrasieren, nicht übernehmen: Fachbegriffe und benannte Entitäten (z. B. „Elektrolyseeinheit", „dezentrales Wasseraufbereitungssystem", „Pd/C-Katalysator") dürfen bei Bedarf zur Klarheit wiederverwendet werden. Aber übernehmen Sie keine beschreibenden Phrasen, mehrteiligen Modifikatoren oder Satzfragmente aus der Quelle als Fragengerüst — formulieren Sie diese in eigenen Worten um.
+- Vielfalt: Die drei Fragen müssen auf drei verschiedene Tatsachen abzielen UND mindestens zwei der fünf unter WORNACH FRAGEN aufgelisteten Kategorien abdecken. Stellen Sie nicht drei Fragen, die alle Betriebsparameter oder alle Materialien betreffen.
+
+WORNACH FRAGEN:
+Zielen Sie auf Fragen in diesen fünf Kategorien:
+  1. Parameter und Bedingungen: Temperatur, Druck, Zeit, Konzentration, pH-Wert, Durchflussrate, Spannung, Atmosphäre, Stöchiometrie, Betriebsbereiche usw.
+  2. Materialien: Katalysator, Lösungsmittel, Reagenz, Substrat, Additiv, Präkursor, Ausrüstung usw.
+  3. Ergebnisse: Ausbeute, Selektivität, Umsatz, Reinheit, Effizienz usw.
+  4. Methoden: Syntheseweg, Charakterisierungstechnik, Trennmethode usw.
+  5. Struktur: funktionelle Gruppe, Kristallform, Polymorph, Molekulargewicht, Zusammensetzung usw.
+
+Fragen zu Funktion, Rolle oder Wirkung sind NUR dann akzeptabel, wenn die Passage diese Information explizit und vollständig angibt — nicht wenn sie auch nur teilweise abgeleitet werden muss.
+
+BEISPIELE:
+
+Example 1
+Passage (Turkish):
+"Enerji̇ tüketi̇mi̇ düşürülmüş bi̇r tahri̇k terti̇bati Buluş hareket enerjisi üretebilen bir motorun (10) en az bir yanma odasında (11) ihtiyaç duyduğu kimyasal unsurlardan en azından bir kısmının temin edilerek enerji sarfiyatının azaltılabildiği bir tahrik tertibatı (1) ile ilgilidir. Buluşun yeniliği; bahsedilen tahrik tertibatının (1) en az bir elektroliz birimi (20) ve en az bir kontrol birimi (40) ile ilişkilendirilmiş olması, bahsedilen elektroliz biriminin (20) elektrolitin elektroliz edilmesini sağlayacak şekilde konfigüre edilmiş olması, bahsedilen kontrol biriminin (40) ise elektroliz biriminde bulunan elektroliti elektroliz edilirken yaklaşık 85-87°C aralığına kadar ısıtacak şekilde gerilim ve voltajı ayarlayabilir olması, elektroliz biriminde (20) elektroliz sonrasında elde edilen oksijen, hidrojen ve su buharının bahsedilen yanma odasına (11) karıştırılarak verilebilir olmasıdır."
+
+✓ Good: "What temperature range is maintained for the electrolyte during electrolysis?"
+  → Asks for one specific parameter directly stated in the passage. Answer: "85–87°C" — a contiguous span, exact numbers preserved.
+
+✗ Bad (inference-why): "Why is the electrolyte heated to about 85–87°C during electrolysis?"
+  → The passage states the temperature but never explains the reason for choosing it.
+
+✗ Bad (partial support): "What gases are produced by electrolysis and fed into the combustion chamber, and in what ratio?"
+  → The passage lists the gases (oxygen, hydrogen, water vapor) but never gives a ratio. The question is only partially answerable. Discard.
+
+Example 2
+Passage (French):
+"Système de surveillance de traitement d'eau décentralisé connecté à un réseau et dispositif de suivi de fonctionnement et de maintenance comprenant au moins un capteur connecté à Internet et une plateforme logicielle intégrée qui peut être utilisée par des installations de grande taille et/ou des organisations comprenant de multiples installations qui gèrent et maintiennent des systèmes de traitement d'eau potable décentralisés (p. ex. des filtres de point d'utilisation) ou des processus de traitement d'eau potable décentralisés (p. ex. un rinçage de robinet) à un ou à plusieurs emplacements. Au moins un capteur est installé en amont ou en aval d'un consommable ou d'un processus de traitement d'eau décentralisé et mesure des données d'eau, comprenant non exclusivement le volume d'eau traité dans le temps, et alerte l'utilisateur lorsque des actions de maintenance sont requises pour maintenir la qualité de l'eau."
+
+✓ Good: "What does the sensor measure in the decentralized water treatment system?"
+  → Short, natural, one specific fact directly stated. "Decentralized water treatment system" is a reused technical term, which is allowed.
+
+✗ Bad (lifted framing): "Why is at least one sensor installed upstream or downstream of a consumable or decentralized treatment process?"
+  → Lifts a long descriptive phrase from the source and asks for reasoning the passage does not give.
+
+✗ Bad (partial support): "How does the sensor determine when maintenance is required?"
+  → The passage says the sensor alerts the user when maintenance is needed, but never states the mechanism or threshold by which it makes that determination. Discard.
+
+SELBSTPRÜFUNG für jede Frage vor dem Finalisieren:
+- Lässt sich die Antwort aus einem zusammenhängenden Abschnitt der Passage gewinnen, ohne Schlussfolgerung oder Kombination über Sätze hinweg? Wenn nicht, verwerfen.
+- Fragt die Frage nach genau einer Information?
+- Werden alle Zahlen, Einheiten und Bereiche in der Antwort exakt wie in der Quelle wiedergegeben?
+- Würde ein Forscher diese Suchanfrage plausibel in eine Suchleiste eingeben?
+- Betreffen die drei Fragen drei unterschiedliche Tatsachen und decken mindestens zwei Kategorien aus WORNACH FRAGEN ab?
+
+AUSGABE (nur gültiges JSON, kein Markdown):
+[
+  {"question": "...", "answer": "...", "question_type": "..."},
+  {"question": "...", "answer": "...", "question_type": "..."},
+  {"question": "...", "answer": "...", "question_type": "..."}
+]
+- answer: der kürzeste Abschnitt, der die Frage vollständig und direkt beantwortet — typischerweise eine Phrase oder ein einzelner kurzer Satz. Streng in der Passage verankert.
+- question_type: einer von parameter_or_condition, material, outcome, method, structure.
