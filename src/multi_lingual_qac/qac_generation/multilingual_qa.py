@@ -451,7 +451,6 @@ def _build_output_row(
     publication_number: str,
     question_language: str,
     context_language: str,
-    strategy_name: str,
 ) -> Dict[str, Any]:
     """Build a single output CSV row from generation + grading results."""
     row: Dict[str, Any] = {
@@ -459,7 +458,6 @@ def _build_output_row(
         "publication_number": publication_number,
         "question_language": question_language,
         "context_language": context_language,
-        "strategy": strategy_name,
         "question": qa["question"],
         "answer": qa["answer"],
     }
@@ -506,7 +504,7 @@ def _build_output_row(
 def _get_fieldnames(mode: str) -> List[str]:
     base = [
         "corpus_id", "publication_number", "question_language",
-        "context_language", "strategy", "question", "answer",
+        "context_language", "question", "answer",
     ]
     if mode == MODE_TECHNICAL:
         base.append("question_type")
@@ -591,7 +589,6 @@ def _process_document(
             continue
 
         # Step 4: Build output rows and sort by total_score (best first)
-        strategy_name = STRATEGY_NAMES.get(strategy, str(strategy))
         doc_rows: List[Dict[str, Any]] = []
         for i in range(3):
             row = _build_output_row(
@@ -603,7 +600,6 @@ def _process_document(
                 publication_number=pub_num,
                 question_language=target_lang,
                 context_language=context_row.get("language", ""),
-                strategy_name=strategy_name,
             )
             doc_rows.append(row)
 
@@ -724,7 +720,7 @@ def main() -> None:
         default=None,
         help=(
             "Output QAC CSV path. Defaults to "
-            "data/google_patents/qac/{mode}_qac.csv"
+            "data/google_patents/qac/{mode}_{strategy}_qac.csv"
         ),
     )
     parser.add_argument(
@@ -774,7 +770,8 @@ def main() -> None:
 
     output_path = args.output
     if output_path is None:
-        output_path = Path(f"data/google_patents/qac/{args.mode}_qac.csv")
+        strategy_name = STRATEGY_NAMES.get(args.strategy, str(args.strategy))
+        output_path = Path(f"data/google_patents/qac/{args.mode}_{strategy_name}_qac.csv")
 
     run_multilingual_qa_pipeline(
         corpus_path=args.corpus,
