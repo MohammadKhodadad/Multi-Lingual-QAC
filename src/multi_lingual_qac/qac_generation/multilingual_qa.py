@@ -1,7 +1,11 @@
 """
-Alternative multilingual Q&A generation for documents that already exist in
-multiple languages.  No translation step needed — questions are generated
-directly in the target language.
+Multilingual Q&A generation for documents that already exist in multiple
+languages.  No translation step needed — questions are generated directly
+in the target language.
+
+Two generation modes:
+  - technical  : fact-extraction questions (parameter, material, outcome, …)
+  - semantic   : concept/retrieval questions (problem, solution, application)
 
 Four strategies for choosing the question language:
   1  RANDOM_ANY       — pick a random language from {en, de, fr, es}
@@ -30,6 +34,9 @@ from tqdm import tqdm
 ALL_LANGS = ["en", "de", "fr", "es"]
 LANG_NAMES = {"en": "English", "de": "German", "fr": "French", "es": "Spanish"}
 
+MODE_TECHNICAL = "technical"
+MODE_SEMANTIC = "semantic"
+
 STRATEGY_RANDOM_ANY = 1
 STRATEGY_RANDOM_MISSING = 2
 STRATEGY_RANDOM_EXISTING = 3
@@ -38,11 +45,24 @@ STRATEGY_ALL = 4
 DEFAULT_MODEL = "gpt-5-mini"
 DEFAULT_REASONING_EFFORT = "low"
 DEFAULT_GENERATION_REASONING_EFFORT = "medium"
-MAX_ATTEMPTS = 3
+
+# Sub-score field names per mode, used for CSV columns and total calculation
+FAITHFULNESS_FIELDS = ["faith_grounding", "faith_precision", "faith_numerical_fidelity", "faith_overall"]
+
+TECHNICAL_QUALITY_FIELDS = [
+    "qual_search_bar_realism", "qual_specificity", "qual_phrasing_economy",
+    "qual_focus", "qual_linguistic_quality", "qual_overall",
+]
+SEMANTIC_QUALITY_FIELDS = [
+    "qual_search_realism", "qual_lexical_distance", "qual_conceptual_framing",
+    "qual_retrievability", "qual_linguistic_quality", "qual_overall",
+]
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_BASE_DIR = Path(__file__).resolve().parent
 
 
 def _get_client() -> OpenAI:
@@ -52,8 +72,8 @@ def _get_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def _parse_json_response(text: str) -> Dict[str, Any]:
-    """Parse a JSON object from a model response."""
+def _parse_json_response(text: str) -> Any:
+    """Parse a JSON object or array from a model response."""
     text = (text or "").strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
@@ -101,14 +121,12 @@ def pick_target_languages(
 
     if strategy == STRATEGY_RANDOM_MISSING:
         if not missing:
-            # Document exists in all 4 languages — fall back to random any
             return [random.choice(ALL_LANGS)]
         return [random.choice(missing)]
 
     if strategy == STRATEGY_RANDOM_EXISTING:
         existing = [l for l in ALL_LANGS if l in available_set]
         if not existing:
-            # Should not happen in a well-formed corpus, fall back
             return [random.choice(ALL_LANGS)]
         return [random.choice(existing)]
 
@@ -119,7 +137,7 @@ def pick_target_languages(
 
 
 # ---------------------------------------------------------------------------
-# Context selection
+# Context helpers
 # ---------------------------------------------------------------------------
 
 
@@ -137,227 +155,358 @@ def _pick_context(
     """
     by_lang = {r["language"]: r for r in rows}
 
-    # Best: same language as the question
     if target_lang in by_lang:
         row = by_lang[target_lang]
         return row, row.get("context") or row.get("abstract") or row.get("title", "")
 
-    # Fallback: prefer English, then any
     for fallback in ["en"] + list(by_lang.keys()):
         if fallback in by_lang:
             row = by_lang[fallback]
             return row, row.get("context") or row.get("abstract") or row.get("title", "")
 
-    # Should never get here
     row = rows[0]
     return row, row.get("context") or row.get("abstract") or row.get("title", "")
+
+
+def _build_all_passages_text(rows: List[Dict[str, Any]]) -> str:
+    """Build a string with all language passages for verifier context."""
+    parts: list[str] = []
+    for r in rows:
+        lang = r.get("language", "?")
+        ctx = r.get("context") or r.get("abstract") or r.get("title", "")
+        if ctx.strip():
+            parts.append(f"[{lang.upper()}] Passage:\n{ctx.strip()}")
+    return "\n\n".join(parts)
 
 
 # ---------------------------------------------------------------------------
 # Prompt loading
 # ---------------------------------------------------------------------------
 
-_PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 _prompt_cache: Dict[str, str] = {}
 
 
-def _load_prompt(lang: str) -> str:
-    """Load the generation prompt for *lang* from prompts/{lang}.txt."""
-    if lang in _prompt_cache:
-        return _prompt_cache[lang]
-    prompt_path = _PROMPTS_DIR / f"{lang}.txt"
-    if not prompt_path.exists():
-        raise FileNotFoundError(
-            f"Prompt file not found: {prompt_path}. "
-            f"Available: {[p.name for p in _PROMPTS_DIR.glob('*.txt')]}"
-        )
-    text = prompt_path.read_text(encoding="utf-8").strip()
-    _prompt_cache[lang] = text
+def _load_file(path: Path) -> str:
+    """Load and cache a prompt file."""
+    key = str(path)
+    if key in _prompt_cache:
+        return _prompt_cache[key]
+    if not path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {path}")
+    text = path.read_text(encoding="utf-8").strip()
+    _prompt_cache[key] = text
     return text
 
 
+def _load_generation_prompt(mode: str, lang: str) -> str:
+    """Load the generation prompt for a given mode and language."""
+    if mode == MODE_TECHNICAL:
+        return _load_file(_BASE_DIR / "technical_question_generation_prompts" / f"{lang}.txt")
+    elif mode == MODE_SEMANTIC:
+        return _load_file(_BASE_DIR / "semantic_retrieval_question_generation_prompts" / f"{lang}.txt")
+    raise ValueError(f"Unknown mode: {mode}")
+
+
+def _load_faithfulness_prompt() -> str:
+    return _load_file(_BASE_DIR / "faithfulness_prompt" / "faithfulness_prompt.txt")
+
+
+def _load_quality_prompt(mode: str) -> str:
+    if mode == MODE_TECHNICAL:
+        return _load_file(_BASE_DIR / "technical_quality_verifier_prompt" / "verifier.txt")
+    elif mode == MODE_SEMANTIC:
+        return _load_file(_BASE_DIR / "semantic_retrieval_quality_verifier_prompt" / "verifier.txt")
+    raise ValueError(f"Unknown mode: {mode}")
+
+
 # ---------------------------------------------------------------------------
-# Q&A generation (language-aware)
+# Generation: produce 3 Q&A pairs
 # ---------------------------------------------------------------------------
 
 
-def generate_qa_in_language(
+def generate_qa_batch(
     client: OpenAI,
     context: str,
     target_lang: str,
+    mode: str,
     *,
-    previous_question: Optional[str] = None,
-    previous_answer: Optional[str] = None,
-    previous_feedback: Optional[str] = None,
     model: str = DEFAULT_MODEL,
-) -> Dict[str, str]:
+) -> List[Dict[str, str]]:
     """
-    Generate one Q&A pair where the question is in *target_lang* and the
-    answer is in English.
-    """
-    prompt = _load_prompt(target_lang)
+    Generate THREE Q&A pairs in *target_lang* from the context.
 
-    retry_note = ""
-    if previous_feedback:
-        retry_note = (
-            "\n\nPrevious attempt issue to fix:\n"
-            f"{previous_feedback}\n"
-            "Regenerate the question and answer so they fix that issue "
-            "while staying fully grounded in the context."
-        )
-    previous_attempt_note = ""
-    if previous_question or previous_answer:
-        previous_attempt_note = (
-            "\n\nPrevious failed attempt to improve upon:\n"
-            f"Previous question: {previous_question or ''}\n"
-            f"Previous answer: {previous_answer or ''}\n"
-            "Use this only as feedback about what to avoid or improve. "
-            "Do not lightly edit it or reuse its wording as a template. "
-            "Generate a fresh corrected question-answer pair."
-        )
+    Returns a list of 3 dicts. Fields depend on mode:
+      technical: {question, answer, question_type}
+      semantic:  {question, answer, framing}
+    """
+    prompt = _load_generation_prompt(mode, target_lang)
 
     response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": prompt},
-            {
-                "role": "user",
-                "content": (
-                    f"Context:\n\n{context[:4000]}"
-                    f"{retry_note}"
-                    f"{previous_attempt_note}"
-                ),
-            },
+            {"role": "user", "content": f"Context:\n\n{context[:4000]}"},
         ],
         reasoning_effort=DEFAULT_GENERATION_REASONING_EFFORT,
     )
     data = _parse_json_response(response.choices[0].message.content or "")
-    return {
-        "question": str(data.get("question", "")).strip(),
-        "answer": str(data.get("answer", "")).strip(),
-        "supporting_text": str(data.get("supporting_text", "")).strip(),
-        "question_type": str(data.get("question_type", "other")).strip(),
+
+    if isinstance(data, dict):
+        data = [data]
+
+    results: List[Dict[str, str]] = []
+    for item in data[:3]:
+        row: Dict[str, str] = {
+            "question": str(item.get("question", "")).strip(),
+            "answer": str(item.get("answer", "")).strip(),
+        }
+        if mode == MODE_TECHNICAL:
+            row["question_type"] = str(item.get("question_type", "other")).strip()
+        else:
+            row["framing"] = str(item.get("framing", "other")).strip()
+        results.append(row)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Faithfulness grader (3 pairs at once)
+# ---------------------------------------------------------------------------
+
+
+def grade_faithfulness(
+    client: OpenAI,
+    all_passages: str,
+    qa_pairs: List[Dict[str, str]],
+    *,
+    model: str = DEFAULT_MODEL,
+) -> List[Dict[str, Any]]:
+    """
+    Grade 3 Q&A pairs for faithfulness against the passages.
+
+    Returns list of 3 dicts with keys:
+      grounding, precision, numerical_fidelity, overall, reason
+    """
+    prompt = _load_faithfulness_prompt()
+
+    candidates = "\n\n".join(
+        f"Candidate {i}:\n  Question: {qa['question']}\n  Answer: {qa['answer']}"
+        for i, qa in enumerate(qa_pairs)
+    )
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": f"{all_passages}\n\n{candidates}",
+            },
+        ],
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+
+    if isinstance(data, dict):
+        data = [data]
+
+    # Ensure we have exactly 3, sorted by index
+    results = sorted(data[:3], key=lambda x: x.get("index", 0))
+
+    # Normalise to guarantee keys exist
+    normalised: List[Dict[str, Any]] = []
+    for item in results:
+        normalised.append({
+            "grounding": int(item.get("grounding", 1)),
+            "precision": int(item.get("precision", 1)),
+            "numerical_fidelity": int(item.get("numerical_fidelity", 1)),
+            "overall": int(item.get("overall", 1)),
+            "reason": str(item.get("reason", "")).strip(),
+        })
+    # Pad if fewer than 3
+    while len(normalised) < 3:
+        normalised.append({"grounding": 1, "precision": 1, "numerical_fidelity": 1, "overall": 1, "reason": "missing"})
+    return normalised
+
+
+# ---------------------------------------------------------------------------
+# Quality grader (3 questions at once, mode-specific)
+# ---------------------------------------------------------------------------
+
+
+def grade_quality(
+    client: OpenAI,
+    all_passages: str,
+    qa_pairs: List[Dict[str, str]],
+    mode: str,
+    *,
+    model: str = DEFAULT_MODEL,
+) -> List[Dict[str, Any]]:
+    """
+    Grade 3 questions for quality using the mode-specific verifier.
+
+    Returns list of 3 dicts with mode-specific score keys + overall,
+    failure_type, reason.
+    """
+    prompt = _load_quality_prompt(mode)
+
+    candidates = "\n\n".join(
+        f"Candidate {i}:\n  Question: {qa['question']}\n  Answer: {qa['answer']}"
+        for i, qa in enumerate(qa_pairs)
+    )
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": f"{all_passages}\n\n{candidates}",
+            },
+        ],
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "")
+
+    if isinstance(data, dict):
+        data = [data]
+
+    results = sorted(data[:3], key=lambda x: x.get("index", 0))
+
+    normalised: List[Dict[str, Any]] = []
+    if mode == MODE_TECHNICAL:
+        for item in results:
+            normalised.append({
+                "search_bar_realism": int(item.get("search_bar_realism", 1)),
+                "specificity": int(item.get("specificity", 1)),
+                "phrasing_economy": int(item.get("phrasing_economy", 1)),
+                "focus": int(item.get("focus", 1)),
+                "linguistic_quality": int(item.get("linguistic_quality", 1)),
+                "overall": int(item.get("overall", 1)),
+                "failure_type": str(item.get("failure_type", "none")).strip(),
+                "reason": str(item.get("reason", "")).strip(),
+            })
+        default = {"search_bar_realism": 1, "specificity": 1, "phrasing_economy": 1,
+                    "focus": 1, "linguistic_quality": 1, "overall": 1,
+                    "failure_type": "missing", "reason": "missing"}
+    else:  # semantic
+        for item in results:
+            normalised.append({
+                "search_realism": int(item.get("search_realism", 1)),
+                "lexical_distance": int(item.get("lexical_distance", 1)),
+                "conceptual_framing": int(item.get("conceptual_framing", 1)),
+                "retrievability": int(item.get("retrievability", 1)),
+                "linguistic_quality": int(item.get("linguistic_quality", 1)),
+                "overall": int(item.get("overall", 1)),
+                "failure_type": str(item.get("failure_type", "none")).strip(),
+                "reason": str(item.get("reason", "")).strip(),
+            })
+        default = {"search_realism": 1, "lexical_distance": 1, "conceptual_framing": 1,
+                    "retrievability": 1, "linguistic_quality": 1, "overall": 1,
+                    "failure_type": "missing", "reason": "missing"}
+
+    while len(normalised) < 3:
+        normalised.append(dict(default))
+    return normalised
+
+
+# ---------------------------------------------------------------------------
+# Score helpers
+# ---------------------------------------------------------------------------
+
+
+def _compute_total_score(faith: Dict[str, Any], qual: Dict[str, Any], mode: str) -> int:
+    """Sum all numerical sub-scores from faithfulness + quality."""
+    total = 0
+    # Faithfulness: grounding + precision + numerical_fidelity + overall
+    for k in ("grounding", "precision", "numerical_fidelity", "overall"):
+        total += int(faith.get(k, 0))
+    # Quality: all numeric sub-scores + overall (excluding failure_type, reason)
+    if mode == MODE_TECHNICAL:
+        for k in ("search_bar_realism", "specificity", "phrasing_economy", "focus", "linguistic_quality", "overall"):
+            total += int(qual.get(k, 0))
+    else:
+        for k in ("search_realism", "lexical_distance", "conceptual_framing", "retrievability", "linguistic_quality", "overall"):
+            total += int(qual.get(k, 0))
+    return total
+
+
+def _build_output_row(
+    qa: Dict[str, str],
+    faith: Dict[str, Any],
+    qual: Dict[str, Any],
+    mode: str,
+    *,
+    corpus_id: str,
+    publication_number: str,
+    question_language: str,
+    context_language: str,
+) -> Dict[str, Any]:
+    """Build a single output CSV row from generation + grading results."""
+    row: Dict[str, Any] = {
+        "corpus_id": corpus_id,
+        "publication_number": publication_number,
+        "question_language": question_language,
+        "context_language": context_language,
+        "question": qa["question"],
+        "answer": qa["answer"],
     }
 
+    # Mode-specific category field
+    if mode == MODE_TECHNICAL:
+        row["question_type"] = qa.get("question_type", "")
+    else:
+        row["framing"] = qa.get("framing", "")
+
+    # Faithfulness scores
+    row["faith_grounding"] = faith["grounding"]
+    row["faith_precision"] = faith["precision"]
+    row["faith_numerical_fidelity"] = faith["numerical_fidelity"]
+    row["faith_overall"] = faith["overall"]
+
+    # Quality scores
+    if mode == MODE_TECHNICAL:
+        row["qual_search_bar_realism"] = qual["search_bar_realism"]
+        row["qual_specificity"] = qual["specificity"]
+        row["qual_phrasing_economy"] = qual["phrasing_economy"]
+        row["qual_focus"] = qual["focus"]
+        row["qual_linguistic_quality"] = qual["linguistic_quality"]
+        row["qual_overall"] = qual["overall"]
+    else:
+        row["qual_search_realism"] = qual["search_realism"]
+        row["qual_lexical_distance"] = qual["lexical_distance"]
+        row["qual_conceptual_framing"] = qual["conceptual_framing"]
+        row["qual_retrievability"] = qual["retrievability"]
+        row["qual_linguistic_quality"] = qual["linguistic_quality"]
+        row["qual_overall"] = qual["overall"]
+
+    row["qual_failure_type"] = qual.get("failure_type", "none")
+    row["total_score"] = _compute_total_score(faith, qual, mode)
+
+    return row
+
 
 # ---------------------------------------------------------------------------
-# Validation gates (faithfulness + quality)
+# CSV field names
 # ---------------------------------------------------------------------------
 
 
-def check_faithfulness(
-    client: OpenAI,
-    context: str,
-    question: str,
-    answer: str,
-    supporting_text: str,
-    *,
-    model: str = DEFAULT_MODEL,
-) -> Tuple[bool, str]:
-    """Validate that the answer is supported by the source context."""
-    prompt = """You are a strict faithfulness checker for patent question-answer pairs.
-
-The question may be in any language. The answer is in English.
-
-Approve only if:
-- the question is answerable from the context,
-- the answer is fully supported by the context,
-- the answer does not add unsupported details,
-- the supporting_text is relevant evidence from the context.
-
-Reject if the answer is generic, speculative, partially unsupported, or not clearly grounded.
-
-Output valid JSON only:
-{"approved": true, "reason": "..."}
-"""
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": prompt},
-            {
-                "role": "user",
-                "content": (
-                    f"Context:\n{context[:5000]}\n\n"
-                    f"Question: {question}\n\n"
-                    f"Answer: {answer}\n\n"
-                         f"Supporting text: {supporting_text}"
-                ),
-            },
-        ],
-        reasoning_effort=DEFAULT_REASONING_EFFORT,
-    )
-    data = _parse_json_response(response.choices[0].message.content or "")
-    approved = bool(data.get("approved", False))
-    reason = str(data.get("reason", "")).strip()
-    return approved, reason
-
-
-def check_question_quality(
-    client: OpenAI,
-    context: str,
-    question: str,
-    answer: str,
-    target_lang: str,
-    *,
-    model: str = DEFAULT_MODEL,
-) -> Tuple[bool, str]:
-    """Validate that the question is retrieval-useful and in the correct language."""
-    lang_name = LANG_NAMES[target_lang]
-    prompt = f"""You are a strict quality checker for retrieval questions built from technical patent text.
-
-The question is expected to be in {lang_name}.
-
-Reject the question if it is NOT written in {lang_name}.
-
-Approve only if the question:
-- is clearly written in {lang_name},
-- sounds like a realistic search or retrieval query,
-- is specific enough to distinguish the document,
-- asks about a concrete technical point from the context,
-- uses natural user-like wording rather than patent-summary wording,
-- is phrased semantically rather than as an obvious exact-match template,
-- is not too generic,
-- is not nearly copied from the context verbatim,
-- and is useful for retrieval benchmarking.
-
-Reject broad patterns such as:
-- "What is the main object of the invention?"
-- "What is the purpose ...?" without naming a specific step or component
-- "What are the advantages ...?" leading to a bundled summary
-- document-centered wording ("described in the invention", "in the text")
-
-If you reject:
-- set failure_type to one of: wrong-language, title-lift, high-overlap, overly-extractive, broad-summary, bundled-facts, weak-query-shape
-- provide a short better_direction hint
-
-Output valid JSON only:
-{{"approved": true, "reason": "...", "failure_type": "none", "better_direction": ""}}
-"""
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": prompt},
-            {
-                "role": "user",
-                "content": (
-                    f"Context:\n{context[:5000]}\n\n"
-                    f"Question: {question}\n\n"
-                    f"Answer: {answer}"
-                ),
-            },
-        ],
-        reasoning_effort=DEFAULT_REASONING_EFFORT,
-    )
-    data = _parse_json_response(response.choices[0].message.content or "")
-    approved = bool(data.get("approved", False))
-    reason = str(data.get("reason", "")).strip()
-    failure_type = str(data.get("failure_type", "")).strip()
-    better_direction = str(data.get("better_direction", "")).strip()
-    if failure_type and failure_type != "none":
-        reason = f"{failure_type}: {reason}" if reason else failure_type
-    if better_direction:
-        reason = f"{reason} Better direction: {better_direction}".strip()
-    return approved, reason
+def _get_fieldnames(mode: str) -> List[str]:
+    base = [
+        "corpus_id", "publication_number", "question_language",
+        "context_language", "question", "answer",
+    ]
+    if mode == MODE_TECHNICAL:
+        base.append("question_type")
+        base.extend(FAITHFULNESS_FIELDS)
+        base.extend(TECHNICAL_QUALITY_FIELDS)
+    else:
+        base.append("framing")
+        base.extend(FAITHFULNESS_FIELDS)
+        base.extend(SEMANTIC_QUALITY_FIELDS)
+    base.append("qual_failure_type")
+    base.append("total_score")
+    return base
 
 
 # ---------------------------------------------------------------------------
@@ -370,18 +519,25 @@ def _process_document(
     rows: List[Dict[str, Any]],
     *,
     strategy: int,
+    mode: str,
     model: str,
-    max_attempts: int,
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, Any]]:
     """
-    Generate Q&A pair(s) for one publication (one group of multilingual rows).
+    Generate and grade Q&A triplets for one publication.
 
-    Returns a list of output dicts, one per successfully generated Q&A.
+    For each target language:
+      1. Generate 3 Q&A pairs
+      2. Grade all 3 for faithfulness (1 call)
+      3. Grade all 3 for quality (1 call)
+      4. Compute total scores and sort best-first
+
+    Returns a list of output rows (3 per target language, sorted by score).
     """
     available_langs = [r["language"] for r in rows]
     target_langs = pick_target_languages(strategy, available_langs)
     client = _get_client()
-    results: List[Dict[str, str]] = []
+    all_passages = _build_all_passages_text(rows)
+    results: List[Dict[str, Any]] = []
 
     for target_lang in target_langs:
         context_row, context_text = _pick_context(rows, target_lang)
@@ -389,92 +545,64 @@ def _process_document(
             tqdm.write(f"  {pub_num} [{target_lang}]: skipped (empty context)")
             continue
 
-        approved = False
-        q = ""
-        a = ""
-        supporting_text = ""
-        question_type = ""
-        last_failure = ""
-        retry_feedback: Optional[str] = None
-        retry_question: Optional[str] = None
-        retry_answer: Optional[str] = None
-
-        for _attempt in range(1, max_attempts + 1):
-            try:
-                generated = generate_qa_in_language(
-                    client,
-                    context_text,
-                    target_lang,
-                    previous_question=retry_question,
-                    previous_answer=retry_answer,
-                    previous_feedback=retry_feedback,
-                    model=model,
-                )
-            except Exception as exc:
-                last_failure = f"generation error: {exc}"
-                break
-
-            q = generated["question"]
-            a = generated["answer"]
-            supporting_text = generated["supporting_text"]
-            question_type = generated["question_type"]
-            retry_question = q
-            retry_answer = a
-
-            # Gate 1: faithfulness
-            try:
-                faith_ok, faith_reason = check_faithfulness(
-                    client, context_text, q, a, supporting_text, model=model,
-                )
-            except Exception as exc:
-                last_failure = f"faithfulness check error: {exc}"
-                break
-            if not faith_ok:
-                last_failure = f"faithfulness: {faith_reason}"
-                retry_feedback = (
-                    f"{last_failure}. Remove unsupported details and keep "
-                    "the answer strictly grounded in the context."
-                )
-                continue
-
-            # Gate 2: quality + language correctness
-            try:
-                qual_ok, qual_reason = check_question_quality(
-                    client, context_text, q, a, target_lang, model=model,
-                )
-            except Exception as exc:
-                last_failure = f"quality check error: {exc}"
-                break
-            if not qual_ok:
-                last_failure = f"quality: {qual_reason}"
-                retry_feedback = (
-                    f"{last_failure}. Use the better direction above if "
-                    "present. Regenerate one fresh question that is more "
-                    "retrieval-useful, more specific, less generic, and "
-                    f"written in natural {LANG_NAMES[target_lang]}."
-                )
-                continue
-
-            approved = True
-            break
-
-        if approved:
-            results.append({
-                "corpus_id": context_row.get("id", ""),
-                "publication_number": pub_num,
-                "question_language": target_lang,
-                "context_language": context_row.get("language", ""),
-                "question": q,
-                "answer": a,
-                "question_type": question_type,
-            })
-            tqdm.write(
-                f"  {pub_num} [{target_lang}]: ok ({question_type})"
+        # Step 1: Generate 3 Q&A pairs
+        try:
+            qa_pairs = generate_qa_batch(
+                client, context_text, target_lang, mode, model=model,
             )
-        else:
+        except Exception as exc:
+            tqdm.write(f"  {pub_num} [{target_lang}]: generation error: {exc}")
+            continue
+
+        if len(qa_pairs) < 3:
             tqdm.write(
-                f"  {pub_num} [{target_lang}]: skipped ({last_failure})"
+                f"  {pub_num} [{target_lang}]: only {len(qa_pairs)} questions generated, skipping"
             )
+            continue
+
+        # Step 2: Faithfulness grading (all 3 at once)
+        try:
+            faith_grades = grade_faithfulness(
+                client, all_passages, qa_pairs, model=model,
+            )
+        except Exception as exc:
+            tqdm.write(f"  {pub_num} [{target_lang}]: faithfulness grading error: {exc}")
+            continue
+
+        # Step 3: Quality grading (all 3 at once)
+        try:
+            qual_grades = grade_quality(
+                client, all_passages, qa_pairs, mode, model=model,
+            )
+        except Exception as exc:
+            tqdm.write(f"  {pub_num} [{target_lang}]: quality grading error: {exc}")
+            continue
+
+        # Step 4: Build output rows and sort by total_score (best first)
+        doc_rows: List[Dict[str, Any]] = []
+        for i in range(3):
+            row = _build_output_row(
+                qa_pairs[i],
+                faith_grades[i],
+                qual_grades[i],
+                mode,
+                corpus_id=context_row.get("id", ""),
+                publication_number=pub_num,
+                question_language=target_lang,
+                context_language=context_row.get("language", ""),
+            )
+            doc_rows.append(row)
+
+        # Sort by total_score descending (best first)
+        doc_rows.sort(key=lambda r: r["total_score"], reverse=True)
+        results.extend(doc_rows)
+
+        best_score = doc_rows[0]["total_score"]
+        cat_field = "question_type" if mode == MODE_TECHNICAL else "framing"
+        tqdm.write(
+            f"  {pub_num} [{target_lang}]: ok (best={best_score}, "
+            f"{cat_field}={doc_rows[0].get(cat_field, '?')})"
+        )
 
     return results
 
@@ -488,22 +616,23 @@ def run_multilingual_qa_pipeline(
     corpus_path: Path,
     output_path: Path,
     *,
+    mode: str = MODE_TECHNICAL,
     strategy: int = STRATEGY_RANDOM_ANY,
     model: str = DEFAULT_MODEL,
-    max_attempts: int = MAX_ATTEMPTS,
     seed: int = 42,
     limit: Optional[int] = None,
 ) -> int:
     """
-    Generate Q&A pairs from a multilingual corpus using the given strategy.
+    Generate Q&A pairs from a multilingual corpus using the given strategy
+    and mode.
 
     Parameters
     ----------
     corpus_path : Path to multilingual_corpus.csv
     output_path : Path for the output QAC CSV
+    mode        : 'technical' or 'semantic'
     strategy    : 1=random_any, 2=random_missing, 3=random_existing, 4=all
     model       : OpenAI model name
-    max_attempts: retries per question
     seed        : random seed for reproducibility
     limit       : if set, only process this many documents (for testing)
 
@@ -524,10 +653,12 @@ def run_multilingual_qa_pipeline(
     }
     print(
         f"Multilingual QA generation: {len(pub_nums)} documents, "
-        f"strategy={strategy_names.get(strategy, strategy)}, model={model}"
+        f"mode={mode}, strategy={strategy_names.get(strategy, strategy)}, "
+        f"model={model}"
     )
 
-    all_rows: List[Dict[str, str]] = []
+    fieldnames = _get_fieldnames(mode)
+    all_rows: List[Dict[str, Any]] = []
     progress = tqdm(pub_nums, desc="Generate Q&A", unit="doc")
     for pub_num in progress:
         rows = groups[pub_num]
@@ -536,8 +667,8 @@ def run_multilingual_qa_pipeline(
                 pub_num,
                 rows,
                 strategy=strategy,
+                mode=mode,
                 model=model,
-                max_attempts=max_attempts,
             )
             all_rows.extend(results)
         except Exception as exc:
@@ -546,10 +677,6 @@ def run_multilingual_qa_pipeline(
     # Write output
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = [
-        "corpus_id", "publication_number", "question_language",
-        "context_language", "question", "answer", "question_type",
-    ]
     with output_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -581,13 +708,23 @@ def main() -> None:
         "--corpus",
         type=Path,
         default=Path("data/google_patents/multilingual_corpus.csv"),
-        help="Path to multilingual corpus CSV (default: data/google_patents/multilingual_corpus.csv)",
+        help="Path to multilingual corpus CSV",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data/google_patents/qac/multilingual_qac.csv"),
-        help="Output QAC CSV path (default: data/google_patents/qac/multilingual_qac.csv)",
+        default=None,
+        help=(
+            "Output QAC CSV path. Defaults to "
+            "data/google_patents/qac/{mode}_qac.csv"
+        ),
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default=MODE_TECHNICAL,
+        choices=[MODE_TECHNICAL, MODE_SEMANTIC],
+        help="Generation mode: 'technical' (default) or 'semantic'",
     )
     parser.add_argument(
         "--strategy",
@@ -614,12 +751,6 @@ def main() -> None:
         help=f"OpenAI model to use (default: {DEFAULT_MODEL})",
     )
     parser.add_argument(
-        "--max-attempts",
-        type=int,
-        default=MAX_ATTEMPTS,
-        help=f"Max retry attempts per question (default: {MAX_ATTEMPTS})",
-    )
-    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -633,12 +764,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    output_path = args.output
+    if output_path is None:
+        output_path = Path(f"data/google_patents/qac/{args.mode}_qac.csv")
+
     run_multilingual_qa_pipeline(
         corpus_path=args.corpus,
-        output_path=args.output,
+        output_path=output_path,
+        mode=args.mode,
         strategy=args.strategy,
         model=args.model,
-        max_attempts=args.max_attempts,
         seed=args.seed,
         limit=args.limit,
     )
