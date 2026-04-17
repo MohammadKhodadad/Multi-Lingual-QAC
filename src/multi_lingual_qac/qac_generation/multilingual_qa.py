@@ -46,6 +46,13 @@ DEFAULT_MODEL = "gpt-5-mini"
 DEFAULT_REASONING_EFFORT = "low"
 DEFAULT_GENERATION_REASONING_EFFORT = "medium"
 
+STRATEGY_NAMES = {
+    STRATEGY_RANDOM_ANY: "random_any",
+    STRATEGY_RANDOM_MISSING: "random_missing",
+    STRATEGY_RANDOM_EXISTING: "random_existing",
+    STRATEGY_ALL: "all",
+}
+
 # Sub-score field names per mode, used for CSV columns and total calculation
 FAITHFULNESS_FIELDS = ["faith_grounding", "faith_precision", "faith_numerical_fidelity", "faith_overall"]
 
@@ -226,14 +233,17 @@ def _load_quality_prompt(mode: str) -> str:
 
 def generate_qa_batch(
     client: OpenAI,
-    context: str,
+    all_passages: str,
     target_lang: str,
     mode: str,
     *,
     model: str = DEFAULT_MODEL,
 ) -> List[Dict[str, str]]:
     """
-    Generate THREE Q&A pairs in *target_lang* from the context.
+    Generate THREE Q&A pairs in *target_lang* from the passages.
+
+    The prompt already ends with the preamble for passages, so
+    all_passages is appended directly as user content.
 
     Returns a list of 3 dicts. Fields depend on mode:
       technical: {question, answer, question_type}
@@ -245,7 +255,7 @@ def generate_qa_batch(
         model=model,
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"Context:\n\n{context[:4000]}"},
+            {"role": "user", "content": all_passages},
         ],
         reasoning_effort=DEFAULT_GENERATION_REASONING_EFFORT,
     )
@@ -441,6 +451,7 @@ def _build_output_row(
     publication_number: str,
     question_language: str,
     context_language: str,
+    strategy_name: str,
 ) -> Dict[str, Any]:
     """Build a single output CSV row from generation + grading results."""
     row: Dict[str, Any] = {
@@ -448,6 +459,7 @@ def _build_output_row(
         "publication_number": publication_number,
         "question_language": question_language,
         "context_language": context_language,
+        "strategy": strategy_name,
         "question": qa["question"],
         "answer": qa["answer"],
     }
@@ -494,7 +506,7 @@ def _build_output_row(
 def _get_fieldnames(mode: str) -> List[str]:
     base = [
         "corpus_id", "publication_number", "question_language",
-        "context_language", "question", "answer",
+        "context_language", "strategy", "question", "answer",
     ]
     if mode == MODE_TECHNICAL:
         base.append("question_type")
@@ -545,10 +557,10 @@ def _process_document(
             tqdm.write(f"  {pub_num} [{target_lang}]: skipped (empty context)")
             continue
 
-        # Step 1: Generate 3 Q&A pairs
+        # Step 1: Generate 3 Q&A pairs (all passages sent to generator)
         try:
             qa_pairs = generate_qa_batch(
-                client, context_text, target_lang, mode, model=model,
+                client, all_passages, target_lang, mode, model=model,
             )
         except Exception as exc:
             tqdm.write(f"  {pub_num} [{target_lang}]: generation error: {exc}")
@@ -579,6 +591,7 @@ def _process_document(
             continue
 
         # Step 4: Build output rows and sort by total_score (best first)
+        strategy_name = STRATEGY_NAMES.get(strategy, str(strategy))
         doc_rows: List[Dict[str, Any]] = []
         for i in range(3):
             row = _build_output_row(
@@ -590,6 +603,7 @@ def _process_document(
                 publication_number=pub_num,
                 question_language=target_lang,
                 context_language=context_row.get("language", ""),
+                strategy_name=strategy_name,
             )
             doc_rows.append(row)
 
@@ -645,15 +659,9 @@ def run_multilingual_qa_pipeline(
     if limit and limit < len(pub_nums):
         pub_nums = pub_nums[:limit]
 
-    strategy_names = {
-        STRATEGY_RANDOM_ANY: "random_any",
-        STRATEGY_RANDOM_MISSING: "random_missing",
-        STRATEGY_RANDOM_EXISTING: "random_existing",
-        STRATEGY_ALL: "all",
-    }
     print(
         f"Multilingual QA generation: {len(pub_nums)} documents, "
-        f"mode={mode}, strategy={strategy_names.get(strategy, strategy)}, "
+        f"mode={mode}, strategy={STRATEGY_NAMES.get(strategy, strategy)}, "
         f"model={model}"
     )
 
