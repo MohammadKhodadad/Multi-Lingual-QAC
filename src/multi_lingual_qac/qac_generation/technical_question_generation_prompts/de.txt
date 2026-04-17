@@ -66,3 +66,4 @@ AUSGABE (nur gültiges JSON, kein Markdown):
 ]
 - answer: der kürzeste Abschnitt, der die Frage vollständig und direkt beantwortet — typischerweise eine Phrase oder ein einzelner kurzer Satz. Streng in der Passage verankert.
 - question_type: einer von parameter_or_condition, material, outcome, method, structure.
+Derselbe Abschnitt existiert in verschiedenen Sprachen. Dies sollte Ihre Zielsprache für Fragen und Antworten nicht beeinflussen. Sie sind oben festgelegt. Hier sind die Abschnitte:

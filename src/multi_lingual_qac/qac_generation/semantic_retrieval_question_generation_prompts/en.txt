@@ -74,3 +74,4 @@ OUTPUT (valid JSON only, no markdown):
 ]
 - answer: a short contiguous span taken from the passage that directly answers the question. Kept as short as possible while fully addressing the question. In the question's language (English).
 - framing: one of problem, solution, application.
+The same passage exists in all different languages. This should not impact your target language for questions and answers. They are declared before. Here are the passages:

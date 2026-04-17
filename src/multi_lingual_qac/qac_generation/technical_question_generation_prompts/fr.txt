@@ -66,3 +66,4 @@ SORTIE (JSON valide uniquement, pas de markdown) :
 ]
 - answer : le segment le plus court qui répond entièrement et directement à la question — typiquement une phrase ou une seule phrase courte. Strictement ancrée dans le passage.
 - question_type : l'un de parameter_or_condition, material, outcome, method, structure.
+Le même passage existe dans différentes langues. Cela ne devrait pas influencer votre langue cible pour les questions et les réponses. Elles sont déclarées ci-dessus. Voici les passages :

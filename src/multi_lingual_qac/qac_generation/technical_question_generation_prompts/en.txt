@@ -66,3 +66,4 @@ OUTPUT (valid JSON only, no markdown):
 ]
 - answer: the shortest span that fully and directly answers the question — typically a phrase or a single short sentence. Strictly grounded in the passage.
 - question_type: one of parameter_or_condition, material, outcome, method, structure.
+The same passage exists in all different languages. This should not impact your target language for questions and answers. They are declared before. Here are the passages:

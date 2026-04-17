@@ -67,3 +67,4 @@ SORTIE (JSON valide uniquement, pas de markdown) :
 ]
 - answer : un segment court et continu tiré du passage qui répond directement à la question. Aussi court que possible tout en répondant entièrement à la question. Dans la langue de la question (français).
 - framing : l'un de problem, solution, application.
+Le même passage existe dans différentes langues. Cela ne devrait pas influencer votre langue cible pour les questions et les réponses. Elles sont déclarées ci-dessus. Voici les passages :

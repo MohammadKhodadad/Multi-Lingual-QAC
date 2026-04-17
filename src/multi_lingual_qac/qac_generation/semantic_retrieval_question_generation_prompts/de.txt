@@ -67,3 +67,4 @@ AUSGABE (nur gültiges JSON, kein Markdown):
 ]
 - answer: ein kurzer, zusammenhängender Abschnitt aus der Passage, der die Frage direkt beantwortet. So kurz wie möglich, während die Frage vollständig adressiert wird. In der Sprache der Frage (Deutsch).
 - framing: einer von problem, solution, application.
+Derselbe Abschnitt existiert in verschiedenen Sprachen. Dies sollte Ihre Zielsprache für Fragen und Antworten nicht beeinflussen. Sie sind oben festgelegt. Hier sind die Abschnitte:

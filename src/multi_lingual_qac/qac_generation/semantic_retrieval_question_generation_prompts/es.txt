@@ -67,3 +67,4 @@ SALIDA (solo JSON válido, sin markdown):
 ]
 - answer: un segmento corto y contiguo tomado del pasaje que responda directamente a la pregunta. Tan corto como sea posible, pero que aborde la pregunta por completo. En el idioma de la pregunta (español).
 - framing: uno de problem, solution, application.
+El mismo pasaje existe en diferentes idiomas. Esto no debería afectar tu idioma objetivo para las preguntas y respuestas. Están declarados anteriormente. Aquí están los pasajes:
