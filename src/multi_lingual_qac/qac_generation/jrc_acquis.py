@@ -214,37 +214,22 @@ def prepare_jrc_qa_inputs(
         if not source_id or not source_lang or not celex:
             continue
         linked_docs = subset_docs_by_celex.get(celex, [])
-        eligible_targets = [
-            row
-            for row in linked_docs
-            if row.get("id", "") != source_id
-            and (
-                not allowed_language_set
-                or row.get("language", "").strip().lower() in allowed_language_set
-            )
-        ]
-        if not eligible_targets:
+        if len([row for row in linked_docs if row.get("id", "")]) < 2:
             continue
-        target_row = rng.choice(
-            sorted(
-                eligible_targets,
-                key=lambda row: (row.get("language", ""), row.get("id", "")),
-            )
-        )
         linked_corpus_ids = [row["id"] for row in linked_docs if row.get("id", "")]
         linked_languages = [row.get("language", "") for row in linked_docs if row.get("language", "")]
         if not linked_corpus_ids:
-            linked_corpus_ids = [source_id, target_row.get("id", "")]
-            linked_languages = [source_lang, target_row.get("language", "")]
-        generation_row = dict(target_row)
+            linked_corpus_ids = [source_id]
+            linked_languages = [source_lang]
+        generation_row = dict(source_row)
         generation_row["celex"] = celex
         generation_row["source_language"] = source_lang
         generation_row["source_corpus_id"] = source_id
-        generation_row["target_language"] = target_row.get("language", "")
-        generation_row["target_corpus_id"] = target_row.get("id", "")
-        generation_row["query_corpus_id"] = target_row.get("id", "")
+        generation_row["target_language"] = source_lang
+        generation_row["target_corpus_id"] = source_id
+        generation_row["query_corpus_id"] = source_id
         generation_row["query_id_hint"] = (
-            f"{celex}__{source_lang}__{target_row.get('language', '')}"
+            f"{celex}__{source_lang}__{source_lang}"
         )
         generation_row["synthetic_target_languages_json"] = json.dumps(
             synthetic_target_language_list,
@@ -254,7 +239,7 @@ def prepare_jrc_qa_inputs(
         generation_row["linked_languages_json"] = json.dumps(linked_languages, ensure_ascii=False)
         generation_row["linked_corpus_count"] = str(len(linked_corpus_ids))
         generation_rows.append(generation_row)
-        generation_target_language_counts[target_row.get("language", "")] += 1
+        generation_target_language_counts[source_lang] += 1
         generation_rows_by_source_language[source_lang] += 1
         relevant_docs_per_generation_unit[len(linked_corpus_ids)] += 1
 
