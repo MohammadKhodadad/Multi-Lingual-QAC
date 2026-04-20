@@ -94,11 +94,14 @@ def prepare_jrc_qa_inputs(
     corpus_fieldnames: list[str] = []
     docs_by_id: dict[str, dict[str, str]] = {}
     docs_by_celex: dict[str, list[dict[str, str]]] = defaultdict(list)
-    all_corpus_rows: list[dict[str, str]] = []
+    allowed_corpus_rows: list[dict[str, str]] = []
     for row in _iter_csv_rows(corpus_full_path):
         if not corpus_fieldnames:
             corpus_fieldnames = list(row.keys())
-        all_corpus_rows.append(row)
+        row_lang = row.get("language", "").strip().lower()
+        if allowed_language_set and row_lang not in allowed_language_set:
+            continue
+        allowed_corpus_rows.append(row)
         row_id = row.get("id", "")
         celex = row.get("celex", "")
         if row_id:
@@ -181,7 +184,7 @@ def prepare_jrc_qa_inputs(
         if row is not None:
             final_corpus_rows_by_id[sampled_source_id] = row
 
-    for row in all_corpus_rows:
+    for row in allowed_corpus_rows:
         row_id = row.get("id", "")
         if not row_id or row_id in final_corpus_rows_by_id:
             continue
