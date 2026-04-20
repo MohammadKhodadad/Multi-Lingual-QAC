@@ -53,12 +53,23 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
     qa_sample = config.qa_sample
     qa_pairs_per_language = config.qa_pairs_per_language
     qa_docs_per_language = config.qa_docs_per_language
+    jrc_qa_languages = config.jrc_qa_languages
     qa_batch = config.qa_batch
     prepared_label = "XMLs" if config.source == "epo" else "Prepared source"
     prepared_path = paths.xml_dir if config.source == "epo" else paths.prepared_dir
 
     if not config.yes:
         if config.source == "jrc-acquis":
+            if jrc_qa_languages is None:
+                use_default_subset = (
+                    ask_interactive(
+                        "Do you want JRC QA generation to be only from these 4 languages: en, es, de, fr? (y/n): ",
+                        "n",
+                    )
+                    == "y"
+                )
+                if use_default_subset:
+                    jrc_qa_languages = ("en", "es", "de", "fr")
             if qa_pairs_per_language is None:
                 qa_pairs_per_language = ask_int(
                     "How many multilingual CELEX-group source documents should be sampled per source language for JRC QA prep? Enter 0 to skip: "
@@ -123,6 +134,7 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                         output_dir=paths.qac_dir,
                         pairs_per_language=qa_pairs_per_language or 0,
                         generation_docs_per_language=qa_docs_per_language or 0,
+                        allowed_languages=jrc_qa_languages,
                     )
                     selected_sources_path = paths.qac_dir / "qa_generation_sources.csv"
                     generation_units_total = int(selection_stats.get("generation_units_total", 0))

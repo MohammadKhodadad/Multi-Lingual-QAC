@@ -6,7 +6,7 @@ import random
 from collections import Counter, defaultdict
 from pathlib import Path
 import sys
-from typing import Any, Dict
+from typing import Any
 
 
 def _set_csv_field_size_limit() -> None:
@@ -47,6 +47,7 @@ def prepare_jrc_qa_inputs(
     output_dir: Path,
     pairs_per_language: int,
     generation_docs_per_language: int,
+    allowed_languages: tuple[str, ...] | None = None,
     seed: int = 42,
 ) -> dict[str, Any]:
     """
@@ -78,6 +79,11 @@ def prepare_jrc_qa_inputs(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     rng = random.Random(seed)
+    allowed_language_set = {
+        lang.strip().lower()
+        for lang in (allowed_languages or ())
+        if lang and lang.strip()
+    }
 
     corpus_fieldnames: list[str] = []
     docs_by_id: dict[str, dict[str, str]] = {}
@@ -104,13 +110,19 @@ def prepare_jrc_qa_inputs(
             qa_candidate_fieldnames = list(row.keys())
         row_id = row.get("id", "")
         celex = row.get("celex", "")
-        lang = row.get("language", "")
+        lang = row.get("language", "").strip().lower()
         if not row_id or not celex or not lang:
+            continue
+        if allowed_language_set and lang not in allowed_language_set:
             continue
         eligible_targets = [
             doc
             for doc in docs_by_celex.get(celex, [])
             if doc.get("id", "") != row_id
+            and (
+                not allowed_language_set
+                or doc.get("language", "").strip().lower() in allowed_language_set
+            )
         ]
         if not eligible_targets:
             continue
@@ -197,6 +209,10 @@ def prepare_jrc_qa_inputs(
             row
             for row in linked_docs
             if row.get("id", "") != source_id
+            and (
+                not allowed_language_set
+                or row.get("language", "").strip().lower() in allowed_language_set
+            )
         ]
         if not eligible_targets:
             continue
@@ -287,6 +303,7 @@ def prepare_jrc_qa_inputs(
     stats = {
         "pairs_per_language_requested": pairs_per_language,
         "generation_docs_per_language_requested": generation_docs_per_language,
+        "allowed_languages": sorted(allowed_language_set),
         "sampled_source_pool_docs_total": len(sampled_source_rows),
         "sampled_source_docs_total": len(sampled_source_rows),
         "selected_generation_source_docs_total": len(selected_source_rows),

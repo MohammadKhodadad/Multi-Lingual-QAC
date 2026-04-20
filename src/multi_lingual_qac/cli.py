@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from src.multi_lingual_qac.config import PipelineConfig, PipelinePaths
 from src.multi_lingual_qac.dataloaders.jrc_acquis import (
+    JRC_ACQUIS_LANGS,
     count_jrc_acquis_input_files,
     download_jrc_acquis_archives,
 )
@@ -44,6 +45,26 @@ def _normalize_hf_dataset_repo(value: str) -> str:
     if marker in raw:
         raw = raw.split(marker, 1)[1]
     return raw.strip().strip("/")
+
+
+def _normalize_jrc_qa_languages(values: list[str] | None) -> tuple[str, ...] | None:
+    if not values:
+        return None
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        parts = [part.strip().lower() for part in value.split(",")]
+        for part in parts:
+            if not part:
+                continue
+            if part not in JRC_ACQUIS_LANGS:
+                raise argparse.ArgumentTypeError(
+                    f"Unsupported JRC QA language: {part}. Supported: {', '.join(JRC_ACQUIS_LANGS)}"
+                )
+            if part not in seen:
+                normalized.append(part)
+                seen.add(part)
+    return tuple(normalized) or None
 
 
 def parse_args() -> PipelineConfig:
@@ -99,6 +120,15 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--qa-sample", type=int, default=None, help="Sample size for Q&A generation (if omitted in interactive mode, you will be prompted; 0 = skip Q&A)")
     parser.add_argument("--qa-pairs-per-language", type=int, default=None, help="JRC-Acquis only: sampled source-document candidates per source language from multilingual CELEX groups before final QA selection")
     parser.add_argument("--qa-docs-per-language", type=int, default=None, help="JRC-Acquis only: retained source documents per language used for QA generation")
+    parser.add_argument(
+        "--jrc-qa-languages",
+        nargs="+",
+        metavar="LANG",
+        help=(
+            "JRC-Acquis only: optional language subset for QA sampling/generation "
+            f"(supported: {', '.join(JRC_ACQUIS_LANGS)}; accepts space- or comma-separated values)"
+        ),
+    )
     parser.add_argument("--qa-batch", action="store_true", help="Batch QA generation using worker threads based on available CPUs")
     parser.add_argument("--qa-no-batch", action="store_true", help="Disable batch QA generation")
     parser.add_argument("--push-hf", action="store_true", help="Push corpus + QAC to Hugging Face Hub")
@@ -168,6 +198,7 @@ def parse_args() -> PipelineConfig:
         qa_sample=args.qa_sample,
         qa_pairs_per_language=args.qa_pairs_per_language,
         qa_docs_per_language=args.qa_docs_per_language,
+        jrc_qa_languages=_normalize_jrc_qa_languages(args.jrc_qa_languages),
         qa_batch=qa_batch,
         push_hf=args.push_hf,
         hf_repo=args.hf_repo,
