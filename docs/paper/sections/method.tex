@@ -20,7 +20,7 @@ We study multilingual legal document retrieval. Let \(c\) denote a \texttt{CELEX
 \[
 \mathcal{D} = \{ d_{c,\ell} \mid c \in \mathcal{C}, \ell \in \mathcal{L}_c \}.
 \]
-The benchmark is supervised through question--answer--context triplets. We first group documents by shared \texttt{CELEX}, which defines multilingual document-level realizations of the same legal act. From a sampled multilingual \texttt{CELEX} group, we select one target-language document as the generation context and produce one question \(q_{c,\ell_t}\) and one answer \(a_{c,\ell_t}\) in that language. Documents that share the same \texttt{CELEX} are treated as language-specific realizations of the same legal act, that is, as document-level cross-lingual counterparts rather than paragraph-aligned translations. After generation, relevance is assigned to the retained sampled documents that share the same \texttt{CELEX}. Thus, generation is based on one selected document realization, while relevance labels are assigned at the \texttt{CELEX} level within the sampled multilingual subset. The final benchmark is exported as \((\texttt{corpus}, \texttt{queries}, \texttt{qrels}, \texttt{qac})\).
+The benchmark is supervised through question--answer--context triplets. We first group documents by shared \texttt{CELEX}, which defines multilingual document-level realizations of the same legal act. From a sampled multilingual \texttt{CELEX} group, we keep one sampled language realization \(d_{c,\ell}\) as the generation context and produce one question \(q_{c,\ell}\) and one answer \(a_{c,\ell}\) in that same language. Documents that share the same \texttt{CELEX} are treated as language-specific realizations of the same legal act, that is, as document-level cross-lingual counterparts rather than paragraph-aligned translations. After generation, relevance is assigned to the retained sampled documents that share the same \texttt{CELEX}. Thus, generation is based on one selected document realization, while relevance labels are assigned at the \texttt{CELEX} level within the sampled multilingual subset. The final benchmark is exported as \((\texttt{corpus}, \texttt{queries}, \texttt{qrels}, \texttt{qac})\).
 
 This formulation makes the benchmark retrieval-oriented rather than extractive-question-answering-oriented. The objective is not to recover a quoted clause or article label, but to retrieve the correct legal document from a multilingual corpus using a realistic legal information need.
 
@@ -75,7 +75,7 @@ The selected preamble is a bounded subset of substantive pre-article paragraphs.
 
 After document preparation, we group all retained documents by \texttt{CELEX}. Each multilingual \texttt{CELEX} group contains the available language-specific realizations of one legal act. This grouped representation is the main cross-lingual structure used by the benchmark. It lets us reason about which documents belong together without assuming paragraph-level alignment or forcing the method to treat the source corpus as an explicit table of bilingual links.
 
-For QA generation, we additionally keep track of a sampling direction, that is, a source language used for sampling control and a target language used for query generation. This directional choice is an operational detail of the sampling procedure, but the conceptual unit remains the multilingual \texttt{CELEX} group.
+For QA generation, we keep track of the sampled document language both as the sampling control signal and as the query language. The conceptual unit therefore remains the multilingual \texttt{CELEX} group, but the final accepted query is generated directly from the sampled realization rather than from a second randomly chosen language version.
 
 \subsection{QA-Candidate Filtering}
 
@@ -87,25 +87,26 @@ Methodologically, this stage separates two goals that are often conflated. The r
 
 \subsection{Sampling Strategy for QA Generation}
 
-We construct QA generation units in four steps. First, for each source language, we sample a broad pool of source-side QA candidates from multilingual \texttt{CELEX} groups. Second, from that pool, we retain only a smaller bounded set of source documents for actual question generation. Third, for each retained source document, we choose one target-language document realization from the same \texttt{CELEX} group; this chosen document defines the actual generation context. Fourth, we build the final retrieval corpus by combining the broader sampled source pool with all corpus documents whose \texttt{CELEX} matches one of the selected generation units.
+We construct QA generation units in four steps. First, for each source language, we sample a broad pool of source-side QA candidates from multilingual \texttt{CELEX} groups. When a language subset is active, both candidate eligibility and corpus construction are restricted to that subset, and a \texttt{CELEX} group counts as multilingual only if it contains at least two documents within the selected subset. Second, we bias source-side sampling toward groups with broader selected-subset coverage by assigning each candidate a linear weight equal to the number of selected-subset languages available in its \texttt{CELEX} group. Third, from that weighted source pool, we retain only a smaller bounded set of source documents for actual question generation. Fourth, we build the final retrieval corpus by combining the broader sampled source pool with all corpus documents whose \texttt{CELEX} matches one of the selected generation units, still restricted to the active language subset.
 
 This design deliberately separates the question-source pool from the retrieval corpus. The generated query is not evaluated only against the one document realization that produced it, nor only against the selected generation groups. Instead, it is evaluated against a broader sampled retrieval corpus that already contains many non-relevant documents, while still linking the query to all retained corpus documents that share the same \texttt{CELEX}. This produces a harder retrieval task than a generation-only subset while preserving transparent cross-lingual relevance labels.
 
-The procedure serves three purposes. It prevents heavily connected documents or frequent \texttt{CELEX} groups from dominating the supervision set, it avoids generating many near-duplicate queries for multiple language realizations of the same legal act, and it keeps the final retrieval corpus substantially broader than the set of documents used to create queries.
+The procedure serves three purposes. It prevents heavily connected documents or frequent \texttt{CELEX} groups from dominating the supervision set, it avoids generating many near-duplicate queries for multiple language realizations of the same legal act, and it keeps the final retrieval corpus substantially broader than the set of documents used to create queries while still preferring better-covered multilingual groups.
 
 \subsection{Same-Language Legal QA Generation}
 
-Given one sampled multilingual \texttt{CELEX} group and one selected target-side document realization \(d_{c,\ell_t}\), we generate the question and answer directly from the target-side generation context \(x^{\mathrm{gen}}_{c,\ell_t}\) and in the target language \(\ell_t\). This same-language design is deliberate. In multilingual legal text, translation-based query projection can preserve coarse meaning while still degrading legal naturalness, clause scope, or the choice of the most salient legal point. Direct generation in the target language better matches how a lawyer, policy analyst, or compliance reader would formulate a query in that language.
+Given one sampled multilingual \texttt{CELEX} group and one selected document realization \(d_{c,\ell}\), we generate the question and answer directly from that generation context \(x^{\mathrm{gen}}_{c,\ell}\) and in the same language \(\ell\). This same-language design is deliberate. In multilingual legal text, translation-based query projection can preserve coarse meaning while still degrading legal naturalness, clause scope, or the choice of the most salient legal point. Direct generation in the sampled language better matches how a lawyer, policy analyst, or compliance reader would formulate a query in that language.
 
 The generator is instructed to produce exactly one question--answer pair. The question should express one sharp legal information need rather than a checklist, inventory, citation lookup, or broad summary. Preferred question types concern operative conditions, exceptions, addressees, evidentiary requirements, legal consequences, applicability limits, thresholds, or what a rule requires, permits, excludes, or causes in practice. The answer should be concise, directly grounded in the selected document context, and sufficient to justify why the linked documents are relevant. We also require a short supporting excerpt copied from the selected context so that each accepted QA unit preserves an auditable textual justification for the answer.
 
 The generation loop can be summarized as follows:
 \begin{enumerate}
-\item select one target-language document realization from a sampled \texttt{CELEX} group and read its generation context;
-\item generate one question--answer pair in the target language;
+\item select one sampled document realization from a multilingual \texttt{CELEX} group and read its generation context;
+\item generate one question--answer pair in that same language;
 \item validate the draft through the staged checker stack;
 \item if validation fails, regenerate with structured feedback;
-\item after at most three attempts, either accept the output or discard the generation unit.
+\item optionally translate an accepted draft into synthetic Chinese and validate the translated QA with translation-quality and legal-shape checks;
+\item after at most three attempts per stage, either accept the output or discard the generation unit.
 \end{enumerate}
 
 To make the flow explicit, Algorithm~\ref{alg:jrc-generation-loop} summarizes the generation and validation procedure for one sampled generation instance.
@@ -117,13 +118,13 @@ To make the flow explicit, Algorithm~\ref{alg:jrc-generation-loop} summarizes th
 \DontPrintSemicolon
 \SetKwInOut{Input}{Input}
 \SetKwInOut{Output}{Output}
-\Input{sampled \texttt{CELEX} group, selected target-language document $d_{c,\ell_t}$, retry budget $T=3$}
+\Input{sampled \texttt{CELEX} group, selected document $d_{c,\ell}$, retry budget $T=3$}
 \Output{accepted QA output with linked relevant documents, or rejection}
 
-Build target-side generation context $x^{\mathrm{gen}}_{c,\ell_t}$\;
+Build generation context $x^{\mathrm{gen}}_{c,\ell}$\;
 
 \For{$t \leftarrow 1$ \KwTo $T$}{
-    Generate one question--answer pair $(q,a)$ in language $\ell_t$\;
+    Generate one question--answer pair $(q,a)$ in language $\ell$\;
     \If{language validation fails}{
         create retry feedback\;
         \Continue\;
@@ -141,6 +142,7 @@ Build target-side generation context $x^{\mathrm{gen}}_{c,\ell_t}$\;
         \Continue\;
     }
     Accept $(q,a)$\;
+    Optionally generate a synthetic Chinese translation and validate it with translation-quality and legal-shape checks\;
     Link the query to retained sampled documents for the same \texttt{CELEX}\;
     Write outputs to \texttt{qac}, \texttt{queries}, and \texttt{qrels}\;
     \Return accepted generation unit\;
@@ -159,7 +161,7 @@ If a draft fails at any stage, the system records structured feedback and uses t
 
 \subsection{Query Linking and Relevance Construction}
 
-Once a question--answer output is accepted, we convert it into retrieval supervision. The generated query is anchored on the sampled target-side document, but its relevance set is defined at the \texttt{CELEX} level within the final retrieval corpus. If multiple retained corpus realizations of the same \texttt{CELEX} are present, the query is linked to all of them; if only two retained documents are present, this reduces to a bilingual case.
+Once a question--answer output is accepted, we convert it into retrieval supervision. The generated query is anchored on the sampled same-language document, but its relevance set is defined at the \texttt{CELEX} level within the final retrieval corpus. If multiple retained corpus realizations of the same \texttt{CELEX} are present, the query is linked to all of them; if only two retained documents are present, this reduces to a bilingual case. Optional synthetic Chinese translations inherit the same relevance set while being marked explicitly as synthetic translated queries in the released metadata.
 
 This relevance construction reflects the central cross-lingual assumption of the benchmark: the same underlying legal act should be retrievable through semantically equivalent language-specific realizations. The positive labels are therefore document-level relevance judgments, not paragraph-level evidence labels. They indicate that the linked documents instantiate the same legal act and support the same underlying information need at the level of document retrieval.
 

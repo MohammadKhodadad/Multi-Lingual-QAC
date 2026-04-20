@@ -45,7 +45,7 @@ uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queri
 ```bash
 uv run main.py --prepare-source JRC-ACQUIS      # download / extract / parse raw JRC-Acquis XML archives
 uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multilingual subsets, and QA candidates
-uv run main.py --source JRC-ACQUIS              # interactive CELEX-group-based legal QA generation from sampled target-side documents
+uv run main.py --source JRC-ACQUIS              # interactive CELEX-group-based legal QA generation from sampled same-language documents
 ```
 
 The JRC retrieval corpus keeps body text plus a capped annex slice and excludes signature tail text from the main retrieval `context`.
@@ -65,9 +65,9 @@ uv run main.py --source JRC-ACQUIS
 JRC uses a CELEX-group-based legal QA flow:
 
 - group multilingual documents by `celex`
-- sample source-side documents from multilingual `celex` groups
-- choose one target-language document realization as the generation text
-- generate the query in that target-side language
+- optionally restrict sampling, corpus construction, and query generation to a chosen language subset
+- sample source-side documents from multilingual `celex` groups, with preference for groups that cover more selected-subset languages
+- generate the query from the sampled document itself, in that same language
 - connect the final query to all retained sampled documents for the same `celex`
 
 ### MTEB benchmark and report generation
@@ -230,15 +230,16 @@ Re-run **step 4** alone if you change labeling logic only; re-run **3** (and **4
 JRC now uses a **CELEX-group-based** QA flow:
 
 1. group multilingual legal documents by `celex`
-2. sample a broader source-side pool per language from multilingual `celex` groups
-3. retain a smaller question-generation set per language from that sampled pool
-4. build the final retrieval corpus from the sampled source pool plus all same-`celex` document realizations for the selected question-generation set
-5. choose one target-language document realization from each selected generation group
-6. generate one same-language legal question/answer from that target-side text
-7. validate it with language, faithfulness, retrieval-quality, and legal-shape checks
-8. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
+2. optionally restrict the source pool, retrieval corpus, and query languages to a chosen subset such as `en/es/de/fr`
+3. sample a broader source-side pool per language from multilingual `celex` groups, while weighting groups with more selected-subset languages more heavily
+4. retain a smaller question-generation set per language from that sampled pool
+5. build the final retrieval corpus from the sampled source pool plus all same-`celex` document realizations for the selected question-generation set, still restricted to the active language subset
+6. generate one same-language legal question/answer from each selected document in its own language
+7. optionally add synthetic Chinese query translations and mark them explicitly in the released query metadata
+8. validate originals and synthetic translations with language, faithfulness, retrieval-quality, and legal-shape checks
+9. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
 
-The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, and legal-shape stages so that provision-led wording, status/label questions, content-list questions, and multi-part legal questions can be filtered with targeted feedback rather than one monolithic blacklist.
+The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
 
 See `docs/QA_GENERATION_PROCESS.md` for the full current QA-generation flow across EPO, Wikidata, and JRC.
 

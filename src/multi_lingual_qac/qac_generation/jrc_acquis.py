@@ -40,6 +40,26 @@ def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, Any]]) ->
         writer.writerows(rows)
 
 
+def _weighted_sample_without_replacement(
+    candidates: list[tuple[dict[str, str], int]],
+    sample_size: int,
+    *,
+    rng: random.Random,
+) -> list[dict[str, str]]:
+    if sample_size <= 0 or not candidates:
+        return []
+    if len(candidates) <= sample_size:
+        return [row for row, _weight in candidates]
+
+    scored: list[tuple[float, dict[str, str]]] = []
+    for row, weight in candidates:
+        normalized_weight = max(1, int(weight))
+        score = rng.random() ** (1.0 / normalized_weight)
+        scored.append((score, row))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [row for _score, row in scored[:sample_size]]
+
+
 def prepare_jrc_qa_inputs(
     *,
     corpus_full_path: Path,
@@ -109,12 +129,10 @@ def prepare_jrc_qa_inputs(
         if celex:
             docs_by_celex[celex].append(row)
 
-    qa_candidate_rows: list[dict[str, str]] = []
     qa_candidate_fieldnames: list[str] = []
-    reservoir_by_lang: dict[str, list[dict[str, str]]] = defaultdict(list)
+    candidates_by_lang: dict[str, list[tuple[dict[str, str], int]]] = defaultdict(list)
     available_source_docs_by_lang: Counter[str] = Counter()
     for row in _iter_csv_rows(qa_candidates_path):
-        qa_candidate_rows.append(row)
         if not qa_candidate_fieldnames:
             qa_candidate_fieldnames = list(row.keys())
         row_id = row.get("id", "")
@@ -135,21 +153,27 @@ def prepare_jrc_qa_inputs(
         ]
         if not eligible_targets:
             continue
+        subset_language_count = len(
+            {
+                doc.get("language", "").strip().lower()
+                for doc in docs_by_celex.get(celex, [])
+                if doc.get("id", "")
+            }
+        )
+        if subset_language_count < 2:
+            continue
         available_source_docs_by_lang[lang] += 1
-        reservoir = reservoir_by_lang[lang]
-        seen = available_source_docs_by_lang[lang]
-        if len(reservoir) < pairs_per_language:
-            reservoir.append(row)
-        else:
-            replace_idx = rng.randint(1, seen)
-            if replace_idx <= pairs_per_language:
-                reservoir[replace_idx - 1] = row
+        candidates_by_lang[lang].append((row, subset_language_count))
 
     sampled_source_rows: list[dict[str, str]] = []
     selected_source_rows: list[dict[str, str]] = []
     selected_sources_stats: dict[str, dict[str, int]] = {}
-    for lang in sorted(reservoir_by_lang):
-        sampled_lang_rows = list(reservoir_by_lang[lang])
+    for lang in sorted(candidates_by_lang):
+        sampled_lang_rows = _weighted_sample_without_replacement(
+            candidates_by_lang[lang],
+            pairs_per_language,
+            rng=rng,
+        )
         if not sampled_lang_rows:
             continue
         sampled_source_rows.extend(sampled_lang_rows)
