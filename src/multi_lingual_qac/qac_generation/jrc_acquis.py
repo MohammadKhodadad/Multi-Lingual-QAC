@@ -48,6 +48,7 @@ def prepare_jrc_qa_inputs(
     pairs_per_language: int,
     generation_docs_per_language: int,
     allowed_languages: tuple[str, ...] | None = None,
+    synthetic_target_languages: tuple[str, ...] = (),
     seed: int = 42,
 ) -> dict[str, Any]:
     """
@@ -84,6 +85,11 @@ def prepare_jrc_qa_inputs(
         for lang in (allowed_languages or ())
         if lang and lang.strip()
     }
+    synthetic_target_language_list = [
+        lang.strip().lower()
+        for lang in synthetic_target_languages
+        if lang and lang.strip()
+    ]
 
     corpus_fieldnames: list[str] = []
     docs_by_id: dict[str, dict[str, str]] = {}
@@ -237,6 +243,10 @@ def prepare_jrc_qa_inputs(
         generation_row["query_id_hint"] = (
             f"{celex}__{source_lang}__{target_row.get('language', '')}"
         )
+        generation_row["synthetic_target_languages_json"] = json.dumps(
+            synthetic_target_language_list,
+            ensure_ascii=False,
+        )
         generation_row["linked_corpus_ids_json"] = json.dumps(linked_corpus_ids, ensure_ascii=False)
         generation_row["linked_languages_json"] = json.dumps(linked_languages, ensure_ascii=False)
         generation_row["linked_corpus_count"] = str(len(linked_corpus_ids))
@@ -276,6 +286,7 @@ def prepare_jrc_qa_inputs(
             "target_corpus_id",
             "query_corpus_id",
             "query_id_hint",
+            "synthetic_target_languages_json",
             "linked_corpus_ids_json",
             "linked_languages_json",
             "linked_corpus_count",
@@ -304,6 +315,7 @@ def prepare_jrc_qa_inputs(
         "pairs_per_language_requested": pairs_per_language,
         "generation_docs_per_language_requested": generation_docs_per_language,
         "allowed_languages": sorted(allowed_language_set),
+        "synthetic_target_languages": synthetic_target_language_list,
         "sampled_source_pool_docs_total": len(sampled_source_rows),
         "sampled_source_docs_total": len(sampled_source_rows),
         "selected_generation_source_docs_total": len(selected_source_rows),

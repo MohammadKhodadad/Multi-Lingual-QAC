@@ -294,6 +294,11 @@ def _corpus_language(row: dict) -> str:
     return _infer_language(row.get("id", "") or row.get("_id", ""))
 
 
+def _parse_boolish(value: object) -> bool:
+    raw = str(value or "").strip().lower()
+    return raw in {"1", "true", "yes", "y"}
+
+
 def push_to_hub(
     corpus_path: Path,
     qac_path: Path,
@@ -346,6 +351,7 @@ def push_to_hub(
         q = r.get("question", "")
         a = r.get("answer", "")
         corpus_lang = corpus_language_by_id.get(cid, _infer_language(cid))
+        is_synthetic_translation = _parse_boolish(r.get("is_synthetic_translation", ""))
         query_id_hint = str(r.get("query_id_hint", "")).strip()
         if query_id_hint:
             query_id = f"{query_id_hint}_q_{lang}"
@@ -360,6 +366,7 @@ def push_to_hub(
             "text": q,
             "question_language": lang,
             "corpus_language": corpus_lang,
+            "is_synthetic_translation": is_synthetic_translation,
         })
         for linked_corpus_id in _linked_corpus_ids(r, cid):
             qrels_data.append({"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0})
@@ -369,6 +376,7 @@ def push_to_hub(
             "language": lang,
             "question": q,
             "answer": a,
+            "is_synthetic_translation": is_synthetic_translation,
         })
 
     corpus_ds = Dataset.from_list(corpus_data)

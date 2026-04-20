@@ -6,7 +6,7 @@ generate question and answer in English from the corpus context, validate, then
 translate to all target languages.
 
 JRC pipeline (`same_language=True`): generate and validate Q&A in each row's
-language without translation.
+language, with optional synthetic translated query variants.
 """
 
 from __future__ import annotations
@@ -883,31 +883,35 @@ def translate_qa(
     answer: str,
     target_langs: List[str],
     *,
+    source_lang: str = "en",
     previous_feedback: Optional[str] = None,
     previous_translated_question: Optional[str] = None,
     previous_translated_answer: Optional[str] = None,
     model: str = DEFAULT_TRANSLATION_MODEL,
+    domain_hint: Optional[str] = None,
 ) -> Dict[str, Tuple[str, str]]:
     """
     Translate (question, answer) to target languages. Returns {lang: (q, a)}.
     """
     if not target_langs:
         return {}
+    source_lang = (source_lang or "en").strip().lower()
+    source_lang_name = LANG_NAMES.get(source_lang, source_lang)
     lang_list = ", ".join(LANG_NAMES.get(l, l) for l in target_langs)
-    prompt = f"""Translate the following English retrieval question and answer pair into these languages: {lang_list}.
+    prompt = f"""Translate the following {source_lang_name} retrieval question and answer pair into these languages: {lang_list}.
 
 For each language, produce a natural, native-sounding, retrieval-style translation.
 Use the source context to resolve ambiguity and preserve the original information need exactly.
 Keep the same meaning, level of specificity, and technical terms where appropriate.
-Do not make the question more generic than the original.
+Do not make the question more generic, broader, or more citation-led than the original.
 Preserve the semantic difficulty of the original question.
 Do not simplify the question into a keyword-heavy or literal surface-form restatement.
 Prefer natural target-language phrasing over word-for-word translation.
 Do not omit or alter numbers, units, ranges, formulas, identifiers, or named technical materials.
 Preserve technical terms, abbreviations, symbols, and patent-style identifiers when translating them would be incorrect or unnatural.
-Keep the answer faithful to the English answer and consistent with the source context.
-Do not add explanation, background, or extra claims not present in the English pair or source context.
-If the English question is technical and concise, keep the target-language question technical and concise too.
+Keep the answer faithful to the source answer and consistent with the source context.
+Do not add explanation, background, or extra claims not present in the source pair or source context.
+If the source question is technical and concise, keep the target-language question technical and concise too.
 Avoid translation artifacts:
 - choose one natural term, not slash-separated alternatives like `X/Y`
 - do not leave editor-style repair traces or synonym bundles
@@ -917,8 +921,20 @@ Avoid translation artifacts:
 - keep the text fully in the target language except for unavoidable technical terms, formulas, units, identifiers, abbreviations, or proper nouns
 - do not leak words from unrelated languages or scripts into the translation
 - if a technical term can stay in Latin script, integrate it naturally into an otherwise target-language sentence
-- if the English answer contains multiple supported facts, preserve them cleanly without turning the translation into a glossary or note
+- if the source answer contains multiple supported facts, preserve them cleanly without turning the translation into a glossary or note
 - prefer one polished final phrasing, not an exploratory or half-edited wording
+"""
+    if _normalize_domain_hint(domain_hint) == "legal":
+        prompt += """
+
+This is legal/regulatory retrieval data.
+- Preserve the exact legal information need from the source question.
+- Keep the question focused on one operative legal point, not a bundled checklist.
+- Do not introduce article numbers, recital numbers, annex labels, provision labels, or phrases like "this article" unless they are already essential in the source question.
+- Do not turn the translation into a clause-lookup query or a broader policy summary.
+- Prefer natural legal phrasing in the target language over literal source-language syntax.
+"""
+    prompt += f"""
 
 Output valid JSON only:
 {{"translations": {{"de": {{"question": "...", "answer": "..."}}, "fr": {{...}}, ...}}}}
@@ -949,8 +965,8 @@ Languages to include: {json.dumps(target_langs)}
                 "role": "user",
                 "content": (
                     f"Source context:\n{context[:5000]}\n\n"
-                    f"English question: {question}\n\n"
-                    f"English answer: {answer}"
+                    f"{source_lang_name} question: {question}\n\n"
+                    f"{source_lang_name} answer: {answer}"
                     f"{retry_note}"
                     f"{previous_attempt_note}"
                 ),
@@ -972,29 +988,33 @@ Languages to include: {json.dumps(target_langs)}
 def check_translation_quality(
     client: OpenAI,
     context: str,
-    english_question: str,
-    english_answer: str,
+    source_question: str,
+    source_answer: str,
     translated_question: str,
     translated_answer: str,
     target_lang: str,
     *,
+    source_lang: str = "en",
     model: str = DEFAULT_QUALITY_MODEL,
+    domain_hint: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Validate that a translated QA pair is fluent, faithful, and in the target language.
     Returns structured quality signals for approval and retry decisions.
     """
     target_lang_name = LANG_NAMES.get(target_lang, target_lang)
-    prompt = f"""You are a strict but practical translation quality checker for multilingual patent retrieval data.
+    source_lang = (source_lang or "en").strip().lower()
+    source_lang_name = LANG_NAMES.get(source_lang, source_lang)
+    prompt = f"""You are a strict but practical translation quality checker for multilingual retrieval data.
 
-The source context may be in any language. The reference question and answer are in English.
+The source context may be in any language. The reference question and answer are in {source_lang_name}.
 The candidate translation must be in {target_lang_name}.
 
 Judge these dimensions separately:
 - `language_ok`: the translated question and answer are clearly written in {target_lang_name}
-- `meaning_ok`: the meaning matches the English question and English answer closely
+- `meaning_ok`: the meaning matches the {source_lang_name} question and {source_lang_name} answer closely
 - `technical_ok`: numbers, units, ranges, formulas, identifiers, and important technical terms are preserved
-- `specificity_ok`: the translated question keeps the same information need and specificity and does not become more generic
+- `specificity_ok`: the translated question keeps the same information need and specificity and does not become more generic, broader, or more citation-led
 - `terminology_ok`: the translation uses appropriate technical terminology and register for {target_lang_name}
 - `artifact_ok`: the translation does not contain repair artifacts such as slash-separated alternatives, unnecessary English glosses, editor-style synonym bundles, or gratuitous code mixing
 - `fluency_ok`: the translation sounds natural enough for a native technical reader and is not clearly word-for-word or grammatically broken
@@ -1047,9 +1067,19 @@ Approval policy:
 - Reject when `grammar_ok` is false and severity is `medium` or `high`.
 - Reject when `fluency_ok` is false and severity is `medium` or `high`.
 - Approve when the only issue is minor fluency stiffness with `severity = low`.
+"""
+    if _normalize_domain_hint(domain_hint) == "legal":
+        prompt += """
+
+Legal/regulatory translation rules:
+- Reject if the translation introduces or removes legal scope, conditions, exceptions, consequences, addressees, evidentiary requirements, or authorities.
+- Reject if the translated question turns into a provision-lookup question, introduces article/provision labels absent from the source question, or becomes a broader legal summary.
+- Reject if one focused legal point in the source becomes a checklist, menu of measures, definition inventory, or multi-branch question in translation.
+"""
+    prompt += """
 
 Output valid JSON only:
-{{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "terminology_ok": true, "artifact_ok": true, "fluency_ok": true, "grammar_ok": true, "severity": "low", "failure_type": "none", "better_direction": "", "reason": "..."}}
+{"language_ok": true, "meaning_ok": true, "technical_ok": true, "specificity_ok": true, "terminology_ok": true, "artifact_ok": true, "fluency_ok": true, "grammar_ok": true, "severity": "low", "failure_type": "none", "better_direction": "", "reason": "..."}
 """
     response = client.chat.completions.create(
         model=model,
@@ -1059,8 +1089,8 @@ Output valid JSON only:
                 "role": "user",
                 "content": (
                     f"Context:\n{context[:5000]}\n\n"
-                    f"English question: {english_question}\n\n"
-                    f"English answer: {english_answer}\n\n"
+                    f"{source_lang_name} question: {source_question}\n\n"
+                    f"{source_lang_name} answer: {source_answer}\n\n"
                     f"{target_lang_name} question: {translated_question}\n\n"
                     f"{target_lang_name} answer: {translated_answer}"
                 ),
@@ -1175,6 +1205,29 @@ def _row_target_corpus_ids(row: Dict[str, Any]) -> Dict[str, str]:
     return result
 
 
+def _row_synthetic_target_languages(
+    row: Dict[str, Any],
+    default_target_languages: List[str],
+) -> List[str]:
+    raw = row.get("synthetic_target_languages_json", "")
+    if not raw:
+        return list(default_target_languages)
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return list(default_target_languages)
+    if not isinstance(parsed, list):
+        return list(default_target_languages)
+    cleaned = []
+    seen = set()
+    for item in parsed:
+        lang = str(item).strip().lower()
+        if lang and lang not in seen:
+            cleaned.append(lang)
+            seen.add(lang)
+    return cleaned
+
+
 def _row_output_metadata(row: Dict[str, Any]) -> Dict[str, str]:
     metadata: Dict[str, str] = {}
     for key in (
@@ -1193,11 +1246,163 @@ def _row_output_metadata(row: Dict[str, Any]) -> Dict[str, str]:
     return metadata
 
 
+def _run_translation_pass(
+    client: OpenAI,
+    *,
+    context: str,
+    source_question: str,
+    source_answer: str,
+    source_lang: str,
+    translation_targets: List[str],
+    translation_model: str,
+    quality_model: str,
+    domain_hint: Optional[str] = None,
+    max_attempts: int = 3,
+) -> tuple[Dict[str, Tuple[str, str]], List[str]]:
+    approved_translations: Dict[str, Tuple[str, str]] = {}
+    failed_languages: List[str] = []
+    source_lang = (source_lang or "en").strip().lower()
+    source_lang_name = LANG_NAMES.get(source_lang, source_lang)
+    deduped_targets: List[str] = []
+    seen_targets: set[str] = set()
+    for lang in translation_targets:
+        normalized = str(lang).strip().lower()
+        if not normalized or normalized == source_lang or normalized in seen_targets:
+            continue
+        deduped_targets.append(normalized)
+        seen_targets.add(normalized)
+
+    for lang in deduped_targets:
+        lang_name = LANG_NAMES.get(lang, lang)
+        lang_failure = "translation missing"
+        retry_feedback: Optional[str] = None
+        retry_q: Optional[str] = None
+        retry_a: Optional[str] = None
+        for _attempt in range(1, max_attempts + 1):
+            trans = translate_qa(
+                client,
+                context,
+                source_question,
+                source_answer,
+                [lang],
+                source_lang=source_lang,
+                previous_feedback=retry_feedback,
+                previous_translated_question=retry_q,
+                previous_translated_answer=retry_a,
+                model=translation_model,
+                domain_hint=domain_hint,
+            )
+            if lang not in trans:
+                lang_failure = "translation missing"
+                retry_feedback = (
+                    "The previous translation attempt was missing or malformed. "
+                    "Return valid JSON with a complete translated question and answer."
+                )
+                continue
+
+            q, a = trans[lang]
+            retry_q = q
+            retry_a = a
+            trans_check = check_translation_quality(
+                client,
+                context,
+                source_question,
+                source_answer,
+                q,
+                a,
+                lang,
+                source_lang=source_lang,
+                model=quality_model,
+                domain_hint=domain_hint,
+            )
+            if not trans_check["approved"]:
+                reason = str(trans_check.get("reason", "")).strip()
+                severity = str(trans_check.get("severity", "high")).strip()
+                failure_type = str(trans_check.get("failure_type", "")).strip()
+                better_direction = str(trans_check.get("better_direction", "")).strip()
+                lang_failure = (
+                    "translation quality failed: "
+                    f"{reason or 'not fluent/faithful enough'}"
+                    f" [severity={severity}]"
+                )
+                feedback_parts = []
+                if failure_type and failure_type != "none":
+                    feedback_parts.append(f"Failure type: {failure_type}.")
+                if reason:
+                    feedback_parts.append(f"Reason: {reason}.")
+                if better_direction:
+                    feedback_parts.append(f"Better direction: {better_direction}.")
+                feedback_parts.append(
+                    f"Revise the {lang_name} translation by preserving the exact meaning, specificity, numbers, units, "
+                    f"and source-grounded details from the {source_lang_name} pair and source context."
+                )
+                if _normalize_domain_hint(domain_hint) == "legal":
+                    feedback_parts.append(
+                        "Keep one focused legal point. Do not add article numbers, provision labels, or phrases like "
+                        "'this article' if they are absent from the source question."
+                    )
+                feedback_parts.append(
+                    f"If the problem is fluency or grammar, rewrite more naturally in {lang_name} without changing the information need."
+                )
+                retry_feedback = " ".join(feedback_parts)
+                continue
+
+            translated_quality_ok, translated_quality_reason = check_question_quality(
+                client,
+                context,
+                q,
+                a,
+                model=quality_model,
+                output_language_name=lang_name,
+                domain_hint=domain_hint,
+            )
+            if not translated_quality_ok:
+                lang_failure = (
+                    "translated question quality failed: "
+                    f"{translated_quality_reason or 'question not useful enough'}"
+                )
+                retry_feedback = (
+                    f"{lang_failure}. Keep the exact {source_lang_name} information need, but rewrite the {lang_name} "
+                    "question into a stronger natural retrieval query without making it broader, more generic, or more literal."
+                )
+                continue
+
+            if _normalize_domain_hint(domain_hint) == "legal":
+                shape_ok, shape_reason = check_legal_question_shape(
+                    client,
+                    context,
+                    q,
+                    a,
+                    model=quality_model,
+                    output_language_name=lang_name,
+                )
+                if not shape_ok:
+                    lang_failure = (
+                        "translated legal shape failed: "
+                        f"{shape_reason or 'question shape not useful enough'}"
+                    )
+                    retry_feedback = (
+                        f"{lang_failure}. Rewrite the {lang_name} translation so the question asks for exactly one focused legal point "
+                        "rather than a checklist, menu, definition inventory, or multi-branch formulation."
+                    )
+                    continue
+
+            approved_translations[lang] = (q, a)
+            lang_failure = ""
+            break
+
+        if lang_failure:
+            failed_languages.append(f"{lang} ({lang_failure})")
+
+    return approved_translations, failed_languages
+
+
 def _process_sample_row(
     index: int,
     row: Dict[str, Any],
     *,
     target_languages: List[str],
+    synthetic_translation_targets: List[str],
     generation_model: str,
     quality_model: str,
     support_model: str,
@@ -1213,6 +1418,10 @@ def _process_sample_row(
         or row.get("title", "")
     )
     effective_target_languages = _row_target_languages(row, target_languages)
+    effective_synthetic_targets = _row_synthetic_target_languages(
+        row,
+        synthetic_translation_targets,
+    )
     target_corpus_ids = _row_target_corpus_ids(row)
     if not context.strip():
         return {
@@ -1364,20 +1573,50 @@ def _process_sample_row(
                     "status": f"skipped ({last_failure or 'validation failed'})",
                 }
 
+            qac_rows = [
+                {
+                    "corpus_id": corpus_id,
+                    "language": row_lang,
+                    "question": q_loc,
+                    "answer": a_loc,
+                    "is_synthetic_translation": "false",
+                    **row_metadata,
+                }
+            ]
+            approved_translations, failed_languages = _run_translation_pass(
+                client,
+                context=context,
+                source_question=q_loc,
+                source_answer=a_loc,
+                source_lang=row_lang,
+                translation_targets=effective_synthetic_targets,
+                translation_model=translation_model,
+                quality_model=quality_model,
+                domain_hint=domain_hint,
+                max_attempts=max_attempts,
+            )
+            for lang, (q, a) in approved_translations.items():
+                qac_rows.append(
+                    {
+                        "corpus_id": corpus_id,
+                        "language": lang,
+                        "question": q,
+                        "answer": a,
+                        "is_synthetic_translation": "true",
+                        **row_metadata,
+                    }
+                )
+            translation_status = ""
+            if effective_synthetic_targets:
+                translation_status = f", + {len(approved_translations)} synthetic translations"
+                if failed_languages:
+                    translation_status += f", skipped {len(failed_languages)}: {', '.join(failed_languages)}"
             return {
                 "index": index,
                 "corpus_id": corpus_id,
                 "attempt_logs": attempt_logs,
-                "rows": [
-                    {
-                        "corpus_id": corpus_id,
-                        "language": row_lang,
-                        "question": q_loc,
-                        "answer": a_loc,
-                        **row_metadata,
-                    }
-                ],
-                "status": f"ok ({question_type or 'validated'} {row_lang}, same-language, attempt {approved_attempt}/{max_attempts})",
+                "rows": qac_rows,
+                "status": f"ok ({question_type or 'validated'} {row_lang}, same-language{translation_status}, attempt {approved_attempt}/{max_attempts})",
             }
 
         approved = False
@@ -1506,81 +1745,21 @@ def _process_sample_row(
             "language": "en",
             "question": q_en,
             "answer": a_en,
+            "is_synthetic_translation": "false",
         }]
-        approved_translations: Dict[str, Tuple[str, str]] = {}
-        failed_languages: List[str] = []
         translation_targets = [lang for lang in effective_target_languages if lang != "en"]
-        for lang in translation_targets:
-            lang_failure = "translation missing"
-            retry_feedback: Optional[str] = None
-            retry_q: Optional[str] = None
-            retry_a: Optional[str] = None
-            for _attempt in range(1, max_attempts + 1):
-                trans = translate_qa(
-                    client,
-                    context,
-                    q_en,
-                    a_en,
-                    [lang],
-                    previous_feedback=retry_feedback,
-                    previous_translated_question=retry_q,
-                    previous_translated_answer=retry_a,
-                    model=translation_model,
-                )
-                if lang not in trans:
-                    lang_failure = "translation missing"
-                    retry_feedback = "The previous translation attempt was missing or malformed. Return valid JSON with a complete translated question and answer."
-                    continue
-
-                q, a = trans[lang]
-                retry_q = q
-                retry_a = a
-                trans_check = check_translation_quality(
-                    client,
-                    context,
-                    q_en,
-                    a_en,
-                    q,
-                    a,
-                    lang,
-                    model=quality_model,
-                )
-                if not trans_check["approved"]:
-                    reason = str(trans_check.get("reason", "")).strip()
-                    severity = str(trans_check.get("severity", "high")).strip()
-                    failure_type = str(trans_check.get("failure_type", "")).strip()
-                    better_direction = str(trans_check.get("better_direction", "")).strip()
-                    lang_failure = (
-                        "translation quality failed: "
-                        f"{reason or 'not fluent/faithful enough'}"
-                        f" [severity={severity}]"
-                    )
-                    feedback_parts = []
-                    if failure_type and failure_type != "none":
-                        feedback_parts.append(f"Failure type: {failure_type}.")
-                    if reason:
-                        feedback_parts.append(f"Reason: {reason}.")
-                    if better_direction:
-                        feedback_parts.append(f"Better direction: {better_direction}.")
-                    feedback_parts.append(
-                        "Revise the translation by preserving the exact meaning, specificity, numbers, units, and source-grounded details from the English pair and source context."
-                    )
-                    if _normalize_domain_hint(domain_hint) == "legal":
-                        feedback_parts.append(
-                            "Do not introduce article numbers, provision labels, or phrases like 'this article' if they are absent from the English question."
-                        )
-                    feedback_parts.append(
-                        "If the problem is fluency or grammar, rewrite more naturally in the target language without changing the information need."
-                    )
-                    retry_feedback = " ".join(feedback_parts)
-                    continue
-
-                approved_translations[lang] = (q, a)
-                lang_failure = ""
-                break
-
-            if lang_failure:
-                failed_languages.append(f"{lang} ({lang_failure})")
+        approved_translations, failed_languages = _run_translation_pass(
+            client,
+            context=context,
+            source_question=q_en,
+            source_answer=a_en,
+            source_lang="en",
+            translation_targets=translation_targets,
+            translation_model=translation_model,
+            quality_model=quality_model,
+            domain_hint=domain_hint,
+            max_attempts=max_attempts,
+        )
 
         for lang, (q, a) in approved_translations.items():
             qac_rows.append({
@@ -1588,6 +1767,7 @@ def _process_sample_row(
                 "language": lang,
                 "question": q,
                 "answer": a,
+                "is_synthetic_translation": "true",
             })
         translation_status = f"{len(approved_translations)} translations"
         if failed_languages:
@@ -1615,6 +1795,7 @@ def run_qa_pipeline(
     *,
     sample_size: int = 50,
     target_languages: Optional[List[str]] = None,
+    synthetic_translation_targets: Optional[List[str]] = None,
     model: Optional[str] = None,
     generation_model: str = DEFAULT_GENERATION_MODEL,
     quality_model: str = DEFAULT_QUALITY_MODEL,
@@ -1630,7 +1811,7 @@ def run_qa_pipeline(
 
     If same_language is False (default): generate in English, translate to target_languages.
     If same_language is True: generate legal question and answer in each row's `language`
-    field; one output row per sampled document (no translation).
+    field, with optional synthetic translated query variants.
 
     Writes qac.csv (corpus_id, language, question, answer) to output_dir.
     Returns number of QAC rows written.
@@ -1639,6 +1820,8 @@ def run_qa_pipeline(
     output_dir = Path(output_dir)
     if target_languages is None:
         target_languages = DEFAULT_TARGET_LANGS
+    if synthetic_translation_targets is None:
+        synthetic_translation_targets = []
     if model is not None:
         generation_model = model
         quality_model = model
@@ -1652,7 +1835,13 @@ def run_qa_pipeline(
 
     rows = load_corpus(corpus_path)
     sampled = sample_corpus(rows, sample_size, stratify_by_language=True, seed=42)
-    mode = "same-language (per row language)" if same_language else "English + translation"
+    mode = (
+        "same-language (per row language)"
+        if same_language and not synthetic_translation_targets
+        else f"same-language (per row language) + synthetic translations {synthetic_translation_targets}"
+        if same_language
+        else "English + translation"
+    )
     print(f"Sampled {len(sampled)} documents from corpus ({len(rows)} total). Mode: {mode}.")
     qac_rows: List[Dict[str, str]] = []
     results: List[Dict[str, Any]] = []
@@ -1671,6 +1860,7 @@ def run_qa_pipeline(
                     index,
                     row,
                     target_languages=target_languages,
+                    synthetic_translation_targets=synthetic_translation_targets,
                     generation_model=generation_model,
                     quality_model=quality_model,
                     support_model=support_model,
@@ -1699,6 +1889,7 @@ def run_qa_pipeline(
                 index - 1,
                 row,
                 target_languages=target_languages,
+                synthetic_translation_targets=synthetic_translation_targets,
                 generation_model=generation_model,
                 quality_model=quality_model,
                 support_model=support_model,

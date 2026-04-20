@@ -58,6 +58,7 @@ class PipelineConfig:
     qa_pairs_per_language: Optional[int] = None
     qa_docs_per_language: Optional[int] = None
     jrc_qa_languages: Optional[tuple[str, ...]] = None
+    jrc_synthetic_chinese: Optional[bool] = None
     qa_batch: Optional[bool] = None
     push_hf: bool = False
     hf_repo: Optional[str] = None

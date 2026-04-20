@@ -129,6 +129,16 @@ def parse_args() -> PipelineConfig:
             f"(supported: {', '.join(JRC_ACQUIS_LANGS)}; accepts space- or comma-separated values)"
         ),
     )
+    parser.add_argument(
+        "--jrc-synthetic-chinese",
+        action="store_true",
+        help="JRC-Acquis only: add synthetic Chinese translations for generated QA pairs",
+    )
+    parser.add_argument(
+        "--no-jrc-synthetic-chinese",
+        action="store_true",
+        help="JRC-Acquis only: disable synthetic Chinese translations for generated QA pairs",
+    )
     parser.add_argument("--qa-batch", action="store_true", help="Batch QA generation using worker threads based on available CPUs")
     parser.add_argument("--qa-no-batch", action="store_true", help="Disable batch QA generation")
     parser.add_argument("--push-hf", action="store_true", help="Push corpus + QAC to Hugging Face Hub")
@@ -179,12 +189,19 @@ def parse_args() -> PipelineConfig:
     )
     args = parser.parse_args()
     qa_batch = None
+    jrc_synthetic_chinese = None
     if args.qa_batch and args.qa_no_batch:
         parser.error("Use only one of --qa-batch or --qa-no-batch")
+    if args.jrc_synthetic_chinese and args.no_jrc_synthetic_chinese:
+        parser.error("Use only one of --jrc-synthetic-chinese or --no-jrc-synthetic-chinese")
     if args.qa_batch:
         qa_batch = True
     elif args.qa_no_batch:
         qa_batch = False
+    if args.jrc_synthetic_chinese:
+        jrc_synthetic_chinese = True
+    elif args.no_jrc_synthetic_chinese:
+        jrc_synthetic_chinese = False
     return PipelineConfig(
         source=args.source,
         prepare_source=args.prepare_source,
@@ -199,6 +216,7 @@ def parse_args() -> PipelineConfig:
         qa_pairs_per_language=args.qa_pairs_per_language,
         qa_docs_per_language=args.qa_docs_per_language,
         jrc_qa_languages=_normalize_jrc_qa_languages(args.jrc_qa_languages),
+        jrc_synthetic_chinese=jrc_synthetic_chinese,
         qa_batch=qa_batch,
         push_hf=args.push_hf,
         hf_repo=args.hf_repo,
