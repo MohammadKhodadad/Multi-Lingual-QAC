@@ -678,7 +678,7 @@ def run_multilingual_qa_pipeline(
         except Exception as exc:
             tqdm.write(f"  {pub_num}: error: {exc}")
 
-    # Write output
+    # Write full output
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as f:
@@ -687,6 +687,25 @@ def run_multilingual_qa_pipeline(
         writer.writerows(all_rows)
 
     print(f"\nWrote {len(all_rows)} QAC rows -> {output_path}")
+
+    # Write best-only output (top question per publication + language)
+    best_rows: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for row in all_rows:
+        key = (row["publication_number"], row["question_language"])
+        if key not in seen:
+            seen.add(key)
+            best_rows.append(row)
+
+    best_path = output_path.with_name(
+        output_path.stem + "_best" + output_path.suffix
+    )
+    with best_path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(best_rows)
+
+    print(f"Wrote {len(best_rows)} best QAC rows -> {best_path}")
     return len(all_rows)
 
 
