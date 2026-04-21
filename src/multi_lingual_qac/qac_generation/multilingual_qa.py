@@ -186,6 +186,25 @@ def _build_all_passages_text(rows: List[Dict[str, Any]]) -> str:
     return "\n\n".join(parts)
 
 
+def _serialize_context_languages(rows: List[Dict[str, Any]]) -> str:
+    """Serialize all languages available for a document into one CSV cell."""
+    seen: set[str] = set()
+    ordered_langs: list[str] = []
+
+    for lang in ALL_LANGS:
+        if any(r.get("language") == lang for r in rows):
+            seen.add(lang)
+            ordered_langs.append(lang)
+
+    for r in rows:
+        lang = (r.get("language") or "").strip()
+        if lang and lang not in seen:
+            seen.add(lang)
+            ordered_langs.append(lang)
+
+    return ",".join(ordered_langs)
+
+
 # ---------------------------------------------------------------------------
 # Prompt loading
 # ---------------------------------------------------------------------------
@@ -547,6 +566,7 @@ def _process_document(
     target_langs = pick_target_languages(strategy, available_langs)
     client = _get_client()
     all_passages = _build_all_passages_text(rows)
+    context_languages = _serialize_context_languages(rows)
     results: List[Dict[str, Any]] = []
 
     for target_lang in target_langs:
@@ -599,7 +619,7 @@ def _process_document(
                 corpus_id=context_row.get("id", ""),
                 publication_number=pub_num,
                 question_language=target_lang,
-                context_language=context_row.get("language", ""),
+                context_language=context_languages,
             )
             doc_rows.append(row)
 
