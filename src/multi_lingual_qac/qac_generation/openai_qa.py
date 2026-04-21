@@ -900,24 +900,29 @@ def translate_qa(
     lang_list = ", ".join(LANG_NAMES.get(l, l) for l in target_langs)
     prompt = f"""Translate the following {source_lang_name} retrieval question and answer pair into these languages: {lang_list}.
 
-For each language, produce a natural, native-sounding, retrieval-style translation.
-Use the source context to resolve ambiguity and preserve the original information need exactly.
-Keep the same meaning, level of specificity, and technical terms where appropriate.
-Do not make the question more generic, broader, or more citation-led than the original.
-Preserve the semantic difficulty of the original question.
-Do not simplify the question into a keyword-heavy or literal surface-form restatement.
-Prefer natural target-language phrasing over word-for-word translation.
-Do not omit or alter numbers, units, ranges, formulas, identifiers, or named technical materials.
-Preserve technical terms, abbreviations, symbols, and patent-style identifiers when translating them would be incorrect or unnatural.
-Keep the answer faithful to the source answer and consistent with the source context.
-Do not add explanation, background, or extra claims not present in the source pair or source context.
-If the source question is technical and concise, keep the target-language question technical and concise too.
+Goal:
+- preserve the exact information need, answer meaning, specificity, and retrieval difficulty of the source pair
+- produce natural, native-sounding target-language retrieval text rather than literal translation
+
+Requirements:
+- Use the source context to resolve ambiguity and preserve the original information need exactly.
+- Keep the same meaning, level of specificity, and technical terms where appropriate.
+- Do not make the question more generic, broader, or more citation-led than the original.
+- Preserve the semantic difficulty of the original question.
+- Do not simplify the question into a keyword-heavy or literal surface-form restatement.
+- Prefer natural target-language phrasing over word-for-word translation.
+- Do not omit or alter numbers, units, ranges, formulas, identifiers, or named technical materials.
+- Preserve technical terms, abbreviations, symbols, and patent-style identifiers when translating them would be incorrect or unnatural.
+- Keep the answer faithful to the source answer and consistent with the source context.
+- Do not add explanation, background, or extra claims not present in the source pair or source context.
+- If the source question is technical and concise, keep the target-language question technical and concise too.
+
 Avoid translation artifacts:
 - choose one natural term, not slash-separated alternatives like `X/Y`
 - do not leave editor-style repair traces or synonym bundles
-- do not include unnecessary English glosses in parentheses
+- do not include unnecessary foreign-language glosses in parentheses
 - avoid code-mixed verbs or phrasing when the target language has a normal technical equivalent
-- rewrite into natural target-language syntax instead of following English word order too closely
+- rewrite into natural target-language syntax instead of following source-language word order too closely
 - keep the text fully in the target language except for unavoidable technical terms, formulas, units, identifiers, abbreviations, or proper nouns
 - do not leak words from unrelated languages or scripts into the translation
 - if a technical term can stay in Latin script, integrate it naturally into an otherwise target-language sentence
@@ -1022,10 +1027,10 @@ Judge these dimensions separately:
 
 Be especially strict about these artifact failures:
 - slash alternatives like `X/Y` when one natural wording should be chosen
-- parenthetical English glosses like `(oiling)` when they are not required for correctness
+- parenthetical foreign-language glosses like `(oiling)` when they are not required for correctness
 - mixed-language repair wording or unresolved synonym pairs
 - foreign-script leakage from an unrelated language when the span is not just a formula, identifier, unit, abbreviation, or proper noun
-- faithful but clearly literal syntax that still reads like English structure mapped into {target_lang_name}
+- faithful but clearly literal syntax that still reads like source-language structure mapped into {target_lang_name}
 
 Severity guidelines:
 - `high`: wrong language, meaning drift, dropped or altered technical details, or much more generic wording
@@ -1051,9 +1056,9 @@ If you reject:
   - `fix grammar and agreement`
   - `restore the missing technical detail exactly`
   - `use the standard technical term in {target_lang_name}`
-  - `keep the question as specific as the English original`
+  - `keep the question as specific as the source original`
   - `choose one natural term instead of slash alternatives`
-  - `remove the English gloss and use native technical wording`
+  - `remove the foreign-language gloss and use native technical wording`
   - `rewrite in natural {target_lang_name} syntax`
 
 If you approve:
