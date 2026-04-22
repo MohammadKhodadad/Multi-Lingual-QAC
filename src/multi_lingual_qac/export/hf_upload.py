@@ -12,7 +12,7 @@ import csv
 import io
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from datasets import Dataset
 from huggingface_hub import HfApi
@@ -67,6 +67,14 @@ def load_qac(qac_path: Path) -> list[dict]:
     return rows
 
 
+def _get_question_language(row: dict[str, Any]) -> str:
+    return str(
+        row.get("question_language")
+        or row.get("language")
+        or ""
+    ).strip()
+
+
 def push_to_hub(
     corpus_path: Path,
     qac_path: Path,
@@ -91,6 +99,12 @@ def push_to_hub(
 
     # Corpus: MTEB format (_id, title, text)
     corpus_ids = {r["id"] for r in corpus_rows}
+    corpus_ids_by_publication: dict[str, list[str]] = {}
+    for row in corpus_rows:
+        pub_num = str(row.get("publication_number", "")).strip()
+        corpus_id = str(row.get("id", "")).strip()
+        if pub_num and corpus_id:
+            corpus_ids_by_publication.setdefault(pub_num, []).append(corpus_id)
     corpus_data = [
         {"_id": r["id"], "title": r.get("title", ""), "text": r.get("context", r.get("abstract", ""))}
         for r in corpus_rows
@@ -105,7 +119,7 @@ def push_to_hub(
     seen_query_ids = set()
     for i, r in enumerate(qac_rows):
         cid = r.get("corpus_id", "")
-        lang = r.get("language", "")
+        lang = _get_question_language(r)
         q = r.get("question", "")
         a = r.get("answer", "")
         query_id = f"{cid}_q_{lang}" if cid in corpus_ids else f"q_{i}_{lang}"
@@ -113,12 +127,35 @@ def push_to_hub(
             query_id = f"{cid}_q_{lang}_{i}"
         seen_query_ids.add(query_id)
 
-        queries_data.append({"_id": query_id, "text": q})
-        qrels_data.append({"query-id": query_id, "corpus-id": cid, "score": 1.0})
+        query_row = {
+            "_id": query_id,
+            "text": q,
+            "language": lang,
+            "question_language": lang,
+            "mode": r.get("mode", ""),
+            "strategy": r.get("strategy", ""),
+            "strategy_name": r.get("strategy_name", ""),
+            "publication_number": r.get("publication_number", ""),
+            "corpus_id": cid,
+        }
+        queries_data.append(query_row)
+        publication_number = str(r.get("publication_number", "")).strip()
+        relevant_corpus_ids = corpus_ids_by_publication.get(publication_number, [])
+        if not relevant_corpus_ids and cid:
+            relevant_corpus_ids = [cid]
+        for relevant_corpus_id in relevant_corpus_ids:
+            qrels_data.append(
+                {"query-id": query_id, "corpus-id": relevant_corpus_id, "score": 1.0}
+            )
         qac_full.append({
             "query_id": query_id,
             "corpus_id": cid,
             "language": lang,
+            "question_language": lang,
+            "mode": r.get("mode", ""),
+            "strategy": r.get("strategy", ""),
+            "strategy_name": r.get("strategy_name", ""),
+            "publication_number": r.get("publication_number", ""),
             "question": q,
             "answer": a,
         })
@@ -182,3 +219,37 @@ def push_to_hub(
     url = f"https://huggingface.co/datasets/{repo_id}"
     print(f"Pushed to {url}")
     return url
+
+
+def upload_benchmark_outputs(
+    local_dir: Path,
+    repo_id: str,
+    *,
+    path_in_repo: str,
+    token: Optional[str] = None,
+    private: bool = False,
+) -> str:
+    """Upload generated benchmark artifacts to a Hugging Face dataset repo."""
+    local_dir = Path(local_dir)
+    if not local_dir.is_dir():
+        raise ValueError(f"Benchmark output directory does not exist: {local_dir}")
+
+    token = token or os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    if not token:
+        raise ValueError("Set HF_TOKEN in .env for Hugging Face upload.")
+
+    api = HfApi(token=token)
+    api.create_repo(
+        repo_id=repo_id,
+        repo_type="dataset",
+        private=private,
+        exist_ok=True,
+    )
+    api.upload_folder(
+        folder_path=str(local_dir),
+        path_in_repo=path_in_repo,
+        repo_id=repo_id,
+        repo_type="dataset",
+        commit_message=f"Update {path_in_repo}",
+    )
+    return f"https://huggingface.co/datasets/{repo_id}/tree/main/{path_in_repo}"

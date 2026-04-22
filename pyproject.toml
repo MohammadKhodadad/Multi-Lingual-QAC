@@ -7,8 +7,10 @@ requires-python = ">=3.10"
 dependencies = [
     "datasets>=2.14.0",
     "google-cloud-bigquery>=3.0.0",
+    "mteb>=2.12.15",
     "openai>=1.0.0",
     "python-dotenv>=1.0.0",
+    "sentence-transformers>=5.3.0",
     "tqdm>=4.67.3",
 ]
 

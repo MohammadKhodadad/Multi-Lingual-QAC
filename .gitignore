@@ -3,5 +3,5 @@
 __pycache__/
 *.pyc
 .python-version
-
+.cache
 data/

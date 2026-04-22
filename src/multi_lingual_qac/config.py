@@ -36,4 +36,16 @@ class PipelineConfig:
     qa_batch: Optional[bool] = None
     push_hf: bool = False
     hf_repo: Optional[str] = None
+    evaluate_mteb_models: tuple[str, ...] = ()
+    mteb_dataset_repo: str = ""
+    mteb_local_corpus_path: str = "data/google_patents/corpus.csv"
+    mteb_local_qac_path: str = "data/google_patents/qac/balanced_100_qac.csv"
+    mteb_output_dir: Optional[str] = None
+    mteb_batch_size: int = 32
+    generate_mteb_tables: bool = False
+    mteb_results_dir: Optional[str] = None
+    mteb_tables_dir: Optional[str] = None
+    mteb_include_mode_strategy: bool = False
+    upload_mteb_results: bool = False
+    mteb_upload_repo: Optional[str] = None
     languages: tuple[str, ...] = tuple(DEFAULT_LANGS)
