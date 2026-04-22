@@ -87,6 +87,36 @@ def _parse_json_response(text: str) -> Any:
     return json.loads(text)
 
 
+def _compute_faith_overall(faith: Dict[str, Any]) -> int:
+    """Compute the faithfulness aggregate from verifier sub-scores."""
+    return sum(
+        int(faith.get(key, 0))
+        for key in ("grounding", "precision", "numerical_fidelity")
+    )
+
+
+def _compute_quality_overall(qual: Dict[str, Any], mode: str) -> int:
+    """Compute the quality aggregate from verifier sub-scores."""
+    if mode == MODE_TECHNICAL:
+        keys = (
+            "search_bar_realism",
+            "specificity",
+            "phrasing_economy",
+            "focus",
+            "linguistic_quality",
+        )
+    else:
+        keys = (
+            "search_realism",
+            "lexical_distance",
+            "conceptual_framing",
+            "retrievability",
+            "linguistic_quality",
+        )
+
+    return sum(int(qual.get(key, 0)) for key in keys)
+
+
 # ---------------------------------------------------------------------------
 # Corpus loading
 # ---------------------------------------------------------------------------
@@ -345,16 +375,24 @@ def grade_faithfulness(
     # Normalise to guarantee keys exist
     normalised: List[Dict[str, Any]] = []
     for item in results:
-        normalised.append({
+        row = {
             "grounding": int(item.get("grounding", 1)),
             "precision": int(item.get("precision", 1)),
             "numerical_fidelity": int(item.get("numerical_fidelity", 1)),
-            "overall": int(item.get("overall", 1)),
             "reason": str(item.get("reason", "")).strip(),
-        })
+        }
+        row["overall"] = _compute_faith_overall(row)
+        normalised.append(row)
     # Pad if fewer than 3
     while len(normalised) < 3:
-        normalised.append({"grounding": 1, "precision": 1, "numerical_fidelity": 1, "overall": 1, "reason": "missing"})
+        row = {
+            "grounding": 1,
+            "precision": 1,
+            "numerical_fidelity": 1,
+            "reason": "missing",
+        }
+        row["overall"] = _compute_faith_overall(row)
+        normalised.append(row)
     return normalised
 
 
@@ -405,37 +443,53 @@ def grade_quality(
     normalised: List[Dict[str, Any]] = []
     if mode == MODE_TECHNICAL:
         for item in results:
-            normalised.append({
+            row = {
                 "search_bar_realism": int(item.get("search_bar_realism", 1)),
                 "specificity": int(item.get("specificity", 1)),
                 "phrasing_economy": int(item.get("phrasing_economy", 1)),
                 "focus": int(item.get("focus", 1)),
                 "linguistic_quality": int(item.get("linguistic_quality", 1)),
-                "overall": int(item.get("overall", 1)),
                 "failure_type": str(item.get("failure_type", "none")).strip(),
                 "reason": str(item.get("reason", "")).strip(),
-            })
-        default = {"search_bar_realism": 1, "specificity": 1, "phrasing_economy": 1,
-                    "focus": 1, "linguistic_quality": 1, "overall": 1,
-                    "failure_type": "missing", "reason": "missing"}
+            }
+            row["overall"] = _compute_quality_overall(row, mode)
+            normalised.append(row)
+        default = {
+            "search_bar_realism": 1,
+            "specificity": 1,
+            "phrasing_economy": 1,
+            "focus": 1,
+            "linguistic_quality": 1,
+            "failure_type": "missing",
+            "reason": "missing",
+        }
     else:  # semantic
         for item in results:
-            normalised.append({
+            row = {
                 "search_realism": int(item.get("search_realism", 1)),
                 "lexical_distance": int(item.get("lexical_distance", 1)),
                 "conceptual_framing": int(item.get("conceptual_framing", 1)),
                 "retrievability": int(item.get("retrievability", 1)),
                 "linguistic_quality": int(item.get("linguistic_quality", 1)),
-                "overall": int(item.get("overall", 1)),
                 "failure_type": str(item.get("failure_type", "none")).strip(),
                 "reason": str(item.get("reason", "")).strip(),
-            })
-        default = {"search_realism": 1, "lexical_distance": 1, "conceptual_framing": 1,
-                    "retrievability": 1, "linguistic_quality": 1, "overall": 1,
-                    "failure_type": "missing", "reason": "missing"}
+            }
+            row["overall"] = _compute_quality_overall(row, mode)
+            normalised.append(row)
+        default = {
+            "search_realism": 1,
+            "lexical_distance": 1,
+            "conceptual_framing": 1,
+            "retrievability": 1,
+            "linguistic_quality": 1,
+            "failure_type": "missing",
+            "reason": "missing",
+        }
 
     while len(normalised) < 3:
-        normalised.append(dict(default))
+        row = dict(default)
+        row["overall"] = _compute_quality_overall(row, mode)
+        normalised.append(row)
     return normalised
 
 
@@ -445,19 +499,8 @@ def grade_quality(
 
 
 def _compute_total_score(faith: Dict[str, Any], qual: Dict[str, Any], mode: str) -> int:
-    """Sum all numerical sub-scores from faithfulness + quality."""
-    total = 0
-    # Faithfulness: grounding + precision + numerical_fidelity + overall
-    for k in ("grounding", "precision", "numerical_fidelity", "overall"):
-        total += int(faith.get(k, 0))
-    # Quality: all numeric sub-scores + overall (excluding failure_type, reason)
-    if mode == MODE_TECHNICAL:
-        for k in ("search_bar_realism", "specificity", "phrasing_economy", "focus", "linguistic_quality", "overall"):
-            total += int(qual.get(k, 0))
-    else:
-        for k in ("search_realism", "lexical_distance", "conceptual_framing", "retrievability", "linguistic_quality", "overall"):
-            total += int(qual.get(k, 0))
-    return total
+    """Sum the faithfulness and quality aggregates."""
+    return int(faith.get("overall", 0)) + int(qual.get("overall", 0))
 
 
 def _build_output_row(
