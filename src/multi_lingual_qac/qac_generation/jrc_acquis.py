@@ -60,6 +60,85 @@ def _weighted_sample_without_replacement(
     return [row for _score, row in scored[:sample_size]]
 
 
+def _assign_synthetic_targets(
+    selected_source_rows: list[dict[str, str]],
+    synthetic_target_languages: list[str],
+    *,
+    synthetic_total_per_language: int,
+    rng: random.Random,
+) -> tuple[dict[str, list[str]], dict[str, dict[str, int]]]:
+    if synthetic_total_per_language <= 0 or not selected_source_rows or not synthetic_target_languages:
+        return {}, {}
+
+    rows_by_source_language: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in selected_source_rows:
+        source_lang = row.get("language", "").strip().lower()
+        if source_lang:
+            rows_by_source_language[source_lang].append(row)
+
+    source_languages = sorted(rows_by_source_language)
+    if not source_languages:
+        return {}, {}
+
+    assignments_by_source_id: dict[str, list[str]] = defaultdict(list)
+    assignment_counts: dict[str, dict[str, int]] = {}
+
+    for synthetic_lang in synthetic_target_languages:
+        base_quota = synthetic_total_per_language // len(source_languages)
+        remainder = synthetic_total_per_language % len(source_languages)
+        quotas = {
+            source_lang: min(base_quota, len(rows_by_source_language[source_lang]))
+            for source_lang in source_languages
+        }
+
+        remaining = synthetic_total_per_language - sum(quotas.values())
+        remainder_order = list(source_languages)
+        rng.shuffle(remainder_order)
+        for source_lang in remainder_order:
+            if remaining <= 0:
+                break
+            available = len(rows_by_source_language[source_lang]) - quotas[source_lang]
+            if available <= 0:
+                continue
+            extra = 1 if remainder > 0 else min(available, remaining)
+            quotas[source_lang] += extra
+            remaining -= extra
+            if remainder > 0:
+                remainder -= 1
+
+        while remaining > 0:
+            expandable = [
+                source_lang
+                for source_lang in source_languages
+                if len(rows_by_source_language[source_lang]) > quotas[source_lang]
+            ]
+            if not expandable:
+                break
+            rng.shuffle(expandable)
+            for source_lang in expandable:
+                if remaining <= 0:
+                    break
+                quotas[source_lang] += 1
+                remaining -= 1
+
+        assignment_counts[synthetic_lang] = {}
+        for source_lang in source_languages:
+            quota = quotas[source_lang]
+            if quota <= 0:
+                continue
+            chosen_rows = rng.sample(rows_by_source_language[source_lang], quota)
+            assignment_counts[synthetic_lang][source_lang] = quota
+            for row in chosen_rows:
+                source_id = row.get("id", "")
+                if source_id:
+                    assignments_by_source_id[source_id].append(synthetic_lang)
+
+    for source_id in list(assignments_by_source_id):
+        assignments_by_source_id[source_id] = sorted(set(assignments_by_source_id[source_id]))
+
+    return assignments_by_source_id, assignment_counts
+
+
 def prepare_jrc_qa_inputs(
     *,
     corpus_full_path: Path,
@@ -192,6 +271,13 @@ def prepare_jrc_qa_inputs(
     sampled_source_rows.sort(key=lambda row: (row.get("language", ""), row.get("id", "")))
     selected_source_rows.sort(key=lambda row: (row.get("language", ""), row.get("id", "")))
 
+    synthetic_targets_by_source_id, synthetic_assignment_counts = _assign_synthetic_targets(
+        selected_source_rows,
+        synthetic_target_language_list,
+        synthetic_total_per_language=generation_docs_per_language,
+        rng=rng,
+    )
+
     sampled_source_pool_ids = {
         row.get("id", "")
         for row in sampled_source_rows
@@ -256,7 +342,7 @@ def prepare_jrc_qa_inputs(
             f"{celex}__{source_lang}__{source_lang}"
         )
         generation_row["synthetic_target_languages_json"] = json.dumps(
-            synthetic_target_language_list,
+            synthetic_targets_by_source_id.get(source_id, []),
             ensure_ascii=False,
         )
         generation_row["linked_corpus_ids_json"] = json.dumps(linked_corpus_ids, ensure_ascii=False)
@@ -328,6 +414,17 @@ def prepare_jrc_qa_inputs(
         "generation_docs_per_language_requested": generation_docs_per_language,
         "allowed_languages": sorted(allowed_language_set),
         "synthetic_target_languages": synthetic_target_language_list,
+        "synthetic_target_total_per_language_requested": (
+            generation_docs_per_language if synthetic_target_language_list else 0
+        ),
+        "synthetic_target_assignments_by_language": {
+            synthetic_lang: int(sum(source_counts.values()))
+            for synthetic_lang, source_counts in sorted(synthetic_assignment_counts.items())
+        },
+        "synthetic_target_assignments_by_source_language": {
+            synthetic_lang: dict(sorted(source_counts.items()))
+            for synthetic_lang, source_counts in sorted(synthetic_assignment_counts.items())
+        },
         "sampled_source_pool_docs_total": len(sampled_source_rows),
         "sampled_source_docs_total": len(sampled_source_rows),
         "selected_generation_source_docs_total": len(selected_source_rows),

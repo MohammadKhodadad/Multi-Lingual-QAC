@@ -105,7 +105,7 @@ The generation loop can be summarized as follows:
 \item generate one question--answer pair in that same language;
 \item validate the draft through the staged checker stack;
 \item if validation fails, regenerate with structured feedback;
-\item optionally translate an accepted draft into synthetic Chinese and validate the translated QA with translation-quality and legal-shape checks;
+\item optionally translate a balanced subset of accepted drafts into enabled synthetic languages (currently Chinese by default), with each synthetic language capped to the same total budget as one retained non-synthetic language and distributed as evenly as possible across source languages, then validate the translated QA with translation-quality and legal-shape checks;
 \item after at most three attempts per stage, either accept the output or discard the generation unit.
 \end{enumerate}
 
@@ -142,7 +142,7 @@ Build generation context $x^{\mathrm{gen}}_{c,\ell}$\;
         \Continue\;
     }
     Accept $(q,a)$\;
-    Optionally generate a synthetic Chinese translation and validate it with translation-quality and legal-shape checks\;
+    Optionally generate quota-balanced synthetic translations for enabled synthetic languages and validate them with translation-quality and legal-shape checks\;
     Link the query to retained sampled documents for the same \texttt{CELEX}\;
     Write outputs to \texttt{qac}, \texttt{queries}, and \texttt{qrels}\;
     \Return accepted generation unit\;
@@ -161,7 +161,7 @@ If a draft fails at any stage, the system records structured feedback and uses t
 
 \subsection{Query Linking and Relevance Construction}
 
-Once a question--answer output is accepted, we convert it into retrieval supervision. The generated query is anchored on the sampled same-language document, but its relevance set is defined at the \texttt{CELEX} level within the final retrieval corpus. If multiple retained corpus realizations of the same \texttt{CELEX} are present, the query is linked to all of them; if only two retained documents are present, this reduces to a bilingual case. Optional synthetic Chinese translations inherit the same relevance set while being marked explicitly as synthetic translated queries in the released metadata.
+Once a question--answer output is accepted, we convert it into retrieval supervision. The generated query is anchored on the sampled same-language document, but its relevance set is defined at the \texttt{CELEX} level within the final retrieval corpus. If multiple retained corpus realizations of the same \texttt{CELEX} are present, the query is linked to all of them; if only two retained documents are present, this reduces to a bilingual case. Optional synthetic translations inherit the same relevance set while being marked explicitly as synthetic translated queries in the released metadata. For each enabled synthetic language, these translations are assigned with a fixed total budget equal to one retained non-synthetic per-language selection budget and spread as evenly as possible across the retained source languages.
 
 This relevance construction reflects the central cross-lingual assumption of the benchmark: the same underlying legal act should be retrievable through semantically equivalent language-specific realizations. The positive labels are therefore document-level relevance judgments, not paragraph-level evidence labels. They indicate that the linked documents instantiate the same legal act and support the same underlying information need at the level of document retrieval.
 

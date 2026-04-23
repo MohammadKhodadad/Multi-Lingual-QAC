@@ -225,8 +225,8 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - `model_comparison.md`
   - `model_comparison.tex`
 - Latest partial CPU comparison snapshot:
-  - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2062`
-  - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.1340`
+  - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2567`
+  - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.2300`
 - Next MTEB work package:
   - finish the default model sweep
   - rerun the strongest models on GPU hardware

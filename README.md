@@ -135,10 +135,10 @@ Comparison-table outputs:
 - `reports/mteb_tables/model_comparison.tex`
 - Hugging Face dataset artifact path: `benchmark_outputs/mteb_tables/`
 
-Current partial CPU results from the latest run:
+Current partial CPU results from the latest completed models:
 
-- `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2062`
-- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.1340`
+- `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2567`
+- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.2300`
 
 Suggested next steps:
 
@@ -235,11 +235,11 @@ JRC now uses a **CELEX-group-based** QA flow:
 4. retain a smaller question-generation set per language from that sampled pool
 5. build the final retrieval corpus from the sampled source pool plus all same-`celex` document realizations for the selected question-generation set, still restricted to the active language subset
 6. generate one same-language legal question/answer from each selected document in its own language
-7. optionally add synthetic Chinese query translations and mark them explicitly in the released query metadata
+7. optionally add synthetic-language query translations (currently Chinese by default), but cap each synthetic language to the same total budget as one selected non-synthetic language and distribute that budget evenly across the retained source languages
 8. validate originals and synthetic translations with language, faithfulness, retrieval-quality, and legal-shape checks
 9. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
 
-The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
+The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. Synthetic translation assignment is quota-based: for each enabled synthetic language, the total number of synthetic queries matches one non-synthetic per-language selection budget and is spread as evenly as possible across the retained source languages. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
 
 See `docs/QA_GENERATION_PROCESS.md` for the full current QA-generation flow across EPO, Wikidata, and JRC.
 
