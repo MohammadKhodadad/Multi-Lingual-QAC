@@ -338,9 +338,7 @@ def prepare_jrc_qa_inputs(
         generation_row["target_language"] = source_lang
         generation_row["target_corpus_id"] = source_id
         generation_row["query_corpus_id"] = source_id
-        generation_row["query_id_hint"] = (
-            f"{celex}__{source_lang}__{source_lang}"
-        )
+        generation_row["query_id_hint"] = source_id
         generation_row["synthetic_target_languages_json"] = json.dumps(
             synthetic_targets_by_source_id.get(source_id, []),
             ensure_ascii=False,

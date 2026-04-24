@@ -167,7 +167,7 @@ def run_wikidata_qrels_labeling(
     """
     Write queries.csv and qrels.csv under output_dir.
 
-    queries columns: _id, text, language, source_corpus_id, qid
+    queries columns: _id, text, query_language, source_corpus_id, qid
     (one row per language in qac for that corpus_id; _id = `{corpus_id}_q_{lang}`.)
 
     When judging non-English passages, the translated question for that language
@@ -279,7 +279,7 @@ def run_wikidata_qrels_labeling(
                 {
                     "_id": query_id,
                     "text": questions_by_lang[qlang],
-                    "language": qlang,
+                    "query_language": qlang,
                     "source_corpus_id": source_cid,
                     "qid": qid,
                 }
@@ -302,7 +302,7 @@ def run_wikidata_qrels_labeling(
     with queries_path.open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(
             fh,
-            fieldnames=["_id", "text", "language", "source_corpus_id", "qid"],
+            fieldnames=["_id", "text", "query_language", "source_corpus_id", "qid"],
         )
         w.writeheader()
         w.writerows(queries_out)

@@ -331,6 +331,7 @@ def push_to_hub(
     corpus_data = [
         {
             "_id": r["id"],
+            "corpus_id": r["id"],
             "title": r.get("title", ""),
             "text": r.get("context", r.get("abstract", "")),
             "corpus_language": corpus_language_by_id.get(r["id"], ""),
@@ -338,7 +339,8 @@ def push_to_hub(
         for r in corpus_rows
     ]
 
-    # Queries: _id, text (one per qac row)
+    # Queries: keep `_id` for retrieval-tool compatibility, plus explicit
+    # readability fields for Hugging Face browsing.
     # Qrels: query-id, corpus-id, score (links each query to its corpus doc)
     queries_data = []
     qrels_data = []
@@ -363,8 +365,10 @@ def push_to_hub(
 
         queries_data.append({
             "_id": query_id,
+            "query_id": query_id,
             "text": q,
-            "question_language": lang,
+            "query_language": lang,
+            "corpus_id": cid,
             "corpus_language": corpus_lang,
             "is_synthetic_translation": is_synthetic_translation,
         })
@@ -373,7 +377,8 @@ def push_to_hub(
         qac_full.append({
             "query_id": query_id,
             "corpus_id": cid,
-            "language": lang,
+            "query_language": lang,
+            "corpus_language": corpus_lang,
             "question": q,
             "answer": a,
             "is_synthetic_translation": is_synthetic_translation,

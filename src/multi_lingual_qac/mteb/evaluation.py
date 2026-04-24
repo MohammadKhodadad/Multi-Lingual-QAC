@@ -126,7 +126,9 @@ def _configure_local_model_cache() -> Path:
 def _detect_query_languages(dataset_repo: str, revision: str) -> list[str]:
     queries = load_dataset(dataset_repo, "queries", split="train", revision=revision)
     lang_column = None
-    if "question_language" in queries.column_names:
+    if "query_language" in queries.column_names:
+        lang_column = "query_language"
+    elif "question_language" in queries.column_names:
         lang_column = "question_language"
     elif "language" in queries.column_names:
         lang_column = "language"
