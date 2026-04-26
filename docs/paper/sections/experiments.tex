@@ -4,7 +4,7 @@ We evaluate the benchmark as a multilingual document retrieval task. After datas
 
 \subsection{Models and Metrics}
 
-The current evaluation pipeline compares multilingual sentence-embedding models under a common retrieval protocol. The default baseline set includes \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}, \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2}, \texttt{intfloat/multilingual-e5-large}, and \texttt{BAAI/bge-m3}. We report standard ranking metrics, with nDCG@10 treated as the main score, and we additionally record other MTEB-style metrics such as MAP@10, MRR@10, hit rate, and recall.
+The current evaluation pipeline compares multilingual sentence-embedding models under a common retrieval protocol. The default baseline set includes \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}, \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2}, \texttt{intfloat/multilingual-e5-large}, and \texttt{BAAI/bge-m3}. We report standard ranking metrics, with Recall@10 treated as the main score. This is deliberate: each query can have several relevant document realizations in different retained languages, so the primary evaluation question is how much of that positive set the model retrieves in the top 10 rather than only whether one relevant document appears early. We also report nDCG@10 as a standard ranking-quality metric, Hit@10 as a top-10 success indicator, MRR@10 as a first-hit metric, and full MAP as a whole-ranking precision-oriented summary. To better reflect ranking quality beyond the first few positions, we additionally track nDCG@100 and Hit@100 as broader-window metrics.
 
 \subsection{Implementation Notes}
 
@@ -18,9 +18,9 @@ This subsection is intentionally left without numeric results for now. Final mod
 \centering
 \caption{Placeholder for the main multilingual retrieval results.}
 \label{tab:main-results-placeholder}
-\begin{tabular}{lccccc}
+\begin{tabular}{lccccccc}
 \toprule
-Model & nDCG@10 & MAP@10 & MRR@10 & Hit@10 & Recall@10 \\
+Model & Recall@10 & nDCG@10 & MRR@10 & Hit@10 & MAP & nDCG@100 & Hit@100 \\
 \midrule
 % Results to be added.
 \bottomrule

@@ -137,8 +137,8 @@ Comparison-table outputs:
 
 Current partial CPU results from the latest completed models:
 
-- `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `ndcg_at_10 = 0.2567`
-- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `ndcg_at_10 = 0.2300`
+- `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `Recall@10 = 0.2921`, `nDCG@10 = 0.2567`, `nDCG@100 = 0.3258`, `Hit@100 = 0.6105`
+- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `Recall@10 = 0.2500`, `nDCG@10 = 0.2300`, `nDCG@100 = 0.2955`, `Hit@100 = 0.5263`
 
 Suggested next steps:
 

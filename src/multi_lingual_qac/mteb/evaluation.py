@@ -13,13 +13,14 @@ from mteb import MTEB
 from mteb.abstasks import AbsTaskRetrieval
 from mteb.abstasks.task_metadata import TaskMetadata
 from mteb.results import TaskResult
+import pytrec_eval
 from sentence_transformers import SentenceTransformer
 
 DEFAULT_MTEB_DATASET_REPO = "MohammadKhodadad/multi-lingual-qac"
 DEFAULT_MTEB_OUTPUT_DIR = "reports/mteb"
 DEFAULT_MTEB_TABLES_DIR = "reports/mteb_tables"
 DEFAULT_MTEB_CACHE_DIR = ".cache/huggingface"
-DEFAULT_MTEB_MAIN_SCORE = "ndcg_at_10"
+DEFAULT_MTEB_MAIN_SCORE = "recall_at_10"
 DEFAULT_MTEB_MODELS = [
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
@@ -77,11 +78,30 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
         self.metadata = metadata
         super().__init__()
 
+    def task_specific_scores(
+        self,
+        scores: dict[str, dict[str, float]],
+        qrels: dict[str, dict[str, int | float]],
+        results: dict[str, dict[str, float]],
+        hf_split: str,
+        hf_subset: str,
+    ) -> dict[str, float]:
+        del scores, hf_split, hf_subset
+        evaluator = pytrec_eval.RelevanceEvaluator(qrels, {"map"})
+        per_query_scores = evaluator.evaluate(results)
+        if not per_query_scores:
+            return {}
+        full_map = sum(float(item.get("map", 0.0)) for item in per_query_scores.values()) / len(
+            per_query_scores
+        )
+        return {"map": round(full_map, 5)}
+
 
 COMPARISON_METRICS = [
     "main_score",
     "ndcg_at_10",
     "map_at_10",
+    "map",
     "mrr_at_10",
     "hit_rate_at_10",
     "recall_at_10",
@@ -420,8 +440,8 @@ def _build_markdown_comparison(
         "",
         "### Ranking",
         "",
-        "| Rank | Model | Main score | nDCG@10 | MAP@10 | MRR@10 | Hit@10 | Recall@10 | Time (s) |",
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Rank | Model | Main score | Recall@10 | nDCG@10 | MRR@10 | Hit@10 | MAP@10 | MAP | nDCG@100 | Hit@100 | Time (s) |",
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for idx, item in enumerate(ranked, start=1):
         cells = [
@@ -430,21 +450,30 @@ def _build_markdown_comparison(
             f"**{item.main_score:.4f}**"
             if item.main_score == best.get("main_score")
             else f"{item.main_score:.4f}",
+            f"**{_format_metric(item.metrics.get('recall_at_10'))}**"
+            if _metric_value(item, "recall_at_10") == best.get("recall_at_10")
+            else _format_metric(item.metrics.get("recall_at_10")),
             f"**{_format_metric(item.metrics.get('ndcg_at_10', item.main_score))}**"
             if _metric_value(item, "ndcg_at_10") == best.get("ndcg_at_10")
             else _format_metric(item.metrics.get("ndcg_at_10", item.main_score)),
-            f"**{_format_metric(item.metrics.get('map_at_10'))}**"
-            if _metric_value(item, "map_at_10") == best.get("map_at_10")
-            else _format_metric(item.metrics.get("map_at_10")),
             f"**{_format_metric(item.metrics.get('mrr_at_10'))}**"
             if _metric_value(item, "mrr_at_10") == best.get("mrr_at_10")
             else _format_metric(item.metrics.get("mrr_at_10")),
             f"**{_format_metric(item.metrics.get('hit_rate_at_10'))}**"
             if _metric_value(item, "hit_rate_at_10") == best.get("hit_rate_at_10")
             else _format_metric(item.metrics.get("hit_rate_at_10")),
-            f"**{_format_metric(item.metrics.get('recall_at_10'))}**"
-            if _metric_value(item, "recall_at_10") == best.get("recall_at_10")
-            else _format_metric(item.metrics.get("recall_at_10")),
+            f"**{_format_metric(item.metrics.get('map_at_10'))}**"
+            if _metric_value(item, "map_at_10") == best.get("map_at_10")
+            else _format_metric(item.metrics.get("map_at_10")),
+            f"**{_format_metric(item.metrics.get('map'))}**"
+            if _metric_value(item, "map") == best.get("map")
+            else _format_metric(item.metrics.get("map")),
+            f"**{_format_metric(item.metrics.get('ndcg_at_100'))}**"
+            if _metric_value(item, "ndcg_at_100") == best.get("ndcg_at_100")
+            else _format_metric(item.metrics.get("ndcg_at_100")),
+            f"**{_format_metric(item.metrics.get('hit_rate_at_100'))}**"
+            if _metric_value(item, "hit_rate_at_100") == best.get("hit_rate_at_100")
+            else _format_metric(item.metrics.get("hit_rate_at_100")),
             (
                 f"{item.evaluation_time_seconds:.1f}"
                 if item.evaluation_time_seconds is not None
@@ -486,17 +515,20 @@ def _build_latex_comparison(
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
-        r"\begin{tabular}{r l r r r r r r}",
+        r"\begin{tabular}{r l r r r r r r r r r}",
         r"\hline",
-        r"Rank & Model & Main & MAP@10 & MRR@10 & Hit@10 & Recall@10 & Time (s) \\",
+        r"Rank & Model & Main & Recall@10 & nDCG@10 & MRR@10 & Hit@10 & MAP & nDCG@100 & Hit@100 & Time (s) \\",
         r"\hline",
     ]
     for idx, item in enumerate(ranked, start=1):
         main_score = _format_metric(item.main_score)
-        map_at_10 = _format_metric(item.metrics.get("map_at_10"))
+        recall_at_10 = _format_metric(item.metrics.get("recall_at_10"))
+        ndcg_at_10 = _format_metric(item.metrics.get("ndcg_at_10", item.main_score))
         mrr_at_10 = _format_metric(item.metrics.get("mrr_at_10"))
         hit_rate_at_10 = _format_metric(item.metrics.get("hit_rate_at_10"))
-        recall_at_10 = _format_metric(item.metrics.get("recall_at_10"))
+        full_map = _format_metric(item.metrics.get("map"))
+        ndcg_at_100 = _format_metric(item.metrics.get("ndcg_at_100"))
+        hit_rate_at_100 = _format_metric(item.metrics.get("hit_rate_at_100"))
         eval_time = (
             f"{item.evaluation_time_seconds:.1f}"
             if item.evaluation_time_seconds is not None
@@ -504,24 +536,33 @@ def _build_latex_comparison(
         )
         if item.main_score == best.get("main_score"):
             main_score = rf"\textbf{{{main_score}}}"
-        if _metric_value(item, "map_at_10") == best.get("map_at_10"):
-            map_at_10 = rf"\textbf{{{map_at_10}}}"
+        if _metric_value(item, "recall_at_10") == best.get("recall_at_10"):
+            recall_at_10 = rf"\textbf{{{recall_at_10}}}"
+        if _metric_value(item, "ndcg_at_10") == best.get("ndcg_at_10"):
+            ndcg_at_10 = rf"\textbf{{{ndcg_at_10}}}"
         if _metric_value(item, "mrr_at_10") == best.get("mrr_at_10"):
             mrr_at_10 = rf"\textbf{{{mrr_at_10}}}"
         if _metric_value(item, "hit_rate_at_10") == best.get("hit_rate_at_10"):
             hit_rate_at_10 = rf"\textbf{{{hit_rate_at_10}}}"
-        if _metric_value(item, "recall_at_10") == best.get("recall_at_10"):
-            recall_at_10 = rf"\textbf{{{recall_at_10}}}"
+        if _metric_value(item, "map") == best.get("map"):
+            full_map = rf"\textbf{{{full_map}}}"
+        if _metric_value(item, "ndcg_at_100") == best.get("ndcg_at_100"):
+            ndcg_at_100 = rf"\textbf{{{ndcg_at_100}}}"
+        if _metric_value(item, "hit_rate_at_100") == best.get("hit_rate_at_100"):
+            hit_rate_at_100 = rf"\textbf{{{hit_rate_at_100}}}"
         lines.append(
             " & ".join(
                 [
                     str(idx),
                     r"\texttt{" + _latex_escape(item.model_name) + "}",
                     main_score,
-                    map_at_10,
+                    recall_at_10,
+                    ndcg_at_10,
                     mrr_at_10,
                     hit_rate_at_10,
-                    recall_at_10,
+                    full_map,
+                    ndcg_at_100,
+                    hit_rate_at_100,
                     eval_time,
                 ]
             )
