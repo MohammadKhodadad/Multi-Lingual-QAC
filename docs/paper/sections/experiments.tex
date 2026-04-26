@@ -1,6 +1,6 @@
 \subsection{Evaluation Setting}
 
-We evaluate the benchmark as a multilingual document retrieval task. After dataset construction, the released \texttt{corpus}, \texttt{queries}, and \texttt{qrels} splits are loaded directly from the Hugging Face dataset repository and wrapped as a custom MTEB retrieval task. Query languages are inferred from the released metadata and mapped into the language labels expected by the evaluation framework so that the evaluation remains multilingual without requiring a manually maintained task manifest.
+We evaluate the benchmark as a multilingual document retrieval task. After dataset construction, the released \texttt{corpus}, \texttt{queries}, and \texttt{qrels} splits are loaded directly from the Hugging Face dataset repository and wrapped as a custom MTEB retrieval task. Query languages are inferred from the released metadata and mapped into the language labels expected by the evaluation framework so that the evaluation remains multilingual without requiring a manually maintained task manifest. The default reported setup is the \texttt{multilingual} variant; a stricter \texttt{cross\_language} variant is also available and keeps only other-language positives for each query.
 
 \subsection{Models and Metrics}
 

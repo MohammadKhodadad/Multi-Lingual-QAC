@@ -33,27 +33,6 @@ DATASET_CARD_ATTRIBUTION = """
 - **Scope:** Attribution and license refer only to the patent dataset content (bibliographic and abstract text from the public BigQuery tables). They do not cover other Google services, products, or UI content.
 """
 
-README_YAML = """---
-configs:
-- config_name: corpus
-  data_files:
-  - split: train
-    path: data/corpus/*.parquet
-- config_name: queries
-  data_files:
-  - split: train
-    path: data/queries/*.parquet
-- config_name: qrels
-  data_files:
-  - split: train
-    path: data/qrels/*.parquet
-- config_name: qac
-  data_files:
-  - split: train
-    path: data/qac/*.parquet
----
-"""
-
 COMMON_DATASET_STRUCTURE = """
 ## Dataset Structure
 
@@ -61,6 +40,8 @@ COMMON_DATASET_STRUCTURE = """
 - `queries`: benchmark queries
 - `qrels`: relevance judgments
 - `qac`: full question-answer-context rows for inspection and analysis
+
+When variant-specific retrieval configs are present, `multilingual-*` keeps the full multilingual relevance set and `cross_language-*` keeps only cross-language positives for the same queries and corpus.
 
 Each config currently contains a `train` split.
 """
@@ -103,7 +84,39 @@ LEADERBOARD_START = "<!-- BEGIN MTEB LEADERBOARD -->"
 LEADERBOARD_END = "<!-- END MTEB LEADERBOARD -->"
 
 
-def _build_readme(source_name: str) -> str:
+def _build_readme_yaml(*, include_variant_configs: bool) -> str:
+    configs = [
+        ("corpus", "data/corpus/*.parquet"),
+        ("queries", "data/queries/*.parquet"),
+        ("qrels", "data/qrels/*.parquet"),
+        ("qac", "data/qac/*.parquet"),
+    ]
+    if include_variant_configs:
+        configs.extend(
+            [
+                ("multilingual-corpus", "data/multilingual-corpus/*.parquet"),
+                ("multilingual-queries", "data/multilingual-queries/*.parquet"),
+                ("multilingual-qrels", "data/multilingual-qrels/*.parquet"),
+                ("cross_language-corpus", "data/cross_language-corpus/*.parquet"),
+                ("cross_language-queries", "data/cross_language-queries/*.parquet"),
+                ("cross_language-qrels", "data/cross_language-qrels/*.parquet"),
+            ]
+        )
+    lines = ["---", "configs:"]
+    for config_name, path in configs:
+        lines.extend(
+            [
+                f"- config_name: {config_name}",
+                "  data_files:",
+                "  - split: train",
+                f"    path: {path}",
+            ]
+        )
+    lines.append("---")
+    return "\n".join(lines) + "\n"
+
+
+def _build_readme(source_name: str, *, include_variant_configs: bool) -> str:
     source_name = (source_name or "").strip().lower()
     if source_name == "epo":
         intro = PATENT_DATASET_INTRO
@@ -117,7 +130,7 @@ def _build_readme(source_name: str) -> str:
     else:
         intro = GENERIC_DATASET_INTRO
         attribution = ""
-    return README_YAML + intro + COMMON_DATASET_STRUCTURE + "\n" + attribution
+    return _build_readme_yaml(include_variant_configs=include_variant_configs) + intro + COMMON_DATASET_STRUCTURE + "\n" + attribution
 
 
 def _set_csv_field_size_limit() -> None:
@@ -299,6 +312,22 @@ def _parse_boolish(value: object) -> bool:
     return raw in {"1", "true", "yes", "y"}
 
 
+def _cross_language_linked_corpus_ids(
+    row: dict,
+    fallback_corpus_id: str,
+    *,
+    query_language: str,
+    corpus_language_by_id: dict[str, str],
+) -> list[str]:
+    linked_ids = _linked_corpus_ids(row, fallback_corpus_id)
+    query_language = (query_language or "").strip().lower()
+    return [
+        corpus_id
+        for corpus_id in linked_ids
+        if corpus_language_by_id.get(corpus_id, _infer_language(corpus_id)) != query_language
+    ]
+
+
 def push_to_hub(
     corpus_path: Path,
     qac_path: Path,
@@ -344,6 +373,8 @@ def push_to_hub(
     # Qrels: query-id, corpus-id, score (links each query to its corpus doc)
     queries_data = []
     qrels_data = []
+    multilingual_qrels_data = []
+    cross_language_qrels_data = []
     qac_full = []  # full triplets with answer
 
     seen_query_ids = set()
@@ -373,7 +404,18 @@ def push_to_hub(
             "is_synthetic_translation": is_synthetic_translation,
         })
         for linked_corpus_id in _linked_corpus_ids(r, cid):
-            qrels_data.append({"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0})
+            qrel_row = {"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0}
+            qrels_data.append(qrel_row)
+            multilingual_qrels_data.append(dict(qrel_row))
+        for linked_corpus_id in _cross_language_linked_corpus_ids(
+            r,
+            cid,
+            query_language=lang,
+            corpus_language_by_id=corpus_language_by_id,
+        ):
+            cross_language_qrels_data.append(
+                {"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0}
+            )
         qac_full.append({
             "query_id": query_id,
             "corpus_id": cid,
@@ -388,6 +430,14 @@ def push_to_hub(
     queries_ds = Dataset.from_list(queries_data)
     qrels_ds = Dataset.from_list(qrels_data)
     qac_ds = Dataset.from_list(qac_full)
+    multilingual_corpus_ds = Dataset.from_list(corpus_data)
+    multilingual_queries_ds = Dataset.from_list(queries_data)
+    multilingual_qrels_ds = Dataset.from_list(multilingual_qrels_data)
+    cross_language_corpus_ds = Dataset.from_list(corpus_data) if cross_language_qrels_data else None
+    cross_language_queries_ds = Dataset.from_list(queries_data) if cross_language_qrels_data else None
+    cross_language_qrels_ds = (
+        Dataset.from_list(cross_language_qrels_data) if cross_language_qrels_data else None
+    )
     api = HfApi(token=token)
 
     _with_hf_retries(
@@ -445,9 +495,79 @@ def push_to_hub(
             private=private,
         ),
     )
+    if cross_language_qrels_data:
+        _with_hf_retries(
+            "Push multilingual corpus split",
+            lambda: multilingual_corpus_ds.push_to_hub(
+                repo_id,
+                config_name="multilingual-corpus",
+                split="train",
+                data_dir="data/multilingual-corpus",
+                token=token,
+                private=private,
+            ),
+        )
+        _with_hf_retries(
+            "Push multilingual queries split",
+            lambda: multilingual_queries_ds.push_to_hub(
+                repo_id,
+                config_name="multilingual-queries",
+                split="train",
+                data_dir="data/multilingual-queries",
+                token=token,
+                private=private,
+            ),
+        )
+        _with_hf_retries(
+            "Push multilingual qrels split",
+            lambda: multilingual_qrels_ds.push_to_hub(
+                repo_id,
+                config_name="multilingual-qrels",
+                split="train",
+                data_dir="data/multilingual-qrels",
+                token=token,
+                private=private,
+            ),
+        )
+        _with_hf_retries(
+            "Push cross-language corpus split",
+            lambda: cross_language_corpus_ds.push_to_hub(
+                repo_id,
+                config_name="cross_language-corpus",
+                split="train",
+                data_dir="data/cross_language-corpus",
+                token=token,
+                private=private,
+            ),
+        )
+        _with_hf_retries(
+            "Push cross-language queries split",
+            lambda: cross_language_queries_ds.push_to_hub(
+                repo_id,
+                config_name="cross_language-queries",
+                split="train",
+                data_dir="data/cross_language-queries",
+                token=token,
+                private=private,
+            ),
+        )
+        _with_hf_retries(
+            "Push cross-language qrels split",
+            lambda: cross_language_qrels_ds.push_to_hub(
+                repo_id,
+                config_name="cross_language-qrels",
+                split="train",
+                data_dir="data/cross_language-qrels",
+                token=token,
+                private=private,
+            ),
+        )
 
     # Upload dataset card (README.md) with attribution and license
-    readme_body = _build_readme(source_name)
+    readme_body = _build_readme(
+        source_name,
+        include_variant_configs=bool(cross_language_qrels_data),
+    )
     _with_hf_retries(
         "Upload dataset README",
         lambda: api.upload_file(

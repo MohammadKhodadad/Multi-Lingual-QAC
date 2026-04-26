@@ -224,6 +224,12 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - `model_comparison.csv`
   - `model_comparison.md`
   - `model_comparison.tex`
+- The MTEB CLI now supports retrieval variants via `--mteb-variant`:
+  - `multilingual` (default): all linked positives remain relevant
+  - `cross_language`: same-language positives are removed from qrels
+- HF upload now also writes variant-prefixed retrieval configs so MTEB can load them cleanly:
+  - `multilingual-corpus`, `multilingual-queries`, `multilingual-qrels`
+  - `cross_language-corpus`, `cross_language-queries`, `cross_language-qrels`
 - Latest partial CPU comparison snapshot:
   - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `Recall@10 = 0.2921`, `nDCG@10 = 0.2567`, `nDCG@100 = 0.3258`, `Hit@100 = 0.6105`
   - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `Recall@10 = 0.2500`, `nDCG@10 = 0.2300`, `nDCG@100 = 0.2955`, `Hit@100 = 0.5263`

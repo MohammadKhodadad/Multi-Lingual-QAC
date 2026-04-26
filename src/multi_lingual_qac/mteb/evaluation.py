@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
+from datasets import get_dataset_config_names, load_dataset
 from mteb import MTEB
 from mteb.abstasks import AbsTaskRetrieval
 from mteb.abstasks.task_metadata import TaskMetadata
@@ -17,6 +17,7 @@ import pytrec_eval
 from sentence_transformers import SentenceTransformer
 
 DEFAULT_MTEB_DATASET_REPO = "MohammadKhodadad/multi-lingual-qac"
+DEFAULT_MTEB_VARIANT = "multilingual"
 DEFAULT_MTEB_OUTPUT_DIR = "reports/mteb"
 DEFAULT_MTEB_TABLES_DIR = "reports/mteb_tables"
 DEFAULT_MTEB_CACHE_DIR = ".cache/huggingface"
@@ -66,6 +67,7 @@ LANGUAGE_TO_MTEB = {
 class ModelEvaluationSummary:
     model_name: str
     model_slug: str
+    dataset_variant: str
     main_score: float
     metrics: dict[str, float]
     output_dir: str
@@ -114,11 +116,32 @@ def _slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "default"
 
 
-def _dataset_task_name(dataset_repo: str) -> str:
+def _normalize_dataset_variant(value: str | None) -> str:
+    normalized = str(value or DEFAULT_MTEB_VARIANT).strip().lower().replace("-", "_")
+    if normalized not in {"multilingual", "cross_language"}:
+        raise ValueError(f"Unsupported dataset variant: {value}")
+    return normalized
+
+
+def _resolve_dataset_subset(dataset_repo: str, revision: str, dataset_variant: str) -> str | None:
+    variant = _normalize_dataset_variant(dataset_variant)
+    dataset_configs = set(get_dataset_config_names(dataset_repo, revision=revision))
+    variant_qrels = f"{variant}-qrels"
+    if variant_qrels in dataset_configs:
+        return variant
+    if variant == "multilingual":
+        return None
+    raise ValueError(
+        f"Dataset `{dataset_repo}` does not expose the `{variant}` retrieval variant."
+    )
+
+
+def _dataset_task_name(dataset_repo: str, dataset_variant: str) -> str:
     owner, _, name = dataset_repo.partition("/")
     owner_slug = _slugify(owner or "hf")
     name_slug = _slugify(name or dataset_repo)
-    return f"{owner_slug}_{name_slug}_retrieval"
+    variant_slug = _slugify(dataset_variant)
+    return f"{owner_slug}_{name_slug}_{variant_slug}_retrieval"
 
 
 def _default_model_cache_dir() -> Path:
@@ -143,8 +166,14 @@ def _configure_local_model_cache() -> Path:
     return sentence_transformers_dir
 
 
-def _detect_query_languages(dataset_repo: str, revision: str) -> list[str]:
-    queries = load_dataset(dataset_repo, "queries", split="train", revision=revision)
+def _detect_query_languages(
+    dataset_repo: str,
+    revision: str,
+    dataset_variant: str,
+) -> list[str]:
+    subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
+    query_config = f"{subset}-queries" if subset is not None else "queries"
+    queries = load_dataset(dataset_repo, query_config, split="train", revision=revision)
     lang_column = None
     if "query_language" in queries.column_names:
         lang_column = "query_language"
@@ -170,18 +199,25 @@ def build_mteb_task(
     dataset_repo: str = DEFAULT_MTEB_DATASET_REPO,
     *,
     revision: str = "main",
+    dataset_variant: str = DEFAULT_MTEB_VARIANT,
 ) -> HubDatasetRetrievalTask:
-    eval_langs = _detect_query_languages(dataset_repo, revision)
+    dataset_variant = _normalize_dataset_variant(dataset_variant)
+    subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
+    eval_langs = _detect_query_languages(dataset_repo, revision, dataset_variant)
+    eval_langs_config = {subset or "default": eval_langs}
     metadata = TaskMetadata(
-        name=_dataset_task_name(dataset_repo),
+        name=_dataset_task_name(dataset_repo, dataset_variant),
         dataset={"path": dataset_repo, "revision": revision},
-        description=f"Custom retrieval evaluation over the Hugging Face dataset `{dataset_repo}`.",
+        description=(
+            f"Custom {dataset_variant.replace('_', '-')} retrieval evaluation over "
+            f"the Hugging Face dataset `{dataset_repo}`."
+        ),
         reference=f"https://huggingface.co/datasets/{dataset_repo}",
         type="Retrieval",
         category="t2t",
         modalities=["text"],
         eval_splits=["train"],
-        eval_langs={"default": eval_langs},
+        eval_langs=eval_langs_config,
         main_score=DEFAULT_MTEB_MAIN_SCORE,
         domains=["Legal"],
         task_subtypes=["Question Answering Retrieval"],
@@ -211,6 +247,7 @@ def _extract_numeric_metrics(result: TaskResult) -> dict[str, float]:
 def _write_summary_reports(
     output_dir: Path,
     dataset_repo: str,
+    dataset_variant: str,
     summaries: list[ModelEvaluationSummary],
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -220,10 +257,12 @@ def _write_summary_reports(
 
     payload = {
         "dataset_repo": dataset_repo,
+        "dataset_variant": dataset_variant,
         "models": [
             {
                 "model_name": item.model_name,
                 "model_slug": item.model_slug,
+                "dataset_variant": item.dataset_variant,
                 "main_score": item.main_score,
                 "metrics": item.metrics,
                 "output_dir": item.output_dir,
@@ -244,6 +283,7 @@ def _write_summary_reports(
             fh,
             fieldnames=[
                 "model_name",
+                "dataset_variant",
                 "main_score",
                 "evaluation_time_seconds",
                 "eval_languages",
@@ -255,6 +295,7 @@ def _write_summary_reports(
         for item in summaries:
             row: dict[str, Any] = {
                 "model_name": item.model_name,
+                "dataset_variant": item.dataset_variant,
                 "main_score": item.main_score,
                 "evaluation_time_seconds": item.evaluation_time_seconds,
                 "eval_languages": ", ".join(item.eval_languages),
@@ -267,6 +308,7 @@ def _write_summary_reports(
         "# MTEB Evaluation Summary",
         "",
         f"- Dataset: `{dataset_repo}`",
+        f"- Variant: `{dataset_variant}`",
         f"- Main score: `{DEFAULT_MTEB_MAIN_SCORE}`",
         "",
         "| Model | Main score | Eval time (s) |",
@@ -287,13 +329,14 @@ def _write_summary_reports(
     summary_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _load_summary_models(results_dir: Path) -> tuple[str, list[ModelEvaluationSummary]]:
+def _load_summary_models(results_dir: Path) -> tuple[str, str, list[ModelEvaluationSummary]]:
     summary_json = results_dir / "summary.json"
     if not summary_json.exists():
         return _load_raw_result_models(results_dir)
 
     payload = json.loads(summary_json.read_text(encoding="utf-8"))
     dataset_repo = str(payload.get("dataset_repo", DEFAULT_MTEB_DATASET_REPO))
+    dataset_variant = _normalize_dataset_variant(payload.get("dataset_variant", DEFAULT_MTEB_VARIANT))
     models_payload = payload.get("models", [])
     summaries: list[ModelEvaluationSummary] = []
     for item in models_payload:
@@ -301,6 +344,9 @@ def _load_summary_models(results_dir: Path) -> tuple[str, list[ModelEvaluationSu
             ModelEvaluationSummary(
                 model_name=str(item.get("model_name", "")).strip(),
                 model_slug=str(item.get("model_slug", "")).strip() or _slugify(str(item.get("model_name", ""))),
+                dataset_variant=_normalize_dataset_variant(
+                    item.get("dataset_variant", dataset_variant)
+                ),
                 main_score=float(item.get("main_score", 0.0)),
                 metrics={
                     str(key): float(value)
@@ -316,10 +362,10 @@ def _load_summary_models(results_dir: Path) -> tuple[str, list[ModelEvaluationSu
                 ),
             )
         )
-    return dataset_repo, summaries
+    return dataset_repo, dataset_variant, summaries
 
 
-def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluationSummary]]:
+def _load_raw_result_models(results_dir: Path) -> tuple[str, str, list[ModelEvaluationSummary]]:
     result_files = sorted(
         path
         for path in results_dir.rglob("*.json")
@@ -327,11 +373,17 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
     )
     summaries: list[ModelEvaluationSummary] = []
     dataset_repo = DEFAULT_MTEB_DATASET_REPO
+    dataset_variant = DEFAULT_MTEB_VARIANT
 
     for result_file in result_files:
         payload = json.loads(result_file.read_text(encoding="utf-8"))
         if "scores" not in payload:
             continue
+        task_name = str(payload.get("task_name", "")).strip().lower()
+        if task_name.endswith("_cross-language_retrieval") or task_name.endswith("_cross_language_retrieval"):
+            dataset_variant = "cross_language"
+        elif task_name.endswith("_multilingual_retrieval"):
+            dataset_variant = "multilingual"
 
         train_rows = payload.get("scores", {}).get("train", [])
         if not train_rows:
@@ -359,6 +411,7 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
             ModelEvaluationSummary(
                 model_name=model_name,
                 model_slug=model_slug,
+                dataset_variant=dataset_variant,
                 main_score=main_score,
                 metrics=metrics,
                 output_dir=str(result_file.parent),
@@ -375,7 +428,7 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
         raise ValueError(
             f"Could not find `summary.json` or any raw MTEB result json files under `{results_dir}`."
         )
-    return dataset_repo, summaries
+    return dataset_repo, dataset_variant, summaries
 
 
 def _metric_value(item: ModelEvaluationSummary, metric: str) -> float | None:
@@ -588,7 +641,7 @@ def generate_mteb_comparison_tables(
 ) -> Path:
     results_path = Path(results_dir)
     output_path = Path(output_dir)
-    dataset_repo, summaries = _load_summary_models(results_path)
+    dataset_repo, dataset_variant, summaries = _load_summary_models(results_path)
     if not summaries:
         raise ValueError(f"No model summaries found in `{results_path}`.")
 
@@ -602,12 +655,14 @@ def generate_mteb_comparison_tables(
 
     payload = {
         "dataset_repo": dataset_repo,
+        "dataset_variant": dataset_variant,
         "results_dir": str(results_path),
         "metrics": COMPARISON_METRICS,
         "models": [
             {
                 "rank": idx,
                 "model_name": item.model_name,
+                "dataset_variant": item.dataset_variant,
                 "main_score": item.main_score,
                 "evaluation_time_seconds": item.evaluation_time_seconds,
                 "output_dir": item.output_dir,
@@ -660,6 +715,7 @@ def run_mteb_evaluation(
     models: list[str],
     *,
     dataset_repo: str = DEFAULT_MTEB_DATASET_REPO,
+    dataset_variant: str = DEFAULT_MTEB_VARIANT,
     output_dir: str | Path = DEFAULT_MTEB_OUTPUT_DIR,
     revision: str = "main",
     batch_size: int = 32,
@@ -667,13 +723,14 @@ def run_mteb_evaluation(
     if not models:
         raise ValueError("Provide at least one model name for MTEB evaluation.")
 
-    task = build_mteb_task(dataset_repo, revision=revision)
+    dataset_variant = _normalize_dataset_variant(dataset_variant)
+    task = build_mteb_task(dataset_repo, revision=revision, dataset_variant=dataset_variant)
     evaluator = MTEB(tasks=[task])
     base_output_dir = Path(output_dir)
     base_output_dir.mkdir(parents=True, exist_ok=True)
     model_cache_dir = _configure_local_model_cache()
     summaries: list[ModelEvaluationSummary] = []
-    eval_languages = _detect_query_languages(dataset_repo, revision)
+    eval_languages = _detect_query_languages(dataset_repo, revision, dataset_variant)
 
     for model_name in models:
         model_slug = _slugify(model_name)
@@ -699,6 +756,7 @@ def run_mteb_evaluation(
         summary = ModelEvaluationSummary(
             model_name=model_name,
             model_slug=model_slug,
+            dataset_variant=dataset_variant,
             main_score=float(result.main_score),
             metrics=metrics,
             output_dir=str(model_output_dir),
@@ -707,5 +765,5 @@ def run_mteb_evaluation(
         )
         summaries.append(summary)
 
-    _write_summary_reports(base_output_dir, dataset_repo, summaries)
+    _write_summary_reports(base_output_dir, dataset_repo, dataset_variant, summaries)
     return summaries

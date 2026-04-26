@@ -47,6 +47,15 @@ def _normalize_hf_dataset_repo(value: str) -> str:
     return raw.strip().strip("/")
 
 
+def _normalize_mteb_variant(value: str) -> str:
+    normalized = value.strip().lower().replace("-", "_")
+    if normalized not in {"multilingual", "cross_language"}:
+        raise argparse.ArgumentTypeError(
+            "Unsupported MTEB variant. Use `multilingual` or `cross_language`."
+        )
+    return normalized
+
+
 def _normalize_jrc_qa_languages(values: list[str] | None) -> tuple[str, ...] | None:
     if not values:
         return None
@@ -165,6 +174,12 @@ def parse_args() -> PipelineConfig:
         help="Directory for MTEB results and summary reports (default: reports/mteb)",
     )
     parser.add_argument(
+        "--mteb-variant",
+        type=_normalize_mteb_variant,
+        default="multilingual",
+        help="Benchmark variant to load from HF for MTEB evaluation (default: multilingual)",
+    )
+    parser.add_argument(
         "--mteb-batch-size",
         type=int,
         default=32,
@@ -228,6 +243,7 @@ def parse_args() -> PipelineConfig:
             else ()
         ),
         mteb_dataset_repo=args.mteb_dataset_repo,
+        mteb_variant=args.mteb_variant,
         mteb_output_dir=args.mteb_output_dir,
         mteb_batch_size=max(1, args.mteb_batch_size),
         generate_mteb_tables=args.generate_mteb_tables,
@@ -248,11 +264,13 @@ def main() -> None:
         summaries = run_mteb_evaluation(
             list(config.evaluate_mteb_models),
             dataset_repo=config.mteb_dataset_repo,
+            dataset_variant=config.mteb_variant,
             output_dir=output_dir,
             batch_size=config.mteb_batch_size,
         )
         print("MTEB evaluation finished.")
         print(f"  Dataset: {config.mteb_dataset_repo}")
+        print(f"  Variant: {config.mteb_variant}")
         print(f"  Output: {output_dir}")
         for item in summaries:
             print(f"  {item.model_name}: {item.main_score:.4f}")

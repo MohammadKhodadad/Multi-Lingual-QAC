@@ -135,6 +135,13 @@ Comparison-table outputs:
 - `reports/mteb_tables/model_comparison.tex`
 - Hugging Face dataset artifact path: `benchmark_outputs/mteb_tables/`
 
+Benchmark variants:
+
+- default `multilingual`: query is relevant to all linked retained document realizations for the same unit
+- optional `cross_language`: same corpus and queries, but qrels exclude same-language positives and keep only other-language relevant documents
+- CLI switch: `uv run main.py --evaluate-mteb --mteb-variant cross_language`
+- HF retrieval configs: base `corpus` / `queries` / `qrels` remain available, and variant-prefixed configs are also uploaded as `multilingual-*` and `cross_language-*` for explicit MTEB loading
+
 Current partial CPU results from the latest completed models:
 
 - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `Recall@10 = 0.2921`, `nDCG@10 = 0.2567`, `nDCG@100 = 0.3258`, `Hit@100 = 0.6105`
@@ -240,6 +247,8 @@ JRC now uses a **CELEX-group-based** QA flow:
 9. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
 
 The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. Synthetic translation assignment is quota-based: for each enabled synthetic language, the total number of synthetic queries matches one non-synthetic per-language selection budget and is spread as evenly as possible across the retained source languages. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
+
+For retrieval release and evaluation, the current benchmark supports two relevance setups over the same generated queries and retrieval corpus: a default `multilingual` setup that keeps all linked positives for the query, and a stricter `cross_language` setup that removes same-language positives and keeps only linked documents in other languages.
 
 See `docs/QA_GENERATION_PROCESS.md` for the full current QA-generation flow across EPO, Wikidata, and JRC.
 
