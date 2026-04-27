@@ -41,7 +41,7 @@ COMMON_DATASET_STRUCTURE = """
 - `qrels`: relevance judgments
 - `qac`: full question-answer-context rows for inspection and analysis
 
-When variant-specific retrieval configs are present, `multilingual-*` keeps the full multilingual relevance set and `cross_language-*` keeps only cross-language positives for the same queries and corpus.
+When variant-specific retrieval configs are present, the unprefixed `corpus` / `queries` / `qrels` configs remain the default multilingual benchmark, and `cross_language-*` keeps only cross-language positives over the same queries and corpus.
 
 Each config currently contains a `train` split.
 """
@@ -94,9 +94,6 @@ def _build_readme_yaml(*, include_variant_configs: bool) -> str:
     if include_variant_configs:
         configs.extend(
             [
-                ("multilingual-corpus", "data/multilingual-corpus/*.parquet"),
-                ("multilingual-queries", "data/multilingual-queries/*.parquet"),
-                ("multilingual-qrels", "data/multilingual-qrels/*.parquet"),
                 ("cross_language-corpus", "data/cross_language-corpus/*.parquet"),
                 ("cross_language-queries", "data/cross_language-queries/*.parquet"),
                 ("cross_language-qrels", "data/cross_language-qrels/*.parquet"),
@@ -373,7 +370,6 @@ def push_to_hub(
     # Qrels: query-id, corpus-id, score (links each query to its corpus doc)
     queries_data = []
     qrels_data = []
-    multilingual_qrels_data = []
     cross_language_qrels_data = []
     qac_full = []  # full triplets with answer
 
@@ -406,7 +402,6 @@ def push_to_hub(
         for linked_corpus_id in _linked_corpus_ids(r, cid):
             qrel_row = {"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0}
             qrels_data.append(qrel_row)
-            multilingual_qrels_data.append(dict(qrel_row))
         for linked_corpus_id in _cross_language_linked_corpus_ids(
             r,
             cid,
@@ -430,9 +425,6 @@ def push_to_hub(
     queries_ds = Dataset.from_list(queries_data)
     qrels_ds = Dataset.from_list(qrels_data)
     qac_ds = Dataset.from_list(qac_full)
-    multilingual_corpus_ds = Dataset.from_list(corpus_data)
-    multilingual_queries_ds = Dataset.from_list(queries_data)
-    multilingual_qrels_ds = Dataset.from_list(multilingual_qrels_data)
     cross_language_corpus_ds = Dataset.from_list(corpus_data) if cross_language_qrels_data else None
     cross_language_queries_ds = Dataset.from_list(queries_data) if cross_language_qrels_data else None
     cross_language_qrels_ds = (
@@ -496,39 +488,6 @@ def push_to_hub(
         ),
     )
     if cross_language_qrels_data:
-        _with_hf_retries(
-            "Push multilingual corpus split",
-            lambda: multilingual_corpus_ds.push_to_hub(
-                repo_id,
-                config_name="multilingual-corpus",
-                split="train",
-                data_dir="data/multilingual-corpus",
-                token=token,
-                private=private,
-            ),
-        )
-        _with_hf_retries(
-            "Push multilingual queries split",
-            lambda: multilingual_queries_ds.push_to_hub(
-                repo_id,
-                config_name="multilingual-queries",
-                split="train",
-                data_dir="data/multilingual-queries",
-                token=token,
-                private=private,
-            ),
-        )
-        _with_hf_retries(
-            "Push multilingual qrels split",
-            lambda: multilingual_qrels_ds.push_to_hub(
-                repo_id,
-                config_name="multilingual-qrels",
-                split="train",
-                data_dir="data/multilingual-qrels",
-                token=token,
-                private=private,
-            ),
-        )
         _with_hf_retries(
             "Push cross-language corpus split",
             lambda: cross_language_corpus_ds.push_to_hub(

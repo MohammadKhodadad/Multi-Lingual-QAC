@@ -76,9 +76,88 @@ class ModelEvaluationSummary:
 
 
 class HubDatasetRetrievalTask(AbsTaskRetrieval):
-    def __init__(self, metadata: TaskMetadata):
+    def __init__(
+        self,
+        metadata: TaskMetadata,
+        *,
+        dataset_repo: str,
+        revision: str,
+        dataset_variant: str,
+    ):
         self.metadata = metadata
+        self.dataset_repo = dataset_repo
+        self.revision = revision
+        self.dataset_variant = dataset_variant
+        self._query_language_by_id: dict[str, str] | None = None
+        self._corpus_language_by_id: dict[str, str] | None = None
         super().__init__()
+
+    def _get_query_language_by_id(self) -> dict[str, str]:
+        if self._query_language_by_id is not None:
+            return self._query_language_by_id
+        query_config = _dataset_config_name(
+            self.dataset_repo,
+            self.revision,
+            self.dataset_variant,
+            "queries",
+        )
+        queries = load_dataset(
+            self.dataset_repo,
+            query_config,
+            split="train",
+            revision=self.revision,
+        )
+        lang_column = _query_language_column(list(queries.column_names))
+        mapping: dict[str, str] = {}
+        if lang_column is None:
+            self._query_language_by_id = mapping
+            return mapping
+        id_column = "_id" if "_id" in queries.column_names else "query_id"
+        for row in queries:
+            query_id = str(row.get(id_column, "")).strip()
+            if not query_id:
+                continue
+            language = str(row.get(lang_column, "")).strip().lower()
+            if not language:
+                language = _infer_language(query_id)
+            mapping[query_id] = language
+        self._query_language_by_id = mapping
+        return mapping
+
+    def _get_corpus_language_by_id(self) -> dict[str, str]:
+        if self._corpus_language_by_id is not None:
+            return self._corpus_language_by_id
+        corpus_config = _dataset_config_name(
+            self.dataset_repo,
+            self.revision,
+            self.dataset_variant,
+            "corpus",
+        )
+        corpus = load_dataset(
+            self.dataset_repo,
+            corpus_config,
+            split="train",
+            revision=self.revision,
+        )
+        mapping: dict[str, str] = {}
+        id_column = "_id" if "_id" in corpus.column_names else "corpus_id"
+        lang_column = (
+            "corpus_language"
+            if "corpus_language" in corpus.column_names
+            else "language"
+            if "language" in corpus.column_names
+            else None
+        )
+        for row in corpus:
+            corpus_id = str(row.get(id_column, "")).strip()
+            if not corpus_id:
+                continue
+            language = str(row.get(lang_column, "")).strip().lower() if lang_column else ""
+            if not language:
+                language = _infer_language(corpus_id)
+            mapping[corpus_id] = language
+        self._corpus_language_by_id = mapping
+        return mapping
 
     def task_specific_scores(
         self,
@@ -91,12 +170,52 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
         del scores, hf_split, hf_subset
         evaluator = pytrec_eval.RelevanceEvaluator(qrels, {"map"})
         per_query_scores = evaluator.evaluate(results)
-        if not per_query_scores:
-            return {}
-        full_map = sum(float(item.get("map", 0.0)) for item in per_query_scores.values()) / len(
-            per_query_scores
-        )
-        return {"map": round(full_map, 5)}
+        query_language_by_id = self._get_query_language_by_id()
+        corpus_language_by_id = self._get_corpus_language_by_id()
+
+        metric_scores: dict[str, float] = {}
+        if per_query_scores:
+            full_map = sum(float(item.get("map", 0.0)) for item in per_query_scores.values()) / len(
+                per_query_scores
+            )
+            metric_scores["map"] = round(full_map, 5)
+
+        same_language_irrelevant_shares: list[float] = []
+        for query_id, doc_scores in results.items():
+            query_language = query_language_by_id.get(query_id, _infer_language(query_id))
+            if not query_language:
+                continue
+            ranked_doc_ids = [
+                doc_id
+                for doc_id, _score in sorted(
+                    doc_scores.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )[:100]
+            ]
+            unrelated_doc_ids = [
+                doc_id
+                for doc_id in ranked_doc_ids
+                if float(qrels.get(query_id, {}).get(doc_id, 0.0)) <= 0.0
+            ]
+            if not unrelated_doc_ids:
+                same_language_irrelevant_shares.append(0.0)
+                continue
+            same_language_unrelated = sum(
+                1
+                for doc_id in unrelated_doc_ids
+                if corpus_language_by_id.get(doc_id, _infer_language(doc_id)) == query_language
+            )
+            same_language_irrelevant_shares.append(
+                same_language_unrelated / len(unrelated_doc_ids)
+            )
+
+        if same_language_irrelevant_shares:
+            metric_scores["same_language_irrelevant_share_at_100"] = round(
+                sum(same_language_irrelevant_shares) / len(same_language_irrelevant_shares),
+                5,
+            )
+        return metric_scores
 
 
 COMPARISON_METRICS = [
@@ -109,6 +228,7 @@ COMPARISON_METRICS = [
     "recall_at_10",
     "ndcg_at_100",
     "hit_rate_at_100",
+    "same_language_irrelevant_share_at_100",
 ]
 
 
@@ -121,6 +241,39 @@ def _normalize_dataset_variant(value: str | None) -> str:
     if normalized not in {"multilingual", "cross_language"}:
         raise ValueError(f"Unsupported dataset variant: {value}")
     return normalized
+
+
+def _infer_language(value: str) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+    parts = [part for part in raw.replace("-", "_").split("_") if part]
+    if not parts:
+        return ""
+    candidate = parts[-1]
+    if 2 <= len(candidate) <= 5 and candidate.isalpha():
+        return candidate
+    return ""
+
+
+def _query_language_column(column_names: list[str]) -> str | None:
+    if "query_language" in column_names:
+        return "query_language"
+    if "question_language" in column_names:
+        return "question_language"
+    if "language" in column_names:
+        return "language"
+    return None
+
+
+def _dataset_config_name(
+    dataset_repo: str,
+    revision: str,
+    dataset_variant: str,
+    base_config: str,
+) -> str:
+    subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
+    return f"{subset}-{base_config}" if subset is not None else base_config
 
 
 def _resolve_dataset_subset(dataset_repo: str, revision: str, dataset_variant: str) -> str | None:
@@ -171,16 +324,9 @@ def _detect_query_languages(
     revision: str,
     dataset_variant: str,
 ) -> list[str]:
-    subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
-    query_config = f"{subset}-queries" if subset is not None else "queries"
+    query_config = _dataset_config_name(dataset_repo, revision, dataset_variant, "queries")
     queries = load_dataset(dataset_repo, query_config, split="train", revision=revision)
-    lang_column = None
-    if "query_language" in queries.column_names:
-        lang_column = "query_language"
-    elif "question_language" in queries.column_names:
-        lang_column = "question_language"
-    elif "language" in queries.column_names:
-        lang_column = "language"
+    lang_column = _query_language_column(list(queries.column_names))
     if lang_column is None:
         return [LANGUAGE_TO_MTEB["en"]]
 
@@ -227,7 +373,12 @@ def build_mteb_task(
         is_public=True,
         contributed_by="multi-lingual-qac",
     )
-    return HubDatasetRetrievalTask(metadata)
+    return HubDatasetRetrievalTask(
+        metadata,
+        dataset_repo=dataset_repo,
+        revision=revision,
+        dataset_variant=dataset_variant,
+    )
 
 
 def _extract_numeric_metrics(result: TaskResult) -> dict[str, float]:
@@ -446,7 +597,11 @@ def _best_metric_values(
         values = [_metric_value(item, metric) for item in summaries]
         numeric_values = [value for value in values if value is not None]
         if numeric_values:
-            best[metric] = max(numeric_values)
+            best[metric] = (
+                min(numeric_values)
+                if metric == "same_language_irrelevant_share_at_100"
+                else max(numeric_values)
+            )
     return best
 
 
@@ -493,8 +648,8 @@ def _build_markdown_comparison(
         "",
         "### Ranking",
         "",
-        "| Rank | Model | Main score | Recall@10 | nDCG@10 | MRR@10 | Hit@10 | MAP@10 | MAP | nDCG@100 | Hit@100 | Time (s) |",
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Rank | Model | Main score | Recall@10 | nDCG@10 | MRR@10 | Hit@10 | MAP@10 | MAP | nDCG@100 | Hit@100 | Same-lang unrelated@100 | Time (s) |",
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for idx, item in enumerate(ranked, start=1):
         cells = [
@@ -527,6 +682,10 @@ def _build_markdown_comparison(
             f"**{_format_metric(item.metrics.get('hit_rate_at_100'))}**"
             if _metric_value(item, "hit_rate_at_100") == best.get("hit_rate_at_100")
             else _format_metric(item.metrics.get("hit_rate_at_100")),
+            f"**{_format_metric(item.metrics.get('same_language_irrelevant_share_at_100'))}**"
+            if _metric_value(item, "same_language_irrelevant_share_at_100")
+            == best.get("same_language_irrelevant_share_at_100")
+            else _format_metric(item.metrics.get("same_language_irrelevant_share_at_100")),
             (
                 f"{item.evaluation_time_seconds:.1f}"
                 if item.evaluation_time_seconds is not None
@@ -544,11 +703,20 @@ def _build_markdown_comparison(
         ]
     )
     for metric in COMPARISON_METRICS:
-        winner = max(
-            ranked,
-            key=lambda item: _metric_value(item, metric)
-            if _metric_value(item, metric) is not None
-            else float("-inf"),
+        winner = (
+            min(
+                ranked,
+                key=lambda item: _metric_value(item, metric)
+                if _metric_value(item, metric) is not None
+                else float("inf"),
+            )
+            if metric == "same_language_irrelevant_share_at_100"
+            else max(
+                ranked,
+                key=lambda item: _metric_value(item, metric)
+                if _metric_value(item, metric) is not None
+                else float("-inf"),
+            )
         )
         winner_value = _metric_value(winner, metric)
         if winner_value is None:
@@ -568,9 +736,9 @@ def _build_latex_comparison(
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
-        r"\begin{tabular}{r l r r r r r r r r r}",
+        r"\begin{tabular}{r l r r r r r r r r r r}",
         r"\hline",
-        r"Rank & Model & Main & Recall@10 & nDCG@10 & MRR@10 & Hit@10 & MAP & nDCG@100 & Hit@100 & Time (s) \\",
+        r"Rank & Model & Main & Recall@10 & nDCG@10 & MRR@10 & Hit@10 & MAP & nDCG@100 & Hit@100 & Same-lang irr@100 & Time (s) \\",
         r"\hline",
     ]
     for idx, item in enumerate(ranked, start=1):
@@ -582,6 +750,9 @@ def _build_latex_comparison(
         full_map = _format_metric(item.metrics.get("map"))
         ndcg_at_100 = _format_metric(item.metrics.get("ndcg_at_100"))
         hit_rate_at_100 = _format_metric(item.metrics.get("hit_rate_at_100"))
+        same_language_irrelevant_share_at_100 = _format_metric(
+            item.metrics.get("same_language_irrelevant_share_at_100")
+        )
         eval_time = (
             f"{item.evaluation_time_seconds:.1f}"
             if item.evaluation_time_seconds is not None
@@ -603,6 +774,12 @@ def _build_latex_comparison(
             ndcg_at_100 = rf"\textbf{{{ndcg_at_100}}}"
         if _metric_value(item, "hit_rate_at_100") == best.get("hit_rate_at_100"):
             hit_rate_at_100 = rf"\textbf{{{hit_rate_at_100}}}"
+        if _metric_value(item, "same_language_irrelevant_share_at_100") == best.get(
+            "same_language_irrelevant_share_at_100"
+        ):
+            same_language_irrelevant_share_at_100 = (
+                rf"\textbf{{{same_language_irrelevant_share_at_100}}}"
+            )
         lines.append(
             " & ".join(
                 [
@@ -616,6 +793,7 @@ def _build_latex_comparison(
                     full_map,
                     ndcg_at_100,
                     hit_rate_at_100,
+                    same_language_irrelevant_share_at_100,
                     eval_time,
                 ]
             )

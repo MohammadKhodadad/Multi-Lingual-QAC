@@ -140,7 +140,7 @@ Benchmark variants:
 - default `multilingual`: query is relevant to all linked retained document realizations for the same unit
 - optional `cross_language`: same corpus and queries, but qrels exclude same-language positives and keep only other-language relevant documents
 - CLI switch: `uv run main.py --evaluate-mteb --mteb-variant cross_language`
-- HF retrieval configs: base `corpus` / `queries` / `qrels` remain available, and variant-prefixed configs are also uploaded as `multilingual-*` and `cross_language-*` for explicit MTEB loading
+- HF retrieval configs: base `corpus` / `queries` / `qrels` are the default multilingual benchmark, and `cross_language-*` is uploaded as the explicit alternate variant for MTEB loading
 
 Current partial CPU results from the latest completed models:
 
