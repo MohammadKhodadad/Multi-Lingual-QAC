@@ -307,11 +307,25 @@ def run_regrading(
     fieldnames = _output_fieldnames()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Best-only sibling file: strip "_all_generated" from the stem if present,
+    # otherwise add a "_best" suffix.
+    if "_all_generated" in output_path.stem:
+        best_path = output_path.with_name(
+            output_path.stem.replace("_all_generated", "") + output_path.suffix
+        )
+    else:
+        best_path = output_path.with_name(output_path.stem + "_best" + output_path.suffix)
+
     rows_written = 0
-    with output_path.open("w", encoding="utf-8", newline="") as out_f:
+    best_written = 0
+    with output_path.open("w", encoding="utf-8", newline="") as out_f, \
+            best_path.open("w", encoding="utf-8", newline="") as best_f:
         writer = csv.DictWriter(out_f, fieldnames=fieldnames)
+        best_writer = csv.DictWriter(best_f, fieldnames=fieldnames)
         writer.writeheader()
+        best_writer.writeheader()
         out_f.flush()
+        best_f.flush()
 
         for (pub_num, lang), group_rows in tqdm(groups.items(), desc="Re-grading", unit="group"):
             mode = group_rows[0]["mode"]
@@ -355,10 +369,15 @@ def run_regrading(
             out_f.flush()
             rows_written += len(group_out)
 
+            best_writer.writerow(group_out[0])
+            best_f.flush()
+            best_written += 1
+
             best = group_out[0]["total_score"]
             tqdm.write(f"  {pub_num} [{lang}]: ok (best={best})")
 
     print(f"\nWrote {rows_written} regraded rows -> {output_path}")
+    print(f"Wrote {best_written} best-only rows -> {best_path}")
     return rows_written
 
 
