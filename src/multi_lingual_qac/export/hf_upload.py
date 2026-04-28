@@ -41,7 +41,7 @@ COMMON_DATASET_STRUCTURE = """
 - `qrels`: relevance judgments
 - `qac`: full question-answer-context rows for inspection and analysis
 
-When variant-specific retrieval configs are present, the unprefixed `corpus` / `queries` / `qrels` configs remain the default multilingual benchmark, and `cross_language-*` keeps only cross-language positives over the same queries and corpus.
+When variant-specific configs are present, the unprefixed `corpus` / `queries` / `qrels` / `qac` configs remain the default multilingual benchmark. The `cross_language-corpus` / `cross_language-queries` / `cross_language-qrels` configs keep the cross-language retrieval setup, and `cross_language-qac` keeps one row per query while filtering `linked_corpus_ids_json` down to cross-language relevant corpus rows.
 
 Each config currently contains a `train` split.
 """
@@ -97,6 +97,7 @@ def _build_readme_yaml(*, include_variant_configs: bool) -> str:
                 ("cross_language-corpus", "data/cross_language-corpus/*.parquet"),
                 ("cross_language-queries", "data/cross_language-queries/*.parquet"),
                 ("cross_language-qrels", "data/cross_language-qrels/*.parquet"),
+                ("cross_language-qac", "data/cross_language-qac/*.parquet"),
             ]
         )
     lines = ["---", "configs:"]
@@ -372,6 +373,7 @@ def push_to_hub(
     qrels_data = []
     cross_language_qrels_data = []
     qac_full = []  # full triplets with answer
+    cross_language_qac_full = []
 
     seen_query_ids = set()
     for i, r in enumerate(qac_rows):
@@ -399,15 +401,17 @@ def push_to_hub(
             "corpus_language": corpus_lang,
             "is_synthetic_translation": is_synthetic_translation,
         })
-        for linked_corpus_id in _linked_corpus_ids(r, cid):
+        linked_ids = _linked_corpus_ids(r, cid)
+        for linked_corpus_id in linked_ids:
             qrel_row = {"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0}
             qrels_data.append(qrel_row)
-        for linked_corpus_id in _cross_language_linked_corpus_ids(
+        cross_language_linked_ids = _cross_language_linked_corpus_ids(
             r,
             cid,
             query_language=lang,
             corpus_language_by_id=corpus_language_by_id,
-        ):
+        )
+        for linked_corpus_id in cross_language_linked_ids:
             cross_language_qrels_data.append(
                 {"query-id": query_id, "corpus-id": linked_corpus_id, "score": 1.0}
             )
@@ -419,7 +423,22 @@ def push_to_hub(
             "question": q,
             "answer": a,
             "is_synthetic_translation": is_synthetic_translation,
+            "linked_corpus_ids_json": json.dumps(linked_ids, ensure_ascii=False),
         })
+        if cross_language_linked_ids:
+            cross_language_qac_full.append({
+                "query_id": query_id,
+                "corpus_id": cid,
+                "query_language": lang,
+                "corpus_language": corpus_lang,
+                "question": q,
+                "answer": a,
+                "is_synthetic_translation": is_synthetic_translation,
+                "linked_corpus_ids_json": json.dumps(
+                    cross_language_linked_ids,
+                    ensure_ascii=False,
+                ),
+            })
 
     corpus_ds = Dataset.from_list(corpus_data)
     queries_ds = Dataset.from_list(queries_data)
@@ -429,6 +448,9 @@ def push_to_hub(
     cross_language_queries_ds = Dataset.from_list(queries_data) if cross_language_qrels_data else None
     cross_language_qrels_ds = (
         Dataset.from_list(cross_language_qrels_data) if cross_language_qrels_data else None
+    )
+    cross_language_qac_ds = (
+        Dataset.from_list(cross_language_qac_full) if cross_language_qac_full else None
     )
     api = HfApi(token=token)
 
@@ -521,6 +543,18 @@ def push_to_hub(
                 private=private,
             ),
         )
+        if cross_language_qac_ds is not None:
+            _with_hf_retries(
+                "Push cross-language qac split",
+                lambda: cross_language_qac_ds.push_to_hub(
+                    repo_id,
+                    config_name="cross_language-qac",
+                    split="train",
+                    data_dir="data/cross_language-qac",
+                    token=token,
+                    private=private,
+                ),
+            )
 
     # Upload dataset card (README.md) with attribution and license
     readme_body = _build_readme(
