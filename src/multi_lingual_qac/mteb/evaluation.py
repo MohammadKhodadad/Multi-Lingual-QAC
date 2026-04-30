@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import os
 import re
 from dataclasses import dataclass
@@ -22,6 +23,8 @@ DEFAULT_MTEB_OUTPUT_DIR = "reports/mteb"
 DEFAULT_MTEB_TABLES_DIR = "reports/mteb_tables"
 DEFAULT_MTEB_CACHE_DIR = ".cache/huggingface"
 DEFAULT_MTEB_MAIN_SCORE = "recall_at_10"
+RETRIEVAL_CUTOFFS = (10, 20, 50, 100)
+SAME_LANGUAGE_DIAGNOSTIC_LANGS = ("de", "en", "es", "fr", "zh")
 DEFAULT_MTEB_MODELS = [
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
@@ -61,6 +64,18 @@ LANGUAGE_TO_MTEB = {
     "tr": "tur-Latn",
     "zh": "zho-Hans",
 }
+
+TABLE_METRICS = [
+    "main_score",
+    "recall_at_10",
+    "recall_at_100",
+    "map_at_10",
+    "map_at_100",
+    "map",
+    "ndcg_at_10",
+    "ndcg_at_100",
+    "same_language_irrelevant_share_at_100",
+]
 
 
 @dataclass(frozen=True)
@@ -180,7 +195,15 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
             )
             metric_scores["map"] = round(full_map, 5)
 
-        same_language_irrelevant_shares: list[float] = []
+        recall_scores: dict[int, list[float]] = {cutoff: [] for cutoff in RETRIEVAL_CUTOFFS}
+        map_scores: dict[int, list[float]] = {cutoff: [] for cutoff in RETRIEVAL_CUTOFFS}
+        ndcg_scores: dict[int, list[float]] = {cutoff: [] for cutoff in RETRIEVAL_CUTOFFS}
+        same_language_irrelevant_shares: dict[int, list[float]] = {
+            cutoff: [] for cutoff in RETRIEVAL_CUTOFFS
+        }
+        same_language_irrelevant_shares_at_100_by_query_lang: dict[str, list[float]] = {
+            lang: [] for lang in SAME_LANGUAGE_DIAGNOSTIC_LANGS
+        }
         for query_id, doc_scores in results.items():
             query_language = query_language_by_id.get(query_id, _infer_language(query_id))
             if not query_language:
@@ -191,44 +214,124 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
                     doc_scores.items(),
                     key=lambda item: item[1],
                     reverse=True,
-                )[:100]
+                )
             ]
-            unrelated_doc_ids = [
+            relevant_doc_ids = {
                 doc_id
-                for doc_id in ranked_doc_ids
-                if float(qrels.get(query_id, {}).get(doc_id, 0.0)) <= 0.0
-            ]
-            if not unrelated_doc_ids:
-                same_language_irrelevant_shares.append(0.0)
+                for doc_id, relevance in qrels.get(query_id, {}).items()
+                if float(relevance) > 0.0
+            }
+            if not relevant_doc_ids:
                 continue
-            same_language_unrelated = sum(
-                1
-                for doc_id in unrelated_doc_ids
-                if corpus_language_by_id.get(doc_id, _infer_language(doc_id)) == query_language
-            )
-            same_language_irrelevant_shares.append(
-                same_language_unrelated / len(unrelated_doc_ids)
-            )
 
-        if same_language_irrelevant_shares:
-            metric_scores["same_language_irrelevant_share_at_100"] = round(
-                sum(same_language_irrelevant_shares) / len(same_language_irrelevant_shares),
-                5,
-            )
+            for cutoff in RETRIEVAL_CUTOFFS:
+                top_doc_ids = ranked_doc_ids[:cutoff]
+                if not top_doc_ids:
+                    continue
+
+                relevant_seen = 0
+                precision_sum = 0.0
+                dcg = 0.0
+                for rank_idx, doc_id in enumerate(top_doc_ids, start=1):
+                    if doc_id in relevant_doc_ids:
+                        relevant_seen += 1
+                        precision_sum += relevant_seen / rank_idx
+                        dcg += 1.0 / math.log2(rank_idx + 1)
+                recall_scores[cutoff].append(relevant_seen / len(relevant_doc_ids))
+                map_scores[cutoff].append(
+                    precision_sum / min(len(relevant_doc_ids), cutoff)
+                    if relevant_doc_ids
+                    else 0.0
+                )
+                ideal_relevant = min(len(relevant_doc_ids), cutoff)
+                ideal_dcg = sum(
+                    1.0 / math.log2(rank_idx + 1)
+                    for rank_idx in range(1, ideal_relevant + 1)
+                )
+                ndcg_scores[cutoff].append(dcg / ideal_dcg if ideal_dcg else 0.0)
+
+                unrelated_doc_ids = [
+                    doc_id for doc_id in top_doc_ids if doc_id not in relevant_doc_ids
+                ]
+                if not unrelated_doc_ids:
+                    same_language_irrelevant_share = 0.0
+                else:
+                    same_language_unrelated = sum(
+                        1
+                        for doc_id in unrelated_doc_ids
+                        if corpus_language_by_id.get(doc_id, _infer_language(doc_id))
+                        == query_language
+                    )
+                    same_language_irrelevant_share = same_language_unrelated / len(
+                        unrelated_doc_ids
+                    )
+                same_language_irrelevant_shares[cutoff].append(
+                    same_language_irrelevant_share
+                )
+                if cutoff == 100 and query_language in SAME_LANGUAGE_DIAGNOSTIC_LANGS:
+                    same_language_irrelevant_shares_at_100_by_query_lang[
+                        query_language
+                    ].append(same_language_irrelevant_share)
+
+        for cutoff in RETRIEVAL_CUTOFFS:
+            if recall_scores[cutoff]:
+                metric_scores[f"recall_at_{cutoff}"] = round(
+                    sum(recall_scores[cutoff]) / len(recall_scores[cutoff]),
+                    5,
+                )
+            if map_scores[cutoff]:
+                metric_scores[f"map_at_{cutoff}"] = round(
+                    sum(map_scores[cutoff]) / len(map_scores[cutoff]),
+                    5,
+                )
+            if ndcg_scores[cutoff]:
+                metric_scores[f"ndcg_at_{cutoff}"] = round(
+                    sum(ndcg_scores[cutoff]) / len(ndcg_scores[cutoff]),
+                    5,
+                )
+            if same_language_irrelevant_shares[cutoff]:
+                metric_scores[f"same_language_irrelevant_share_at_{cutoff}"] = round(
+                    sum(same_language_irrelevant_shares[cutoff])
+                    / len(same_language_irrelevant_shares[cutoff]),
+                    5,
+                )
+
+        for query_language in SAME_LANGUAGE_DIAGNOSTIC_LANGS:
+            values = same_language_irrelevant_shares_at_100_by_query_lang[query_language]
+            if values:
+                metric_scores[
+                    f"same_language_irrelevant_share_at_100_lang_{query_language}"
+                ] = round(sum(values) / len(values), 5)
         return metric_scores
 
 
 COMPARISON_METRICS = [
     "main_score",
-    "ndcg_at_10",
+    "recall_at_10",
+    "recall_at_20",
+    "recall_at_50",
+    "recall_at_100",
     "map_at_10",
+    "map_at_20",
+    "map_at_50",
+    "map_at_100",
     "map",
+    "ndcg_at_10",
+    "ndcg_at_20",
+    "ndcg_at_50",
+    "ndcg_at_100",
     "mrr_at_10",
     "hit_rate_at_10",
-    "recall_at_10",
-    "ndcg_at_100",
     "hit_rate_at_100",
+    "same_language_irrelevant_share_at_10",
+    "same_language_irrelevant_share_at_20",
+    "same_language_irrelevant_share_at_50",
     "same_language_irrelevant_share_at_100",
+    "same_language_irrelevant_share_at_100_lang_de",
+    "same_language_irrelevant_share_at_100_lang_en",
+    "same_language_irrelevant_share_at_100_lang_es",
+    "same_language_irrelevant_share_at_100_lang_fr",
+    "same_language_irrelevant_share_at_100_lang_zh",
 ]
 
 
@@ -599,7 +702,7 @@ def _best_metric_values(
         if numeric_values:
             best[metric] = (
                 min(numeric_values)
-                if metric == "same_language_irrelevant_share_at_100"
+                if metric.startswith("same_language_irrelevant_share_at_")
                 else max(numeric_values)
             )
     return best
@@ -609,6 +712,71 @@ def _format_metric(value: float | None) -> str:
     if value is None:
         return ""
     return f"{value:.4f}"
+
+
+def _metric_label(metric: str) -> str:
+    labels = {
+        "main_score": "Main score",
+        "map": "MAP",
+        "same_language_irrelevant_share_at_100": "Same-lang irr@100",
+    }
+    if metric in labels:
+        return labels[metric]
+    match = re.fullmatch(r"([a-z]+)_at_(\d+)", metric)
+    if match:
+        name, cutoff = match.groups()
+        display = {
+            "recall": "Recall",
+            "map": "MAP",
+            "ndcg": "nDCG",
+            "mrr": "MRR",
+            "hit_rate": "Hit",
+        }.get(name, name)
+        return f"{display}@{cutoff}"
+    return metric
+
+
+def _format_metric_cell(
+    item: ModelEvaluationSummary,
+    metric: str,
+    best: dict[str, float],
+) -> str:
+    value = _metric_value(item, metric)
+    formatted = _format_metric(value)
+    if value is not None and metric in best and value == best[metric]:
+        return f"**{formatted}**"
+    return formatted
+
+
+def _latex_metric_cell(
+    item: ModelEvaluationSummary,
+    metric: str,
+    best: dict[str, float],
+) -> str:
+    value = _metric_value(item, metric)
+    formatted = _format_metric(value)
+    if value is not None and metric in best and value == best[metric]:
+        return rf"\textbf{{{formatted}}}"
+    return formatted
+
+
+def _ordered_metric_keys(summaries: list[ModelEvaluationSummary]) -> list[str]:
+    seen = set()
+    ordered: list[str] = []
+    for metric in COMPARISON_METRICS:
+        if metric not in seen:
+            ordered.append(metric)
+            seen.add(metric)
+    extras = sorted(
+        {
+            key
+            for item in summaries
+            for key in item.metrics
+            if key not in seen
+        }
+    )
+    ordered.extend(extras)
+    return ordered
 
 
 def _latex_escape(text: str) -> str:
@@ -633,8 +801,9 @@ def _build_markdown_comparison(
     dataset_repo: str,
     ranked: list[ModelEvaluationSummary],
 ) -> str:
-    best = _best_metric_values(ranked, COMPARISON_METRICS)
+    best = _best_metric_values(ranked, TABLE_METRICS)
     top = ranked[0]
+    metric_headers = [_metric_label(metric) for metric in TABLE_METRICS]
     lines = [
         "# MTEB Model Comparison",
         "",
@@ -648,44 +817,14 @@ def _build_markdown_comparison(
         "",
         "### Ranking",
         "",
-        "| Rank | Model | Main score | Recall@10 | nDCG@10 | MRR@10 | Hit@10 | MAP@10 | MAP | nDCG@100 | Hit@100 | Same-lang unrelated@100 | Time (s) |",
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Rank | Model | " + " | ".join(metric_headers) + " | Time (s) |",
+        "| ---: | --- | " + " | ".join(["---:"] * len(metric_headers)) + " | ---: |",
     ]
     for idx, item in enumerate(ranked, start=1):
         cells = [
             str(idx),
             f"`{item.model_name}`",
-            f"**{item.main_score:.4f}**"
-            if item.main_score == best.get("main_score")
-            else f"{item.main_score:.4f}",
-            f"**{_format_metric(item.metrics.get('recall_at_10'))}**"
-            if _metric_value(item, "recall_at_10") == best.get("recall_at_10")
-            else _format_metric(item.metrics.get("recall_at_10")),
-            f"**{_format_metric(item.metrics.get('ndcg_at_10', item.main_score))}**"
-            if _metric_value(item, "ndcg_at_10") == best.get("ndcg_at_10")
-            else _format_metric(item.metrics.get("ndcg_at_10", item.main_score)),
-            f"**{_format_metric(item.metrics.get('mrr_at_10'))}**"
-            if _metric_value(item, "mrr_at_10") == best.get("mrr_at_10")
-            else _format_metric(item.metrics.get("mrr_at_10")),
-            f"**{_format_metric(item.metrics.get('hit_rate_at_10'))}**"
-            if _metric_value(item, "hit_rate_at_10") == best.get("hit_rate_at_10")
-            else _format_metric(item.metrics.get("hit_rate_at_10")),
-            f"**{_format_metric(item.metrics.get('map_at_10'))}**"
-            if _metric_value(item, "map_at_10") == best.get("map_at_10")
-            else _format_metric(item.metrics.get("map_at_10")),
-            f"**{_format_metric(item.metrics.get('map'))}**"
-            if _metric_value(item, "map") == best.get("map")
-            else _format_metric(item.metrics.get("map")),
-            f"**{_format_metric(item.metrics.get('ndcg_at_100'))}**"
-            if _metric_value(item, "ndcg_at_100") == best.get("ndcg_at_100")
-            else _format_metric(item.metrics.get("ndcg_at_100")),
-            f"**{_format_metric(item.metrics.get('hit_rate_at_100'))}**"
-            if _metric_value(item, "hit_rate_at_100") == best.get("hit_rate_at_100")
-            else _format_metric(item.metrics.get("hit_rate_at_100")),
-            f"**{_format_metric(item.metrics.get('same_language_irrelevant_share_at_100'))}**"
-            if _metric_value(item, "same_language_irrelevant_share_at_100")
-            == best.get("same_language_irrelevant_share_at_100")
-            else _format_metric(item.metrics.get("same_language_irrelevant_share_at_100")),
+            *[_format_metric_cell(item, metric, best) for metric in TABLE_METRICS],
             (
                 f"{item.evaluation_time_seconds:.1f}"
                 if item.evaluation_time_seconds is not None
@@ -702,7 +841,7 @@ def _build_markdown_comparison(
             "| --- | --- | ---: |",
         ]
     )
-    for metric in COMPARISON_METRICS:
+    for metric in TABLE_METRICS:
         winner = (
             min(
                 ranked,
@@ -710,7 +849,7 @@ def _build_markdown_comparison(
                 if _metric_value(item, metric) is not None
                 else float("inf"),
             )
-            if metric == "same_language_irrelevant_share_at_100"
+            if metric.startswith("same_language_irrelevant_share_at_")
             else max(
                 ranked,
                 key=lambda item: _metric_value(item, metric)
@@ -722,7 +861,7 @@ def _build_markdown_comparison(
         if winner_value is None:
             continue
         lines.append(
-            f"| `{metric}` | `{winner.model_name}` | {winner_value:.4f} |"
+            f"| `{_metric_label(metric)}` | `{winner.model_name}` | {winner_value:.4f} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -731,69 +870,30 @@ def _build_latex_comparison(
     dataset_repo: str,
     ranked: list[ModelEvaluationSummary],
 ) -> str:
-    best = _best_metric_values(ranked, COMPARISON_METRICS)
+    best = _best_metric_values(ranked, TABLE_METRICS)
+    column_spec = "r l " + " ".join(["r"] * len(TABLE_METRICS)) + " r"
+    metric_headers = " & ".join(_latex_escape(_metric_label(metric)) for metric in TABLE_METRICS)
     lines = [
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
-        r"\begin{tabular}{r l r r r r r r r r r r}",
+        rf"\begin{{tabular}}{{{column_spec}}}",
         r"\hline",
-        r"Rank & Model & Main & Recall@10 & nDCG@10 & MRR@10 & Hit@10 & MAP & nDCG@100 & Hit@100 & Same-lang irr@100 & Time (s) \\",
+        rf"Rank & Model & {metric_headers} & Time (s) \\",
         r"\hline",
     ]
     for idx, item in enumerate(ranked, start=1):
-        main_score = _format_metric(item.main_score)
-        recall_at_10 = _format_metric(item.metrics.get("recall_at_10"))
-        ndcg_at_10 = _format_metric(item.metrics.get("ndcg_at_10", item.main_score))
-        mrr_at_10 = _format_metric(item.metrics.get("mrr_at_10"))
-        hit_rate_at_10 = _format_metric(item.metrics.get("hit_rate_at_10"))
-        full_map = _format_metric(item.metrics.get("map"))
-        ndcg_at_100 = _format_metric(item.metrics.get("ndcg_at_100"))
-        hit_rate_at_100 = _format_metric(item.metrics.get("hit_rate_at_100"))
-        same_language_irrelevant_share_at_100 = _format_metric(
-            item.metrics.get("same_language_irrelevant_share_at_100")
-        )
         eval_time = (
             f"{item.evaluation_time_seconds:.1f}"
             if item.evaluation_time_seconds is not None
             else "--"
         )
-        if item.main_score == best.get("main_score"):
-            main_score = rf"\textbf{{{main_score}}}"
-        if _metric_value(item, "recall_at_10") == best.get("recall_at_10"):
-            recall_at_10 = rf"\textbf{{{recall_at_10}}}"
-        if _metric_value(item, "ndcg_at_10") == best.get("ndcg_at_10"):
-            ndcg_at_10 = rf"\textbf{{{ndcg_at_10}}}"
-        if _metric_value(item, "mrr_at_10") == best.get("mrr_at_10"):
-            mrr_at_10 = rf"\textbf{{{mrr_at_10}}}"
-        if _metric_value(item, "hit_rate_at_10") == best.get("hit_rate_at_10"):
-            hit_rate_at_10 = rf"\textbf{{{hit_rate_at_10}}}"
-        if _metric_value(item, "map") == best.get("map"):
-            full_map = rf"\textbf{{{full_map}}}"
-        if _metric_value(item, "ndcg_at_100") == best.get("ndcg_at_100"):
-            ndcg_at_100 = rf"\textbf{{{ndcg_at_100}}}"
-        if _metric_value(item, "hit_rate_at_100") == best.get("hit_rate_at_100"):
-            hit_rate_at_100 = rf"\textbf{{{hit_rate_at_100}}}"
-        if _metric_value(item, "same_language_irrelevant_share_at_100") == best.get(
-            "same_language_irrelevant_share_at_100"
-        ):
-            same_language_irrelevant_share_at_100 = (
-                rf"\textbf{{{same_language_irrelevant_share_at_100}}}"
-            )
         lines.append(
             " & ".join(
                 [
                     str(idx),
                     r"\texttt{" + _latex_escape(item.model_name) + "}",
-                    main_score,
-                    recall_at_10,
-                    ndcg_at_10,
-                    mrr_at_10,
-                    hit_rate_at_10,
-                    full_map,
-                    ndcg_at_100,
-                    hit_rate_at_100,
-                    same_language_irrelevant_share_at_100,
+                    *[_latex_metric_cell(item, metric, best) for metric in TABLE_METRICS],
                     eval_time,
                 ]
             )
@@ -824,6 +924,7 @@ def generate_mteb_comparison_tables(
         raise ValueError(f"No model summaries found in `{results_path}`.")
 
     ranked = sorted(summaries, key=lambda item: item.main_score, reverse=True)
+    all_metric_keys = _ordered_metric_keys(ranked)
     output_path.mkdir(parents=True, exist_ok=True)
 
     comparison_json = output_path / "model_comparison.json"
@@ -835,7 +936,8 @@ def generate_mteb_comparison_tables(
         "dataset_repo": dataset_repo,
         "dataset_variant": dataset_variant,
         "results_dir": str(results_path),
-        "metrics": COMPARISON_METRICS,
+        "metrics": all_metric_keys,
+        "table_metrics": TABLE_METRICS,
         "models": [
             {
                 "rank": idx,
@@ -844,7 +946,7 @@ def generate_mteb_comparison_tables(
                 "main_score": item.main_score,
                 "evaluation_time_seconds": item.evaluation_time_seconds,
                 "output_dir": item.output_dir,
-                "metrics": {metric: item.metrics.get(metric) for metric in COMPARISON_METRICS},
+                "metrics": {metric: _metric_value(item, metric) for metric in all_metric_keys},
             }
             for idx, item in enumerate(ranked, start=1)
         ],
@@ -862,7 +964,7 @@ def generate_mteb_comparison_tables(
                 "model_name",
                 "evaluation_time_seconds",
                 "output_dir",
-                *COMPARISON_METRICS,
+                *all_metric_keys,
             ],
         )
         writer.writeheader()
@@ -874,7 +976,7 @@ def generate_mteb_comparison_tables(
                 "evaluation_time_seconds": item.evaluation_time_seconds,
                 "output_dir": item.output_dir,
             }
-            for metric in COMPARISON_METRICS:
+            for metric in all_metric_keys:
                 row[metric] = item.metrics.get(metric, item.main_score if metric == "main_score" else "")
             writer.writerow(row)
 

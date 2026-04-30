@@ -141,6 +141,7 @@ Benchmark variants:
 - optional `cross_language`: same corpus and queries, but qrels exclude same-language positives and keep only other-language relevant documents
 - CLI switch: `uv run main.py --evaluate-mteb --mteb-variant cross_language`
 - HF configs: base `corpus` / `queries` / `qrels` / `qac` are the default multilingual benchmark; `cross_language-corpus` / `cross_language-queries` / `cross_language-qrels` define the alternate retrieval setup, and `cross_language-qac` keeps one row per query with `linked_corpus_ids_json` filtered to cross-language relevant corpus rows
+- Metrics: `Recall@10` remains the main score. Full benchmark outputs also store `Recall`, `MAP`, `nDCG`, and same-language irrelevant-result share at `k=10,20,50,100`, plus `same_language_irrelevant_share_at_100_lang_{lang}` diagnostics for `de`, `en`, `es`, `fr`, and `zh`; compact comparison tables show only the headline 10/100 columns.
 
 Current partial CPU results from the latest completed models:
 

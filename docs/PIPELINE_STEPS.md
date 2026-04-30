@@ -228,6 +228,7 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
   - `multilingual` (default): all linked positives remain relevant
   - `cross_language`: same-language positives are removed from qrels
 - HF upload keeps `corpus`, `queries`, `qrels`, and `qac` as the default multilingual benchmark and additionally writes `cross_language-corpus`, `cross_language-queries`, `cross_language-qrels`, and `cross_language-qac`; the cross-language QAC config keeps one row per query and filters `linked_corpus_ids_json` to cross-language relevant corpus rows.
+- Metrics now include `Recall`, `MAP`, `nDCG`, and same-language irrelevant-result share at `k=10,20,50,100`, plus `same_language_irrelevant_share_at_100_lang_{lang}` diagnostics for `de`, `en`, `es`, `fr`, and `zh`; generated JSON/CSV artifacts keep the full metric set, while Markdown/LaTeX comparison tables stay compact with the headline 10/100 columns.
 - Latest partial CPU comparison snapshot:
   - `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`: `Recall@10 = 0.2921`, `nDCG@10 = 0.2567`, `nDCG@100 = 0.3258`, `Hit@100 = 0.6105`
   - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`: `Recall@10 = 0.2500`, `nDCG@10 = 0.2300`, `nDCG@100 = 0.2955`, `Hit@100 = 0.5263`
