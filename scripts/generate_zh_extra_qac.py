@@ -17,25 +17,36 @@ Generate 40 additional QAC rows that exercise the new Chinese support:
             strategies using the same quota allocation as
             balanced_multilingual_qa.
 
-The existing question-generation logic is reused unchanged: this script wires
-up `generate_qa_batch`, `grade_faithfulness`, `grade_quality`, and the row
-builder from `multi_lingual_qac.qac_generation.multilingual_qa`. Output
-schema matches `balanced_multilingual_qa`'s output (best-only + all-generated
-sibling file).
+Question generation runs on OpenAI (default ``gpt-5-mini``). The
+faithfulness and quality verifiers run on OpenRouter using Claude Sonnet 4.6
+with extended thinking enabled — the same model and configuration used by
+``scripts/regrade_with_openrouter.py``. Because the verifier matches the
+regraded balanced files, this script APPENDS its results directly into
+those existing files instead of writing standalone outputs:
+
+  - all-generated rows (3 candidates per group) ->
+        data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv
+  - best-only rows (top candidate per group) ->
+        data/google_patents/qac/balanced_100_qac_regraded.csv
+
+A small manifest is still written separately so each run is traceable.
+
+Append targets are validated before any API call: the file must exist and
+its header must match the standard QAC schema. Override with --all-generated
+and --best if you need different targets.
 
 Usage:
-    python scripts/generate_zh_extra_qac.py \\
-        --corpus data/google_patents/multilingual_corpus.csv \\
-        --exclude-from data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv \\
-        --output data/google_patents/qac/extra_40_zh_qac.csv
+    python scripts/generate_zh_extra_qac.py
 
-Requires OPENAI_API_KEY in environment (or .env file).
+Requires both ``OPENAI_API_KEY`` (for generation) and ``OPENROUTER_API_KEY``
+(for the Claude verifier) in environment / .env file.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import os
 import random
 import sys
 from pathlib import Path
@@ -62,12 +73,15 @@ from multi_lingual_qac.qac_generation.multilingual_qa import (  # noqa: E402
     TECHNICAL_QUALITY_FIELDS,
     _build_all_passages_text,
     _build_output_row,
+    _compute_faith_overall,
+    _compute_quality_overall,
     _get_client,
+    _load_faithfulness_prompt,
+    _load_quality_prompt,
+    _parse_json_response,
     _pick_context,
     _serialize_context_languages,
     generate_qa_batch,
-    grade_faithfulness,
-    grade_quality,
     load_multilingual_corpus,
     pick_target_languages,
 )
@@ -76,8 +90,13 @@ from multi_lingual_qac.qac_generation.balanced_multilingual_qa import (  # noqa:
     _select_best_rows,
 )
 
+from openai import OpenAI  # noqa: E402
 
-DEFAULT_MODEL = "gpt-5-mini"
+DEFAULT_GENERATION_MODEL = "gpt-5-mini"
+DEFAULT_VERIFIER_MODEL = "anthropic/claude-sonnet-4.6"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+THINKING_BUDGET_TOKENS = 8000
+MAX_TOKENS = 12000
 PHASE_A_FORCED_LANG = "zh"
 PHASE_A_STRATEGY_LABEL = "forced_zh"
 # Sentinel integer for strategy column when query language is forced.
@@ -91,20 +110,179 @@ STRATEGIES = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# OpenRouter verifier (Claude Sonnet 4.6 thinking by default).
+# Mirrors scripts/regrade_with_openrouter.py so the verifier model used here
+# matches the one used to regrade balanced_100_qac_all_generated.csv.
+# ---------------------------------------------------------------------------
+
+
+def _get_openrouter_client() -> OpenAI:
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "Set OPENROUTER_API_KEY in environment or .env to run the Claude verifier "
+            "(default verifier is anthropic/claude-sonnet-4.6)."
+        )
+    return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+
+
+def _call_with_thinking(client: OpenAI, model: str, messages: list) -> str:
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        max_tokens=MAX_TOKENS,
+        extra_body={
+            "thinking": {
+                "type": "enabled",
+                "budget_tokens": THINKING_BUDGET_TOKENS,
+            }
+        },
+    )
+    return response.choices[0].message.content or ""
+
+
+def _verify_faithfulness(
+    client: OpenAI,
+    model: str,
+    all_passages: str,
+    qa_pairs: List[Dict[str, str]],
+) -> List[Dict[str, Any]]:
+    prompt = _load_faithfulness_prompt()
+    candidates = "\n\n".join(
+        f"Candidate {i}:\n  Question: {qa['question']}\n  Answer: {qa['answer']}"
+        for i, qa in enumerate(qa_pairs)
+    )
+    content = _call_with_thinking(
+        client,
+        model,
+        [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"{all_passages}\n\n{candidates}"},
+        ],
+    )
+    data = _parse_json_response(content)
+    if isinstance(data, dict):
+        data = [data]
+
+    results = sorted(data[:3], key=lambda x: x.get("index", 0))
+    normalised: List[Dict[str, Any]] = []
+    for item in results:
+        row: Dict[str, Any] = {
+            "grounding": int(item.get("grounding", 1)),
+            "precision": int(item.get("precision", 1)),
+            "numerical_fidelity": int(item.get("numerical_fidelity", 1)),
+            "reason": str(item.get("reason", "")).strip(),
+        }
+        row["overall"] = _compute_faith_overall(row)
+        normalised.append(row)
+
+    while len(normalised) < 3:
+        fallback: Dict[str, Any] = {
+            "grounding": 1,
+            "precision": 1,
+            "numerical_fidelity": 1,
+            "reason": "missing",
+        }
+        fallback["overall"] = _compute_faith_overall(fallback)
+        normalised.append(fallback)
+    return normalised
+
+
+def _verify_quality(
+    client: OpenAI,
+    model: str,
+    all_passages: str,
+    qa_pairs: List[Dict[str, str]],
+    mode: str,
+) -> List[Dict[str, Any]]:
+    prompt = _load_quality_prompt(mode)
+    candidates = "\n\n".join(
+        f"Candidate {i}:\n  Question: {qa['question']}\n  Answer: {qa['answer']}"
+        for i, qa in enumerate(qa_pairs)
+    )
+    content = _call_with_thinking(
+        client,
+        model,
+        [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"{all_passages}\n\n{candidates}"},
+        ],
+    )
+    data = _parse_json_response(content)
+    if isinstance(data, dict):
+        data = [data]
+
+    results = sorted(data[:3], key=lambda x: x.get("index", 0))
+    normalised: List[Dict[str, Any]] = []
+
+    if mode == MODE_TECHNICAL:
+        for item in results:
+            row: Dict[str, Any] = {
+                "search_bar_realism": int(item.get("search_bar_realism", 1)),
+                "specificity": int(item.get("specificity", 1)),
+                "phrasing_economy": int(item.get("phrasing_economy", 1)),
+                "focus": int(item.get("focus", 1)),
+                "linguistic_quality": int(item.get("linguistic_quality", 1)),
+                "failure_type": str(item.get("failure_type", "none")).strip(),
+                "reason": str(item.get("reason", "")).strip(),
+            }
+            row["overall"] = _compute_quality_overall(row, mode)
+            normalised.append(row)
+        default: Dict[str, Any] = {
+            "search_bar_realism": 1,
+            "specificity": 1,
+            "phrasing_economy": 1,
+            "focus": 1,
+            "linguistic_quality": 1,
+            "failure_type": "missing",
+            "reason": "missing",
+        }
+    else:
+        for item in results:
+            row = {
+                "search_realism": int(item.get("search_realism", 1)),
+                "lexical_distance": int(item.get("lexical_distance", 1)),
+                "conceptual_framing": int(item.get("conceptual_framing", 1)),
+                "retrievability": int(item.get("retrievability", 1)),
+                "linguistic_quality": int(item.get("linguistic_quality", 1)),
+                "failure_type": str(item.get("failure_type", "none")).strip(),
+                "reason": str(item.get("reason", "")).strip(),
+            }
+            row["overall"] = _compute_quality_overall(row, mode)
+            normalised.append(row)
+        default = {
+            "search_realism": 1,
+            "lexical_distance": 1,
+            "conceptual_framing": 1,
+            "retrievability": 1,
+            "linguistic_quality": 1,
+            "failure_type": "missing",
+            "reason": "missing",
+        }
+
+    while len(normalised) < 3:
+        fallback = dict(default)
+        fallback["overall"] = _compute_quality_overall(fallback, mode)
+        normalised.append(fallback)
+    return normalised
+
+
 def _generate_for_target_langs(
     pub_num: str,
     rows: List[Dict[str, Any]],
     target_langs: List[str],
     *,
     mode: str,
-    model: str,
-    client,
+    generation_client: OpenAI,
+    generation_model: str,
+    verifier_client: OpenAI,
+    verifier_model: str,
 ) -> List[Dict[str, Any]]:
-    """Replica of `_process_document` orchestration that takes pre-resolved
-    target_langs instead of computing them from a strategy.
-
-    The underlying generation/grading logic is reused unchanged via the
-    exported helpers."""
+    """Generation orchestration with split clients/models: question generation
+    runs against ``generation_client`` (default OpenAI gpt-5-mini), while
+    faithfulness and quality verification run against ``verifier_client``
+    (default OpenRouter Claude Sonnet 4.6 with thinking)."""
     all_passages = _build_all_passages_text(rows)
     context_languages = _serialize_context_languages(rows)
     results: List[Dict[str, Any]] = []
@@ -116,7 +294,9 @@ def _generate_for_target_langs(
             continue
 
         try:
-            qa_pairs = generate_qa_batch(client, all_passages, target_lang, mode, model=model)
+            qa_pairs = generate_qa_batch(
+                generation_client, all_passages, target_lang, mode, model=generation_model,
+            )
         except Exception as exc:
             tqdm.write(f"  {pub_num} [{target_lang}]: generation error: {exc}")
             continue
@@ -128,13 +308,17 @@ def _generate_for_target_langs(
             continue
 
         try:
-            faith_grades = grade_faithfulness(client, all_passages, qa_pairs, model=model)
+            faith_grades = _verify_faithfulness(
+                verifier_client, verifier_model, all_passages, qa_pairs,
+            )
         except Exception as exc:
             tqdm.write(f"  {pub_num} [{target_lang}]: faithfulness grading error: {exc}")
             continue
 
         try:
-            qual_grades = grade_quality(client, all_passages, qa_pairs, mode, model=model)
+            qual_grades = _verify_quality(
+                verifier_client, verifier_model, all_passages, qa_pairs, mode,
+            )
         except Exception as exc:
             tqdm.write(f"  {pub_num} [{target_lang}]: quality grading error: {exc}")
             continue
@@ -331,13 +515,34 @@ def _build_phase_b_plan(
     return plan
 
 
+def _check_appendable(path: Path, expected_fieldnames: List[str]) -> None:
+    """Validate that *path* exists, is non-empty, and its header matches the
+    schema we are about to append. Refuses to silently create the file or
+    write into a file with a different header."""
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Append target {path} does not exist. Create it first (e.g. by "
+            f"running the balanced pipeline + regrade) or pass a different path."
+        )
+    with path.open(encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        header = next(reader, None)
+    if header != expected_fieldnames:
+        raise ValueError(
+            f"Header mismatch in {path}.\n  expected: {expected_fieldnames}\n  found:    {header}"
+        )
+
+
 def run(
     corpus_path: Path,
-    output_path: Path,
     *,
+    all_generated_path: Path,
+    best_path: Path,
+    manifest_path: Path,
     exclude_from: Optional[Path],
     questions_per_phase_per_mode: int,
-    model: str,
+    generation_model: str,
+    verifier_model: str,
     seed: int,
     dry_run: bool,
 ) -> None:
@@ -380,9 +585,16 @@ def run(
         f"(translated pool size {len(translated_pubs)})"
     )
 
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path = output_path.with_name(output_path.stem + "_manifest" + output_path.suffix)
+    all_generated_path = Path(all_generated_path)
+    best_path = Path(best_path)
+    manifest_path = Path(manifest_path)
+
+    fieldnames = _output_fieldnames()
+    if not dry_run:
+        _check_appendable(all_generated_path, fieldnames)
+        _check_appendable(best_path, fieldnames)
+
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_fields = [
         "phase",
         "publication_number",
@@ -425,24 +637,23 @@ def run(
         print("Dry run only: manifest written, generation skipped.")
         return
 
-    fieldnames = _output_fieldnames()
-    all_output_path = output_path.with_name(output_path.stem + "_all_generated" + output_path.suffix)
-
-    client = _get_client()
+    generation_client = _get_client()
+    verifier_client = _get_openrouter_client()
+    print(f"Generator:        {generation_model} (OpenAI)")
+    print(f"Verifier:         {verifier_model} (OpenRouter, thinking)")
+    print(f"Append target:    {all_generated_path}")
+    print(f"Best-only target: {best_path}")
 
     best_count = 0
     all_count = 0
     full_plan = [("A", item) for item in phase_a_plan] + [("B", item) for item in phase_b_plan]
     progress = tqdm(full_plan, desc="Generate zh extra Q&A", unit="doc")
-    with output_path.open("w", encoding="utf-8", newline="") as best_f, all_output_path.open(
-        "w", encoding="utf-8", newline=""
+    # Open for append; assume header is already present (validated above).
+    with best_path.open("a", encoding="utf-8", newline="") as best_f, all_generated_path.open(
+        "a", encoding="utf-8", newline=""
     ) as all_f:
         best_writer = csv.DictWriter(best_f, fieldnames=fieldnames)
         all_writer = csv.DictWriter(all_f, fieldnames=fieldnames)
-        best_writer.writeheader()
-        all_writer.writeheader()
-        best_f.flush()
-        all_f.flush()
 
         for phase, item in progress:
             pub_num = item["publication_number"]
@@ -452,8 +663,10 @@ def run(
                 rows,
                 item["target_langs"],
                 mode=item["mode"],
-                model=model,
-                client=client,
+                generation_client=generation_client,
+                generation_model=generation_model,
+                verifier_client=verifier_client,
+                verifier_model=verifier_model,
             )
 
             stamped: List[Dict[str, Any]] = []
@@ -481,8 +694,8 @@ def run(
                     f"expected {item['expected_question_count']} questions, got {len(best_rows)}"
                 )
 
-    print(f"\nWrote {best_count} best-only QAC rows -> {output_path}")
-    print(f"Wrote {all_count} all-generated QAC rows -> {all_output_path}")
+    print(f"\nAppended {all_count} all-generated rows -> {all_generated_path}")
+    print(f"Appended {best_count} best-only rows    -> {best_path}")
 
 
 def main() -> None:
@@ -508,10 +721,28 @@ def main() -> None:
         help="CSV whose publication_number column lists pubs that Phase A must skip.",
     )
     parser.add_argument(
-        "--output",
+        "--all-generated",
         type=Path,
-        default=Path("data/google_patents/qac/extra_40_zh_qac.csv"),
-        help="Output CSV path for the best-only sample.",
+        default=Path("data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv"),
+        help=(
+            "Existing CSV that the new all-generated rows (3 candidates per group) "
+            "are APPENDED to. Must already exist with the standard QAC header."
+        ),
+    )
+    parser.add_argument(
+        "--best",
+        type=Path,
+        default=Path("data/google_patents/qac/balanced_100_qac_regraded.csv"),
+        help=(
+            "Existing CSV that the new best-only rows (top candidate per group) "
+            "are APPENDED to. Must already exist with the standard QAC header."
+        ),
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("data/google_patents/qac/extra_40_zh_qac_manifest.csv"),
+        help="Path for the run plan / manifest (written fresh each run).",
     )
     parser.add_argument(
         "--questions-per-phase-per-mode",
@@ -520,10 +751,20 @@ def main() -> None:
         help="Questions per (phase, mode) pair (default: 10 -> 40 total).",
     )
     parser.add_argument(
-        "--model",
+        "--generation-model",
         type=str,
-        default=DEFAULT_MODEL,
-        help=f"OpenAI model to use (default: {DEFAULT_MODEL}).",
+        default=DEFAULT_GENERATION_MODEL,
+        help=f"OpenAI model used for question generation (default: {DEFAULT_GENERATION_MODEL}).",
+    )
+    parser.add_argument(
+        "--verifier-model",
+        type=str,
+        default=DEFAULT_VERIFIER_MODEL,
+        help=(
+            "OpenRouter model used for the faithfulness and quality verifiers, "
+            f"called with extended thinking (default: {DEFAULT_VERIFIER_MODEL}). "
+            "Requires OPENROUTER_API_KEY."
+        ),
     )
     parser.add_argument(
         "--seed",
@@ -540,10 +781,13 @@ def main() -> None:
 
     run(
         corpus_path=args.corpus,
-        output_path=args.output,
+        all_generated_path=args.all_generated,
+        best_path=args.best,
+        manifest_path=args.manifest,
         exclude_from=args.exclude_from,
         questions_per_phase_per_mode=args.questions_per_phase_per_mode,
-        model=args.model,
+        generation_model=args.generation_model,
+        verifier_model=args.verifier_model,
         seed=args.seed,
         dry_run=args.dry_run,
     )

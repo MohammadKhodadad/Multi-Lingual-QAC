@@ -7,6 +7,22 @@ The source row is the English row when present, otherwise any other language
 that already exists for that publication. Publications that already have a
 Chinese row are skipped.
 
+Row format matches the existing corpus exactly. The ``context`` field is
+rebuilt in code with the same logic as the original dataloader
+(``src/multi_lingual_qac/dataloaders/google_patents.py``):
+
+    parts = []
+    if title:       parts.append(f"Title: {title}")
+    if abstract:    parts.append(f"Abstract: {abstract}")
+    if first_claim: parts.append(f"First claim: {first_claim}")
+    context = "\\n\\n".join(parts).strip()
+
+so the structural labels stay in English exactly as they appear in every
+other row, while the body is in Chinese. ``description`` is never part of
+``context`` (it isn't in the dataloader either) and is copied through
+unchanged. The model is only asked to translate ``title``, ``abstract`` and
+``first_claim``.
+
 Translation guidance (encoded in the prompt):
   - Translate fluent prose into natural simplified Chinese.
   - Preserve all chemical names, compound identifiers, trade names, reagent
@@ -61,7 +77,13 @@ CORPUS_FIELDS = [
     "source",
 ]
 
-TRANSLATABLE_FIELDS = ("title", "abstract", "description", "first_claim", "context")
+# Fields whose body the model translates. ``first_claim`` is currently always
+# empty in the corpus, but the original dataloader does include it in
+# ``context`` when populated, so we translate it for parity.
+TRANSLATABLE_FIELDS = ("title", "abstract", "first_claim")
+# Carried through unchanged. ``description`` is never part of ``context`` in
+# the dataloader, so we leave it as-is.
+COPY_AS_IS_FIELDS = ("description",)
 
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_REASONING_EFFORT = "low"
@@ -84,7 +106,8 @@ Translate the supplied patent fields into simplified Chinese (zh-CN). Translatio
 4. Translate ordinary prose around the technical terms — connectors, descriptions, explanations — into
    natural Chinese. Do not produce word-for-word translations and do not omit content.
 5. Keep paragraph and list structure. Do not add commentary, headings, or notes.
-6. If a field is empty in the source, return an empty string for that field.
+6. Translate ONLY the body text in each field. Do NOT translate or invent structural labels — there
+   are none in the input. If a field is empty in the source, return an empty string for that field.
 
 You will receive a JSON object whose keys are field names and whose values are source text. Return a
 JSON object with the same keys whose values are the Chinese translations following the rules above.
@@ -133,6 +156,22 @@ def _pick_source_row(rows: List[Dict[str, str]]) -> Optional[Dict[str, str]]:
     return None
 
 
+def _build_context(title: str, abstract: str, first_claim: str) -> str:
+    """Reconstruct the ``context`` field exactly the way the original corpus
+    builder does in ``src/multi_lingual_qac/dataloaders/google_patents.py``:
+    English structural labels, only non-empty parts included, joined with a
+    blank line, stripped. ``description`` is intentionally not part of the
+    context (matches the dataloader)."""
+    parts: List[str] = []
+    if title:
+        parts.append(f"Title: {title}")
+    if abstract:
+        parts.append(f"Abstract: {abstract}")
+    if first_claim:
+        parts.append(f"First claim: {first_claim}")
+    return "\n\n".join(parts).strip()
+
+
 def translate_row(
     client: OpenAI,
     source: Dict[str, str],
@@ -143,7 +182,9 @@ def translate_row(
 
     Returns a new row dict with the same keys as the corpus schema, language
     set to 'zh', id suffixed with '_zh', and translatable fields replaced
-    with their Chinese translations.
+    with their Chinese translations. The ``context`` field is rebuilt from
+    the translated title/abstract using the same English structural labels
+    used by every other row in the corpus.
     """
     payload = {field: source.get(field, "") or "" for field in TRANSLATABLE_FIELDS}
 
@@ -163,6 +204,11 @@ def translate_row(
     for field in TRANSLATABLE_FIELDS:
         value = translated.get(field, "")
         new_row[field] = "" if value is None else str(value)
+    for field in COPY_AS_IS_FIELDS:
+        new_row[field] = source.get(field, "") or ""
+    new_row["context"] = _build_context(
+        new_row["title"], new_row["abstract"], new_row["first_claim"]
+    )
     return new_row
 
 
