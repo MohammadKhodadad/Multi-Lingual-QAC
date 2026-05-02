@@ -31,8 +31,8 @@ from tqdm import tqdm
 # Constants
 # ---------------------------------------------------------------------------
 
-ALL_LANGS = ["en", "de", "fr", "es"]
-LANG_NAMES = {"en": "English", "de": "German", "fr": "French", "es": "Spanish"}
+ALL_LANGS = ["en", "de", "fr", "es", "zh"]
+LANG_NAMES = {"en": "English", "de": "German", "fr": "French", "es": "Spanish", "zh": "Chinese"}
 
 MODE_TECHNICAL = "technical"
 MODE_SEMANTIC = "semantic"
