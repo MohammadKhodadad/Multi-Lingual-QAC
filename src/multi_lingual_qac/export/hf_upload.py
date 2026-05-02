@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import os
 from pathlib import Path
 from typing import Any, Optional
@@ -47,6 +48,22 @@ configs:
   data_files:
   - split: train
     path: data/qac/*.parquet
+- config_name: cross_language-corpus
+  data_files:
+  - split: train
+    path: data/cross_language-corpus/*.parquet
+- config_name: cross_language-queries
+  data_files:
+  - split: train
+    path: data/cross_language-queries/*.parquet
+- config_name: cross_language-qrels
+  data_files:
+  - split: train
+    path: data/cross_language-qrels/*.parquet
+- config_name: cross_language-qac
+  data_files:
+  - split: train
+    path: data/cross_language-qac/*.parquet
 ---
 """
 
@@ -75,6 +92,14 @@ def _get_question_language(row: dict[str, Any]) -> str:
     ).strip()
 
 
+def _query_id(corpus_id: str, question_language: str, index: int, seen: set[str]) -> str:
+    query_id = f"{corpus_id}_q_{question_language}" if corpus_id else f"q_{index}_{question_language}"
+    if query_id in seen:
+        query_id = f"{query_id}_{index}"
+    seen.add(query_id)
+    return query_id
+
+
 def push_to_hub(
     corpus_path: Path,
     qac_path: Path,
@@ -97,16 +122,25 @@ def push_to_hub(
     corpus_rows = load_corpus(corpus_path)
     qac_rows = load_qac(qac_path)
 
-    # Corpus: MTEB format (_id, title, text)
+    # Corpus: MTEB format plus language metadata.
     corpus_ids = {r["id"] for r in corpus_rows}
     corpus_ids_by_publication: dict[str, list[str]] = {}
+    corpus_language_by_id: dict[str, str] = {}
     for row in corpus_rows:
         pub_num = str(row.get("publication_number", "")).strip()
         corpus_id = str(row.get("id", "")).strip()
         if pub_num and corpus_id:
             corpus_ids_by_publication.setdefault(pub_num, []).append(corpus_id)
+        if corpus_id:
+            corpus_language_by_id[corpus_id] = str(row.get("language", "")).strip()
     corpus_data = [
-        {"_id": r["id"], "title": r.get("title", ""), "text": r.get("context", r.get("abstract", ""))}
+        {
+            "_id": r["id"],
+            "corpus_id": r["id"],
+            "title": r.get("title", ""),
+            "text": r.get("context", r.get("abstract", "")),
+            "corpus_language": str(r.get("language", "")).strip(),
+        }
         for r in corpus_rows
     ]
 
@@ -114,58 +148,87 @@ def push_to_hub(
     # Qrels: query-id, corpus-id, score (links each query to its corpus doc)
     queries_data = []
     qrels_data = []
+    cross_language_qrels_data = []
     qac_full = []  # full triplets with answer
+    cross_language_qac_full = []
 
     seen_query_ids = set()
     for i, r in enumerate(qac_rows):
-        cid = r.get("corpus_id", "")
+        cid = str(r.get("corpus_id", "")).strip()
         lang = _get_question_language(r)
+        corpus_lang = corpus_language_by_id.get(cid, "")
         q = r.get("question", "")
         a = r.get("answer", "")
-        query_id = f"{cid}_q_{lang}" if cid in corpus_ids else f"q_{i}_{lang}"
-        if query_id in seen_query_ids:
-            query_id = f"{cid}_q_{lang}_{i}"
-        seen_query_ids.add(query_id)
-
-        query_row = {
-            "_id": query_id,
-            "text": q,
-            "language": lang,
-            "question_language": lang,
-            "mode": r.get("mode", ""),
-            "strategy": r.get("strategy", ""),
-            "strategy_name": r.get("strategy_name", ""),
-            "publication_number": r.get("publication_number", ""),
-            "corpus_id": cid,
-        }
-        queries_data.append(query_row)
+        query_id = _query_id(cid if cid in corpus_ids else "", lang, i, seen_query_ids)
+        is_synthetic_translation = bool(lang and corpus_lang and lang != corpus_lang)
         publication_number = str(r.get("publication_number", "")).strip()
         relevant_corpus_ids = corpus_ids_by_publication.get(publication_number, [])
         if not relevant_corpus_ids and cid:
             relevant_corpus_ids = [cid]
+        cross_language_corpus_ids = [
+            relevant_corpus_id
+            for relevant_corpus_id in relevant_corpus_ids
+            if corpus_language_by_id.get(relevant_corpus_id, "") != lang
+        ]
+        if not cross_language_corpus_ids:
+            cross_language_corpus_ids = list(relevant_corpus_ids)
+
+        query_row = {
+            "_id": query_id,
+            "query_id": query_id,
+            "text": q,
+            "query_language": lang,
+            "corpus_id": cid,
+            "corpus_language": corpus_lang,
+            "is_synthetic_translation": is_synthetic_translation,
+        }
+        queries_data.append(query_row)
         for relevant_corpus_id in relevant_corpus_ids:
             qrels_data.append(
+                {"query-id": query_id, "corpus-id": relevant_corpus_id, "score": 1.0}
+            )
+        for relevant_corpus_id in cross_language_corpus_ids:
+            cross_language_qrels_data.append(
                 {"query-id": query_id, "corpus-id": relevant_corpus_id, "score": 1.0}
             )
         qac_full.append({
             "query_id": query_id,
             "corpus_id": cid,
-            "language": lang,
-            "question_language": lang,
-            "mode": r.get("mode", ""),
-            "strategy": r.get("strategy", ""),
-            "strategy_name": r.get("strategy_name", ""),
-            "publication_number": r.get("publication_number", ""),
+            "query_language": lang,
+            "corpus_language": corpus_lang,
             "question": q,
             "answer": a,
+            "is_synthetic_translation": is_synthetic_translation,
+            "linked_corpus_ids_json": json.dumps(relevant_corpus_ids, ensure_ascii=False),
+        })
+        cross_language_qac_full.append({
+            "query_id": query_id,
+            "corpus_id": cid,
+            "query_language": lang,
+            "corpus_language": corpus_lang,
+            "question": q,
+            "answer": a,
+            "is_synthetic_translation": is_synthetic_translation,
+            "linked_corpus_ids_json": json.dumps(cross_language_corpus_ids, ensure_ascii=False),
         })
 
     corpus_ds = Dataset.from_list(corpus_data)
     queries_ds = Dataset.from_list(queries_data)
     qrels_ds = Dataset.from_list(qrels_data)
     qac_ds = Dataset.from_list(qac_full)
+    cross_language_corpus_ds = Dataset.from_list(corpus_data)
+    cross_language_queries_ds = Dataset.from_list(queries_data)
+    cross_language_qrels_ds = Dataset.from_list(cross_language_qrels_data)
+    cross_language_qac_ds = Dataset.from_list(cross_language_qac_full)
 
     # Push each subset/config separately, each with its own train split.
+    api = HfApi(token=token)
+    api.create_repo(
+        repo_id=repo_id,
+        repo_type="dataset",
+        private=private,
+        exist_ok=True,
+    )
     corpus_ds.push_to_hub(
         repo_id,
         config_name="corpus",
@@ -198,17 +261,50 @@ def push_to_hub(
         token=token,
         private=private,
     )
+    cross_language_corpus_ds.push_to_hub(
+        repo_id,
+        config_name="cross_language-corpus",
+        split="train",
+        data_dir="data/cross_language-corpus",
+        token=token,
+        private=private,
+    )
+    cross_language_queries_ds.push_to_hub(
+        repo_id,
+        config_name="cross_language-queries",
+        split="train",
+        data_dir="data/cross_language-queries",
+        token=token,
+        private=private,
+    )
+    cross_language_qrels_ds.push_to_hub(
+        repo_id,
+        config_name="cross_language-qrels",
+        split="train",
+        data_dir="data/cross_language-qrels",
+        token=token,
+        private=private,
+    )
+    cross_language_qac_ds.push_to_hub(
+        repo_id,
+        config_name="cross_language-qac",
+        split="train",
+        data_dir="data/cross_language-qac",
+        token=token,
+        private=private,
+    )
 
     # Upload dataset card (README.md) with attribution and license
     readme_body = (
         README_YAML
         + "# Multi-lingual chemical QAC (retrieval benchmark)\n\n"
         "Question–Answer–Context (QAC) data for chemistry patent retrieval, multiple languages. "
-        "Configs/subsets: `corpus`, `queries`, `qrels`, `qac` (MTEB-style). "
+        "Configs/subsets: `corpus`, `queries`, `qrels`, `qac`, plus "
+        "`cross_language-corpus`, `cross_language-queries`, `cross_language-qrels`, "
+        "`cross_language-qac` (MTEB-style). "
         "Each config currently contains a `train` split.\n"
         + DATASET_CARD_ATTRIBUTION
     )
-    api = HfApi(token=token)
     api.upload_file(
         path_or_fileobj=io.BytesIO(readme_body.encode("utf-8")),
         path_in_repo="README.md",
