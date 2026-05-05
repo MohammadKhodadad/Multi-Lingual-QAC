@@ -76,6 +76,20 @@ def _normalize_jrc_qa_languages(values: list[str] | None) -> tuple[str, ...] | N
     return tuple(normalized) or None
 
 
+def _resolve_jrc_chemical_only(config: PipelineConfig, *, action_label: str) -> bool:
+    if config.jrc_chemical_only:
+        return True
+    if config.yes:
+        return False
+    return (
+        ask_interactive(
+            f"Do you want to {action_label} only chemical-focused JRC-Acquis documents? (y/n): ",
+            "n",
+        )
+        == "y"
+    )
+
+
 def parse_args() -> PipelineConfig:
     parser = argparse.ArgumentParser(
         description="Multi-Lingual Chemical QAC: prepare source data and build QAC."
@@ -129,6 +143,11 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--qa-sample", type=int, default=None, help="Sample size for Q&A generation (if omitted in interactive mode, you will be prompted; 0 = skip Q&A)")
     parser.add_argument("--qa-pairs-per-language", type=int, default=None, help="JRC-Acquis only: sampled source-document candidates per source language from multilingual CELEX groups before final QA selection")
     parser.add_argument("--qa-docs-per-language", type=int, default=None, help="JRC-Acquis only: retained source documents per language used for QA generation")
+    parser.add_argument(
+        "--jrc-chemical-only",
+        action="store_true",
+        help="JRC-Acquis only: keep documents whose EuroVoc metadata overlaps the chemical-topic filter",
+    )
     parser.add_argument(
         "--jrc-qa-languages",
         nargs="+",
@@ -230,6 +249,7 @@ def parse_args() -> PipelineConfig:
         qa_sample=args.qa_sample,
         qa_pairs_per_language=args.qa_pairs_per_language,
         qa_docs_per_language=args.qa_docs_per_language,
+        jrc_chemical_only=args.jrc_chemical_only,
         jrc_qa_languages=_normalize_jrc_qa_languages(args.jrc_qa_languages),
         jrc_synthetic_chinese=jrc_synthetic_chinese,
         qa_batch=qa_batch,
@@ -365,6 +385,7 @@ def main() -> None:
             no_extraction=config.no_extraction,
             limit=config.limit,
             qa_sample=config.qa_sample,
+            jrc_chemical_only=config.jrc_chemical_only,
             qa_batch=config.qa_batch,
             push_hf=config.push_hf,
             hf_repo=config.hf_repo,
@@ -407,7 +428,12 @@ def main() -> None:
         if not run_prepare:
             print("Prepare skipped.")
             return
+        prepare_jrc_chemical_only = config.jrc_chemical_only
         if config.prepare_source == "jrc-acquis":
+            prepare_jrc_chemical_only = _resolve_jrc_chemical_only(
+                config,
+                action_label="load",
+            )
             use_multi_cpu = False
             if not config.yes:
                 use_multi_cpu = (
@@ -429,6 +455,7 @@ def main() -> None:
                 no_extraction=config.no_extraction,
                 limit=config.limit,
                 qa_sample=config.qa_sample,
+                jrc_chemical_only=prepare_jrc_chemical_only,
                 qa_batch=config.qa_batch,
                 push_hf=config.push_hf,
                 hf_repo=config.hf_repo,
@@ -454,6 +481,11 @@ def main() -> None:
                 f" loaded {stats['documents_loaded']} XML documents"
                 f" across {len(stats['languages'])} languages."
             )
+            if stats.get("chemical_only"):
+                print(
+                    "  Chemical filter: kept EuroVoc-matched documents; "
+                    f"filtered {stats.get('documents_filtered_non_chemical', 0)} non-chemical documents."
+                )
             print("  Workers:", stats.get("workers", prepare_workers))
             print("  Input:", paths.input_dir)
             print("  Prepared:", paths.prepared_dir)
@@ -475,7 +507,12 @@ def main() -> None:
 
     if config.build_corpus:
         build_workers = 1
+        build_jrc_chemical_only = config.jrc_chemical_only
         if config.build_corpus == "jrc-acquis":
+            build_jrc_chemical_only = _resolve_jrc_chemical_only(
+                config,
+                action_label="build",
+            )
             use_multi_cpu = config.build_corpus_batch
             if not config.build_corpus_batch and not config.yes:
                 use_multi_cpu = (
@@ -499,6 +536,7 @@ def main() -> None:
             no_extraction=config.no_extraction,
             limit=config.limit,
             qa_sample=config.qa_sample,
+            jrc_chemical_only=build_jrc_chemical_only,
             qa_batch=config.qa_batch,
             push_hf=config.push_hf,
             hf_repo=config.hf_repo,
@@ -524,6 +562,11 @@ def main() -> None:
                 f" {stats['documents_written']} multilingual documents"
                 f" from {stats['celex_total']} CELEX ids."
             )
+            if stats.get("chemical_only"):
+                print(
+                    "  Chemical filter: "
+                    f"filtered {stats.get('documents_filtered_non_chemical', 0)} non-chemical documents."
+                )
             print(f"  Workers: {stats.get('workers', build_workers)}")
             print(f"  Multilingual CELEX ids: {stats['celex_multilingual']}")
             print(f"  All language pairs: {stats['pairs_written']}")

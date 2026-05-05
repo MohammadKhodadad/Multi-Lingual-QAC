@@ -57,6 +57,7 @@ class PipelineConfig:
     qa_sample: Optional[int] = None
     qa_pairs_per_language: Optional[int] = None
     qa_docs_per_language: Optional[int] = None
+    jrc_chemical_only: bool = False
     jrc_qa_languages: Optional[tuple[str, ...]] = None
     jrc_synthetic_chinese: Optional[bool] = None
     qa_batch: Optional[bool] = None

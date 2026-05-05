@@ -6,10 +6,13 @@ import csv
 import json
 import re
 import shutil
+import ssl
 import sys
 import tarfile
 import xml.etree.ElementTree as ET
+from collections.abc import Iterable as IterableABC
 from collections import Counter
+from functools import partial
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, Optional
 from urllib.parse import urljoin
@@ -43,6 +46,38 @@ JRC_ACQUIS_LANGS = (
 )
 
 JRC_ACQUIS_CORPUS_INDEX_URL = "https://wt-public.emm4u.eu/Acquis/JRC-Acquis.3.0/corpus/"
+CHEMICAL_EUROVOC_IDS = frozenset(
+    {
+        "1362",  # chemical industry
+        "2739",  # chemical product
+        "2364",  # petrochemicals
+        "2772",  # petroleum product
+        "3810",  # chemical compound
+        "3809",  # chemical element
+        "3817",  # organic chemical
+        "2740",  # inorganic chemical product
+        "5045",  # inorganic acid
+        "5035",  # acid
+        "3798",  # special chemicals
+        "3808",  # raw chemical industry
+        "c_e5d85c14",  # chemicals legislation
+        "5966",  # chemistry
+        "5968",  # industrial chemistry
+        "4889",  # biochemistry
+        "707",  # electrochemistry
+        "2528",  # chemical pollution
+        "6914",  # chemical accident
+        "2716",  # hydrogen production
+        "1387",  # rubber industry
+        "1396",  # glass industry
+        "1415",  # pharmaceutical industry
+        "1414",  # oil industry
+        "2357",  # pesticide
+        "2985",  # plant protection product / plant health product
+        "2987",  # herbicide
+        "5227",  # insecticide
+    }
+)
 RE_MULTISPACE = re.compile(r"\s+")
 RE_CELEX = re.compile(r"\b[0-9A-Z][0-9A-Z()_-]{5,}\b")
 RE_ARCHIVE_NAME = re.compile(r"\bjrc-([a-z]{2})\.tgz\b", re.IGNORECASE)
@@ -81,6 +116,10 @@ RE_JRC_REFERENCE_LINE = re.compile(
     r")",
     re.IGNORECASE,
 )
+
+_JRC_SSL_CONTEXT = ssl.create_default_context()
+_JRC_SSL_CONTEXT.check_hostname = False
+_JRC_SSL_CONTEXT.verify_mode = ssl.CERT_NONE
 
 
 def _local_name(tag: str) -> str:
@@ -213,7 +252,7 @@ def count_jrc_acquis_input_files(input_dir: Path) -> int:
 
 
 def _fetch_jrc_archive_urls(index_url: str = JRC_ACQUIS_CORPUS_INDEX_URL) -> dict[str, str]:
-    with urlopen(index_url) as response:
+    with urlopen(index_url, context=_JRC_SSL_CONTEXT) as response:
         html = response.read().decode("utf-8", errors="replace")
 
     urls: dict[str, str] = {}
@@ -257,7 +296,7 @@ def download_jrc_acquis_archives(
             continue
 
         tmp = dest.with_suffix(dest.suffix + ".part")
-        with urlopen(archive_urls[lang]) as response, tmp.open("wb") as out:
+        with urlopen(archive_urls[lang], context=_JRC_SSL_CONTEXT) as response, tmp.open("wb") as out:
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
@@ -419,6 +458,27 @@ def _extract_eurovoc(root: ET.Element) -> list[str]:
     return sorted(set(values))
 
 
+def _normalize_eurovoc_ids(values: Any) -> set[str]:
+    if values is None:
+        return set()
+    if isinstance(values, str):
+        parts = values.replace(",", "|").split("|")
+        return {part.strip().lower() for part in parts if part.strip()}
+    if isinstance(values, IterableABC):
+        normalized: set[str] = set()
+        for value in values:
+            text = str(value).strip().lower()
+            if text:
+                normalized.add(text)
+        return normalized
+    text = str(values).strip().lower()
+    return {text} if text else set()
+
+
+def _has_chemical_eurovoc(values: Any) -> bool:
+    return bool(_normalize_eurovoc_ids(values) & CHEMICAL_EUROVOC_IDS)
+
+
 def _section_from_ancestors(
     elem: ET.Element,
     parent_map: Dict[ET.Element, ET.Element],
@@ -509,6 +569,7 @@ def _iter_archive_records(
     archive_path: Path,
     *,
     archive_lang: str,
+    chemical_only: bool = False,
 ) -> Iterator[dict[str, Any]]:
     with tarfile.open(archive_path, "r:*") as tar:
         for member in tar:
@@ -526,6 +587,8 @@ def _iter_archive_records(
                 source_archive=str(archive_path),
             )
             if record is not None:
+                if chemical_only and not _has_chemical_eurovoc(record.get("eurovoc_ids")):
+                    continue
                 yield record
 
 
@@ -533,6 +596,7 @@ def _process_archive_to_temp(
     archive_path_str: str,
     archive_lang: str,
     temp_dir_str: str,
+    chemical_only: bool = False,
 ) -> dict[str, Any]:
     archive_path = Path(archive_path_str)
     temp_dir = Path(temp_dir_str)
@@ -540,11 +604,15 @@ def _process_archive_to_temp(
     temp_jsonl = temp_dir / f"{archive_path.stem}.jsonl"
 
     count = 0
+    filtered_non_chemical = 0
     language_counts: Counter[str] = Counter()
     paragraph_counts: Counter[str] = Counter()
 
     with temp_jsonl.open("w", encoding="utf-8") as out:
         for record in _iter_archive_records(archive_path, archive_lang=archive_lang):
+            if chemical_only and not _has_chemical_eurovoc(record.get("eurovoc_ids")):
+                filtered_non_chemical += 1
+                continue
             out.write(json.dumps(record, ensure_ascii=False) + "\n")
             count += 1
             language_counts[record["language"]] += 1
@@ -554,12 +622,13 @@ def _process_archive_to_temp(
         "archive_name": archive_path.name,
         "temp_jsonl": str(temp_jsonl),
         "documents_loaded": count,
+        "documents_filtered_non_chemical": filtered_non_chemical,
         "languages": dict(sorted(language_counts.items())),
         "paragraphs_by_language": dict(sorted(paragraph_counts.items())),
     }
 
 
-def _iter_xml_records(input_dir: Path) -> Iterator[dict[str, Any]]:
+def _iter_xml_records(input_dir: Path, *, chemical_only: bool = False) -> Iterator[dict[str, Any]]:
     for xml_path in sorted(input_dir.rglob("*.xml")):
         archive_lang = xml_path.parent.name.lower()
         if archive_lang not in JRC_ACQUIS_LANGS:
@@ -573,6 +642,8 @@ def _iter_xml_records(input_dir: Path) -> Iterator[dict[str, Any]]:
             source_archive=str(xml_path),
         )
         if record is not None:
+            if chemical_only and not _has_chemical_eurovoc(record.get("eurovoc_ids")):
+                continue
             yield record
 
 
@@ -580,6 +651,7 @@ def iter_jrc_acquis_raw_records(
     input_dir: Path,
     *,
     languages: Optional[Iterable[str]] = None,
+    chemical_only: bool = False,
 ) -> Iterator[dict[str, Any]]:
     allowed = {lang.lower() for lang in languages} if languages else None
     input_dir = Path(input_dir)
@@ -590,10 +662,14 @@ def iter_jrc_acquis_raw_records(
             archive_lang = archive_path.stem.replace("jrc-", "").replace(".tar", "").lower()
             if allowed and archive_lang not in allowed:
                 continue
-            yield from _iter_archive_records(archive_path, archive_lang=archive_lang)
+            yield from _iter_archive_records(
+                archive_path,
+                archive_lang=archive_lang,
+                chemical_only=chemical_only,
+            )
         return
 
-    for record in _iter_xml_records(input_dir):
+    for record in _iter_xml_records(input_dir, chemical_only=chemical_only):
         if allowed and record["language"] not in allowed:
             continue
         yield record
@@ -606,6 +682,7 @@ def load_jrc_acquis_raw(
     languages: Optional[Iterable[str]] = None,
     limit: Optional[int] = None,
     workers: int = 1,
+    chemical_only: bool = False,
 ) -> dict[str, Any]:
     """
     Read raw JRC-Acquis monolingual XML archives or extracted XML files and write
@@ -624,6 +701,7 @@ def load_jrc_acquis_raw(
     stats_json = output_dir / "raw_load_stats.json"
 
     count = 0
+    filtered_non_chemical = 0
     language_counts: Counter[str] = Counter()
     paragraph_counts: Counter[str] = Counter()
     archive_counts: Counter[str] = Counter()
@@ -653,6 +731,7 @@ def load_jrc_acquis_raw(
                         str(archive_path),
                         archive_lang,
                         str(temp_dir),
+                        chemical_only,
                     ): (archive_path, archive_lang)
                     for archive_path, archive_lang in selected_archives
                 }
@@ -664,6 +743,7 @@ def load_jrc_acquis_raw(
                             shutil.copyfileobj(fh, out)
                         temp_jsonl.unlink()
                     count += int(result["documents_loaded"])
+                    filtered_non_chemical += int(result.get("documents_filtered_non_chemical", 0))
                     for lang, value in result["languages"].items():
                         language_counts[lang] += int(value)
                     for lang, value in result["paragraphs_by_language"].items():
@@ -682,6 +762,9 @@ def load_jrc_acquis_raw(
             unit="doc",
         ) as pbar:
             for record in iter_jrc_acquis_raw_records(input_dir, languages=languages):
+                if chemical_only and not _has_chemical_eurovoc(record.get("eurovoc_ids")):
+                    filtered_non_chemical += 1
+                    continue
                 out.write(json.dumps(record, ensure_ascii=False) + "\n")
                 count += 1
                 language_counts[record["language"]] += 1
@@ -699,7 +782,10 @@ def load_jrc_acquis_raw(
         )
 
     stats = {
+        "chemical_only": chemical_only,
+        "chemical_eurovoc_filter_ids": sorted(CHEMICAL_EUROVOC_IDS) if chemical_only else [],
         "documents_loaded": count,
+        "documents_filtered_non_chemical": filtered_non_chemical,
         "languages": dict(sorted(language_counts.items())),
         "paragraphs_by_language": dict(sorted(paragraph_counts.items())),
         "source_files": dict(sorted(archive_counts.items())),
@@ -966,17 +1052,22 @@ def _build_jrc_document_entry(row: dict[str, Any]) -> Optional[dict[str, Any]]:
     }
 
 
-def _build_jrc_document_batch(lines: list[str]) -> dict[str, Any]:
+def _build_jrc_document_batch(lines: list[str], *, chemical_only: bool = False) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
     language_counts: Counter[str] = Counter()
     body_chars_by_lang: Counter[str] = Counter()
+    filtered_non_chemical = 0
     docs_short = 0
     docs_long = 0
     formatting_cleaned = 0
     operative_trimmed = 0
 
     for line in lines:
-        record = _build_jrc_document_entry(json.loads(line))
+        row = json.loads(line)
+        if chemical_only and not _has_chemical_eurovoc(row.get("eurovoc_ids")):
+            filtered_non_chemical += 1
+            continue
+        record = _build_jrc_document_entry(row)
         if record is None:
             continue
         records.append(record)
@@ -995,6 +1086,7 @@ def _build_jrc_document_batch(lines: list[str]) -> dict[str, Any]:
         "records": records,
         "language_counts": dict(language_counts),
         "body_chars_by_lang": dict(body_chars_by_lang),
+        "documents_filtered_non_chemical": filtered_non_chemical,
         "docs_short": docs_short,
         "docs_long": docs_long,
         "formatting_cleaned": formatting_cleaned,
@@ -1108,6 +1200,7 @@ def build_jrc_acquis_document_corpus(
     full_output_path: Path,
     output_path: Path,
     workers: int = 1,
+    chemical_only: bool = False,
 ) -> dict[str, Any]:
     """
     Build a document-level multilingual corpus from `raw_documents.jsonl`.
@@ -1138,6 +1231,7 @@ def build_jrc_acquis_document_corpus(
     language_counts: Counter[str] = Counter()
     body_chars_by_lang: Counter[str] = Counter()
     doc_count = 0
+    filtered_non_chemical = 0
     docs_short = 0
     docs_long = 0
     formatting_cleaned = 0
@@ -1159,7 +1253,10 @@ def build_jrc_acquis_document_corpus(
         doc_batches = _iter_batches(src, doc_batch_size)
         if workers > 1:
             with ProcessPoolExecutor(max_workers=workers) as executor:
-                results_iter = executor.map(_build_jrc_document_batch, doc_batches)
+                results_iter = executor.map(
+                    partial(_build_jrc_document_batch, chemical_only=chemical_only),
+                    doc_batches,
+                )
                 for result in results_iter:
                     records = result["records"]
                     for record in records:
@@ -1173,6 +1270,7 @@ def build_jrc_acquis_document_corpus(
                     for lang, chars in result["body_chars_by_lang"].items():
                         body_chars_by_lang[lang] += int(chars)
                     doc_count += len(records)
+                    filtered_non_chemical += int(result.get("documents_filtered_non_chemical", 0))
                     docs_short += int(result["docs_short"])
                     docs_long += int(result["docs_long"])
                     formatting_cleaned += int(result["formatting_cleaned"])
@@ -1183,7 +1281,7 @@ def build_jrc_acquis_document_corpus(
                         pbar.set_postfix(lang=last["lang"], celex=last["celex"][:12])
         else:
             for batch in doc_batches:
-                result = _build_jrc_document_batch(batch)
+                result = _build_jrc_document_batch(batch, chemical_only=chemical_only)
                 records = result["records"]
                 for record in records:
                     full_writer.writerow(record["full_row"])
@@ -1194,6 +1292,7 @@ def build_jrc_acquis_document_corpus(
                 for lang, chars in result["body_chars_by_lang"].items():
                     body_chars_by_lang[lang] += int(chars)
                 doc_count += len(records)
+                filtered_non_chemical += int(result.get("documents_filtered_non_chemical", 0))
                 docs_short += int(result["docs_short"])
                 docs_long += int(result["docs_long"])
                 formatting_cleaned += int(result["formatting_cleaned"])
@@ -1327,7 +1426,10 @@ def build_jrc_acquis_document_corpus(
         if count
     }
     stats = {
+        "chemical_only": chemical_only,
+        "chemical_eurovoc_filter_ids": sorted(CHEMICAL_EUROVOC_IDS) if chemical_only else [],
         "documents_written": doc_count,
+        "documents_filtered_non_chemical": filtered_non_chemical,
         "celex_total": len(per_celex),
         "celex_multilingual": celex_multilingual,
         "pairs_written": pair_count,
@@ -1398,6 +1500,11 @@ def parse_jrc_acquis_args() -> argparse.Namespace:
         default=None,
         help="Optional max number of XML documents to load for inspection.",
     )
+    parser.add_argument(
+        "--chemical-only",
+        action="store_true",
+        help="Keep only JRC-Acquis documents with chemical-topic EuroVoc metadata.",
+    )
     return parser.parse_args()
 
 
@@ -1408,6 +1515,7 @@ def main() -> None:
         output_dir=args.output_dir,
         languages=args.languages,
         limit=args.limit,
+        chemical_only=args.chemical_only,
     )
     print("Loaded raw JRC-Acquis documents:")
     print("  Input:", args.input_dir)

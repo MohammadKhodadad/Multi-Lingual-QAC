@@ -46,9 +46,12 @@ uv run main.py --label-qrels WIKIDATA                 # LLM judge: qrels + queri
 uv run main.py --prepare-source JRC-ACQUIS      # download / extract / parse raw JRC-Acquis XML archives
 uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multilingual subsets, and QA candidates
 uv run main.py --source JRC-ACQUIS              # interactive CELEX-group-based legal QA generation from sampled same-language documents
+# Optional chemical-topic subset:
+uv run main.py --prepare-source JRC-ACQUIS --jrc-chemical-only --yes
+uv run main.py --build-corpus JRC-ACQUIS --jrc-chemical-only --build-corpus-batch
 ```
 
-The JRC retrieval corpus keeps body text plus a capped annex slice and excludes signature tail text from the main retrieval `context`.
+The JRC retrieval corpus keeps compact operative/body text and excludes signature tail text from the main retrieval `context`. Add `--jrc-chemical-only` to both JRC source preparation and corpus build when you want a non-interactive chemical-focused run; otherwise those two JRC commands ask whether to keep only documents whose EuroVoc IDs overlap the built-in chemical-topic filter. The generated `raw_load_stats.json` and `document_corpus_stats.json` record whether the filter was active, the filter IDs, and how many non-chemical documents were removed.
 
 Typical interactive JRC QA review run:
 
@@ -247,7 +250,7 @@ JRC now uses a **CELEX-group-based** QA flow:
 8. validate originals and synthetic translations with language, faithfulness, retrieval-quality, and legal-shape checks
 9. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
 
-The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. Synthetic translation assignment is quota-based: for each enabled synthetic language, the total number of synthetic queries matches one non-synthetic per-language selection budget and is spread as evenly as possible across the retained source languages. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
+The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. For chemical-focused JRC experiments, pass `--jrc-chemical-only` to both `--prepare-source JRC-ACQUIS` and `--build-corpus JRC-ACQUIS`; the filter keeps documents whose EuroVoc metadata matches the chemical-topic ID set and records the active filter in the prepare/build stats. Synthetic translation assignment is quota-based: for each enabled synthetic language, the total number of synthetic queries matches one non-synthetic per-language selection budget and is spread as evenly as possible across the retained source languages. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
 
 For retrieval release and evaluation, the current benchmark supports two relevance setups over the same generated queries and retrieval corpus: a default `multilingual` setup that keeps all linked positives for the query, and a stricter `cross_language` setup that removes same-language positives and keeps only linked documents in other languages.
 

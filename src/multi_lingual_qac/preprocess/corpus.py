@@ -48,6 +48,7 @@ def prepare_corpus_source(
             languages=None,
             limit=config.limit,
             workers=config.prepare_workers,
+            chemical_only=config.jrc_chemical_only,
         )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 
@@ -100,6 +101,7 @@ def build_corpus_from_source(
             full_output_path=paths.corpus_full_csv,
             output_path=paths.corpus_csv,
             workers=config.build_workers,
+            chemical_only=config.jrc_chemical_only,
         )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 

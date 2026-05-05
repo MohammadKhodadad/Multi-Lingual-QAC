@@ -156,6 +156,7 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 - Built `data/JRC-ACQUIS/preprocessed/corpus_full.csv`, `corpus.csv`, multilingual subsets, QA-candidate subsets, inspection sample, and `document_pairs_all.csv`.
 - Pairing is document-level and based on shared `celex`, so each pair is the same EU legal act in two languages.
 - Added multi-CPU support for both `--prepare-source JRC-ACQUIS` and `--build-corpus JRC-ACQUIS`.
+- Added `--jrc-chemical-only` for non-interactive JRC runs that should keep only documents whose EuroVoc metadata matches the built-in chemical-topic ID set. If the flag is omitted in interactive mode, JRC raw loading and corpus building each ask a yes/no chemical-only question. Use the same answer for both stages, because each stage records its own filtered counts and filter metadata in JSON stats.
 
 ## 14. JRC-Acquis Preprocessing and Inspection
 - Replaced brittle case-specific cleanup rules with more generic legal-structure cleanup and operative-section trimming.
