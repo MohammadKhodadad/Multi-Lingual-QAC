@@ -76,6 +76,21 @@ def _normalize_jrc_qa_languages(values: list[str] | None) -> tuple[str, ...] | N
     return tuple(normalized) or None
 
 
+def _normalize_jrc_qa_filter_profile(value: str) -> str:
+    normalized = value.strip().lower()
+    aliases = {
+        "1": "strict",
+        "strict": "strict",
+        "2": "soft",
+        "soft": "soft",
+    }
+    if normalized not in aliases:
+        raise argparse.ArgumentTypeError(
+            "Unsupported JRC QA filter profile. Use `1`/`strict` or `2`/`soft`."
+        )
+    return aliases[normalized]
+
+
 def _resolve_jrc_chemical_only(config: PipelineConfig, *, action_label: str) -> bool:
     if config.jrc_chemical_only:
         return True
@@ -88,6 +103,24 @@ def _resolve_jrc_chemical_only(config: PipelineConfig, *, action_label: str) -> 
         )
         == "y"
     )
+
+
+def _resolve_jrc_qa_filter_profile(config: PipelineConfig) -> str:
+    if config.jrc_qa_filter_profile:
+        return config.jrc_qa_filter_profile
+    if config.yes:
+        return "strict"
+    while True:
+        raw = input(
+            "JRC QA candidate filter profile for corpus build "
+            "(1=strict/current, 2=soft/more documents) [1]: "
+        ).strip()
+        if not raw:
+            return "strict"
+        try:
+            return _normalize_jrc_qa_filter_profile(raw)
+        except argparse.ArgumentTypeError as exc:
+            print(exc)
 
 
 def parse_args() -> PipelineConfig:
@@ -147,6 +180,16 @@ def parse_args() -> PipelineConfig:
         "--jrc-chemical-only",
         action="store_true",
         help="JRC-Acquis only: keep documents whose EuroVoc metadata overlaps the chemical-topic filter",
+    )
+    parser.add_argument(
+        "--jrc-qa-filter-profile",
+        type=_normalize_jrc_qa_filter_profile,
+        default=None,
+        metavar="{1,2,strict,soft}",
+        help=(
+            "JRC-Acquis build only: QA-candidate preprocessing profile. "
+            "`1`/`strict` keeps the current thresholds; `2`/`soft` lowers minimums."
+        ),
     )
     parser.add_argument(
         "--jrc-qa-languages",
@@ -250,6 +293,7 @@ def parse_args() -> PipelineConfig:
         qa_pairs_per_language=args.qa_pairs_per_language,
         qa_docs_per_language=args.qa_docs_per_language,
         jrc_chemical_only=args.jrc_chemical_only,
+        jrc_qa_filter_profile=args.jrc_qa_filter_profile,
         jrc_qa_languages=_normalize_jrc_qa_languages(args.jrc_qa_languages),
         jrc_synthetic_chinese=jrc_synthetic_chinese,
         qa_batch=qa_batch,
@@ -386,6 +430,7 @@ def main() -> None:
             limit=config.limit,
             qa_sample=config.qa_sample,
             jrc_chemical_only=config.jrc_chemical_only,
+            jrc_qa_filter_profile=config.jrc_qa_filter_profile,
             qa_batch=config.qa_batch,
             push_hf=config.push_hf,
             hf_repo=config.hf_repo,
@@ -456,6 +501,7 @@ def main() -> None:
                 limit=config.limit,
                 qa_sample=config.qa_sample,
                 jrc_chemical_only=prepare_jrc_chemical_only,
+                jrc_qa_filter_profile=config.jrc_qa_filter_profile,
                 qa_batch=config.qa_batch,
                 push_hf=config.push_hf,
                 hf_repo=config.hf_repo,
@@ -508,11 +554,13 @@ def main() -> None:
     if config.build_corpus:
         build_workers = 1
         build_jrc_chemical_only = config.jrc_chemical_only
+        build_jrc_qa_filter_profile = config.jrc_qa_filter_profile or "strict"
         if config.build_corpus == "jrc-acquis":
             build_jrc_chemical_only = _resolve_jrc_chemical_only(
                 config,
                 action_label="build",
             )
+            build_jrc_qa_filter_profile = _resolve_jrc_qa_filter_profile(config)
             use_multi_cpu = config.build_corpus_batch
             if not config.build_corpus_batch and not config.yes:
                 use_multi_cpu = (
@@ -537,6 +585,7 @@ def main() -> None:
             limit=config.limit,
             qa_sample=config.qa_sample,
             jrc_chemical_only=build_jrc_chemical_only,
+            jrc_qa_filter_profile=build_jrc_qa_filter_profile,
             qa_batch=config.qa_batch,
             push_hf=config.push_hf,
             hf_repo=config.hf_repo,
@@ -567,6 +616,7 @@ def main() -> None:
                     "  Chemical filter: "
                     f"filtered {stats.get('documents_filtered_non_chemical', 0)} non-chemical documents."
                 )
+            print(f"  QA filter profile: {stats.get('qa_filter', {}).get('profile', build_jrc_qa_filter_profile)}")
             print(f"  Workers: {stats.get('workers', build_workers)}")
             print(f"  Multilingual CELEX ids: {stats['celex_multilingual']}")
             print(f"  All language pairs: {stats['pairs_written']}")

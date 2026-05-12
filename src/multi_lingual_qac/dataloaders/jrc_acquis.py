@@ -841,6 +841,28 @@ JRC_QA_MIN_MEDIUM_OPERATIVE_PARAGRAPHS = 5
 JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS = 120
 JRC_QA_SHORT_PARAGRAPH_MAX_CHARS = 60
 JRC_QA_MAX_SHORT_OPERATIVE_RATIO = 0.55
+JRC_QA_FILTER_PROFILES = {
+    "strict": {
+        "min_chars": 1500,
+        "max_chars": 30000,
+        "min_body_paragraphs": 8,
+        "min_operative_chars": 1200,
+        "min_medium_operative_paragraphs": 5,
+        "medium_paragraph_min_chars": 120,
+        "short_paragraph_max_chars": 60,
+        "max_short_operative_ratio": 0.55,
+    },
+    "soft": {
+        "min_chars": 900,
+        "max_chars": 30000,
+        "min_body_paragraphs": 4,
+        "min_operative_chars": 700,
+        "min_medium_operative_paragraphs": 2,
+        "medium_paragraph_min_chars": 120,
+        "short_paragraph_max_chars": 60,
+        "max_short_operative_ratio": 0.55,
+    },
+}
 JRC_INSPECTION_SAMPLE_PER_LANGUAGE = 5
 # Approximate a compact 512-token retrieval representation using characters.
 JRC_RETRIEVAL_BODY_MAX_CHARS = 1800
@@ -1138,33 +1160,48 @@ def _split_jrc_paragraphs(text: str) -> list[str]:
     return paragraphs
 
 
-def _assess_jrc_qa_candidate(row: dict[str, str]) -> dict[str, Any]:
+def _jrc_qa_filter_config(profile: str = "strict") -> dict[str, float | int]:
+    normalized = str(profile or "strict").strip().lower()
+    if normalized not in JRC_QA_FILTER_PROFILES:
+        raise ValueError(
+            f"Unsupported JRC QA filter profile: {profile}. "
+            f"Use one of: {', '.join(sorted(JRC_QA_FILTER_PROFILES))}"
+        )
+    return JRC_QA_FILTER_PROFILES[normalized]
+
+
+def _assess_jrc_qa_candidate(row: dict[str, str], *, profile: str = "strict") -> dict[str, Any]:
+    qa_filter = _jrc_qa_filter_config(profile)
     context = row.get("context", "") or ""
     body_paragraph_count = int(row.get("body_paragraph_count", "0") or 0)
     operative_paragraphs = _split_jrc_paragraphs(row.get("operative_context", ""))
     operative_chars = sum(len(paragraph) for paragraph in operative_paragraphs)
     medium_operative_paragraphs = sum(
-        1 for paragraph in operative_paragraphs if len(paragraph) >= JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS
+        1
+        for paragraph in operative_paragraphs
+        if len(paragraph) >= int(qa_filter["medium_paragraph_min_chars"])
     )
     short_operative_paragraphs = sum(
-        1 for paragraph in operative_paragraphs if len(paragraph) <= JRC_QA_SHORT_PARAGRAPH_MAX_CHARS
+        1
+        for paragraph in operative_paragraphs
+        if len(paragraph) <= int(qa_filter["short_paragraph_max_chars"])
     )
     short_operative_ratio = (
         short_operative_paragraphs / len(operative_paragraphs) if operative_paragraphs else 1.0
     )
 
     reasons: list[str] = []
-    if len(context) < JRC_QA_MIN_CHARS:
+    if len(context) < int(qa_filter["min_chars"]):
         reasons.append("too_short")
-    if len(context) > JRC_QA_MAX_CHARS:
+    if len(context) > int(qa_filter["max_chars"]):
         reasons.append("too_long")
-    if body_paragraph_count < JRC_QA_MIN_BODY_PARAGRAPHS:
+    if body_paragraph_count < int(qa_filter["min_body_paragraphs"]):
         reasons.append("too_few_body_paragraphs")
-    if operative_chars < JRC_QA_MIN_OPERATIVE_CHARS:
+    if operative_chars < int(qa_filter["min_operative_chars"]):
         reasons.append("too_few_operative_chars")
-    if medium_operative_paragraphs < JRC_QA_MIN_MEDIUM_OPERATIVE_PARAGRAPHS:
+    if medium_operative_paragraphs < int(qa_filter["min_medium_operative_paragraphs"]):
         reasons.append("too_few_medium_operative_paragraphs")
-    if short_operative_ratio > JRC_QA_MAX_SHORT_OPERATIVE_RATIO:
+    if short_operative_ratio > float(qa_filter["max_short_operative_ratio"]):
         reasons.append("too_many_short_operative_paragraphs")
 
     return {
@@ -1179,8 +1216,8 @@ def _assess_jrc_qa_candidate(row: dict[str, str]) -> dict[str, Any]:
     }
 
 
-def _is_jrc_qa_candidate(row: dict[str, str]) -> bool:
-    return bool(_assess_jrc_qa_candidate(row)["is_candidate"])
+def _is_jrc_qa_candidate(row: dict[str, str], *, profile: str = "strict") -> bool:
+    return bool(_assess_jrc_qa_candidate(row, profile=profile)["is_candidate"])
 
 
 def _set_csv_field_size_limit() -> None:
@@ -1201,6 +1238,7 @@ def build_jrc_acquis_document_corpus(
     output_path: Path,
     workers: int = 1,
     chemical_only: bool = False,
+    qa_filter_profile: str = "strict",
 ) -> dict[str, Any]:
     """
     Build a document-level multilingual corpus from `raw_documents.jsonl`.
@@ -1223,6 +1261,8 @@ def build_jrc_acquis_document_corpus(
     full_output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     workers = max(1, int(workers or 1))
+    qa_filter_profile = str(qa_filter_profile or "strict").strip().lower()
+    qa_filter = _jrc_qa_filter_config(qa_filter_profile)
 
     pairs_path = preprocessed_dir / "document_pairs_all.csv"
     stats_path = preprocessed_dir / "document_corpus_stats.json"
@@ -1401,7 +1441,7 @@ def build_jrc_acquis_document_corpus(
             multilingual_docs_written += 1
             multilingual_docs_by_language[lang] += 1
 
-            qa_assessment = _assess_jrc_qa_candidate(row)
+            qa_assessment = _assess_jrc_qa_candidate(row, profile=qa_filter_profile)
             if qa_assessment["is_candidate"]:
                 qa_writer.writerow({field: row.get(field, "") for field in JRC_DOCUMENT_FIELDNAMES})
                 qa_candidates_written += 1
@@ -1455,14 +1495,8 @@ def build_jrc_acquis_document_corpus(
         "qa_candidates_csv": str(qa_candidates_path),
         "inspection_sample_csv": str(inspection_sample_path),
         "qa_filter": {
-            "min_chars": JRC_QA_MIN_CHARS,
-            "max_chars": JRC_QA_MAX_CHARS,
-            "min_body_paragraphs": JRC_QA_MIN_BODY_PARAGRAPHS,
-            "min_operative_chars": JRC_QA_MIN_OPERATIVE_CHARS,
-            "min_medium_operative_paragraphs": JRC_QA_MIN_MEDIUM_OPERATIVE_PARAGRAPHS,
-            "medium_paragraph_min_chars": JRC_QA_MEDIUM_PARAGRAPH_MIN_CHARS,
-            "short_paragraph_max_chars": JRC_QA_SHORT_PARAGRAPH_MAX_CHARS,
-            "max_short_operative_ratio": JRC_QA_MAX_SHORT_OPERATIVE_RATIO,
+            "profile": qa_filter_profile,
+            **qa_filter,
         },
         "workers": workers,
     }

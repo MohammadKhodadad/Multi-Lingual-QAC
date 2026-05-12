@@ -102,6 +102,7 @@ def build_corpus_from_source(
             output_path=paths.corpus_csv,
             workers=config.build_workers,
             chemical_only=config.jrc_chemical_only,
+            qa_filter_profile=config.jrc_qa_filter_profile or "strict",
         )
     raise ValueError(f"Unsupported corpus source: {config.source}")
 

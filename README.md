@@ -48,10 +48,10 @@ uv run main.py --build-corpus JRC-ACQUIS        # build document corpus, multili
 uv run main.py --source JRC-ACQUIS              # interactive CELEX-group-based legal QA generation from sampled same-language documents
 # Optional chemical-topic subset:
 uv run main.py --prepare-source JRC-ACQUIS --jrc-chemical-only --yes
-uv run main.py --build-corpus JRC-ACQUIS --jrc-chemical-only --build-corpus-batch
+uv run main.py --build-corpus JRC-ACQUIS --jrc-chemical-only --jrc-qa-filter-profile 2 --build-corpus-batch
 ```
 
-The JRC retrieval corpus keeps compact operative/body text and excludes signature tail text from the main retrieval `context`. Add `--jrc-chemical-only` to both JRC source preparation and corpus build when you want a non-interactive chemical-focused run; otherwise those two JRC commands ask whether to keep only documents whose EuroVoc IDs overlap the built-in chemical-topic filter. The generated `raw_load_stats.json` and `document_corpus_stats.json` record whether the filter was active, the filter IDs, and how many non-chemical documents were removed.
+The JRC retrieval corpus keeps compact operative/body text and excludes signature tail text from the main retrieval `context`. Add `--jrc-chemical-only` to both JRC source preparation and corpus build when you want a non-interactive chemical-focused run; otherwise those two JRC commands ask whether to keep only documents whose EuroVoc IDs overlap the built-in chemical-topic filter. During JRC corpus build, `--jrc-qa-filter-profile 1` keeps the strict/current QA-candidate thresholds and `--jrc-qa-filter-profile 2` uses softer minimums for compact 256-512-token style passages. The generated `raw_load_stats.json` and `document_corpus_stats.json` record whether the filter was active, the filter IDs, the QA filter profile, and how many non-chemical documents were removed.
 
 Typical interactive JRC QA review run:
 
