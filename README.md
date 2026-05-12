@@ -70,8 +70,10 @@ JRC uses a CELEX-group-based legal QA flow:
 - group multilingual documents by `celex`
 - optionally restrict sampling, corpus construction, and query generation to a chosen language subset
 - sample source-side documents from multilingual `celex` groups, with preference for groups that cover more selected-subset languages
+- keep an oversampled replacement pool so rejected source documents can be skipped without immediately reducing the requested accepted query count
 - generate the query from the sampled document itself, in that same language
-- connect the final query to all retained sampled documents for the same `celex`
+- check whether at least one non-source same-`celex` language version supports the generated answer
+- connect the final query only to the source document plus supported translated same-`celex` documents
 
 ### MTEB benchmark and report generation
 
@@ -247,10 +249,12 @@ JRC now uses a **CELEX-group-based** QA flow:
 5. build the final retrieval corpus from the sampled source pool plus all same-`celex` document realizations for the selected question-generation set, still restricted to the active language subset
 6. generate one same-language legal question/answer from each selected document in its own language
 7. optionally add synthetic-language query translations (currently Chinese by default), but cap each synthetic language to the same total budget as one selected non-synthetic language and distribute that budget evenly across the retained source languages
-8. validate originals and synthetic translations with language, faithfulness, retrieval-quality, and legal-shape checks
-9. connect the resulting query to all documents in the final retrieval corpus for the same `celex`
+8. validate originals with language, faithfulness, retrieval-quality, legal-shape, and cross-language support checks
+9. continue through replacement source candidates until the requested accepted count per source language is reached, or candidates are exhausted
+10. validate synthetic translations with language, meaning, terminology, and legal-shape checks
+11. connect the resulting query to the source document plus supported translated same-`celex` documents
 
-The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. For chemical-focused JRC experiments, pass `--jrc-chemical-only` to both `--prepare-source JRC-ACQUIS` and `--build-corpus JRC-ACQUIS`; the filter keeps documents whose EuroVoc metadata matches the chemical-topic ID set and records the active filter in the prepare/build stats. Synthetic translation assignment is quota-based: for each enabled synthetic language, the total number of synthetic queries matches one non-synthetic per-language selection budget and is spread as evenly as possible across the retained source languages. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
+The released JRC retrieval text is intentionally compact: it keeps the title plus bounded operative/article body text only, and excludes annex and signature material from the retrieval representation. When a language subset is active, both the retrieval corpus and linked relevance sets stay inside that subset. For chemical-focused JRC experiments, pass `--jrc-chemical-only` to both `--prepare-source JRC-ACQUIS` and `--build-corpus JRC-ACQUIS`; the filter keeps documents whose EuroVoc metadata matches the chemical-topic ID set and records the active filter in the prepare/build stats. JRC query generation also runs a lightweight cross-language support check: a query is kept only if at least one non-source same-`celex` language version contains enough information to support the expected answer, and unsupported translated positives are removed from `linked_corpus_ids_json`. Synthetic translation assignment is quota-based: for each enabled synthetic language, the total number of synthetic queries matches one non-synthetic per-language selection budget and is spread as evenly as possible across the retained source languages. The generation/checking prompts for JRC are domain-specific: legal/regulatory rather than chemistry/patent. The current prompt stack is intentionally separated into generation, faithfulness, retrieval-quality, legal-shape, cross-language answer support, and translation-quality stages so that provision-led wording, status/label questions, content-list questions, multi-part legal questions, unsupported translated positives, and weak synthetic translations can be filtered with targeted feedback rather than one monolithic blacklist.
 
 For retrieval release and evaluation, the current benchmark supports two relevance setups over the same generated queries and retrieval corpus: a default `multilingual` setup that keeps all linked positives for the query, and a stricter `cross_language` setup that removes same-language positives and keeps only linked documents in other languages.
 

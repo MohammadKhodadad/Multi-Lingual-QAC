@@ -8,6 +8,8 @@ from pathlib import Path
 import sys
 from typing import Any
 
+JRC_GENERATION_SOURCE_OVERSAMPLE_FACTOR = 3
+
 
 def _set_csv_field_size_limit() -> None:
     limit = sys.maxsize
@@ -256,8 +258,9 @@ def prepare_jrc_qa_inputs(
         if not sampled_lang_rows:
             continue
         sampled_source_rows.extend(sampled_lang_rows)
-        if len(sampled_lang_rows) > generation_docs_per_language:
-            chosen_rows = rng.sample(sampled_lang_rows, generation_docs_per_language)
+        generation_candidate_limit = generation_docs_per_language * JRC_GENERATION_SOURCE_OVERSAMPLE_FACTOR
+        if len(sampled_lang_rows) > generation_candidate_limit:
+            chosen_rows = rng.sample(sampled_lang_rows, generation_candidate_limit)
         else:
             chosen_rows = list(sampled_lang_rows)
         chosen_rows.sort(key=lambda row: row.get("id", ""))
@@ -265,7 +268,8 @@ def prepare_jrc_qa_inputs(
         selected_sources_stats[lang] = {
             "available_source_docs": int(available_source_docs_by_lang[lang]),
             "sampled_source_docs": len(sampled_lang_rows),
-            "selected_source_docs": len(chosen_rows),
+            "generation_source_candidates": len(chosen_rows),
+            "requested_accepted_source_docs": generation_docs_per_language,
         }
 
     sampled_source_rows.sort(key=lambda row: (row.get("language", ""), row.get("id", "")))
@@ -410,6 +414,7 @@ def prepare_jrc_qa_inputs(
     stats = {
         "pairs_per_language_requested": pairs_per_language,
         "generation_docs_per_language_requested": generation_docs_per_language,
+        "generation_source_oversample_factor": JRC_GENERATION_SOURCE_OVERSAMPLE_FACTOR,
         "allowed_languages": sorted(allowed_language_set),
         "synthetic_target_languages": synthetic_target_language_list,
         "synthetic_target_total_per_language_requested": (

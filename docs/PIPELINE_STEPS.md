@@ -170,11 +170,14 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 - Current JRC QA flow:
   1. sample directional language pairs
   2. select source QA candidates
-  3. choose one sampled pair per selected source document
+  3. choose an oversampled replacement pool of source documents per language
   4. generate the question from the translated/target side of the pair
-  5. attach the resulting query to all retained sampled translations for the same `celex`
+  5. check whether at least one non-source same-`celex` language version supports the answer
+  6. keep generating from later source candidates until the requested accepted count per language is reached, or candidates are exhausted
+  7. attach the resulting query only to the source document plus supported translated same-`celex` documents
 - JRC runs through `openai_qa.run_qa_pipeline(..., same_language=True, domain_hint="legal")`.
 - The active JRC prompt/check path is legal/regulatory, not chemistry/patent.
+- Unsupported translated positives are removed from `linked_corpus_ids_json`; if no translated document supports the answer, the generation attempt is rejected and retried.
 
 ## 16. JRC Legal Prompt and Quality Iteration
 - Tightened in-language legal generation prompts to avoid article numbers, clause lookup, and copied phrasing.

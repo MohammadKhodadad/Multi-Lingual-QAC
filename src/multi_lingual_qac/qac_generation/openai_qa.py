@@ -11,6 +11,7 @@ language, with optional synthetic translated query variants.
 
 from __future__ import annotations
 
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 import json
@@ -49,6 +50,7 @@ LANG_NAMES = {
 DEFAULT_GENERATION_MODEL = "gpt-5-mini"
 DEFAULT_QUALITY_MODEL = "gpt-5-mini"
 DEFAULT_SUPPORT_MODEL = "gpt-5-mini"
+DEFAULT_CROSS_LANGUAGE_SUPPORT_MODEL = "gpt-5-nano"
 DEFAULT_TRANSLATION_MODEL = "gpt-5-mini"
 DEFAULT_REASONING_EFFORT = "low"
 DEFAULT_GENERATION_REASONING_EFFORT = "medium"
@@ -606,6 +608,59 @@ Output valid JSON only:
     approved = bool(data.get("approved", False))
     reason = str(data.get("reason", "")).strip()
     return approved, reason
+
+
+def check_cross_language_answer_support(
+    client: OpenAI,
+    question: str,
+    answer: str,
+    candidate_context: str,
+    *,
+    question_lang: str,
+    candidate_lang: str,
+    model: str = DEFAULT_CROSS_LANGUAGE_SUPPORT_MODEL,
+) -> Tuple[bool, str]:
+    """
+    Check whether a linked translated document contains enough information to
+    answer the source-language question with the expected answer.
+    """
+    question_lang_name = LANG_NAMES.get(question_lang, question_lang)
+    candidate_lang_name = LANG_NAMES.get(candidate_lang, candidate_lang)
+    prompt = f"""You are a strict multilingual support judge for legal retrieval data.
+
+Goal:
+- Decide whether the candidate legal passage contains enough information to answer the question with the expected answer.
+- The question and expected answer are in {question_lang_name}.
+- The candidate passage is in {candidate_lang_name}.
+- Do not require the candidate passage to use the same wording or language as the expected answer.
+- Approve only if the same legal rule, condition, obligation, exception, consequence, or requirement is present in the candidate passage.
+- Reject if the candidate passage is only from the same legal act but the answer-bearing content is absent from the shown passage.
+- Reject if the candidate passage only contains generic background, title text, signatures, dates, or unrelated provisions.
+
+Return JSON only:
+{{"supported": true, "reason": "..."}}
+or
+{{"supported": false, "reason": "..."}}
+"""
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Question:\n{question}\n\n"
+                    f"Expected answer:\n{answer}\n\n"
+                    f"Candidate passage:\n{candidate_context}"
+                ),
+            },
+        ],
+        reasoning_effort=DEFAULT_REASONING_EFFORT,
+    )
+    data = _parse_json_response(response.choices[0].message.content or "{}")
+    supported = bool(data.get("supported"))
+    reason = str(data.get("reason", "")).strip()
+    return supported, reason
 
 
 def check_question_quality(
@@ -1251,6 +1306,75 @@ def _row_output_metadata(row: Dict[str, Any]) -> Dict[str, str]:
     return metadata
 
 
+def _row_linked_corpus_ids(row: Dict[str, Any]) -> List[str]:
+    raw = row.get("linked_corpus_ids_json", "")
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    linked_ids: List[str] = []
+    seen = set()
+    for item in parsed:
+        corpus_id = str(item).strip()
+        if corpus_id and corpus_id not in seen:
+            linked_ids.append(corpus_id)
+            seen.add(corpus_id)
+    return linked_ids
+
+
+def _check_linked_translation_support(
+    client: OpenAI,
+    row: Dict[str, Any],
+    *,
+    question: str,
+    answer: str,
+    source_lang: str,
+    linked_corpus_by_id: Dict[str, Dict[str, Any]],
+    model: str,
+) -> tuple[List[str], Dict[str, str]]:
+    linked_ids = _row_linked_corpus_ids(row)
+    source_id = str(row.get("source_corpus_id") or row.get("query_corpus_id") or row.get("id", "")).strip()
+    supported_ids: List[str] = []
+    support_reasons: Dict[str, str] = {}
+
+    for corpus_id in linked_ids:
+        linked_doc = linked_corpus_by_id.get(corpus_id)
+        if not linked_doc:
+            continue
+        linked_lang = str(linked_doc.get("language", "")).strip().lower()
+        if not linked_lang or linked_lang == source_lang:
+            continue
+        candidate_context = str(
+            linked_doc.get("context") or linked_doc.get("text") or linked_doc.get("abstract") or ""
+        ).strip()
+        if not candidate_context:
+            continue
+        supported, reason = check_cross_language_answer_support(
+            client,
+            question,
+            answer,
+            candidate_context,
+            question_lang=source_lang,
+            candidate_lang=linked_lang,
+            model=model,
+        )
+        support_reasons[corpus_id] = reason
+        if supported:
+            supported_ids.append(corpus_id)
+
+    pruned_ids = []
+    if source_id:
+        pruned_ids.append(source_id)
+    for corpus_id in supported_ids:
+        if corpus_id not in pruned_ids:
+            pruned_ids.append(corpus_id)
+    return pruned_ids, support_reasons
+
+
 def _run_translation_pass(
     client: OpenAI,
     *,
@@ -1412,9 +1536,12 @@ def _process_sample_row(
     quality_model: str,
     support_model: str,
     translation_model: str,
+    cross_language_support_model: str,
     max_attempts: int,
     same_language: bool = False,
     domain_hint: Optional[str] = None,
+    linked_corpus_by_id: Optional[Dict[str, Dict[str, Any]]] = None,
+    require_cross_language_support: bool = False,
 ) -> Dict[str, Any]:
     corpus_id = str(row.get("query_corpus_id") or row.get("id", "")).strip()
     context = (
@@ -1450,6 +1577,8 @@ def _process_sample_row(
             a_loc = ""
             supporting_text = ""
             question_type = ""
+            supported_linked_corpus_ids: List[str] = []
+            cross_language_support_reasons: Dict[str, str] = {}
             last_failure = ""
             retry_feedback: Optional[str] = None
             retry_question: Optional[str] = None
@@ -1561,6 +1690,36 @@ def _process_sample_row(
                     )
                     continue
 
+                if require_cross_language_support:
+                    supported_linked_corpus_ids, cross_language_support_reasons = _check_linked_translation_support(
+                        client,
+                        row,
+                        question=q_loc,
+                        answer=a_loc,
+                        source_lang=row_lang,
+                        linked_corpus_by_id=linked_corpus_by_id or {},
+                        model=cross_language_support_model,
+                    )
+                    non_source_supported = [
+                        corpus_id
+                        for corpus_id in supported_linked_corpus_ids
+                        if corpus_id != str(row.get("source_corpus_id") or row.get("query_corpus_id") or row.get("id", "")).strip()
+                    ]
+                    if not non_source_supported:
+                        last_failure = "cross-language support check failed: no linked translation supports the answer"
+                        checked_count = len(cross_language_support_reasons)
+                        attempt_logs.append(
+                            f"attempt {_attempt}/{max_attempts}: cross-language support rejected - "
+                            f"0/{checked_count} linked translations supported the answer"
+                        )
+                        retry_feedback = (
+                            f"{last_failure}. Regenerate a fresh question whose answer-bearing legal point is likely "
+                            f"to appear in the compact translated versions of the same CELEX act. Prefer central "
+                            f"operative obligations, conditions, exceptions, or consequences over details that may "
+                            f"only appear in one language slice."
+                        )
+                        continue
+
                 approved_sl = True
                 approved_attempt = _attempt
                 if _attempt > 1:
@@ -1588,6 +1747,37 @@ def _process_sample_row(
                     **row_metadata,
                 }
             ]
+            if require_cross_language_support:
+                source_id = str(
+                    row.get("source_corpus_id") or row.get("query_corpus_id") or row.get("id", "")
+                ).strip()
+                supported_languages = [
+                    str((linked_corpus_by_id or {}).get(corpus_id, {}).get("language", "")).strip().lower()
+                    for corpus_id in supported_linked_corpus_ids
+                ]
+                supported_languages = [lang for lang in supported_languages if lang]
+                row_metadata["linked_corpus_ids_json"] = json.dumps(
+                    supported_linked_corpus_ids,
+                    ensure_ascii=False,
+                )
+                row_metadata["linked_languages_json"] = json.dumps(
+                    supported_languages,
+                    ensure_ascii=False,
+                )
+                row_metadata["cross_language_support_checked"] = "true"
+                row_metadata["cross_language_supported_corpus_ids_json"] = json.dumps(
+                    [
+                        corpus_id
+                        for corpus_id in supported_linked_corpus_ids
+                        if corpus_id != source_id
+                    ],
+                    ensure_ascii=False,
+                )
+                row_metadata["cross_language_support_reasons_json"] = json.dumps(
+                    cross_language_support_reasons,
+                    ensure_ascii=False,
+                )
+                qac_rows[0].update(row_metadata)
             approved_translations, failed_languages = _run_translation_pass(
                 client,
                 context=context,
@@ -1612,6 +1802,9 @@ def _process_sample_row(
                     }
                 )
             translation_status = ""
+            support_status = ""
+            if require_cross_language_support:
+                support_status = f", {max(0, len(supported_linked_corpus_ids) - 1)} supported translations"
             if effective_synthetic_targets:
                 translation_status = f", + {len(approved_translations)} synthetic translations"
                 if failed_languages:
@@ -1621,7 +1814,10 @@ def _process_sample_row(
                 "corpus_id": corpus_id,
                 "attempt_logs": attempt_logs,
                 "rows": qac_rows,
-                "status": f"ok ({question_type or 'validated'} {row_lang}, same-language{translation_status}, attempt {approved_attempt}/{max_attempts})",
+                "status": (
+                    f"ok ({question_type or 'validated'} {row_lang}, same-language"
+                    f"{support_status}{translation_status}, attempt {approved_attempt}/{max_attempts})"
+                ),
             }
 
         approved = False
@@ -1806,10 +2002,14 @@ def run_qa_pipeline(
     quality_model: str = DEFAULT_QUALITY_MODEL,
     support_model: str = DEFAULT_SUPPORT_MODEL,
     translation_model: str = DEFAULT_TRANSLATION_MODEL,
+    cross_language_support_model: str = DEFAULT_CROSS_LANGUAGE_SUPPORT_MODEL,
     max_attempts: int = 3,
     batch_mode: bool = False,
     same_language: bool = False,
     domain_hint: Optional[str] = None,
+    linked_corpus_path: Optional[Path] = None,
+    require_cross_language_support: bool = False,
+    accepted_per_language: Optional[int] = None,
 ) -> int:
     """
     Sample corpus and generate Q&A.
@@ -1832,6 +2032,7 @@ def run_qa_pipeline(
         quality_model = model
         support_model = model
         translation_model = model
+        cross_language_support_model = model
     if same_language and _normalize_domain_hint(domain_hint) != "legal":
         raise ValueError(
             "same_language mode is only supported for legal/JRC generation in this branch."
@@ -1839,6 +2040,22 @@ def run_qa_pipeline(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     rows = load_corpus(corpus_path)
+    linked_corpus_by_id: Dict[str, Dict[str, Any]] = {}
+    if require_cross_language_support:
+        if not same_language:
+            raise ValueError("Cross-language support checking is only supported for same-language/JRC generation.")
+        if linked_corpus_path is None:
+            raise ValueError("linked_corpus_path is required when require_cross_language_support=True.")
+        linked_rows = load_corpus(Path(linked_corpus_path))
+        linked_corpus_by_id = {
+            str(row.get("id") or row.get("_id") or "").strip(): row
+            for row in linked_rows
+            if str(row.get("id") or row.get("_id") or "").strip()
+        }
+        print(
+            "Cross-language answer support check enabled:"
+            f" {len(linked_corpus_by_id)} linked corpus documents loaded."
+        )
     sampled = sample_corpus(rows, sample_size, stratify_by_language=True, seed=42)
     mode = (
         "same-language (per row language)"
@@ -1850,6 +2067,11 @@ def run_qa_pipeline(
     print(f"Sampled {len(sampled)} documents from corpus ({len(rows)} total). Mode: {mode}.")
     qac_rows: List[Dict[str, str]] = []
     results: List[Dict[str, Any]] = []
+    accepted_by_language: Counter[str] = Counter()
+    use_language_acceptance_quota = same_language and accepted_per_language is not None
+    if use_language_acceptance_quota and batch_mode:
+        print("Language acceptance quotas are enabled; running JRC Q&A generation in single-threaded mode.")
+        batch_mode = False
 
     if batch_mode and sampled:
         available_cpus = os.cpu_count() or 1
@@ -1870,9 +2092,12 @@ def run_qa_pipeline(
                     quality_model=quality_model,
                     support_model=support_model,
                     translation_model=translation_model,
+                    cross_language_support_model=cross_language_support_model,
                     max_attempts=max_attempts,
                     same_language=same_language,
                     domain_hint=domain_hint,
+                    linked_corpus_by_id=linked_corpus_by_id,
+                    require_cross_language_support=require_cross_language_support,
                 )
                 for index, row in enumerate(sampled)
             ]
@@ -1890,6 +2115,9 @@ def run_qa_pipeline(
             print("Running Q&A generation in single-threaded mode.")
         progress = tqdm(sampled, total=len(sampled), desc="Generate Q&A", unit="doc")
         for index, row in enumerate(progress, start=1):
+            row_lang = str(row.get("language") or "en").strip().lower()
+            if use_language_acceptance_quota and accepted_by_language[row_lang] >= int(accepted_per_language or 0):
+                continue
             result = _process_sample_row(
                 index - 1,
                 row,
@@ -1899,14 +2127,24 @@ def run_qa_pipeline(
                 quality_model=quality_model,
                 support_model=support_model,
                 translation_model=translation_model,
+                cross_language_support_model=cross_language_support_model,
                 max_attempts=max_attempts,
                 same_language=same_language,
                 domain_hint=domain_hint,
+                linked_corpus_by_id=linked_corpus_by_id,
+                require_cross_language_support=require_cross_language_support,
             )
             results.append(result)
             for log_line in result.get("attempt_logs", []):
                 tqdm.write(f"     {result['corpus_id']}: {log_line}")
             tqdm.write(f"  [{index}/{len(sampled)}] {result['corpus_id']}... {result['status']}")
+            if use_language_acceptance_quota and result.get("rows"):
+                accepted_by_language[row_lang] += 1
+                progress.set_postfix(
+                    accepted="/".join(
+                        f"{lang}:{accepted_by_language[lang]}" for lang in sorted(accepted_by_language)
+                    )
+                )
 
     for result in sorted(results, key=lambda item: item["index"]):
         qac_rows.extend(result["rows"])

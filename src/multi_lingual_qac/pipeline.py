@@ -156,7 +156,7 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     print(
                         "Prepared JRC QA benchmark inputs:"
                         f" {sampled_source_pool_total} sampled source-pool docs,"
-                        f" {selected_generation_docs_total} selected generation docs,"
+                        f" {selected_generation_docs_total} generation source candidates,"
                         f" {final_retrieval_corpus_total} final retrieval-corpus docs,"
                         f" {generation_units_total} generation units."
                     )
@@ -169,6 +169,9 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                         same_language=True,
                         domain_hint="legal",
                         synthetic_translation_targets=["zh"] if jrc_synthetic_chinese else [],
+                        linked_corpus_path=paths.qac_dir / "corpus_full.csv",
+                        require_cross_language_support=True,
+                        accepted_per_language=qa_docs_per_language,
                     )
                 else:
                     run_qa_pipeline(
