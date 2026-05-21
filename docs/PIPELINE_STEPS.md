@@ -191,6 +191,7 @@ Sample corpus (stratified by language). Generate English retrieval-style Q&A via
 - Added a dedicated legal-shape checker after the general quality checker to reject broad legal-shape, condition-list, menu-of-measures, definition-inventory, date-value-lookup, and multi-branch question forms.
 - Added Hugging Face export columns for `corpus_language` and `question_language` in the pushed dataset configs.
 - Cleaned `openai_qa.py` so the same-language path is now explicitly JRC/legal-only in this branch and dead prompt branches were removed.
+- Added a continuously refreshed JRC numerical report at `reports/jrc-acquis/jrc_pipeline_generation_report.md`; it is regenerated after raw loading, corpus building, QA source selection, QA generation, and HF upload, and consolidates raw/cleaned counts, filter losses, candidate rejection reasons, translation failures, cross-language support failures, final QAC rows, and artifact row counts.
 
 ## 17. JRC QAC Review Notes
 - Replaced the old chemistry-focused `docs/QAC_QUALITY_NOTES.md` with JRC-specific QA review notes.

@@ -7,6 +7,7 @@ from src.multi_lingual_qac.export.hf_upload import push_to_hub
 from src.multi_lingual_qac.preprocess.corpus import count_source_records
 from src.multi_lingual_qac.qac_generation.jrc_acquis import prepare_jrc_qa_inputs
 from src.multi_lingual_qac.qac_generation.openai_qa import run_qa_pipeline
+from src.multi_lingual_qac.reporting import update_jrc_pipeline_report
 
 
 def ask_interactive(prompt: str, default: str = "n") -> str:
@@ -160,6 +161,8 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                         f" {final_retrieval_corpus_total} final retrieval-corpus docs,"
                         f" {generation_units_total} generation units."
                     )
+                    report_path = update_jrc_pipeline_report(paths, stage="qa source selection")
+                    print("  Report:", report_path)
                     run_qa_pipeline(
                         corpus_path=selected_sources_path,
                         output_dir=paths.qac_dir,
@@ -173,6 +176,8 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                         require_cross_language_support=True,
                         accepted_per_language=qa_docs_per_language,
                     )
+                    report_path = update_jrc_pipeline_report(paths, stage="qa generation")
+                    print("  Report:", report_path)
                 else:
                     run_qa_pipeline(
                         corpus_path=paths.corpus_full_csv,
@@ -228,6 +233,9 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                 repo_id=hf_repo,
                 source_name=config.source,
             )
+            if config.source == "jrc-acquis":
+                report_path = update_jrc_pipeline_report(paths, stage="hugging face upload")
+                print("  Report:", report_path)
 
     print("\nDone.")
     print(f"  {prepared_label}:", prepared_path)

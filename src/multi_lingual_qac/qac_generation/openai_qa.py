@@ -1561,6 +1561,11 @@ def _process_sample_row(
             "corpus_id": corpus_id,
             "rows": [],
             "status": "skipped (empty context)",
+            "source_language": str(row.get("language") or "en").strip().lower(),
+            "failure_reason": "empty_context",
+            "failed_translation_languages": [],
+            "approved_attempt": 0,
+            "cross_language_support_failure": False,
         }
 
     try:
@@ -1735,6 +1740,13 @@ def _process_sample_row(
                     "rows": [],
                     "attempt_logs": attempt_logs,
                     "status": f"skipped ({last_failure or 'validation failed'})",
+                    "source_language": row_lang,
+                    "failure_reason": _qa_failure_bucket(last_failure),
+                    "failed_translation_languages": [],
+                    "approved_attempt": 0,
+                    "cross_language_support_failure": (
+                        "cross-language support check failed" in last_failure
+                    ),
                 }
 
             qac_rows = [
@@ -1818,6 +1830,12 @@ def _process_sample_row(
                     f"ok ({question_type or 'validated'} {row_lang}, same-language"
                     f"{support_status}{translation_status}, attempt {approved_attempt}/{max_attempts})"
                 ),
+                "source_language": row_lang,
+                "failure_reason": "",
+                "failed_translation_languages": failed_languages,
+                "approved_attempt": approved_attempt,
+                "cross_language_support_failure": False,
+                "supported_translation_count": max(0, len(supported_linked_corpus_ids) - 1),
             }
 
         approved = False
@@ -1938,6 +1956,11 @@ def _process_sample_row(
                 "rows": [],
                 "attempt_logs": attempt_logs,
                 "status": f"skipped ({last_failure or 'validation failed'})",
+                "source_language": str(row.get("language") or "en").strip().lower(),
+                "failure_reason": _qa_failure_bucket(last_failure),
+                "failed_translation_languages": [],
+                "approved_attempt": 0,
+                "cross_language_support_failure": False,
             }
 
         english_corpus_id = target_corpus_ids.get("en", corpus_id)
@@ -1979,6 +2002,11 @@ def _process_sample_row(
             "attempt_logs": attempt_logs,
             "rows": qac_rows,
             "status": f"ok ({question_type or 'validated'} en + {translation_status}, attempt {approved_attempt}/{max_attempts})",
+            "source_language": str(row.get("language") or "en").strip().lower(),
+            "failure_reason": "",
+            "failed_translation_languages": failed_languages,
+            "approved_attempt": approved_attempt,
+            "cross_language_support_failure": False,
         }
     except Exception as exc:
         return {
@@ -1987,7 +2015,144 @@ def _process_sample_row(
             "rows": [],
             "attempt_logs": [],
             "status": f"error: {exc}",
+            "source_language": str(row.get("language") or "en").strip().lower(),
+            "failure_reason": "error",
+            "failed_translation_languages": [],
+            "approved_attempt": 0,
+            "cross_language_support_failure": False,
         }
+
+
+def _qa_failure_bucket(reason: str) -> str:
+    normalized = (reason or "").strip().lower()
+    if not normalized:
+        return "validation_failed"
+    if "cross-language support" in normalized:
+        return "no_cross_language_answer_support"
+    if "language check" in normalized:
+        return "language_check_failed"
+    if "faithfulness check" in normalized:
+        return "faithfulness_check_failed"
+    if "quality check" in normalized:
+        return "question_quality_check_failed"
+    if "legal shape check" in normalized:
+        return "legal_shape_check_failed"
+    if "empty context" in normalized:
+        return "empty_context"
+    return "other_validation_failed"
+
+
+def _summarize_qa_generation_results(
+    *,
+    rows_loaded: int,
+    sampled_count: int,
+    results: List[Dict[str, Any]],
+    qac_rows: List[Dict[str, str]],
+    sample_size: int,
+    target_languages: List[str],
+    synthetic_translation_targets: List[str],
+    generation_model: str,
+    quality_model: str,
+    support_model: str,
+    translation_model: str,
+    cross_language_support_model: str,
+    max_attempts: int,
+    batch_mode: bool,
+    same_language: bool,
+    domain_hint: Optional[str],
+    require_cross_language_support: bool,
+    accepted_per_language: Optional[int],
+) -> Dict[str, Any]:
+    accepted_results = [result for result in results if result.get("rows")]
+    skipped_results = [
+        result
+        for result in results
+        if not result.get("rows") and str(result.get("status", "")).startswith("skipped")
+    ]
+    error_results = [
+        result
+        for result in results
+        if str(result.get("status", "")).startswith("error")
+    ]
+    attempts = [
+        int(result.get("approved_attempt", 0))
+        for result in accepted_results
+        if int(result.get("approved_attempt", 0)) > 0
+    ]
+    rejection_attempts = sum(len(result.get("attempt_logs", []) or []) for result in results)
+    rows_by_language: Counter[str] = Counter()
+    base_rows_by_language: Counter[str] = Counter()
+    synthetic_rows_by_language: Counter[str] = Counter()
+    results_by_language: Counter[str] = Counter()
+    accepted_by_language: Counter[str] = Counter()
+    skipped_by_language: Counter[str] = Counter()
+    skipped_by_reason: Counter[str] = Counter()
+    failed_translation_languages: Counter[str] = Counter()
+
+    for row in qac_rows:
+        lang = str(row.get("language", "")).strip().lower() or "unknown"
+        rows_by_language[lang] += 1
+        if str(row.get("is_synthetic_translation", "")).strip().lower() == "true":
+            synthetic_rows_by_language[lang] += 1
+        else:
+            base_rows_by_language[lang] += 1
+
+    for result in results:
+        source_lang = str(result.get("source_language", "")).strip().lower() or "unknown"
+        results_by_language[source_lang] += 1
+        if result.get("rows"):
+            accepted_by_language[source_lang] += 1
+        elif str(result.get("status", "")).startswith("skipped"):
+            skipped_by_language[source_lang] += 1
+            skipped_by_reason[str(result.get("failure_reason") or "unknown")] += 1
+        for lang in result.get("failed_translation_languages", []) or []:
+            failed_translation_languages[str(lang).strip().lower() or "unknown"] += 1
+
+    return {
+        "source_rows_loaded": rows_loaded,
+        "source_rows_sampled": sampled_count,
+        "source_rows_processed": len(results),
+        "source_rows_accepted": len(accepted_results),
+        "source_rows_skipped": len(skipped_results),
+        "source_rows_error": len(error_results),
+        "results_by_language": dict(sorted(results_by_language.items())),
+        "accepted_source_rows_by_language": dict(sorted(accepted_by_language.items())),
+        "skipped_source_rows_by_language": dict(sorted(skipped_by_language.items())),
+        "skipped_by_reason": dict(sorted(skipped_by_reason.items())),
+        "qac_rows_written": len(qac_rows),
+        "base_qac_rows_written": sum(base_rows_by_language.values()),
+        "synthetic_translation_rows_written": sum(synthetic_rows_by_language.values()),
+        "qac_rows_by_language": dict(sorted(rows_by_language.items())),
+        "base_qac_rows_by_language": dict(sorted(base_rows_by_language.items())),
+        "synthetic_translation_rows_by_language": dict(sorted(synthetic_rows_by_language.items())),
+        "failed_translation_count": sum(failed_translation_languages.values()),
+        "failed_translation_languages": dict(sorted(failed_translation_languages.items())),
+        "cross_language_support_failures": sum(
+            1 for result in results if result.get("cross_language_support_failure")
+        ),
+        "supported_translation_count_total": sum(
+            int(result.get("supported_translation_count", 0) or 0) for result in results
+        ),
+        "validation_rejection_attempts": rejection_attempts,
+        "approved_attempts": attempts,
+        "average_approved_attempt": (
+            round(sum(attempts) / len(attempts), 4) if attempts else 0.0
+        ),
+        "sample_size_requested": sample_size,
+        "target_languages": target_languages,
+        "synthetic_translation_targets": synthetic_translation_targets,
+        "generation_model": generation_model,
+        "quality_model": quality_model,
+        "support_model": support_model,
+        "translation_model": translation_model,
+        "cross_language_support_model": cross_language_support_model,
+        "max_attempts": max_attempts,
+        "batch_mode": batch_mode,
+        "same_language": same_language,
+        "domain_hint": domain_hint or "",
+        "require_cross_language_support": require_cross_language_support,
+        "accepted_per_language": accepted_per_language,
+    }
 
 
 def run_qa_pipeline(
@@ -2160,5 +2325,32 @@ def run_qa_pipeline(
         w.writeheader()
         w.writerows(qac_rows)
 
+    generation_stats = _summarize_qa_generation_results(
+        rows_loaded=len(rows),
+        sampled_count=len(sampled),
+        results=results,
+        qac_rows=qac_rows,
+        sample_size=sample_size,
+        target_languages=target_languages,
+        synthetic_translation_targets=synthetic_translation_targets,
+        generation_model=generation_model,
+        quality_model=quality_model,
+        support_model=support_model,
+        translation_model=translation_model,
+        cross_language_support_model=cross_language_support_model,
+        max_attempts=max_attempts,
+        batch_mode=batch_mode,
+        same_language=same_language,
+        domain_hint=domain_hint,
+        require_cross_language_support=require_cross_language_support,
+        accepted_per_language=accepted_per_language,
+    )
+    stats_path = output_dir / "qac_generation_stats.json"
+    stats_path.write_text(
+        json.dumps(generation_stats, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
     print(f"Wrote {len(qac_rows)} QAC rows -> {out_csv}")
+    print(f"Wrote QAC generation stats -> {stats_path}")
     return len(qac_rows)
