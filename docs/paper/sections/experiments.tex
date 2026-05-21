@@ -10,10 +10,6 @@ The current evaluation pipeline compares multilingual sentence-embedding models 
 
 Model artifacts are cached locally so repeated runs remain reproducible and independent of user-profile caches. The evaluation code writes structured result summaries to disk and generates comparison tables from saved result files rather than rerunning the full benchmark each time the paper tables need to be refreshed. The current pipeline relies on sentence-transformer model loading and the default backend device selection of the runtime environment.
 
-\subsection{Construction Audit}
-
-Each JRC construction run writes a numerical audit report to \texttt{reports/jrc-acquis/jrc\_pipeline\_generation\_report.md}. This report is not an evaluation result, but it is part of the experimental record because it fixes the dataset instance being evaluated. It records the number of raw documents loaded, documents retained after optional chemical filtering, cleaned retrieval documents, multilingual \texttt{CELEX} groups, QA candidates, sampled generation candidates, accepted and skipped source rows, translation failures, cross-language support failures, final QAC rows, and artifact row counts. The final paper should cite the audit counts from the frozen dataset run before reporting model scores.
-
 \subsection{Results To Be Finalized}
 
 This subsection is intentionally left without numeric results for now. Final model scores, ranking tables, and any language-wise breakdowns should be inserted here once the benchmark runs are finalized.
