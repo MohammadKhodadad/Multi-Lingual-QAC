@@ -111,6 +111,22 @@ Examples that should be rejected include:
 \item ``What may the authority do, and by when must it notify the applicant?'' because it bundles a main action with a procedural deadline.
 \end{itemize}
 
+\subsection{Cross-Language Answer-Support Checker}
+
+The cross-language answer-support checker is specific to the JRC construction path. After a same-language QA draft passes language, faithfulness, retrieval-quality, and legal-shape validation, the checker evaluates linked non-source documents from the same retained \texttt{CELEX} group. Its role is to decide whether the compact retained text of a translated document contains enough information to support the generated question and answer.
+
+This check is deliberately stricter than simply sharing a \texttt{CELEX} identifier. A same-\texttt{CELEX} document may be a valid language realization of the same legal act, but the compact retrieval text retained for that language may omit the specific answer-bearing point. If no non-source linked document supports the answer, the generation attempt is rejected and retried. If one or more translated documents do support the answer, unsupported translated positives are removed from the query's linked corpus identifiers before export.
+
+\subsection{Synthetic Translation Checker}
+
+When synthetic query languages are enabled, accepted source-language QA pairs may be translated into the synthetic target language, currently Chinese. The translation checker validates both language and meaning preservation. It rejects outputs that are in the wrong language, are unnaturally mixed with the source language, mistranslate legal terminology, change the answer scope, omit a condition or exception, or introduce unsupported legal implications. Translated QA rows inherit the same pruned relevance set as the accepted source-language query and are marked explicitly as synthetic translations in the released metadata.
+
+\subsection{Retry Feedback and Logging}
+
+Each failed validation stage produces targeted feedback for regeneration. Language failures ask for the same QA pair to be rewritten in the intended language. Faithfulness failures ask for a stricter grounding to the supplied passage. Retrieval-quality and legal-shape failures ask for a fresh legal information need centered on one decisive point. Cross-language support failures ask for a question whose answer-bearing legal point is more likely to appear in the compact translated versions of the same act.
+
+The implementation records these outcomes in two complementary forms. Terminal logs expose per-attempt decisions during generation. The structured file \texttt{qac\_generation\_stats.json} records accepted source rows, skipped source rows, rejection buckets, translation failures, cross-language support failures, approved-attempt counts, and per-language row totals. The consolidated report \texttt{reports/jrc-acquis/jrc\_pipeline\_generation\_report.md} combines those generation numbers with preprocessing and corpus-construction statistics.
+
 \subsection{Grouped View of the Stack}
 
 The checker stack is intentionally separated by function:
@@ -120,6 +136,8 @@ The checker stack is intentionally separated by function:
 \item the faithfulness checker filters unsupported or over-claimed answers;
 \item the retrieval-quality checker filters weak retrieval formulations;
 \item the legal-shape checker filters structurally weak legal question forms such as lists, inventories, and multi-branch bundles.
+\item the cross-language answer-support checker verifies that at least one translated retained document supports the source-language answer;
+\item the synthetic translation checker validates language quality, meaning preservation, and legal terminology for translated QA rows.
 \end{itemize}
 
 This separation matters because the same rejected row should not be explained in four different ways. Instead, each stage is meant to remove a distinct class of failure and provide targeted retry feedback for regeneration.

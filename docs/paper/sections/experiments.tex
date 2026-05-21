@@ -4,20 +4,24 @@ We evaluate the benchmark as a multilingual document retrieval task. After datas
 
 \subsection{Models and Metrics}
 
-The current evaluation pipeline compares multilingual sentence-embedding models under a common retrieval protocol. The default baseline set includes \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}, \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2}, \texttt{intfloat/multilingual-e5-large}, and \texttt{BAAI/bge-m3}. We report standard ranking metrics, with Recall@10 treated as the main score. This is deliberate: each query can have several relevant document realizations in different retained languages, so the primary evaluation question is how much of that positive set the model retrieves in the top 10 rather than only whether one relevant document appears early. The saved benchmark artifacts additionally include Recall, MAP, nDCG, and same-language irrelevant-result share at \(k \in \{10,20,50,100\}\), plus language-specific \texttt{same\_language\_irrelevant\_share\_at\_100\_lang\_\{lang\}} diagnostics for German, English, Spanish, French, and Chinese queries. The compact paper table shows the 10 and 100 cutoffs rather than every stored diagnostic column.
+The current evaluation pipeline compares multilingual sentence-embedding models under a common retrieval protocol. The default baseline set includes \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}, \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2}, \texttt{intfloat/multilingual-e5-large}, and \texttt{BAAI/bge-m3}. We report standard ranking metrics, with Recall@10 treated as the main score. This is deliberate: each query can have several relevant document realizations in different retained languages, so the primary evaluation question is how much of that positive set the model retrieves in the top 10 rather than only whether one relevant document appears early. The saved benchmark artifacts additionally include Recall, MAP, nDCG, and same-language irrelevant-result share at \(k \in \{10,20,50,100\}\), plus language-specific \texttt{same\_language\_irrelevant\_share\_at\_100\_lang\_\{lang\}} diagnostics for German, English, Spanish, French, Portuguese, and Chinese queries. The compact paper table shows the 10 and 100 cutoffs rather than every stored diagnostic column.
 
 \subsection{Implementation Notes}
 
 Model artifacts are cached locally so repeated runs remain reproducible and independent of user-profile caches. The evaluation code writes structured result summaries to disk and generates comparison tables from saved result files rather than rerunning the full benchmark each time the paper tables need to be refreshed. The current pipeline relies on sentence-transformer model loading and the default backend device selection of the runtime environment.
 
-\subsection{Results Placeholder}
+\subsection{Construction Audit}
+
+Each JRC construction run writes a numerical audit report to \texttt{reports/jrc-acquis/jrc\_pipeline\_generation\_report.md}. This report is not an evaluation result, but it is part of the experimental record because it fixes the dataset instance being evaluated. It records the number of raw documents loaded, documents retained after optional chemical filtering, cleaned retrieval documents, multilingual \texttt{CELEX} groups, QA candidates, sampled generation candidates, accepted and skipped source rows, translation failures, cross-language support failures, final QAC rows, and artifact row counts. The final paper should cite the audit counts from the frozen dataset run before reporting model scores.
+
+\subsection{Results To Be Finalized}
 
 This subsection is intentionally left without numeric results for now. Final model scores, ranking tables, and any language-wise breakdowns should be inserted here once the benchmark runs are finalized.
 
 \begin{table}[t]
 \centering
-\caption{Placeholder for the main multilingual retrieval results.}
-\label{tab:main-results-placeholder}
+\caption{Main multilingual retrieval results to be filled from the finalized benchmark run.}
+\label{tab:main-results}
 \begin{tabular}{lcccccccc}
 \toprule
 Model & Recall@10 & Recall@100 & MAP@10 & MAP@100 & MAP & nDCG@10 & nDCG@100 & SameLangIrr@100 \\
@@ -27,6 +31,6 @@ Model & Recall@10 & Recall@100 & MAP@10 & MAP@100 & MAP & nDCG@10 & nDCG@100 & S
 \end{tabular}
 \end{table}
 
-\subsection{Analysis Placeholder}
+\subsection{Analysis To Be Finalized}
 
 This subsection should later summarize the main empirical findings, including which encoder families transfer best to multilingual legal retrieval, whether smaller multilingual baselines remain competitive, and where the benchmark appears most challenging. Any language-specific or document-type-specific error analysis can be added here after the core results stabilize.

@@ -9,6 +9,8 @@ from src.multi_lingual_qac.qac_generation.jrc_acquis import prepare_jrc_qa_input
 from src.multi_lingual_qac.qac_generation.openai_qa import run_qa_pipeline
 from src.multi_lingual_qac.reporting import update_jrc_pipeline_report
 
+DEFAULT_JRC_QA_LANGUAGES = ("en", "es", "de", "fr", "pt")
+
 
 def ask_interactive(prompt: str, default: str = "n") -> str:
     choice = input(prompt).strip().lower() or default
@@ -65,13 +67,13 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
             if jrc_qa_languages is None:
                 use_default_subset = (
                     ask_interactive(
-                        "Do you want JRC QA generation to be only from these 4 languages: en, es, de, fr? (y/n): ",
+                        "Do you want JRC QA generation to be only from these 5 languages: en, es, de, fr, pt? (y/n): ",
                         "n",
                     )
                     == "y"
                 )
                 if use_default_subset:
-                    jrc_qa_languages = ("en", "es", "de", "fr")
+                    jrc_qa_languages = DEFAULT_JRC_QA_LANGUAGES
             if jrc_synthetic_chinese is None:
                 jrc_synthetic_chinese = (
                     ask_interactive(

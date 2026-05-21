@@ -24,7 +24,7 @@ DEFAULT_MTEB_TABLES_DIR = "reports/mteb_tables"
 DEFAULT_MTEB_CACHE_DIR = ".cache/huggingface"
 DEFAULT_MTEB_MAIN_SCORE = "recall_at_10"
 RETRIEVAL_CUTOFFS = (10, 20, 50, 100)
-SAME_LANGUAGE_DIAGNOSTIC_LANGS = ("de", "en", "es", "fr", "zh")
+SAME_LANGUAGE_DIAGNOSTIC_LANGS = ("de", "en", "es", "fr", "pt", "zh")
 DEFAULT_MTEB_MODELS = [
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
@@ -331,6 +331,7 @@ COMPARISON_METRICS = [
     "same_language_irrelevant_share_at_100_lang_en",
     "same_language_irrelevant_share_at_100_lang_es",
     "same_language_irrelevant_share_at_100_lang_fr",
+    "same_language_irrelevant_share_at_100_lang_pt",
     "same_language_irrelevant_share_at_100_lang_zh",
 ]
 
