@@ -26,6 +26,7 @@ from src.multi_lingual_qac.preprocess.corpus import (
     count_source_records,
     prepare_corpus_source,
 )
+from src.multi_lingual_qac.reporting import update_jrc_pipeline_report
 from src.multi_lingual_qac.pipeline import ask_interactive, ask_text, run_pipeline
 from src.multi_lingual_qac.qac_generation.label_wikidata_qrels import run_wikidata_qrels_labeling
 
@@ -537,6 +538,8 @@ def main() -> None:
             print("  Prepared:", paths.prepared_dir)
             print("  Raw JSONL:", paths.prepared_dir / "raw_documents.jsonl")
             print("  Stats:", paths.prepared_dir / "raw_load_stats.json")
+            report_path = update_jrc_pipeline_report(paths, stage="raw loading")
+            print("  Report:", report_path)
         else:
             print(
                 f"Prepared {source_label} source files:"
@@ -629,6 +632,8 @@ def main() -> None:
             print("  Multilingual full:", paths.preprocessed_dir / "corpus_multilingual_full.csv")
             print("  QA candidates:", paths.preprocessed_dir / "corpus_qa_candidates.csv")
             print("  Inspection sample:", paths.preprocessed_dir / "inspection_sample.csv")
+            report_path = update_jrc_pipeline_report(paths, stage="corpus build")
+            print("  Report:", report_path)
         else:
             print(
                 f"Built {source_label} corpus:"

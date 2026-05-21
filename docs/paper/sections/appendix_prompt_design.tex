@@ -125,7 +125,7 @@ When synthetic query languages are enabled, accepted source-language QA pairs ma
 
 Each failed validation stage produces targeted feedback for regeneration. Language failures ask for the same QA pair to be rewritten in the intended language. Faithfulness failures ask for a stricter grounding to the supplied passage. Retrieval-quality and legal-shape failures ask for a fresh legal information need centered on one decisive point. Cross-language support failures ask for a question whose answer-bearing legal point is more likely to appear in the compact translated versions of the same act.
 
-The implementation records these outcomes in two complementary forms. Terminal logs expose per-attempt decisions during generation. The structured file \texttt{qac\_generation\_stats.json} records accepted source rows, skipped source rows, rejection buckets, translation failures, cross-language support failures, approved-attempt counts, and per-language row totals.
+The implementation records these outcomes in two complementary forms. Terminal logs expose per-attempt decisions during generation. The structured file \texttt{qac\_generation\_stats.json} records accepted source rows, skipped source rows, rejection buckets, translation failures, cross-language support failures, approved-attempt counts, and per-language row totals. The consolidated report \texttt{reports/jrc-acquis/jrc\_pipeline\_generation\_report.md} combines those generation numbers with preprocessing and corpus-construction statistics.
 
 \subsection{Grouped View of the Stack}
 
