@@ -116,6 +116,22 @@ def parse_args() -> PipelineConfig:
         default=None,
         help="Hugging Face dataset repo ID or URL for uploaded MTEB comparison tables",
     )
+    parser.add_argument(
+        "--epo-ingest",
+        action="store_true",
+        help="Stream the next BDDS item(s) of EP full-text data, filter to chemistry multilingual rows, append to data/EPO/multilingual_corpus.csv",
+    )
+    parser.add_argument(
+        "--num-batches",
+        type=int,
+        default=1,
+        help="With --epo-ingest, how many BDDS items to process in sequence (default: 1)",
+    )
+    parser.add_argument(
+        "--chemistry-strict",
+        action="store_true",
+        help="With --epo-ingest, keep only docs whose chemistry signal comes from CPC/IPC classification (drop title-keyword-only matches)",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -155,6 +171,9 @@ def parse_args() -> PipelineConfig:
         mteb_include_mode_strategy=args.mteb_include_mode_strategy,
         upload_mteb_results=args.upload_mteb_results,
         mteb_upload_repo=args.mteb_upload_repo,
+        epo_ingest=args.epo_ingest,
+        epo_num_batches=max(1, args.num_batches),
+        epo_chemistry_strict=args.chemistry_strict,
     )
 
 
@@ -165,6 +184,18 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.epo_ingest:
+        from src.multi_lingual_qac.dataloaders.epo_bdds import ingest_n_batches
+
+        paths = PipelinePaths.from_project_root(project_root)
+        ingest_n_batches(
+            config.epo_num_batches,
+            manifest_path=paths.epo_manifest_path,
+            corpus_path=paths.epo_corpus_path,
+            chemistry_strict=config.epo_chemistry_strict,
+        )
+        return
+
     if config.evaluate_mteb_models:
         from src.multi_lingual_qac.mteb import run_mteb_evaluation
 

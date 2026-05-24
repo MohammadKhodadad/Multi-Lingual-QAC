@@ -14,16 +14,23 @@ class PipelinePaths:
     preprocessed_dir: Path
     corpus_csv: Path
     qac_dir: Path
+    epo_data_dir: Path
+    epo_manifest_path: Path
+    epo_corpus_path: Path
 
     @classmethod
     def from_project_root(cls, project_root: Path) -> "PipelinePaths":
         data_dir = project_root / "data" / "google_patents"
+        epo_dir = project_root / "data" / "EPO"
         return cls(
             project_root=project_root,
             raw_ndjson=data_dir / "chemistry_patents.ndjson",
             preprocessed_dir=data_dir / "preprocessed",
             corpus_csv=data_dir / "corpus.csv",
             qac_dir=data_dir / "qac",
+            epo_data_dir=epo_dir,
+            epo_manifest_path=epo_dir / "manifest.json",
+            epo_corpus_path=epo_dir / "multilingual_corpus.csv",
         )
 
 
@@ -49,3 +56,6 @@ class PipelineConfig:
     upload_mteb_results: bool = False
     mteb_upload_repo: Optional[str] = None
     languages: tuple[str, ...] = tuple(DEFAULT_LANGS)
+    epo_ingest: bool = False
+    epo_num_batches: int = 1
+    epo_chemistry_strict: bool = False

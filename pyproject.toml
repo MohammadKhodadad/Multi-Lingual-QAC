@@ -10,6 +10,8 @@ dependencies = [
     "mteb>=2.12.15",
     "openai>=1.0.0",
     "python-dotenv>=1.0.0",
+    "remotezip>=0.12.2",
+    "requests>=2.31.0",
     "sentence-transformers>=5.3.0",
     "tqdm>=4.67.3",
 ]
