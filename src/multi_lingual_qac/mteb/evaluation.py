@@ -2,48 +2,35 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import os
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from datasets import load_dataset
+from datasets import get_dataset_config_names, load_dataset
+from mteb import MTEB
+from mteb.abstasks import AbsTaskRetrieval
+from mteb.abstasks.task_metadata import TaskMetadata
+from mteb.results import TaskResult
+import pytrec_eval
+from sentence_transformers import SentenceTransformer
 
-DEFAULT_MTEB_DATASET_REPO = ""
+DEFAULT_MTEB_DATASET_REPO = "MehdiAstaraki/multi-lingual-qac-chem-patents"
+DEFAULT_MTEB_VARIANT = "multilingual"
 DEFAULT_MTEB_OUTPUT_DIR = "reports/mteb"
 DEFAULT_MTEB_TABLES_DIR = "reports/mteb_tables"
 DEFAULT_MTEB_CACHE_DIR = ".cache/huggingface"
-DEFAULT_MTEB_MAIN_SCORE = "ndcg_at_10"
-DEFAULT_MTEB_LOCAL_CORPUS_PATH = "data/google_patents/corpus.csv"
-DEFAULT_MTEB_LOCAL_QAC_PATH = "data/google_patents/qac/balanced_100_qac.csv"
-PROJECT_REFERENCE_URL = "https://github.com/MohammadKhodadad/Multi-Lingual-QAC"
+DEFAULT_MTEB_MAIN_SCORE = "recall_at_10"
+RETRIEVAL_CUTOFFS = (10, 20, 50, 100)
+SAME_LANGUAGE_DIAGNOSTIC_LANGS = ("de", "en", "es", "fr", "pt", "zh")
 DEFAULT_MTEB_MODELS = [
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
     "intfloat/multilingual-e5-large",
     "BAAI/bge-m3",
 ]
-
-_LOCAL_BENCHMARK_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
-
-STRATEGY_ID_TO_NAME = {
-    "1": "random_any",
-    "2": "random_missing",
-    "3": "random_existing",
-    "4": "all",
-}
-STRATEGY_SORT_ORDER = {
-    "random_any": 0,
-    "random_missing": 1,
-    "random_existing": 2,
-    "all": 3,
-}
-MODE_SORT_ORDER = {
-    "technical": 0,
-    "semantic": 1,
-}
 
 LANGUAGE_TO_MTEB = {
     "ar": "arb-Arab",
@@ -78,44 +65,24 @@ LANGUAGE_TO_MTEB = {
     "zh": "zho-Hans",
 }
 
-COMPARISON_METRICS = [
+TABLE_METRICS = [
     "main_score",
-    "ndcg_at_10",
-    "map_at_10",
-    "mrr_at_10",
-    "hit_rate_at_10",
     "recall_at_10",
+    "recall_at_100",
+    "map_at_10",
+    "map_at_100",
+    "map",
+    "ndcg_at_10",
     "ndcg_at_100",
-    "hit_rate_at_100",
+    "same_language_irrelevant_share_at_100",
 ]
-
-
-@dataclass(frozen=True)
-class BenchmarkSlice:
-    name: str
-    label: str
-    mode: Optional[str] = None
-    strategy_name: Optional[str] = None
-
-    def matches(self, row: dict[str, Any]) -> bool:
-        row_mode = str(row.get("mode", "")).strip().lower()
-        row_strategy = _row_strategy_name(row)
-        if self.mode is not None and row_mode != self.mode:
-            return False
-        if self.strategy_name is not None and row_strategy != self.strategy_name:
-            return False
-        return True
 
 
 @dataclass(frozen=True)
 class ModelEvaluationSummary:
     model_name: str
     model_slug: str
-    slice_name: str
-    slice_label: str
-    filter_mode: str
-    filter_strategy_name: str
-    task_name: str
+    dataset_variant: str
     main_score: float
     metrics: dict[str, float]
     output_dir: str
@@ -123,80 +90,315 @@ class ModelEvaluationSummary:
     evaluation_time_seconds: float | None
 
 
-@dataclass(frozen=True)
-class BenchmarkSource:
-    dataset_repo: str = ""
-    local_corpus_path: str = DEFAULT_MTEB_LOCAL_CORPUS_PATH
-    local_qac_path: str = DEFAULT_MTEB_LOCAL_QAC_PATH
-    revision: str = "main"
+class HubDatasetRetrievalTask(AbsTaskRetrieval):
+    def __init__(
+        self,
+        metadata: TaskMetadata,
+        *,
+        dataset_repo: str,
+        revision: str,
+        dataset_variant: str,
+    ):
+        self.metadata = metadata
+        self.dataset_repo = dataset_repo
+        self.revision = revision
+        self.dataset_variant = dataset_variant
+        self._query_language_by_id: dict[str, str] | None = None
+        self._corpus_language_by_id: dict[str, str] | None = None
+        super().__init__()
 
-    @property
-    def uses_hf(self) -> bool:
-        return bool(self.dataset_repo.strip())
+    def _get_query_language_by_id(self) -> dict[str, str]:
+        if self._query_language_by_id is not None:
+            return self._query_language_by_id
+        query_config = _dataset_config_name(
+            self.dataset_repo,
+            self.revision,
+            self.dataset_variant,
+            "queries",
+        )
+        queries = load_dataset(
+            self.dataset_repo,
+            query_config,
+            split="train",
+            revision=self.revision,
+        )
+        lang_column = _query_language_column(list(queries.column_names))
+        mapping: dict[str, str] = {}
+        if lang_column is None:
+            self._query_language_by_id = mapping
+            return mapping
+        id_column = "_id" if "_id" in queries.column_names else "query_id"
+        for row in queries:
+            query_id = str(row.get(id_column, "")).strip()
+            if not query_id:
+                continue
+            language = str(row.get(lang_column, "")).strip().lower()
+            if not language:
+                language = _infer_language(query_id)
+            mapping[query_id] = language
+        self._query_language_by_id = mapping
+        return mapping
 
-    @property
-    def label(self) -> str:
-        if self.uses_hf:
-            return self.dataset_repo
-        return f"local:{self.local_qac_path}"
+    def _get_corpus_language_by_id(self) -> dict[str, str]:
+        if self._corpus_language_by_id is not None:
+            return self._corpus_language_by_id
+        corpus_config = _dataset_config_name(
+            self.dataset_repo,
+            self.revision,
+            self.dataset_variant,
+            "corpus",
+        )
+        corpus = load_dataset(
+            self.dataset_repo,
+            corpus_config,
+            split="train",
+            revision=self.revision,
+        )
+        mapping: dict[str, str] = {}
+        id_column = "_id" if "_id" in corpus.column_names else "corpus_id"
+        lang_column = (
+            "corpus_language"
+            if "corpus_language" in corpus.column_names
+            else "language"
+            if "language" in corpus.column_names
+            else None
+        )
+        for row in corpus:
+            corpus_id = str(row.get(id_column, "")).strip()
+            if not corpus_id:
+                continue
+            language = str(row.get(lang_column, "")).strip().lower() if lang_column else ""
+            if not language:
+                language = _infer_language(corpus_id)
+            mapping[corpus_id] = language
+        self._corpus_language_by_id = mapping
+        return mapping
+
+    def task_specific_scores(
+        self,
+        scores: dict[str, dict[str, float]],
+        qrels: dict[str, dict[str, int | float]],
+        results: dict[str, dict[str, float]],
+        hf_split: str,
+        hf_subset: str,
+    ) -> dict[str, float]:
+        del scores, hf_split, hf_subset
+        evaluator = pytrec_eval.RelevanceEvaluator(qrels, {"map"})
+        per_query_scores = evaluator.evaluate(results)
+        query_language_by_id = self._get_query_language_by_id()
+        corpus_language_by_id = self._get_corpus_language_by_id()
+
+        metric_scores: dict[str, float] = {}
+        if per_query_scores:
+            full_map = sum(float(item.get("map", 0.0)) for item in per_query_scores.values()) / len(
+                per_query_scores
+            )
+            metric_scores["map"] = round(full_map, 5)
+
+        recall_scores: dict[int, list[float]] = {cutoff: [] for cutoff in RETRIEVAL_CUTOFFS}
+        map_scores: dict[int, list[float]] = {cutoff: [] for cutoff in RETRIEVAL_CUTOFFS}
+        ndcg_scores: dict[int, list[float]] = {cutoff: [] for cutoff in RETRIEVAL_CUTOFFS}
+        same_language_irrelevant_shares: dict[int, list[float]] = {
+            cutoff: [] for cutoff in RETRIEVAL_CUTOFFS
+        }
+        same_language_irrelevant_shares_at_100_by_query_lang: dict[str, list[float]] = {
+            lang: [] for lang in SAME_LANGUAGE_DIAGNOSTIC_LANGS
+        }
+        for query_id, doc_scores in results.items():
+            query_language = query_language_by_id.get(query_id, _infer_language(query_id))
+            if not query_language:
+                continue
+            ranked_doc_ids = [
+                doc_id
+                for doc_id, _score in sorted(
+                    doc_scores.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )
+            ]
+            relevant_doc_ids = {
+                doc_id
+                for doc_id, relevance in qrels.get(query_id, {}).items()
+                if float(relevance) > 0.0
+            }
+            if not relevant_doc_ids:
+                continue
+
+            for cutoff in RETRIEVAL_CUTOFFS:
+                top_doc_ids = ranked_doc_ids[:cutoff]
+                if not top_doc_ids:
+                    continue
+
+                relevant_seen = 0
+                precision_sum = 0.0
+                dcg = 0.0
+                for rank_idx, doc_id in enumerate(top_doc_ids, start=1):
+                    if doc_id in relevant_doc_ids:
+                        relevant_seen += 1
+                        precision_sum += relevant_seen / rank_idx
+                        dcg += 1.0 / math.log2(rank_idx + 1)
+                recall_scores[cutoff].append(relevant_seen / len(relevant_doc_ids))
+                map_scores[cutoff].append(
+                    precision_sum / min(len(relevant_doc_ids), cutoff)
+                    if relevant_doc_ids
+                    else 0.0
+                )
+                ideal_relevant = min(len(relevant_doc_ids), cutoff)
+                ideal_dcg = sum(
+                    1.0 / math.log2(rank_idx + 1)
+                    for rank_idx in range(1, ideal_relevant + 1)
+                )
+                ndcg_scores[cutoff].append(dcg / ideal_dcg if ideal_dcg else 0.0)
+
+                unrelated_doc_ids = [
+                    doc_id for doc_id in top_doc_ids if doc_id not in relevant_doc_ids
+                ]
+                if not unrelated_doc_ids:
+                    same_language_irrelevant_share = 0.0
+                else:
+                    same_language_unrelated = sum(
+                        1
+                        for doc_id in unrelated_doc_ids
+                        if corpus_language_by_id.get(doc_id, _infer_language(doc_id))
+                        == query_language
+                    )
+                    same_language_irrelevant_share = same_language_unrelated / len(
+                        unrelated_doc_ids
+                    )
+                same_language_irrelevant_shares[cutoff].append(
+                    same_language_irrelevant_share
+                )
+                if cutoff == 100 and query_language in SAME_LANGUAGE_DIAGNOSTIC_LANGS:
+                    same_language_irrelevant_shares_at_100_by_query_lang[
+                        query_language
+                    ].append(same_language_irrelevant_share)
+
+        for cutoff in RETRIEVAL_CUTOFFS:
+            if recall_scores[cutoff]:
+                metric_scores[f"recall_at_{cutoff}"] = round(
+                    sum(recall_scores[cutoff]) / len(recall_scores[cutoff]),
+                    5,
+                )
+            if map_scores[cutoff]:
+                metric_scores[f"map_at_{cutoff}"] = round(
+                    sum(map_scores[cutoff]) / len(map_scores[cutoff]),
+                    5,
+                )
+            if ndcg_scores[cutoff]:
+                metric_scores[f"ndcg_at_{cutoff}"] = round(
+                    sum(ndcg_scores[cutoff]) / len(ndcg_scores[cutoff]),
+                    5,
+                )
+            if same_language_irrelevant_shares[cutoff]:
+                metric_scores[f"same_language_irrelevant_share_at_{cutoff}"] = round(
+                    sum(same_language_irrelevant_shares[cutoff])
+                    / len(same_language_irrelevant_shares[cutoff]),
+                    5,
+                )
+
+        for query_language in SAME_LANGUAGE_DIAGNOSTIC_LANGS:
+            values = same_language_irrelevant_shares_at_100_by_query_lang[query_language]
+            if values:
+                metric_scores[
+                    f"same_language_irrelevant_share_at_100_lang_{query_language}"
+                ] = round(sum(values) / len(values), 5)
+        return metric_scores
+
+
+COMPARISON_METRICS = [
+    "main_score",
+    "recall_at_10",
+    "recall_at_20",
+    "recall_at_50",
+    "recall_at_100",
+    "map_at_10",
+    "map_at_20",
+    "map_at_50",
+    "map_at_100",
+    "map",
+    "ndcg_at_10",
+    "ndcg_at_20",
+    "ndcg_at_50",
+    "ndcg_at_100",
+    "mrr_at_10",
+    "hit_rate_at_10",
+    "hit_rate_at_100",
+    "same_language_irrelevant_share_at_10",
+    "same_language_irrelevant_share_at_20",
+    "same_language_irrelevant_share_at_50",
+    "same_language_irrelevant_share_at_100",
+    "same_language_irrelevant_share_at_100_lang_de",
+    "same_language_irrelevant_share_at_100_lang_en",
+    "same_language_irrelevant_share_at_100_lang_es",
+    "same_language_irrelevant_share_at_100_lang_fr",
+    "same_language_irrelevant_share_at_100_lang_pt",
+    "same_language_irrelevant_share_at_100_lang_zh",
+]
 
 
 def _slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "default"
 
 
-def _dataset_task_name(dataset_repo: str) -> str:
+def _normalize_dataset_variant(value: str | None) -> str:
+    normalized = str(value or DEFAULT_MTEB_VARIANT).strip().lower().replace("-", "_")
+    if normalized not in {"multilingual", "cross_language"}:
+        raise ValueError(f"Unsupported dataset variant: {value}")
+    return normalized
+
+
+def _infer_language(value: str) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+    parts = [part for part in raw.replace("-", "_").split("_") if part]
+    if not parts:
+        return ""
+    candidate = parts[-1]
+    if 2 <= len(candidate) <= 5 and candidate.isalpha():
+        return candidate
+    return ""
+
+
+def _query_language_column(column_names: list[str]) -> str | None:
+    if "query_language" in column_names:
+        return "query_language"
+    if "question_language" in column_names:
+        return "question_language"
+    if "language" in column_names:
+        return "language"
+    return None
+
+
+def _dataset_config_name(
+    dataset_repo: str,
+    revision: str,
+    dataset_variant: str,
+    base_config: str,
+) -> str:
+    subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
+    return f"{subset}-{base_config}" if subset is not None else base_config
+
+
+def _resolve_dataset_subset(dataset_repo: str, revision: str, dataset_variant: str) -> str | None:
+    variant = _normalize_dataset_variant(dataset_variant)
+    dataset_configs = set(get_dataset_config_names(dataset_repo, revision=revision))
+    variant_qrels = f"{variant}-qrels"
+    if variant_qrels in dataset_configs:
+        return variant
+    if variant == "multilingual":
+        return None
+    raise ValueError(
+        f"Dataset `{dataset_repo}` does not expose the `{variant}` retrieval variant."
+    )
+
+
+def _dataset_task_name(dataset_repo: str, dataset_variant: str) -> str:
     owner, _, name = dataset_repo.partition("/")
     owner_slug = _slugify(owner or "hf")
     name_slug = _slugify(name or dataset_repo)
-    return f"{owner_slug}_{name_slug}_retrieval"
-
-
-def _row_strategy_name(row: dict[str, Any]) -> str:
-    strategy_name = str(row.get("strategy_name", "")).strip().lower()
-    if strategy_name:
-        return strategy_name
-    strategy = str(row.get("strategy", "")).strip()
-    return STRATEGY_ID_TO_NAME.get(strategy, strategy.lower())
-
-
-def _slice_sort_key(slice_filter: BenchmarkSlice) -> tuple[int, int, int, str]:
-    if slice_filter.name == "overall":
-        return (0, 0, 0, slice_filter.name)
-    if slice_filter.mode and slice_filter.strategy_name:
-        return (
-            3,
-            MODE_SORT_ORDER.get(slice_filter.mode, 99),
-            STRATEGY_SORT_ORDER.get(slice_filter.strategy_name, 99),
-            slice_filter.name,
-        )
-    if slice_filter.mode:
-        return (1, MODE_SORT_ORDER.get(slice_filter.mode, 99), 0, slice_filter.name)
-    if slice_filter.strategy_name:
-        return (2, 0, STRATEGY_SORT_ORDER.get(slice_filter.strategy_name, 99), slice_filter.name)
-    return (9, 99, 99, slice_filter.name)
-
-
-def _slice_name_from_task_name(task_name: str) -> str:
-    if "__" not in task_name:
-        return "overall"
-    return task_name.rsplit("__", 1)[-1]
-
-
-def _slice_label_from_name(slice_name: str) -> str:
-    if slice_name == "overall":
-        return "Overall"
-    if slice_name.startswith("mode-"):
-        mode = slice_name.removeprefix("mode-").replace("-", " ")
-        return f"Mode: {mode}"
-    if slice_name.startswith("strategy-"):
-        strategy = slice_name.removeprefix("strategy-").replace("-", " ")
-        return f"Strategy: {strategy}"
-    if slice_name.startswith("mode-strategy-"):
-        _, _, rest = slice_name.partition("mode-strategy-")
-        mode, _, strategy = rest.partition("__")
-        return f"Mode/Strategy: {mode.replace('-', ' ')} / {strategy.replace('-', ' ')}"
-    return slice_name.replace("-", " ")
+    variant_slug = _slugify(dataset_variant)
+    return f"{owner_slug}_{name_slug}_{variant_slug}_retrieval"
 
 
 def _default_model_cache_dir() -> Path:
@@ -220,387 +422,75 @@ def _configure_local_model_cache() -> Path:
     return sentence_transformers_dir
 
 
-def _model_cache_path(cache_dir: Path, model_name: str) -> Path:
-    return cache_dir / f"models--{model_name.replace('/', '--')}"
-
-
-def _has_cached_model(cache_dir: Path, model_name: str) -> bool:
-    snapshots_dir = _model_cache_path(cache_dir, model_name) / "snapshots"
-    return snapshots_dir.exists() and any(snapshots_dir.iterdir())
-
-
-def _load_hf_split(dataset_repo: str, config_name: str, revision: str) -> list[dict[str, Any]]:
-    dataset = load_dataset(dataset_repo, config_name, split="train", revision=revision)
-    return [dict(row) for row in dataset]
-
-
-def _load_csv_rows(path: str | Path) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    with Path(path).open(encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            rows.append(dict(row))
-    return rows
-
-
-def _get_question_language(row: dict[str, Any]) -> str:
-    return str(row.get("question_language") or row.get("language") or "").strip()
-
-
-def _build_local_benchmark_rows(
-    corpus_path: str | Path,
-    qac_path: str | Path,
-) -> dict[str, list[dict[str, Any]]]:
-    cache_key = (str(Path(corpus_path)), str(Path(qac_path)))
-    cached = _LOCAL_BENCHMARK_CACHE.get(cache_key)
-    if cached is not None:
-        return cached
-
-    corpus_rows = _load_csv_rows(corpus_path)
-    qac_rows = _load_csv_rows(qac_path)
-
-    corpus_rows_out = [
-        {
-            "_id": str(row.get("id", "")).strip(),
-            "title": str(row.get("title", "")).strip(),
-            "text": str(row.get("context", row.get("abstract", ""))).strip(),
-            "publication_number": str(row.get("publication_number", "")).strip(),
-            "language": str(row.get("language", "")).strip(),
-        }
-        for row in corpus_rows
-        if str(row.get("id", "")).strip()
-    ]
-
-    corpus_ids_by_publication: dict[str, list[str]] = defaultdict(list)
-    corpus_id_set = set()
-    for row in corpus_rows_out:
-        corpus_id_set.add(row["_id"])
-        if row["publication_number"]:
-            corpus_ids_by_publication[row["publication_number"]].append(row["_id"])
-
-    queries_rows: list[dict[str, Any]] = []
-    qrels_rows: list[dict[str, Any]] = []
-    qac_rows_out: list[dict[str, Any]] = []
-    seen_query_ids: set[str] = set()
-
-    for i, row in enumerate(qac_rows):
-        corpus_id = str(row.get("corpus_id", "")).strip()
-        question_language = _get_question_language(row)
-        question = str(row.get("question", "")).strip()
-        answer = str(row.get("answer", "")).strip()
-        publication_number = str(row.get("publication_number", "")).strip()
-        query_id = (
-            f"{corpus_id}_q_{question_language}"
-            if corpus_id in corpus_id_set
-            else f"q_{i}_{question_language}"
-        )
-        if query_id in seen_query_ids:
-            query_id = f"{query_id}_{i}"
-        seen_query_ids.add(query_id)
-
-        query_row = {
-            "_id": query_id,
-            "text": question,
-            "language": question_language,
-            "question_language": question_language,
-            "mode": str(row.get("mode", "")).strip(),
-            "strategy": str(row.get("strategy", "")).strip(),
-            "strategy_name": str(row.get("strategy_name", "")).strip(),
-            "publication_number": publication_number,
-            "corpus_id": corpus_id,
-        }
-        queries_rows.append(query_row)
-
-        relevant_corpus_ids = corpus_ids_by_publication.get(publication_number, [])
-        if not relevant_corpus_ids and corpus_id:
-            relevant_corpus_ids = [corpus_id]
-        for relevant_corpus_id in relevant_corpus_ids:
-            qrels_rows.append(
-                {"query-id": query_id, "corpus-id": relevant_corpus_id, "score": 1.0}
-            )
-
-        qac_rows_out.append(
-            {
-                "query_id": query_id,
-                "corpus_id": corpus_id,
-                "language": question_language,
-                "question_language": question_language,
-                "mode": str(row.get("mode", "")).strip(),
-                "strategy": str(row.get("strategy", "")).strip(),
-                "strategy_name": str(row.get("strategy_name", "")).strip(),
-                "publication_number": publication_number,
-                "question": question,
-                "answer": answer,
-            }
-        )
-
-    built = {
-        "corpus": corpus_rows_out,
-        "queries": queries_rows,
-        "qrels": qrels_rows,
-        "qac": qac_rows_out,
-    }
-    _LOCAL_BENCHMARK_CACHE[cache_key] = built
-    return built
-
-
-def _load_benchmark_split(
-    source: BenchmarkSource,
-    config_name: str,
-) -> list[dict[str, Any]]:
-    if source.uses_hf:
-        return _load_hf_split(source.dataset_repo, config_name, source.revision)
-    return _build_local_benchmark_rows(
-        source.local_corpus_path,
-        source.local_qac_path,
-    )[config_name]
-
-
 def _detect_query_languages(
-    source: BenchmarkSource,
-    *,
-    slice_filter: Optional[BenchmarkSlice] = None,
+    dataset_repo: str,
+    revision: str,
+    dataset_variant: str,
 ) -> list[str]:
-    query_rows = _load_benchmark_split(source, "queries")
-    if slice_filter is not None:
-        query_rows = [row for row in query_rows if slice_filter.matches(row)]
-
-    lang_column = None
-    if query_rows and "question_language" in query_rows[0]:
-        lang_column = "question_language"
-    elif query_rows and "language" in query_rows[0]:
-        lang_column = "language"
+    query_config = _dataset_config_name(dataset_repo, revision, dataset_variant, "queries")
+    queries = load_dataset(dataset_repo, query_config, split="train", revision=revision)
+    lang_column = _query_language_column(list(queries.column_names))
     if lang_column is None:
         return [LANGUAGE_TO_MTEB["en"]]
 
     langs = sorted(
         {
-            str(row.get(lang_column, "")).strip().lower()
-            for row in query_rows
-            if str(row.get(lang_column, "")).strip()
+            str(value).strip().lower()
+            for value in queries[lang_column]
+            if str(value).strip()
         }
     )
     mapped = [LANGUAGE_TO_MTEB[lang] for lang in langs if lang in LANGUAGE_TO_MTEB]
     return mapped or [LANGUAGE_TO_MTEB["en"]]
 
 
-def _detect_benchmark_slices(
-    source: BenchmarkSource,
-    *,
-    include_mode_strategy: bool = False,
-) -> list[BenchmarkSlice]:
-    query_rows = _load_benchmark_split(source, "queries")
-    slices = [BenchmarkSlice(name="overall", label="Overall")]
-
-    modes = sorted(
-        {
-            str(row.get("mode", "")).strip().lower()
-            for row in query_rows
-            if str(row.get("mode", "")).strip()
-        },
-        key=lambda value: (MODE_SORT_ORDER.get(value, 99), value),
-    )
-    for mode in modes:
-        slices.append(
-            BenchmarkSlice(
-                name=f"mode-{_slugify(mode)}",
-                label=f"Mode: {mode}",
-                mode=mode,
-            )
-        )
-
-    strategies = sorted(
-        {
-            _row_strategy_name(row)
-            for row in query_rows
-            if _row_strategy_name(row)
-        },
-        key=lambda value: (STRATEGY_SORT_ORDER.get(value, 99), value),
-    )
-    for strategy_name in strategies:
-        slices.append(
-            BenchmarkSlice(
-                name=f"strategy-{_slugify(strategy_name)}",
-                label=f"Strategy: {strategy_name}",
-                strategy_name=strategy_name,
-            )
-        )
-
-    if include_mode_strategy and modes and strategies:
-        for mode in modes:
-            for strategy_name in strategies:
-                if any(
-                    str(row.get("mode", "")).strip().lower() == mode
-                    and _row_strategy_name(row) == strategy_name
-                    for row in query_rows
-                ):
-                    slices.append(
-                        BenchmarkSlice(
-                            name=f"mode-strategy-{_slugify(mode)}__{_slugify(strategy_name)}",
-                            label=f"Mode/Strategy: {mode} / {strategy_name}",
-                            mode=mode,
-                            strategy_name=strategy_name,
-                        )
-                    )
-
-    return sorted(slices, key=_slice_sort_key)
-
-
-def _build_task_class() -> type:
-    try:
-        from mteb.abstasks import AbsTaskRetrieval
-    except ModuleNotFoundError as exc:
-        raise ValueError(
-            "MTEB benchmarking requires the `mteb` package. Install project dependencies first."
-        ) from exc
-
-    class HubDatasetRetrievalTask(AbsTaskRetrieval):
-        def __init__(
-            self,
-            metadata: Any,
-            *,
-            dataset_repo: str,
-            revision: str,
-            slice_filter: BenchmarkSlice,
-            source: BenchmarkSource,
-        ):
-            self.metadata = metadata
-            self.dataset_repo = dataset_repo
-            self.revision = revision
-            self.slice_filter = slice_filter
-            self.source = source
-            super().__init__()
-
-        def load_data(self, **_: Any) -> None:
-            corpus_rows = _load_benchmark_split(self.source, "corpus")
-            query_rows = [
-                row
-                for row in _load_benchmark_split(self.source, "queries")
-                if self.slice_filter.matches(row)
-            ]
-            qrel_rows = _load_benchmark_split(self.source, "qrels")
-
-            query_texts = {
-                str(row.get("_id", "")).strip(): str(row.get("text", "")).strip()
-                for row in query_rows
-                if str(row.get("_id", "")).strip()
-            }
-            if not query_texts:
-                raise ValueError(
-                    f"No queries matched slice `{self.slice_filter.name}` in `{self.dataset_repo}`."
-                )
-
-            relevant_docs: dict[str, dict[str, float]] = defaultdict(dict)
-            for row in qrel_rows:
-                query_id = str(row.get("query-id", "")).strip()
-                corpus_id = str(row.get("corpus-id", "")).strip()
-                if query_id not in query_texts or not corpus_id:
-                    continue
-                relevant_docs[query_id][corpus_id] = float(row.get("score", 1.0))
-
-            query_texts = {
-                query_id: text
-                for query_id, text in query_texts.items()
-                if query_id in relevant_docs
-            }
-            if not query_texts:
-                raise ValueError(
-                    f"Slice `{self.slice_filter.name}` matched queries but no qrels in `{self.dataset_repo}`."
-                )
-
-            corpus = {}
-            for row in corpus_rows:
-                corpus_id = str(row.get("_id", row.get("id", ""))).strip()
-                if not corpus_id:
-                    continue
-                corpus[corpus_id] = {
-                    "title": str(row.get("title", "")).strip(),
-                    "text": str(row.get("text", row.get("context", ""))).strip(),
-                }
-
-            self.corpus = {"train": corpus}
-            self.queries = {"train": query_texts}
-            self.relevant_docs = {"train": dict(relevant_docs)}
-            self.data_loaded = True
-
-    return HubDatasetRetrievalTask
-
-
-def build_mteb_tasks(
+def build_mteb_task(
     dataset_repo: str = DEFAULT_MTEB_DATASET_REPO,
     *,
-    local_corpus_path: str = DEFAULT_MTEB_LOCAL_CORPUS_PATH,
-    local_qac_path: str = DEFAULT_MTEB_LOCAL_QAC_PATH,
     revision: str = "main",
-    include_mode_strategy: bool = False,
-) -> list[Any]:
-    try:
-        from mteb.abstasks.task_metadata import TaskMetadata
-    except ModuleNotFoundError as exc:
-        raise ValueError(
-            "MTEB benchmarking requires the `mteb` package. Install project dependencies first."
-        ) from exc
-
-    task_class = _build_task_class()
-    tasks = []
-    source = BenchmarkSource(
-        dataset_repo=dataset_repo,
-        local_corpus_path=local_corpus_path,
-        local_qac_path=local_qac_path,
-        revision=revision,
+    dataset_variant: str = DEFAULT_MTEB_VARIANT,
+) -> HubDatasetRetrievalTask:
+    dataset_variant = _normalize_dataset_variant(dataset_variant)
+    subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
+    eval_langs = _detect_query_languages(dataset_repo, revision, dataset_variant)
+    eval_langs_config = {subset or "default": eval_langs}
+    metadata = TaskMetadata(
+        name=_dataset_task_name(dataset_repo, dataset_variant),
+        dataset={"path": dataset_repo, "revision": revision},
+        description=(
+            f"Custom {dataset_variant.replace('_', '-')} retrieval evaluation over the "
+            f"chemistry-patent QAC dataset `{dataset_repo}`. Cross-lingual relevance "
+            "treats every corpus document sharing a question's publication_number as a positive."
+        ),
+        reference=f"https://huggingface.co/datasets/{dataset_repo}",
+        type="Retrieval",
+        category="t2t",
+        modalities=["text"],
+        eval_splits=["train"],
+        eval_langs=eval_langs_config,
+        main_score=DEFAULT_MTEB_MAIN_SCORE,
+        domains=["Chemistry", "Engineering"],
+        task_subtypes=["Question Answering Retrieval"],
+        license="not specified",
+        annotations_creators="LM-generated and reviewed",
+        sample_creation="LM-generated and verified",
+        is_public=True,
+        contributed_by="multi-lingual-qac",
     )
-    base_name = _dataset_task_name(source.label)
-    for slice_filter in _detect_benchmark_slices(
-        source,
-        include_mode_strategy=include_mode_strategy,
-    ):
-        eval_langs = _detect_query_languages(
-            source,
-            slice_filter=slice_filter,
-        )
-        metadata = TaskMetadata(
-            name=f"{base_name}__{slice_filter.name}",
-            dataset={"path": source.label, "revision": revision},
-            description=(
-                f"Custom retrieval evaluation over `{source.label}` "
-                f"for slice `{slice_filter.label}`."
-            ),
-            reference=(
-                f"https://huggingface.co/datasets/{dataset_repo}"
-                if source.uses_hf
-                else PROJECT_REFERENCE_URL
-            ),
-            type="Retrieval",
-            category="t2t",
-            modalities=["text"],
-            eval_splits=["train"],
-            eval_langs=eval_langs,
-            main_score=DEFAULT_MTEB_MAIN_SCORE,
-            domains=["Chemistry", "Engineering"],
-            task_subtypes=["Question Answering Retrieval"],
-            license="not specified",
-            annotations_creators="LM-generated and reviewed",
-            sample_creation="LM-generated and verified",
-            is_public=True,
-            contributed_by="multi-lingual-qac",
-        )
-        tasks.append(
-            task_class(
-                metadata,
-                dataset_repo=source.dataset_repo,
-                revision=source.revision,
-                slice_filter=slice_filter,
-                source=source,
-            )
-        )
-    return tasks
+    return HubDatasetRetrievalTask(
+        metadata,
+        dataset_repo=dataset_repo,
+        revision=revision,
+        dataset_variant=dataset_variant,
+    )
 
 
-def _extract_numeric_metrics(result: Any) -> dict[str, float]:
+def _extract_numeric_metrics(result: TaskResult) -> dict[str, float]:
     metrics: dict[str, float] = {}
     for split_rows in result.scores.values():
         for row in split_rows:
             for key, value in row.items():
-                if key in {"hf_subset", "languages", "main_score"}:
+                if key in {"hf_subset", "languages"}:
                     continue
                 if isinstance(value, (int, float)):
                     metrics[key] = float(value)
@@ -609,49 +499,10 @@ def _extract_numeric_metrics(result: Any) -> dict[str, float]:
     return metrics
 
 
-def _summary_sort_key(item: ModelEvaluationSummary) -> tuple[tuple[int, int, int, str], float, str]:
-    slice_filter = BenchmarkSlice(
-        name=item.slice_name,
-        label=item.slice_label,
-        mode=item.filter_mode or None,
-        strategy_name=item.filter_strategy_name or None,
-    )
-    return (_slice_sort_key(slice_filter), -item.main_score, item.model_name.lower())
-
-
-def _group_summaries_by_slice(
-    summaries: list[ModelEvaluationSummary],
-) -> list[tuple[str, str, list[ModelEvaluationSummary]]]:
-    grouped: dict[str, list[ModelEvaluationSummary]] = defaultdict(list)
-    labels: dict[str, str] = {}
-    for item in summaries:
-        grouped[item.slice_name].append(item)
-        labels[item.slice_name] = item.slice_label
-
-    ordered_slices = sorted(
-        grouped.keys(),
-        key=lambda name: _slice_sort_key(
-            BenchmarkSlice(
-                name=name,
-                label=labels[name],
-                mode=grouped[name][0].filter_mode or None,
-                strategy_name=grouped[name][0].filter_strategy_name or None,
-            )
-        ),
-    )
-    return [
-        (
-            slice_name,
-            labels[slice_name],
-            sorted(grouped[slice_name], key=lambda item: item.main_score, reverse=True),
-        )
-        for slice_name in ordered_slices
-    ]
-
-
 def _write_summary_reports(
     output_dir: Path,
     dataset_repo: str,
+    dataset_variant: str,
     summaries: list[ModelEvaluationSummary],
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -661,27 +512,19 @@ def _write_summary_reports(
 
     payload = {
         "dataset_repo": dataset_repo,
-        "slices": [
+        "dataset_variant": dataset_variant,
+        "models": [
             {
-                "slice_name": slice_name,
-                "slice_label": slice_label,
-                "models": [
-                    {
-                        "model_name": item.model_name,
-                        "model_slug": item.model_slug,
-                        "filter_mode": item.filter_mode,
-                        "filter_strategy_name": item.filter_strategy_name,
-                        "task_name": item.task_name,
-                        "main_score": item.main_score,
-                        "metrics": item.metrics,
-                        "output_dir": item.output_dir,
-                        "eval_languages": item.eval_languages,
-                        "evaluation_time_seconds": item.evaluation_time_seconds,
-                    }
-                    for item in items
-                ],
+                "model_name": item.model_name,
+                "model_slug": item.model_slug,
+                "dataset_variant": item.dataset_variant,
+                "main_score": item.main_score,
+                "metrics": item.metrics,
+                "output_dir": item.output_dir,
+                "eval_languages": item.eval_languages,
+                "evaluation_time_seconds": item.evaluation_time_seconds,
             }
-            for slice_name, slice_label, items in _group_summaries_by_slice(summaries)
+            for item in summaries
         ],
     }
     summary_json.write_text(
@@ -694,11 +537,8 @@ def _write_summary_reports(
         writer = csv.DictWriter(
             fh,
             fieldnames=[
-                "slice_name",
-                "slice_label",
-                "filter_mode",
-                "filter_strategy_name",
                 "model_name",
+                "dataset_variant",
                 "main_score",
                 "evaluation_time_seconds",
                 "eval_languages",
@@ -707,13 +547,10 @@ def _write_summary_reports(
             ],
         )
         writer.writeheader()
-        for item in sorted(summaries, key=_summary_sort_key):
+        for item in summaries:
             row: dict[str, Any] = {
-                "slice_name": item.slice_name,
-                "slice_label": item.slice_label,
-                "filter_mode": item.filter_mode,
-                "filter_strategy_name": item.filter_strategy_name,
                 "model_name": item.model_name,
+                "dataset_variant": item.dataset_variant,
                 "main_score": item.main_score,
                 "evaluation_time_seconds": item.evaluation_time_seconds,
                 "eval_languages": ", ".join(item.eval_languages),
@@ -726,75 +563,64 @@ def _write_summary_reports(
         "# MTEB Evaluation Summary",
         "",
         f"- Dataset: `{dataset_repo}`",
+        f"- Variant: `{dataset_variant}`",
         f"- Main score: `{DEFAULT_MTEB_MAIN_SCORE}`",
         "",
+        "| Model | Main score | Eval time (s) |",
+        "| --- | ---: | ---: |",
     ]
-    for slice_name, slice_label, items in _group_summaries_by_slice(summaries):
-        lines.extend(
-            [
-                f"## {slice_label}",
-                "",
-                "| Model | Main score | Eval time (s) |",
-                "| --- | ---: | ---: |",
-            ]
+    for item in summaries:
+        eval_time = (
+            f"{item.evaluation_time_seconds:.1f}"
+            if item.evaluation_time_seconds is not None
+            else ""
         )
-        for item in items:
-            eval_time = (
-                f"{item.evaluation_time_seconds:.1f}"
-                if item.evaluation_time_seconds is not None
-                else ""
-            )
-            lines.append(f"| `{item.model_name}` | {item.main_score:.4f} | {eval_time} |")
-            if item.metrics:
-                metric_parts = [
-                    f"`{key}`={value:.4f}" for key, value in sorted(item.metrics.items())
-                ]
-                lines.append(f"| `{item.model_name}` metrics | {'; '.join(metric_parts)} | |")
-        lines.append("")
+        lines.append(f"| `{item.model_name}` | {item.main_score:.4f} | {eval_time} |")
+        if item.metrics:
+            metric_parts = [
+                f"`{key}`={value:.4f}" for key, value in sorted(item.metrics.items())
+            ]
+            lines.append(f"| `{item.model_name}` metrics | {'; '.join(metric_parts)} | |")
     summary_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _load_summary_models(results_dir: Path) -> tuple[str, list[ModelEvaluationSummary]]:
+def _load_summary_models(results_dir: Path) -> tuple[str, str, list[ModelEvaluationSummary]]:
     summary_json = results_dir / "summary.json"
     if not summary_json.exists():
         return _load_raw_result_models(results_dir)
 
     payload = json.loads(summary_json.read_text(encoding="utf-8"))
     dataset_repo = str(payload.get("dataset_repo", DEFAULT_MTEB_DATASET_REPO))
+    dataset_variant = _normalize_dataset_variant(payload.get("dataset_variant", DEFAULT_MTEB_VARIANT))
+    models_payload = payload.get("models", [])
     summaries: list[ModelEvaluationSummary] = []
-    for slice_payload in payload.get("slices", []):
-        slice_name = str(slice_payload.get("slice_name", "overall"))
-        slice_label = str(slice_payload.get("slice_label", _slice_label_from_name(slice_name)))
-        for item in slice_payload.get("models", []):
-            summaries.append(
-                ModelEvaluationSummary(
-                    model_name=str(item.get("model_name", "")).strip(),
-                    model_slug=str(item.get("model_slug", "")).strip()
-                    or _slugify(str(item.get("model_name", ""))),
-                    slice_name=slice_name,
-                    slice_label=slice_label,
-                    filter_mode=str(item.get("filter_mode", "")).strip(),
-                    filter_strategy_name=str(item.get("filter_strategy_name", "")).strip(),
-                    task_name=str(item.get("task_name", "")).strip(),
-                    main_score=float(item.get("main_score", 0.0)),
-                    metrics={
-                        str(key): float(value)
-                        for key, value in dict(item.get("metrics", {})).items()
-                        if isinstance(value, (int, float))
-                    },
-                    output_dir=str(item.get("output_dir", "")).strip(),
-                    eval_languages=[str(x) for x in item.get("eval_languages", [])],
-                    evaluation_time_seconds=(
-                        float(item["evaluation_time_seconds"])
-                        if item.get("evaluation_time_seconds") is not None
-                        else None
-                    ),
-                )
+    for item in models_payload:
+        summaries.append(
+            ModelEvaluationSummary(
+                model_name=str(item.get("model_name", "")).strip(),
+                model_slug=str(item.get("model_slug", "")).strip() or _slugify(str(item.get("model_name", ""))),
+                dataset_variant=_normalize_dataset_variant(
+                    item.get("dataset_variant", dataset_variant)
+                ),
+                main_score=float(item.get("main_score", 0.0)),
+                metrics={
+                    str(key): float(value)
+                    for key, value in dict(item.get("metrics", {})).items()
+                    if isinstance(value, (int, float))
+                },
+                output_dir=str(item.get("output_dir", "")).strip(),
+                eval_languages=[str(x) for x in item.get("eval_languages", [])],
+                evaluation_time_seconds=(
+                    float(item["evaluation_time_seconds"])
+                    if item.get("evaluation_time_seconds") is not None
+                    else None
+                ),
             )
-    return dataset_repo, summaries
+        )
+    return dataset_repo, dataset_variant, summaries
 
 
-def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluationSummary]]:
+def _load_raw_result_models(results_dir: Path) -> tuple[str, str, list[ModelEvaluationSummary]]:
     result_files = sorted(
         path
         for path in results_dir.rglob("*.json")
@@ -802,11 +628,17 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
     )
     summaries: list[ModelEvaluationSummary] = []
     dataset_repo = DEFAULT_MTEB_DATASET_REPO
+    dataset_variant = DEFAULT_MTEB_VARIANT
 
     for result_file in result_files:
         payload = json.loads(result_file.read_text(encoding="utf-8"))
         if "scores" not in payload:
             continue
+        task_name = str(payload.get("task_name", "")).strip().lower()
+        if task_name.endswith("_cross-language_retrieval") or task_name.endswith("_cross_language_retrieval"):
+            dataset_variant = "cross_language"
+        elif task_name.endswith("_multilingual_retrieval"):
+            dataset_variant = "multilingual"
 
         train_rows = payload.get("scores", {}).get("train", [])
         if not train_rows:
@@ -815,7 +647,7 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
         metrics = {
             str(key): float(value)
             for key, value in first_row.items()
-            if key not in {"hf_subset", "languages", "main_score"} and isinstance(value, (int, float))
+            if key not in {"hf_subset", "languages"} and isinstance(value, (int, float))
         }
         main_score = float(
             first_row.get("main_score", metrics.get(DEFAULT_MTEB_MAIN_SCORE, 0.0))
@@ -830,17 +662,11 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
             model_name = str(model_meta.get("name", model_name))
             model_slug = _slugify(model_name)
 
-        task_name = result_file.stem
-        slice_name = _slice_name_from_task_name(task_name)
         summaries.append(
             ModelEvaluationSummary(
                 model_name=model_name,
                 model_slug=model_slug,
-                slice_name=slice_name,
-                slice_label=_slice_label_from_name(slice_name),
-                filter_mode="",
-                filter_strategy_name="",
-                task_name=task_name,
+                dataset_variant=dataset_variant,
                 main_score=main_score,
                 metrics=metrics,
                 output_dir=str(result_file.parent),
@@ -857,7 +683,7 @@ def _load_raw_result_models(results_dir: Path) -> tuple[str, list[ModelEvaluatio
         raise ValueError(
             f"Could not find `summary.json` or any raw MTEB result json files under `{results_dir}`."
         )
-    return dataset_repo, summaries
+    return dataset_repo, dataset_variant, summaries
 
 
 def _metric_value(item: ModelEvaluationSummary, metric: str) -> float | None:
@@ -875,7 +701,11 @@ def _best_metric_values(
         values = [_metric_value(item, metric) for item in summaries]
         numeric_values = [value for value in values if value is not None]
         if numeric_values:
-            best[metric] = max(numeric_values)
+            best[metric] = (
+                min(numeric_values)
+                if metric.startswith("same_language_irrelevant_share_at_")
+                else max(numeric_values)
+            )
     return best
 
 
@@ -883,6 +713,71 @@ def _format_metric(value: float | None) -> str:
     if value is None:
         return ""
     return f"{value:.4f}"
+
+
+def _metric_label(metric: str) -> str:
+    labels = {
+        "main_score": "Main score",
+        "map": "MAP",
+        "same_language_irrelevant_share_at_100": "Same-lang irr@100",
+    }
+    if metric in labels:
+        return labels[metric]
+    match = re.fullmatch(r"([a-z]+)_at_(\d+)", metric)
+    if match:
+        name, cutoff = match.groups()
+        display = {
+            "recall": "Recall",
+            "map": "MAP",
+            "ndcg": "nDCG",
+            "mrr": "MRR",
+            "hit_rate": "Hit",
+        }.get(name, name)
+        return f"{display}@{cutoff}"
+    return metric
+
+
+def _format_metric_cell(
+    item: ModelEvaluationSummary,
+    metric: str,
+    best: dict[str, float],
+) -> str:
+    value = _metric_value(item, metric)
+    formatted = _format_metric(value)
+    if value is not None and metric in best and value == best[metric]:
+        return f"**{formatted}**"
+    return formatted
+
+
+def _latex_metric_cell(
+    item: ModelEvaluationSummary,
+    metric: str,
+    best: dict[str, float],
+) -> str:
+    value = _metric_value(item, metric)
+    formatted = _format_metric(value)
+    if value is not None and metric in best and value == best[metric]:
+        return rf"\textbf{{{formatted}}}"
+    return formatted
+
+
+def _ordered_metric_keys(summaries: list[ModelEvaluationSummary]) -> list[str]:
+    seen = set()
+    ordered: list[str] = []
+    for metric in COMPARISON_METRICS:
+        if metric not in seen:
+            ordered.append(metric)
+            seen.add(metric)
+    extras = sorted(
+        {
+            key
+            for item in summaries
+            for key in item.metrics
+            if key not in seen
+        }
+    )
+    ordered.extend(extras)
+    return ordered
 
 
 def _latex_escape(text: str) -> str:
@@ -905,124 +800,116 @@ def _latex_escape(text: str) -> str:
 
 def _build_markdown_comparison(
     dataset_repo: str,
-    grouped: list[tuple[str, str, list[ModelEvaluationSummary]]],
+    ranked: list[ModelEvaluationSummary],
 ) -> str:
+    best = _best_metric_values(ranked, TABLE_METRICS)
+    top = ranked[0]
+    metric_headers = [_metric_label(metric) for metric in TABLE_METRICS]
     lines = [
         "# MTEB Model Comparison",
         "",
-        f"- Dataset: `{dataset_repo}`",
-        f"- Main score: `{DEFAULT_MTEB_MAIN_SCORE}`",
+        "## Leaderboard",
         "",
+        "### Overview",
+        "",
+        f"- Dataset: `{dataset_repo}`",
+        f"- Models compared: `{len(ranked)}`",
+        f"- Best model by `{DEFAULT_MTEB_MAIN_SCORE}`: `{top.model_name}` ({top.main_score:.4f})",
+        "",
+        "### Ranking",
+        "",
+        "| Rank | Model | " + " | ".join(metric_headers) + " | Time (s) |",
+        "| ---: | --- | " + " | ".join(["---:"] * len(metric_headers)) + " | ---: |",
     ]
-    for _, slice_label, ranked in grouped:
-        best = _best_metric_values(ranked, COMPARISON_METRICS)
-        top = ranked[0]
-        lines.extend(
-            [
-                f"## {slice_label}",
-                "",
-                f"- Best model by `{DEFAULT_MTEB_MAIN_SCORE}`: `{top.model_name}` ({top.main_score:.4f})",
-                "",
-                "| Rank | Model | Main score | nDCG@10 | MAP@10 | MRR@10 | Hit@10 | Recall@10 | Time (s) |",
-                "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
-            ]
+    for idx, item in enumerate(ranked, start=1):
+        cells = [
+            str(idx),
+            f"`{item.model_name}`",
+            *[_format_metric_cell(item, metric, best) for metric in TABLE_METRICS],
+            (
+                f"{item.evaluation_time_seconds:.1f}"
+                if item.evaluation_time_seconds is not None
+                else ""
+            ),
+        ]
+        lines.append("| " + " | ".join(cells) + " |")
+    lines.extend(
+        [
+            "",
+            "### Metric Winners",
+            "",
+            "| Metric | Best model | Score |",
+            "| --- | --- | ---: |",
+        ]
+    )
+    for metric in TABLE_METRICS:
+        winner = (
+            min(
+                ranked,
+                key=lambda item: _metric_value(item, metric)
+                if _metric_value(item, metric) is not None
+                else float("inf"),
+            )
+            if metric.startswith("same_language_irrelevant_share_at_")
+            else max(
+                ranked,
+                key=lambda item: _metric_value(item, metric)
+                if _metric_value(item, metric) is not None
+                else float("-inf"),
+            )
         )
-        for idx, item in enumerate(ranked, start=1):
-            cells = [
-                str(idx),
-                f"`{item.model_name}`",
-                f"**{item.main_score:.4f}**"
-                if item.main_score == best.get("main_score")
-                else f"{item.main_score:.4f}",
-                f"**{_format_metric(item.metrics.get('ndcg_at_10', item.main_score))}**"
-                if _metric_value(item, "ndcg_at_10") == best.get("ndcg_at_10")
-                else _format_metric(item.metrics.get("ndcg_at_10", item.main_score)),
-                f"**{_format_metric(item.metrics.get('map_at_10'))}**"
-                if _metric_value(item, "map_at_10") == best.get("map_at_10")
-                else _format_metric(item.metrics.get("map_at_10")),
-                f"**{_format_metric(item.metrics.get('mrr_at_10'))}**"
-                if _metric_value(item, "mrr_at_10") == best.get("mrr_at_10")
-                else _format_metric(item.metrics.get("mrr_at_10")),
-                f"**{_format_metric(item.metrics.get('hit_rate_at_10'))}**"
-                if _metric_value(item, "hit_rate_at_10") == best.get("hit_rate_at_10")
-                else _format_metric(item.metrics.get("hit_rate_at_10")),
-                f"**{_format_metric(item.metrics.get('recall_at_10'))}**"
-                if _metric_value(item, "recall_at_10") == best.get("recall_at_10")
-                else _format_metric(item.metrics.get("recall_at_10")),
-                (
-                    f"{item.evaluation_time_seconds:.1f}"
-                    if item.evaluation_time_seconds is not None
-                    else ""
-                ),
-            ]
-            lines.append("| " + " | ".join(cells) + " |")
-        lines.append("")
+        winner_value = _metric_value(winner, metric)
+        if winner_value is None:
+            continue
+        lines.append(
+            f"| `{_metric_label(metric)}` | `{winner.model_name}` | {winner_value:.4f} |"
+        )
     return "\n".join(lines) + "\n"
 
 
 def _build_latex_comparison(
     dataset_repo: str,
-    grouped: list[tuple[str, str, list[ModelEvaluationSummary]]],
+    ranked: list[ModelEvaluationSummary],
 ) -> str:
-    lines = []
-    for _, slice_label, ranked in grouped:
-        best = _best_metric_values(ranked, COMPARISON_METRICS)
-        lines.extend(
-            [
-                r"\begin{table}[t]",
-                r"\centering",
-                r"\small",
-                rf"\caption{{MTEB retrieval comparison on \texttt{{{_latex_escape(dataset_repo)}}} for {_latex_escape(slice_label)}.}}",
-                r"\begin{tabular}{r l r r r r r r}",
-                r"\hline",
-                r"Rank & Model & Main & MAP@10 & MRR@10 & Hit@10 & Recall@10 & Time (s) \\",
-                r"\hline",
-            ]
+    best = _best_metric_values(ranked, TABLE_METRICS)
+    column_spec = "r l " + " ".join(["r"] * len(TABLE_METRICS)) + " r"
+    metric_headers = " & ".join(_latex_escape(_metric_label(metric)) for metric in TABLE_METRICS)
+    lines = [
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        rf"\begin{{tabular}}{{{column_spec}}}",
+        r"\hline",
+        rf"Rank & Model & {metric_headers} & Time (s) \\",
+        r"\hline",
+    ]
+    for idx, item in enumerate(ranked, start=1):
+        eval_time = (
+            f"{item.evaluation_time_seconds:.1f}"
+            if item.evaluation_time_seconds is not None
+            else "--"
         )
-        for idx, item in enumerate(ranked, start=1):
-            main_score = _format_metric(item.main_score)
-            map_at_10 = _format_metric(item.metrics.get("map_at_10"))
-            mrr_at_10 = _format_metric(item.metrics.get("mrr_at_10"))
-            hit_rate_at_10 = _format_metric(item.metrics.get("hit_rate_at_10"))
-            recall_at_10 = _format_metric(item.metrics.get("recall_at_10"))
-            eval_time = (
-                f"{item.evaluation_time_seconds:.1f}"
-                if item.evaluation_time_seconds is not None
-                else "--"
+        lines.append(
+            " & ".join(
+                [
+                    str(idx),
+                    r"\texttt{" + _latex_escape(item.model_name) + "}",
+                    *[_latex_metric_cell(item, metric, best) for metric in TABLE_METRICS],
+                    eval_time,
+                ]
             )
-            if item.main_score == best.get("main_score"):
-                main_score = rf"\textbf{{{main_score}}}"
-            if _metric_value(item, "map_at_10") == best.get("map_at_10"):
-                map_at_10 = rf"\textbf{{{map_at_10}}}"
-            if _metric_value(item, "mrr_at_10") == best.get("mrr_at_10"):
-                mrr_at_10 = rf"\textbf{{{mrr_at_10}}}"
-            if _metric_value(item, "hit_rate_at_10") == best.get("hit_rate_at_10"):
-                hit_rate_at_10 = rf"\textbf{{{hit_rate_at_10}}}"
-            if _metric_value(item, "recall_at_10") == best.get("recall_at_10"):
-                recall_at_10 = rf"\textbf{{{recall_at_10}}}"
-            lines.append(
-                " & ".join(
-                    [
-                        str(idx),
-                        r"\texttt{" + _latex_escape(item.model_name) + "}",
-                        main_score,
-                        map_at_10,
-                        mrr_at_10,
-                        hit_rate_at_10,
-                        recall_at_10,
-                        eval_time,
-                    ]
-                )
-                + r" \\"
-            )
-        lines.extend(
-            [
-                r"\hline",
-                r"\end{tabular}",
-                r"\end{table}",
-                "",
-            ]
+            + r" \\"
         )
+    lines.extend(
+        [
+            r"\hline",
+            r"\end{tabular}",
+            rf"\caption{{MTEB retrieval comparison on \texttt{{{_latex_escape(dataset_repo)}}}. Bold marks the best score per metric.}}",
+            r"\label{tab:mteb-model-comparison}",
+            r"\end{table}",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -1033,11 +920,12 @@ def generate_mteb_comparison_tables(
 ) -> Path:
     results_path = Path(results_dir)
     output_path = Path(output_dir)
-    dataset_repo, summaries = _load_summary_models(results_path)
+    dataset_repo, dataset_variant, summaries = _load_summary_models(results_path)
     if not summaries:
         raise ValueError(f"No model summaries found in `{results_path}`.")
 
-    grouped = _group_summaries_by_slice(summaries)
+    ranked = sorted(summaries, key=lambda item: item.main_score, reverse=True)
+    all_metric_keys = _ordered_metric_keys(ranked)
     output_path.mkdir(parents=True, exist_ok=True)
 
     comparison_json = output_path / "model_comparison.json"
@@ -1047,28 +935,21 @@ def generate_mteb_comparison_tables(
 
     payload = {
         "dataset_repo": dataset_repo,
+        "dataset_variant": dataset_variant,
         "results_dir": str(results_path),
-        "metrics": COMPARISON_METRICS,
-        "slices": [
+        "metrics": all_metric_keys,
+        "table_metrics": TABLE_METRICS,
+        "models": [
             {
-                "slice_name": slice_name,
-                "slice_label": slice_label,
-                "models": [
-                    {
-                        "rank": idx,
-                        "model_name": item.model_name,
-                        "main_score": item.main_score,
-                        "evaluation_time_seconds": item.evaluation_time_seconds,
-                        "output_dir": item.output_dir,
-                        "metrics": {
-                            metric: item.metrics.get(metric)
-                            for metric in COMPARISON_METRICS
-                        },
-                    }
-                    for idx, item in enumerate(ranked, start=1)
-                ],
+                "rank": idx,
+                "model_name": item.model_name,
+                "dataset_variant": item.dataset_variant,
+                "main_score": item.main_score,
+                "evaluation_time_seconds": item.evaluation_time_seconds,
+                "output_dir": item.output_dir,
+                "metrics": {metric: _metric_value(item, metric) for metric in all_metric_keys},
             }
-            for slice_name, slice_label, ranked in grouped
+            for idx, item in enumerate(ranked, start=1)
         ],
     }
     comparison_json.write_text(
@@ -1080,40 +961,32 @@ def generate_mteb_comparison_tables(
         writer = csv.DictWriter(
             fh,
             fieldnames=[
-                "slice_name",
-                "slice_label",
                 "rank",
                 "model_name",
                 "evaluation_time_seconds",
                 "output_dir",
-                *COMPARISON_METRICS,
+                *all_metric_keys,
             ],
         )
         writer.writeheader()
-        for slice_name, slice_label, ranked in grouped:
-            for idx, item in enumerate(ranked, start=1):
-                row: dict[str, Any] = {
-                    "slice_name": slice_name,
-                    "slice_label": slice_label,
-                    "rank": idx,
-                    "model_name": item.model_name,
-                    "main_score": item.main_score,
-                    "evaluation_time_seconds": item.evaluation_time_seconds,
-                    "output_dir": item.output_dir,
-                }
-                for metric in COMPARISON_METRICS:
-                    row[metric] = item.metrics.get(
-                        metric,
-                        item.main_score if metric == "main_score" else "",
-                    )
-                writer.writerow(row)
+        for idx, item in enumerate(ranked, start=1):
+            row: dict[str, Any] = {
+                "rank": idx,
+                "model_name": item.model_name,
+                "main_score": item.main_score,
+                "evaluation_time_seconds": item.evaluation_time_seconds,
+                "output_dir": item.output_dir,
+            }
+            for metric in all_metric_keys:
+                row[metric] = item.metrics.get(metric, item.main_score if metric == "main_score" else "")
+            writer.writerow(row)
 
     comparison_md.write_text(
-        _build_markdown_comparison(dataset_repo, grouped),
+        _build_markdown_comparison(dataset_repo, ranked),
         encoding="utf-8",
     )
     comparison_tex.write_text(
-        _build_latex_comparison(dataset_repo, grouped),
+        _build_latex_comparison(dataset_repo, ranked),
         encoding="utf-8",
     )
     return output_path
@@ -1123,70 +996,27 @@ def run_mteb_evaluation(
     models: list[str],
     *,
     dataset_repo: str = DEFAULT_MTEB_DATASET_REPO,
-    local_corpus_path: str = DEFAULT_MTEB_LOCAL_CORPUS_PATH,
-    local_qac_path: str = DEFAULT_MTEB_LOCAL_QAC_PATH,
+    dataset_variant: str = DEFAULT_MTEB_VARIANT,
     output_dir: str | Path = DEFAULT_MTEB_OUTPUT_DIR,
     revision: str = "main",
     batch_size: int = 32,
-    include_mode_strategy: bool = False,
 ) -> list[ModelEvaluationSummary]:
     if not models:
         raise ValueError("Provide at least one model name for MTEB evaluation.")
 
-    try:
-        from mteb import MTEB
-    except ModuleNotFoundError as exc:
-        raise ValueError(
-            "MTEB benchmarking requires the `mteb` package. Install project dependencies first."
-        ) from exc
-    try:
-        from sentence_transformers import SentenceTransformer
-    except ModuleNotFoundError as exc:
-        raise ValueError(
-            "MTEB benchmarking requires the `sentence-transformers` package. Install project dependencies first."
-        ) from exc
-
-    source = BenchmarkSource(
-        dataset_repo=dataset_repo,
-        local_corpus_path=local_corpus_path,
-        local_qac_path=local_qac_path,
-        revision=revision,
-    )
-
-    tasks = build_mteb_tasks(
-        dataset_repo,
-        local_corpus_path=local_corpus_path,
-        local_qac_path=local_qac_path,
-        revision=revision,
-        include_mode_strategy=include_mode_strategy,
-    )
-    evaluator = MTEB(tasks=tasks)
+    dataset_variant = _normalize_dataset_variant(dataset_variant)
+    task = build_mteb_task(dataset_repo, revision=revision, dataset_variant=dataset_variant)
+    evaluator = MTEB(tasks=[task])
     base_output_dir = Path(output_dir)
     base_output_dir.mkdir(parents=True, exist_ok=True)
     model_cache_dir = _configure_local_model_cache()
     summaries: list[ModelEvaluationSummary] = []
+    eval_languages = _detect_query_languages(dataset_repo, revision, dataset_variant)
 
     for model_name in models:
         model_slug = _slugify(model_name)
-        print(f"Evaluating `{model_name}` on `{source.label}`...")
-        has_cached_model = _has_cached_model(model_cache_dir, model_name)
-        try:
-            model = SentenceTransformer(
-                model_name,
-                cache_folder=str(model_cache_dir),
-                local_files_only=has_cached_model,
-            )
-        except Exception as exc:
-            if not has_cached_model:
-                raise
-            print(
-                f"  Cached model load failed ({exc}). Retrying with standard resolution..."
-            )
-            model = SentenceTransformer(
-                model_name,
-                cache_folder=str(model_cache_dir),
-                local_files_only=False,
-            )
+        print(f"Evaluating `{model_name}` on `{dataset_repo}` ({dataset_variant})...")
+        model = SentenceTransformer(model_name, cache_folder=str(model_cache_dir))
         model_meta = evaluator.create_model_meta(model)
         model_output_dir = base_output_dir / model_meta.model_name_as_path() / (
             model_meta.revision or "no_revision_available"
@@ -1202,33 +1032,19 @@ def run_mteb_evaluation(
         if not results:
             raise ValueError(f"MTEB returned no results for model `{model_name}`.")
 
-        if len(results) != len(tasks):
-            raise ValueError(
-                f"MTEB returned {len(results)} results for {len(tasks)} tasks on `{model_name}`."
-            )
+        result = results[0]
+        metrics = _extract_numeric_metrics(result)
+        summary = ModelEvaluationSummary(
+            model_name=model_name,
+            model_slug=model_slug,
+            dataset_variant=dataset_variant,
+            main_score=float(result.main_score),
+            metrics=metrics,
+            output_dir=str(model_output_dir),
+            eval_languages=eval_languages,
+            evaluation_time_seconds=result.evaluation_time,
+        )
+        summaries.append(summary)
 
-        for task, result in zip(tasks, results):
-            slice_filter = task.slice_filter
-            metrics = _extract_numeric_metrics(result)
-            summaries.append(
-                ModelEvaluationSummary(
-                    model_name=model_name,
-                    model_slug=model_slug,
-                    slice_name=slice_filter.name,
-                    slice_label=slice_filter.label,
-                    filter_mode=slice_filter.mode or "",
-                    filter_strategy_name=slice_filter.strategy_name or "",
-                    task_name=task.metadata.name,
-                    main_score=float(result.main_score),
-                    metrics=metrics,
-                    output_dir=str(model_output_dir / task.metadata.name),
-                    eval_languages=_detect_query_languages(
-                        source,
-                        slice_filter=slice_filter,
-                    ),
-                    evaluation_time_seconds=result.evaluation_time,
-                )
-            )
-
-    _write_summary_reports(base_output_dir, source.label, summaries)
+    _write_summary_reports(base_output_dir, dataset_repo, dataset_variant, summaries)
     return summaries

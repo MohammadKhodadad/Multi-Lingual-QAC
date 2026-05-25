@@ -20,10 +20,17 @@ def _normalize_hf_dataset_repo(value: str) -> str:
     return raw.strip().strip("/")
 
 
+def _normalize_mteb_variant(value: str) -> str:
+    normalized = value.strip().lower().replace("-", "_")
+    if normalized not in {"multilingual", "cross_language"}:
+        raise argparse.ArgumentTypeError(
+            "Unsupported MTEB variant. Use `multilingual` or `cross_language`."
+        )
+    return normalized
+
+
 def parse_args() -> PipelineConfig:
-    default_mteb_dataset_repo = ""
-    default_mteb_local_corpus = "data/google_patents/corpus.csv"
-    default_mteb_local_qac = "data/google_patents/qac/balanced_100_qac.csv"
+    default_mteb_dataset_repo = "MehdiAstaraki/multi-lingual-qac-chem-patents"
     parser = argparse.ArgumentParser(
         description="Multi-Lingual Chemical QAC: extract patents, preprocess to CSV."
     )
@@ -49,26 +56,20 @@ def parse_args() -> PipelineConfig:
         type=str,
         default=default_mteb_dataset_repo,
         help=(
-            "Optional Hugging Face dataset repo to evaluate with MTEB. "
-            "If omitted, benchmarking uses local CSVs."
+            "Hugging Face dataset repo to evaluate with MTEB "
+            f"(default: {default_mteb_dataset_repo})"
         ),
     )
     parser.add_argument(
-        "--mteb-local-corpus-path",
-        type=str,
-        default=default_mteb_local_corpus,
+        "--mteb-variant",
+        type=_normalize_mteb_variant,
+        default="multilingual",
+        metavar="{multilingual,cross_language}",
         help=(
-            "Local corpus CSV for MTEB benchmarking when no dataset repo is given "
-            f"(default: {default_mteb_local_corpus})"
-        ),
-    )
-    parser.add_argument(
-        "--mteb-local-qac-path",
-        type=str,
-        default=default_mteb_local_qac,
-        help=(
-            "Local QAC CSV for MTEB benchmarking when no dataset repo is given "
-            f"(default: {default_mteb_local_qac})"
+            "Which retrieval subset to evaluate. `multilingual` uses the `qrels` config "
+            "(every doc sharing a publication_number is a positive, including the source-language "
+            "doc). `cross_language` uses `cross_language-qrels` (only foreign-language docs are positives). "
+            "Default: multilingual."
         ),
     )
     parser.add_argument(
@@ -82,11 +83,6 @@ def parse_args() -> PipelineConfig:
         type=int,
         default=32,
         help="Batch size passed to sentence-transformers encoding during MTEB evaluation",
-    )
-    parser.add_argument(
-        "--mteb-include-mode-strategy",
-        action="store_true",
-        help="Also evaluate mode/strategy combination slices in addition to overall, mode, and strategy slices",
     )
     parser.add_argument(
         "--generate-mteb-tables",
@@ -161,14 +157,12 @@ def parse_args() -> PipelineConfig:
             else ()
         ),
         mteb_dataset_repo=args.mteb_dataset_repo,
-        mteb_local_corpus_path=args.mteb_local_corpus_path,
-        mteb_local_qac_path=args.mteb_local_qac_path,
+        mteb_dataset_variant=args.mteb_variant,
         mteb_output_dir=args.mteb_output_dir,
         mteb_batch_size=max(1, args.mteb_batch_size),
         generate_mteb_tables=args.generate_mteb_tables,
         mteb_results_dir=args.mteb_results_dir,
         mteb_tables_dir=args.mteb_tables_dir,
-        mteb_include_mode_strategy=args.mteb_include_mode_strategy,
         upload_mteb_results=args.upload_mteb_results,
         mteb_upload_repo=args.mteb_upload_repo,
         epo_ingest=args.epo_ingest,
@@ -203,21 +197,16 @@ def main() -> None:
         summaries = run_mteb_evaluation(
             list(config.evaluate_mteb_models),
             dataset_repo=config.mteb_dataset_repo,
-            local_corpus_path=config.mteb_local_corpus_path,
-            local_qac_path=config.mteb_local_qac_path,
+            dataset_variant=config.mteb_dataset_variant,
             output_dir=output_dir,
             batch_size=config.mteb_batch_size,
-            include_mode_strategy=config.mteb_include_mode_strategy,
         )
         print("MTEB evaluation finished.")
-        if config.mteb_dataset_repo:
-            print(f"  Dataset: {config.mteb_dataset_repo}")
-        else:
-            print(f"  Local corpus: {config.mteb_local_corpus_path}")
-            print(f"  Local QAC: {config.mteb_local_qac_path}")
+        print(f"  Dataset: {config.mteb_dataset_repo}")
+        print(f"  Variant: {config.mteb_dataset_variant}")
         print(f"  Output: {output_dir}")
         for item in summaries:
-            print(f"  [{item.slice_name}] {item.model_name}: {item.main_score:.4f}")
+            print(f"  {item.model_name}: {item.main_score:.4f}")
         return
 
     if config.generate_mteb_tables:

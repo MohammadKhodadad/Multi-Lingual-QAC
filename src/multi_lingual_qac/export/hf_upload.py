@@ -140,6 +140,7 @@ def push_to_hub(
             "title": r.get("title", ""),
             "text": r.get("context", r.get("abstract", "")),
             "corpus_language": str(r.get("language", "")).strip(),
+            "publication_number": str(r.get("publication_number", "")).strip(),
         }
         for r in corpus_rows
     ]
@@ -181,6 +182,7 @@ def push_to_hub(
             "corpus_id": cid,
             "corpus_language": corpus_lang,
             "is_synthetic_translation": is_synthetic_translation,
+            "publication_number": publication_number,
         }
         queries_data.append(query_row)
         for relevant_corpus_id in relevant_corpus_ids:
@@ -199,6 +201,7 @@ def push_to_hub(
             "question": q,
             "answer": a,
             "is_synthetic_translation": is_synthetic_translation,
+            "publication_number": publication_number,
             "linked_corpus_ids_json": json.dumps(relevant_corpus_ids, ensure_ascii=False),
         })
         cross_language_qac_full.append({
@@ -209,6 +212,7 @@ def push_to_hub(
             "question": q,
             "answer": a,
             "is_synthetic_translation": is_synthetic_translation,
+            "publication_number": publication_number,
             "linked_corpus_ids_json": json.dumps(cross_language_corpus_ids, ensure_ascii=False),
         })
 
