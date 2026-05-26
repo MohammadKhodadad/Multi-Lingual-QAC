@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple
 
 import requests
-import remotezip
+from stream_unzip import stream_unzip
 from tqdm import tqdm
 
 from src.multi_lingual_qac.dataloaders.epo_xml import (
@@ -399,14 +399,33 @@ def _stream_remote_zip(
     *,
     progress: Optional[Callable[[str], None]] = None,
 ) -> Iterator[Tuple[bytes, str]]:
-    with remotezip.RemoteZip(url, session=session) as rz:
-        for info in rz.infolist():
-            if getattr(info, "is_dir", lambda: False)() or info.filename.endswith("/"):
-                continue
+    """Stream a ZIP from `url` end-to-end (no HTTP Range), yielding inner XMLs.
+
+    Uses `stream_unzip` to read local file headers sequentially from byte 0,
+    so works even when the server doesn't honor suffix-Range requests (Cloudflare
+    in front of BDDS ignores `Range: bytes=-N` on multi-GB zip downloads).
+    """
+    with session.get(url, stream=True, timeout=120) as resp:
+        resp.raise_for_status()
+        total = int(resp.headers.get("Content-Length") or 0) or None
+        chunks = _chunks_with_byte_progress(
+            resp.iter_content(chunk_size=1024 * 1024),
+            total=total,
+            desc="  download",
+        )
+        for name_bytes, _size, entry_chunks in stream_unzip(chunks):
+            name = name_bytes.decode("utf-8", errors="replace")
             if progress:
-                progress(info.filename)
-            data = _read_zip_member(rz, info)
-            yield from _yield_xmls_recursive(data, info.filename)
+                progress(name)
+            if name.endswith("/"):
+                # Directory entry — consume its (empty) chunk stream and skip.
+                for _ in entry_chunks:
+                    pass
+                continue
+            data = _read_entry_with_cap(entry_chunks, name)
+            if data is None:
+                continue
+            yield from _yield_xmls_recursive(data, name)
 
 
 def _stream_remote_tar(
@@ -416,10 +435,13 @@ def _stream_remote_tar(
     mode: str = "r|",
     progress: Optional[Callable[[str], None]] = None,
 ) -> Iterator[Tuple[bytes, str]]:
-    with session.get(url, stream=True, timeout=60) as resp:
+    with session.get(url, stream=True, timeout=120) as resp:
         resp.raise_for_status()
-        # tarfile in streaming mode needs a non-seekable file-like; resp.raw works.
-        with tarfile.open(fileobj=resp.raw, mode=mode) as tf:
+        total = int(resp.headers.get("Content-Length") or 0) or None
+        # Wrap resp.raw with a byte-counter so the user sees download progress
+        # alongside the per-XML parse counter.
+        raw = _RawWithProgress(resp.raw, total=total, desc="  download")
+        with tarfile.open(fileobj=raw, mode=mode) as tf:
             for member in tf:
                 if not member.isfile():
                     continue
@@ -430,17 +452,92 @@ def _stream_remote_tar(
                     continue
                 data = f.read()
                 yield from _yield_xmls_recursive(data, member.name)
+        raw.close()
 
 
-def _read_zip_member(rz: "remotezip.RemoteZip", info: "zipfile.ZipInfo") -> bytes:
-    size = getattr(info, "file_size", 0)
-    if size and size > _MAX_NESTED_ARCHIVE_BYTES:
-        raise RuntimeError(
-            f"BDDS entry {info.filename!r} is {size} bytes uncompressed, "
-            f"exceeds the in-memory cap of {_MAX_NESTED_ARCHIVE_BYTES} bytes. "
-            "Set EPO_MAX_NESTED_BYTES if you have the headroom."
+def _chunks_with_byte_progress(
+    chunks: Iterable[bytes],
+    *,
+    total: Optional[int],
+    desc: str,
+) -> Iterator[bytes]:
+    """Wrap a chunk iterable in a tqdm reporting bytes downloaded."""
+    pbar = tqdm(
+        total=total,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        desc=desc,
+        leave=False,
+    )
+    try:
+        for chunk in chunks:
+            if chunk:
+                pbar.update(len(chunk))
+                yield chunk
+    finally:
+        pbar.close()
+
+
+class _RawWithProgress:
+    """File-like wrapper over `resp.raw` that updates a tqdm on every read.
+
+    tarfile in streaming mode (`r|`) reads via `.read(n)` on a file-like object;
+    iter_content does not fit that interface, so we use this thin shim instead
+    of `_chunks_with_byte_progress` for the tar path.
+    """
+
+    def __init__(self, raw: Any, *, total: Optional[int], desc: str):
+        self._raw = raw
+        self._pbar = tqdm(
+            total=total,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+            desc=desc,
+            leave=False,
         )
-    return rz.read(info)
+
+    def read(self, *args, **kwargs) -> bytes:
+        data = self._raw.read(*args, **kwargs)
+        if data:
+            self._pbar.update(len(data))
+        return data
+
+    def close(self) -> None:
+        self._pbar.close()
+
+
+def _read_entry_with_cap(
+    entry_chunks: Iterable[bytes],
+    name: str,
+) -> Optional[bytes]:
+    """Accumulate an inner-archive entry's chunks into bytes with a hard cap.
+
+    Returns None (and drains the iterator to advance stream_unzip's state
+    machine) if the entry exceeds `_MAX_NESTED_ARCHIVE_BYTES`. This protects
+    the disk/memory budget against pathological nested entries.
+    """
+    parts: List[bytes] = []
+    total = 0
+    capped = False
+    for chunk in entry_chunks:
+        if not chunk:
+            continue
+        total += len(chunk)
+        if not capped and total > _MAX_NESTED_ARCHIVE_BYTES:
+            capped = True
+            tqdm.write(
+                f"  WARN: entry {name!r} exceeds in-memory cap "
+                f"({_MAX_NESTED_ARCHIVE_BYTES} bytes); skipping. "
+                "Set EPO_MAX_NESTED_BYTES if you have the headroom."
+            )
+            # Keep draining so stream_unzip can advance to the next entry.
+        if not capped:
+            parts.append(chunk)
+    if capped:
+        return None
+    return b"".join(parts)
 
 
 def _yield_xmls_recursive(data: bytes, name: str) -> Iterator[Tuple[bytes, str]]:

@@ -9,10 +9,10 @@ dependencies = [
     "google-cloud-bigquery>=3.0.0",
     "mteb>=2.12.15",
     "openai>=1.0.0",
-    "pytrec_eval>=0.5",
+    "pytrec-eval-terrier>=0.5.10",
     "python-dotenv>=1.0.0",
-    "remotezip>=0.12.2",
     "requests>=2.31.0",
+    "stream-unzip>=0.0.96",
     "sentence-transformers>=5.3.0",
     "tqdm>=4.67.3",
 ]
