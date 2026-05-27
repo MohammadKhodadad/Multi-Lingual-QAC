@@ -739,6 +739,7 @@ def preprocess_ndjson_to_csv(
         "country_code",
         "publication_date",
         "source",
+        "ipc_codes",
     ]
 
     for lang in tqdm(languages, desc="Preprocess languages", unit="lang"):
@@ -782,6 +783,12 @@ def preprocess_ndjson_to_csv(
                 context_parts.append(f"First claim: {first_claim}")
             context = "\n\n".join(context_parts).strip()
 
+            ipc_codes = "|".join(
+                code
+                for entry in (rec.get("ipc") or [])
+                if (code := (entry.get("code") or "").strip())
+            )
+
             rows.append({
                 "id": f"{pub_num}_{lang}",
                 "language": lang,
@@ -794,6 +801,7 @@ def preprocess_ndjson_to_csv(
                 "country_code": rec.get("country_code") or "",
                 "publication_date": rec.get("publication_date") or "",
                 "source": "google_patents",
+                "ipc_codes": ipc_codes,
             })
 
             if per_lang_limit and len(rows) >= per_lang_limit:
@@ -843,6 +851,7 @@ def merge_corpus_csv(
                 row["description"] = clean_text(row.get("description", ""))
                 row["first_claim"] = clean_text(row.get("first_claim", ""))
                 row["context"] = clean_text(row.get("context", ""))
+                row["ipc_codes"] = row.get("ipc_codes", "")
                 if word_count(row["abstract"]) < min_abstract_words:
                     continue
                 if not row["context"]:
@@ -859,7 +868,7 @@ def merge_corpus_csv(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
         "id", "language", "title", "abstract", "description", "first_claim", "context",
-        "publication_number", "country_code", "publication_date", "source",
+        "publication_number", "country_code", "publication_date", "source", "ipc_codes",
     ]
     with output_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)

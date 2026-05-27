@@ -53,7 +53,7 @@ def find_multilingual_documents(
     fieldnames = [
         "id", "language", "title", "abstract", "description",
         "first_claim", "context", "publication_number",
-        "country_code", "publication_date", "source",
+        "country_code", "publication_date", "source", "ipc_codes",
     ]
     rows_out: list[dict[str, str]] = []
     for lang in languages:

@@ -60,6 +60,7 @@ CSV_FIELDNAMES: Tuple[str, ...] = (
     "country_code",
     "publication_date",
     "source",
+    "ipc_codes",
 )
 
 

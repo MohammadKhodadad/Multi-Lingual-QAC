@@ -399,4 +399,5 @@ def build_row_for_language(record: Dict[str, Any], language: str) -> Optional[Di
         "country_code": record.get("country_code", ""),
         "publication_date": record.get("publication_date", ""),
         "source": "epo",
+        "ipc_codes": "|".join(record.get("ipc_codes", [])),
     }
