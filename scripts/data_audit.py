@@ -124,12 +124,27 @@ def _source_stats(
             for code in ipc_map.get(pub_num, []):
                 ipc_counter[code] += 1
 
+    # Parallel text coverage matrix: for each lang pair, count docs with both
+    pub_langs: Dict[str, Set[str]] = defaultdict(set)
+    for r in rows:
+        pub_langs[r["publication_number"]].add(r["language"])
+    all_langs = sorted(lang_counter.keys())
+    lang_pair_matrix: Dict[str, Dict[str, int]] = {}
+    for l1 in all_langs:
+        lang_pair_matrix[l1] = {}
+        for l2 in all_langs:
+            lang_pair_matrix[l1][l2] = sum(
+                1 for langs in pub_langs.values() if l1 in langs and l2 in langs
+            )
+
     sorted_dates = sorted(dates) if dates else []
     return {
         "source": source_name,
         "unique_pubs": len(pubs),
         "total_rows": len(rows),
         "languages": dict(lang_counter.most_common()),
+        "all_langs": all_langs,
+        "lang_pair_matrix": lang_pair_matrix,
         "country_codes": dict(country_counter.most_common()),
         "date_min": _format_date(sorted_dates[0]) if sorted_dates else "N/A",
         "date_max": _format_date(sorted_dates[-1]) if sorted_dates else "N/A",
@@ -239,6 +254,24 @@ def _render_markdown(
         for lang, count in sorted(stats["languages"].items()):
             lines.append(f"| {lang} | {count:,} |")
         lines.append("")
+
+        all_langs = stats.get("all_langs", [])
+        matrix = stats.get("lang_pair_matrix", {})
+        if all_langs and matrix:
+            lines.append("### Parallel Text Coverage")
+            lines.append("")
+            lines.append("Documents with text in both row-language and column-language:")
+            lines.append("")
+            header = "| |" + " ".join(f" **{l}** |" for l in all_langs)
+            lines.append(header)
+            lines.append("|" + "|".join(["---"] * (len(all_langs) + 1)) + "|")
+            for l1 in all_langs:
+                row_cells = f"| **{l1}** |"
+                for l2 in all_langs:
+                    val = matrix[l1][l2]
+                    row_cells += f" {val:,} |"
+                lines.append(row_cells)
+            lines.append("")
 
         lines.append("### Field Coverage")
         lines.append("")

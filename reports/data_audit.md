@@ -1,6 +1,6 @@
 # Data Audit Report
 
-Generated: 2026-05-27 20:30
+Generated: 2026-05-27 20:39
 
 ## Summary
 
@@ -24,6 +24,17 @@ Generated: 2026-05-27 20:30
 | en | 10,827 |
 | es | 2,154 |
 | fr | 8,805 |
+
+### Parallel Text Coverage
+
+Documents with text in both row-language and column-language:
+
+| | **de** |  **en** |  **es** |  **fr** |
+|---|---|---|---|---|
+| **de** | 1,601 | 1,601 | 0 | 1,601 |
+| **en** | 1,601 | 10,827 | 2,149 | 8,800 |
+| **es** | 0 | 2,149 | 2,154 | 127 |
+| **fr** | 1,601 | 8,800 | 127 | 8,805 |
 
 ### Field Coverage
 
@@ -80,6 +91,16 @@ Generated: 2026-05-27 20:30
 | de | 3,770 |
 | en | 3,773 |
 | fr | 3,772 |
+
+### Parallel Text Coverage
+
+Documents with text in both row-language and column-language:
+
+| | **de** |  **en** |  **fr** |
+|---|---|---|---|
+| **de** | 3,770 | 3,770 | 3,769 |
+| **en** | 3,770 | 3,773 | 3,772 |
+| **fr** | 3,769 | 3,772 | 3,772 |
 
 ### Field Coverage
 
