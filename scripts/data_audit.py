@@ -99,10 +99,24 @@ def _source_stats(
 
     ipc_counter: Counter = Counter()
     ipc_available = False
-    if ipc_map:
+
+    csv_has_ipc = any(r.get("ipc_codes", "").strip() for r in rows[:100])
+    if csv_has_ipc:
+        ipc_available = True
+        seen_pubs_ipc: Set[str] = set()
+        for r in rows:
+            pub = r["publication_number"]
+            if pub in seen_pubs_ipc:
+                continue
+            seen_pubs_ipc.add(pub)
+            for code in (r.get("ipc_codes") or "").split("|"):
+                code = code.strip()[:3]
+                if code:
+                    ipc_counter[code] += 1
+    elif ipc_map:
         ipc_available = True
         pub_nums_in_rows = {r["publication_number"] for r in rows}
-        seen_pubs_ipc: Set[str] = set()
+        seen_pubs_ipc = set()
         for pub_num in pub_nums_in_rows:
             if pub_num in seen_pubs_ipc:
                 continue
@@ -186,8 +200,8 @@ def _render_markdown(
     # --- Summary table ---
     lines.append("## Summary")
     lines.append("")
-    lines.append("| Source | Unique Docs | Total Rows | Languages | Date Range | IPC Available | File |")
-    lines.append("|--------|------------|------------|-----------|------------|---------------|------|")
+    lines.append("| Source | Documents | Total Rows (all langs) | Languages | Date Range | IPC Available | File |")
+    lines.append("|--------|-----------|----------------------|-----------|------------|---------------|------|")
     for stats, path in [
         (gp_stats, gp_path),
         (epo_stats, epo_path),
@@ -201,7 +215,6 @@ def _render_markdown(
                 f"| {stats['source']} | {stats['unique_pubs']:,} | {stats['total_rows']:,} "
                 f"| {langs} | {dr} | {ipc} | `{fname}` |"
             )
-    lines.append("| USPTO | — | — | — | — | — | *Not yet ingested* |")
     lines.append("")
 
     # --- Per-source detail ---
@@ -214,8 +227,8 @@ def _render_markdown(
         lines.append(f"## {stats['source']}")
         lines.append("")
         lines.append(f"- **File**: `{path}`")
-        lines.append(f"- **Unique documents**: {stats['unique_pubs']:,}")
-        lines.append(f"- **Total rows**: {stats['total_rows']:,}")
+        lines.append(f"- **Documents**: {stats['unique_pubs']:,} (each counted once regardless of how many languages)")
+        lines.append(f"- **Total rows**: {stats['total_rows']:,} (one row per document-language pair)")
         lines.append(f"- **Date range**: {stats['date_min']} to {stats['date_max']}")
         lines.append("")
 
@@ -262,12 +275,6 @@ def _render_markdown(
             lines.append("at parse time but `build_row_for_language` does not persist them to the corpus CSV.")
             lines.append("Chemistry filtering uses prefixes: C, A01N, A23L, A61K, A61P, B01D, B01F, B01J, B01L, C25, G01N, H01M.")
             lines.append("")
-
-    # --- USPTO placeholder ---
-    lines.append("## USPTO")
-    lines.append("")
-    lines.append("No data ingested yet. No USPTO loader or data files present in the project.")
-    lines.append("")
 
     # --- Cross-source overlap ---
     if overlap:

@@ -1,106 +1,122 @@
 # Data Audit Report
 
-Generated: 2026-05-27 18:53
+Generated: 2026-05-27 20:30
 
 ## Summary
 
-| Source | Unique Docs | Total Rows | Languages | Date Range | IPC Available | File |
-|--------|------------|------------|-----------|------------|---------------|------|
-| Google Patents | 531 | 1,110 | fr, en, de, zh, es | 2025-10-02 .. 2025-10-22 | Yes | `multilingual_corpus.csv` |
-| EPO | 3,876 | 11,625 | en, fr, de | 2026-04-15 .. 2026-05-20 | No (not in CSV) | `multilingual_corpus.csv` |
-| USPTO | — | — | — | — | — | *Not yet ingested* |
+| Source | Documents | Total Rows (all langs) | Languages | Date Range | IPC Available | File |
+|--------|-----------|----------------------|-----------|------------|---------------|------|
+| Google Patents | 10,628 | 23,387 | en, fr, es, de | 1999-03-18 .. 2025-10-22 | Yes | `multilingual_corpus.csv` |
+| EPO | 3,773 | 11,315 | en, fr, de | 2026-04-22 .. 2026-05-27 | Yes | `multilingual_corpus.csv` |
 
 ## Google Patents
 
 - **File**: `data/google_patents/multilingual_corpus.csv`
-- **Unique documents**: 531
-- **Total rows**: 1,110
-- **Date range**: 2025-10-02 to 2025-10-22
+- **Documents**: 10,628 (each counted once regardless of how many languages)
+- **Total rows**: 23,387 (one row per document-language pair)
+- **Date range**: 1999-03-18 to 2025-10-22
 
 ### Language Distribution
 
 | Language | Rows |
 |----------|------|
-| de | 127 |
-| en | 420 |
-| es | 12 |
-| fr | 531 |
-| zh | 20 |
+| de | 1,601 |
+| en | 10,827 |
+| es | 2,154 |
+| fr | 8,805 |
 
 ### Field Coverage
 
 | Field | Rows with content | % |
 |-------|------------------|---|
-| abstract | 1,110 | 100.0% |
+| abstract | 23,387 | 100.0% |
 | first_claim | 0 | 0.0% |
 | description | 0 | 0.0% |
 
 ### Country Codes
 
-- `EP`: 962 rows
-- `WO`: 148 rows
+- `CR`: 12 rows
+- `EP`: 4,525 rows
+- `ES`: 164 rows
+- `MX`: 3,876 rows
+- `WO`: 14,810 rows
 
 ### IPC Class Distribution (top-level)
 
 | IPC Class | Documents |
 |-----------|----------|
-| A61 | 135 |
-| C08 | 114 |
-| C07 | 92 |
-| C12 | 83 |
-| B01 | 49 |
-| C09 | 48 |
-| H01 | 35 |
-| G01 | 35 |
-| C23 | 25 |
-| C22 | 25 |
-| C25 | 22 |
-| C10 | 21 |
-| C01 | 19 |
-| B60 | 19 |
-| C11 | 16 |
-| B29 | 16 |
-| C04 | 16 |
-| B32 | 12 |
-| A23 | 12 |
-| C03 | 12 |
+| A61 | 12,743 |
+| C08 | 5,320 |
+| C07 | 4,985 |
+| C12 | 4,140 |
+| C22 | 2,604 |
+| C09 | 2,301 |
+| B01 | 2,047 |
+| H01 | 1,954 |
+| C25 | 1,622 |
+| C23 | 1,274 |
+| C10 | 1,147 |
+| C21 | 1,146 |
+| C01 | 1,139 |
+| C04 | 910 |
+| G01 | 846 |
+| B32 | 789 |
+| C02 | 783 |
+| A23 | 774 |
+| A01 | 725 |
+| C11 | 618 |
 
 ## EPO
 
 - **File**: `data/EPO/multilingual_corpus.csv`
-- **Unique documents**: 3,876
-- **Total rows**: 11,625
-- **Date range**: 2026-04-15 to 2026-05-20
+- **Documents**: 3,773 (each counted once regardless of how many languages)
+- **Total rows**: 11,315 (one row per document-language pair)
+- **Date range**: 2026-04-22 to 2026-05-27
 
 ### Language Distribution
 
 | Language | Rows |
 |----------|------|
-| de | 3,873 |
-| en | 3,876 |
-| fr | 3,876 |
+| de | 3,770 |
+| en | 3,773 |
+| fr | 3,772 |
 
 ### Field Coverage
 
 | Field | Rows with content | % |
 |-------|------------------|---|
 | abstract | 0 | 0.0% |
-| first_claim | 11,625 | 100.0% |
-| description | 3,876 | 33.3% |
+| first_claim | 11,315 | 100.0% |
+| description | 3,773 | 33.3% |
 
 ### Country Codes
 
-- `EP`: 11,625 rows
+- `EP`: 11,315 rows
 
-### IPC Class Distribution
+### IPC Class Distribution (top-level)
 
-Not available in current CSV output. The EPO XML parser extracts IPC/CPC codes
-at parse time but `build_row_for_language` does not persist them to the corpus CSV.
-Chemistry filtering uses prefixes: C, A01N, A23L, A61K, A61P, B01D, B01F, B01J, B01L, C25, G01N, H01M.
-
-## USPTO
-
-No data ingested yet. No USPTO loader or data files present in the project.
+| IPC Class | Documents |
+|-----------|----------|
+| A61 | 4,212 |
+| H01 | 3,484 |
+| G01 | 1,580 |
+| C08 | 1,354 |
+| C07 | 1,308 |
+| B01 | 1,019 |
+| C12 | 714 |
+| C09 | 584 |
+| B29 | 432 |
+| C10 | 373 |
+| C22 | 366 |
+| A23 | 348 |
+| C23 | 281 |
+| A01 | 268 |
+| C11 | 242 |
+| C01 | 211 |
+| H10 | 198 |
+| C04 | 196 |
+| B32 | 195 |
+| B60 | 188 |
 
 ## Cross-Source Overlap
 
@@ -108,10 +124,10 @@ Dedup key: `country_code + bare doc-number` (e.g. `EP_4634118`).
 
 | Metric | Count |
 |--------|-------|
-| EPO-only documents | 3,876 |
-| Google Patents-only documents | 531 |
+| EPO-only documents | 3,773 |
+| Google Patents-only documents | 10,628 |
 | Duplicates (same patent in both) | 0 |
-| **Merged total (deduplicated)** | **4,407** |
+| **Merged total (deduplicated)** | **14,401** |
 
 No duplicates found (the dedup script may have already removed them).
 
@@ -119,15 +135,15 @@ No duplicates found (the dedup script may have already removed them).
 
 ### Language Gaps
 
-- Languages in Google Patents only: es, zh
+- Languages in Google Patents only: es
 
 ### Date Coverage Gaps
 
-- Google Patents: 2025-10-02 to 2025-10-22
-- EPO: 2026-04-15 to 2026-05-20
+- Google Patents: 1999-03-18 to 2025-10-22
+- EPO: 2026-04-22 to 2026-05-27
 - **Gap**: no date overlap between the two sources.
 
 ### IPC Coverage Gaps
 
-- Google Patents has IPC data; EPO does not (not persisted to CSV).
-- Google Patents IPC classes: A23, A61, B01, B29, B32, B60, C01, C03, C04, C07, C08, C09, C10, C11, C12, C22, C23, C25, G01, H01
+- IPC classes in Google Patents only: C02, C21, C25
+- IPC classes in EPO only: B29, B60, H10
