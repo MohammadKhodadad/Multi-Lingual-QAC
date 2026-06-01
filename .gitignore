@@ -4,4 +4,7 @@ __pycache__/
 *.pyc
 .python-version
 .cache
+.venv/
+.uv-cache/
+cluster/
 data/

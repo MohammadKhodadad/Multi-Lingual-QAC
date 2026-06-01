@@ -107,6 +107,34 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
         self._corpus_language_by_id: dict[str, str] | None = None
         super().__init__()
 
+    def load_data(self, num_proc: int | None = None, **kwargs: Any) -> None:
+        """Load retrieval data, working around a strict-offline-mode quirk.
+
+        In offline mode (``HF_HUB_OFFLINE=1``), ``datasets.get_dataset_config_names``
+        returns ``['default']`` instead of the dataset's real config list. That makes
+        MTEB's ``RetrievalDatasetLoader`` believe ``default`` is a valid config and skip
+        its ``default`` -> ``qrels`` fallback, so it tries to load a nonexistent
+        ``default`` config and fails on compute nodes that have no internet. We
+        temporarily substitute the real config names (from the hub when reachable, else
+        from the local datasets cache) while the upstream loader runs, then restore the
+        original function. Online behaviour is unchanged.
+        """
+        if self.data_loaded:
+            return
+        import mteb.abstasks.retrieval_dataset_loaders as _rdl
+
+        real_configs = _resolve_loader_configs(self.dataset_repo, self.revision)
+        original_get_config_names = _rdl.get_dataset_config_names
+        if real_configs:
+            def _patched_get_config_names(path, revision=None, *args, **kwargs):
+                return list(real_configs)
+
+            _rdl.get_dataset_config_names = _patched_get_config_names
+        try:
+            super().load_data(num_proc=num_proc, **kwargs)
+        finally:
+            _rdl.get_dataset_config_names = original_get_config_names
+
     def _get_query_language_by_id(self) -> dict[str, str]:
         if self._query_language_by_id is not None:
             return self._query_language_by_id
@@ -391,6 +419,36 @@ def _resolve_dataset_subset(dataset_repo: str, revision: str, dataset_variant: s
     raise ValueError(
         f"Dataset `{dataset_repo}` does not expose the `{variant}` retrieval variant."
     )
+
+
+def _dataset_cache_config_names(dataset_repo: str) -> list[str]:
+    """Config names materialized in the local datasets cache (offline-safe)."""
+    from datasets import config as datasets_config
+
+    cache_root = Path(datasets_config.HF_DATASETS_CACHE) / dataset_repo.replace("/", "___")
+    if not cache_root.is_dir():
+        return []
+    return sorted(path.name for path in cache_root.iterdir() if path.is_dir())
+
+
+def _resolve_loader_configs(dataset_repo: str, revision: str) -> list[str]:
+    """Real dataset config names, robust to strict offline mode.
+
+    ``get_dataset_config_names`` returns ``['default']`` when the hub is unreachable,
+    so trust its answer only when it looks real; otherwise fall back to the config
+    directories present in the local datasets cache.
+    """
+    try:
+        configs = [
+            name
+            for name in get_dataset_config_names(dataset_repo, revision=revision)
+            if name != "default"
+        ]
+    except Exception:
+        configs = []
+    if configs:
+        return configs
+    return _dataset_cache_config_names(dataset_repo)
 
 
 def _dataset_task_name(dataset_repo: str, dataset_variant: str) -> str:
