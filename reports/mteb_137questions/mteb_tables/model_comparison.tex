@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{r l r r r r r r r r r r}
+\hline
+Rank & Model & Main score & Recall@10 & Recall@100 & MAP@10 & MAP@100 & MAP & nDCG@10 & nDCG@100 & Same-lang irr@100 & Time (s) \\
+\hline
+1 & \texttt{BAAI/bge-m3} & \textbf{0.7166} & \textbf{0.7166} & \textbf{0.9088} & \textbf{0.5738} & \textbf{0.5894} & \textbf{0.5904} & \textbf{0.6390} & \textbf{0.6919} & 0.2215 & 40.9 \\
+2 & \texttt{sentence-transformers/paraphrase-multilingual-mpnet-base-v2} & 0.5888 & 0.5888 & 0.8248 & 0.4368 & 0.4536 & 0.4551 & 0.5034 & 0.5682 & \textbf{0.2004} & 17.5 \\
+3 & \texttt{intfloat/multilingual-e5-large} & 0.5450 & 0.5450 & 0.8491 & 0.3751 & 0.3962 & 0.3977 & 0.4573 & 0.5390 & 0.5193 & 39.8 \\
+4 & \texttt{sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2} & 0.4951 & 0.4951 & 0.8285 & 0.3450 & 0.3686 & 0.3699 & 0.4136 & 0.5031 & 0.2061 & 16.7 \\
+\hline
+\end{tabular}
+\caption{MTEB retrieval comparison on \texttt{MehdiAstaraki/multi-lingual-qac-chem-patents}. Bold marks the best score per metric.}
+\label{tab:mteb-model-comparison}
+\end{table}
