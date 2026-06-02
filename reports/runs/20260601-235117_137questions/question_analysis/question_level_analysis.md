@@ -46,7 +46,7 @@
 | Group | n | BAAI/bge-m3 | intfloat/multilingual-e5-large | sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 | sentence-transformers/paraphrase-multilingual-mpnet-base-v2 |
 |---|---|---|---|---|---|
 | original | 57 | 0.722 | 0.605 | 0.509 | 0.588 |
-| synthetic-translation | 80 | 0.712 | 0.502 | 0.485 | 0.590 |
+| synthetic-translation | 80 | 0.713 | 0.502 | 0.485 | 0.590 |
 
 ## 5) Cross-lingual targets: same- vs cross-language (mean Recall@10)
 | Target | BAAI/bge-m3 | intfloat/multilingual-e5-large | sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 | sentence-transformers/paraphrase-multilingual-mpnet-base-v2 |
