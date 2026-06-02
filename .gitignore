@@ -9,6 +9,4 @@ __pycache__/
 cluster/
 data/
 # benchmark runs: keep summaries/tables/metadata/index trackable, ignore the heavy parts
-reports/runs/*/predictions/
-reports/runs/*/no_model_name__available/
 .claude
