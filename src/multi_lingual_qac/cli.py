@@ -120,6 +120,14 @@ def parse_args() -> PipelineConfig:
         help="Disable the PNG plots that --analyze-questions writes to <run>/question_analysis/plots/",
     )
     parser.add_argument(
+        "--query-metadata",
+        type=str,
+        default=None,
+        metavar="CSV",
+        help="CSV holding per-question `mode`/`strategy` (joined to queries by question text). "
+        "Only needed when the dataset's queries config doesn't already carry those columns.",
+    )
+    parser.add_argument(
         "--run-id",
         type=str,
         default=None,
@@ -207,6 +215,7 @@ def parse_args() -> PipelineConfig:
         analyze_questions=args.analyze_questions,
         mteb_analysis_dir=args.mteb_analysis_dir,
         mteb_no_plots=args.no_plots,
+        mteb_query_metadata=args.query_metadata,
         run_id_label=args.run_id,
         generate_mteb_tables=args.generate_mteb_tables,
         mteb_results_dir=args.mteb_results_dir,
@@ -291,6 +300,7 @@ def main() -> None:
                 dataset_variant=config.mteb_dataset_variant,
                 model_names=list(config.evaluate_mteb_models),
                 make_plots=not config.mteb_no_plots,
+                query_metadata_csv=config.mteb_query_metadata,
             )
 
         # Run identity: metadata + rolling trend index + latest pointer.
@@ -356,6 +366,7 @@ def main() -> None:
             dataset_repo=config.mteb_dataset_repo,
             dataset_variant=config.mteb_dataset_variant,
             make_plots=not config.mteb_no_plots,
+            query_metadata_csv=config.mteb_query_metadata,
         )
         print("Question-level analysis generated.")
         print(f"  Results dir: {results_dir}")

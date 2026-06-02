@@ -174,6 +174,9 @@ def push_to_hub(
         if not cross_language_corpus_ids:
             cross_language_corpus_ids = list(relevant_corpus_ids)
 
+        question_mode = str(r.get("mode", "")).strip()
+        question_strategy = str(r.get("strategy", "")).strip()
+        question_strategy_name = str(r.get("strategy_name", "")).strip()
         query_row = {
             "_id": query_id,
             "query_id": query_id,
@@ -183,6 +186,9 @@ def push_to_hub(
             "corpus_language": corpus_lang,
             "is_synthetic_translation": is_synthetic_translation,
             "publication_number": publication_number,
+            "mode": question_mode,
+            "strategy": question_strategy,
+            "strategy_name": question_strategy_name,
         }
         queries_data.append(query_row)
         for relevant_corpus_id in relevant_corpus_ids:
@@ -202,6 +208,9 @@ def push_to_hub(
             "answer": a,
             "is_synthetic_translation": is_synthetic_translation,
             "publication_number": publication_number,
+            "mode": question_mode,
+            "strategy": question_strategy,
+            "strategy_name": question_strategy_name,
             "linked_corpus_ids_json": json.dumps(relevant_corpus_ids, ensure_ascii=False),
         })
         cross_language_qac_full.append({

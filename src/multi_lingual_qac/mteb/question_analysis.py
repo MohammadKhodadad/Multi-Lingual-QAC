@@ -5,13 +5,15 @@ Given per-query rankings saved by ``run_mteb_evaluation(..., prediction_dir=...)
 breaks Recall@K / MRR@K down by:
 
   1. query language
-  2. query origin: original vs synthetic-translation queries
-  3. retrieval mode: same-language vs cross-language relevant targets
-  4. query-language x target-language pair matrix (best model)
+  2. question mode (technical vs semantic) and strategy (random / random_missing / ...)
+  3. query origin (original vs synthetic-translation)
+  4. cross-lingual targets (same- vs cross-language relevant docs)
+  5. query-language x target-language pair matrix (best model)
 
-It is dataset-agnostic: each breakdown is skipped gracefully when the dataset
-lacks the needed column (e.g. no ``is_synthetic_translation`` column, or a single
-language), so it keeps working for other question sets / datasets.
+Question ``mode``/``strategy`` come from the queries config when present, or from a CSV
+passed via ``query_metadata_csv`` (joined by question text, with a (corpus_id, language)
+fallback). It is dataset-agnostic: each breakdown is skipped gracefully when its data is
+absent, so it keeps working for other question sets / datasets.
 """
 from __future__ import annotations
 
@@ -36,6 +38,11 @@ from src.multi_lingual_qac.mteb.evaluation import (
 PREDICTION_GLOB = "*_predictions.json"
 DEFAULT_K = 10
 
+# Question-generation attributes (real fields, sourced from the QAC metadata).
+MODE_ORDER = ["technical", "semantic"]
+STRATEGY_ORDER = ["random", "random_missing", "random_existing", "all", "forced_zh"]
+_STRATEGY_NUM = {"0": "forced_zh", "1": "random", "2": "random_missing", "3": "random_existing", "4": "all"}
+
 
 def _mean(values) -> float:
     values = list(values)
@@ -55,6 +62,50 @@ def _corpus_language_column(columns: list[str]) -> str | None:
         if name in columns:
             return name
     return None
+
+
+def _strategy_display(value: str) -> str:
+    """Canonical display name for a strategy (random_any/numeric -> 'random', etc.)."""
+    v = str(value).strip()
+    if v.endswith(".0"):
+        v = v[:-2]
+    if v == "random_any":
+        return "random"
+    return _STRATEGY_NUM.get(v, v)
+
+
+def _query_metadata_columns(columns: list[str]) -> tuple[str | None, str | None]:
+    """Column names holding the question mode and strategy, if present."""
+    mode_col = "mode" if "mode" in columns else None
+    strat_col = "strategy_name" if "strategy_name" in columns else ("strategy" if "strategy" in columns else None)
+    return mode_col, strat_col
+
+
+def _load_query_metadata_csv(csv_path: str | Path) -> tuple[dict, dict]:
+    """Build text->(mode, strategy) and (corpus_id, lang)->(mode, strategy) maps from a CSV.
+
+    Used to attach question mode/strategy when the dataset's queries config does not carry
+    them (e.g. an already-published dataset whose export predates those columns).
+    """
+    import pandas as pd
+
+    df = pd.read_csv(csv_path)
+    cols = list(df.columns)
+    text_col = "question" if "question" in cols else ("text" if "text" in cols else None)
+    mode_col, strat_col = _query_metadata_columns(cols)
+    cid_col = "corpus_id" if "corpus_id" in cols else None
+    lang_col = next((c for c in ("question_language", "query_language", "language") if c in cols), None)
+    by_text: dict[str, tuple] = {}
+    by_cid_lang: dict[tuple, tuple] = {}
+    for _, row in df.iterrows():
+        mode_val = str(row[mode_col]).strip().lower() if mode_col and pd.notna(row[mode_col]) else ""
+        strat_val = _strategy_display(row[strat_col]) if strat_col and pd.notna(row[strat_col]) else ""
+        meta = (mode_val or None, strat_val or None)
+        if text_col and pd.notna(row[text_col]):
+            by_text[str(row[text_col]).strip()] = meta
+        if cid_col and lang_col and pd.notna(row[cid_col]) and pd.notna(row[lang_col]):
+            by_cid_lang[(str(row[cid_col]).strip(), str(row[lang_col]).strip().lower())] = meta
+    return by_text, by_cid_lang
 
 
 def _load_predictions(model_dir: Path) -> dict[str, dict[str, float]] | None:
@@ -149,6 +200,8 @@ def _make_plots(
     query_lang: dict,
     corpus_lang: dict,
     query_synth: dict,
+    query_mode: dict,
+    query_strategy: dict,
     best: str | None,
     summary_metrics: dict,
     k: int,
@@ -165,6 +218,8 @@ def _make_plots(
 
     plots_dir = Path(output_dir) / "plots"
     plots_dir.mkdir(parents=True, exist_ok=True)
+    for stale in ("mode_same_vs_cross.png", "strategy_original_vs_translation.png"):
+        (plots_dir / stale).unlink(missing_ok=True)  # superseded by renamed plots
     short = [_short_label(lb) for lb in labels]
     n = len(labels)
 
@@ -214,22 +269,34 @@ def _make_plots(
                   for lb in labels]
         grouped_bar("recall_by_language.png", langs, values, f"Recall@{k}", f"Recall@{k} by query language")
 
-    # 3) retrieval mode: same vs cross-language targets
+    # 3) question mode (technical vs semantic) + strategy
+    if query_mode:
+        present = [m for m in MODE_ORDER if any(query_mode.get(q) == m for q in query_mode)]
+        present += sorted({m for m in query_mode.values()} - set(MODE_ORDER))
+        values = [[mean_where(lb, lambda q, pq, m=m: query_mode.get(q) == m) for m in present] for lb in labels]
+        grouped_bar("mode.png", present, values, f"Recall@{k}", f"Recall@{k} by question mode")
+    if query_strategy:
+        present = [s for s in STRATEGY_ORDER if any(query_strategy.get(q) == s for q in query_strategy)]
+        present += sorted({s for s in query_strategy.values()} - set(STRATEGY_ORDER))
+        values = [[mean_where(lb, lambda q, pq, s=s: query_strategy.get(q) == s) for s in present] for lb in labels]
+        grouped_bar("strategy.png", present, values, f"Recall@{k}", f"Recall@{k} by question strategy")
+
+    # 4) cross-lingual targets: same vs cross-language
     def mode_mean(label, key):
         vals = [pq[key] for pq in pq_by_model[label].values() if pq.get(key) is not None]
         return _mean(vals) if vals else None
 
     if any(mode_mean(lb, "same_recall") is not None or mode_mean(lb, "cross_recall") is not None for lb in labels):
         values = [[mode_mean(lb, "same_recall"), mode_mean(lb, "cross_recall")] for lb in labels]
-        grouped_bar("mode_same_vs_cross.png", ["same-language", "cross-language"], values,
-                    f"Recall@{k}", f"Same- vs cross-language targets (Recall@{k})")
+        grouped_bar("cross_lingual_targets.png", ["same-language", "cross-language"], values,
+                    f"Recall@{k}", f"Cross-lingual targets: same vs cross (Recall@{k})")
 
-    # 4) strategy: original vs synthetic-translation
+    # 5) query origin: original vs synthetic-translation
     if query_synth:
         values = [[mean_where(lb, lambda q, pq, want=want: q in query_synth and query_synth[q] is want)
                    for want in (False, True)] for lb in labels]
-        grouped_bar("strategy_original_vs_translation.png", ["original", "synthetic-translation"], values,
-                    f"Recall@{k}", f"Recall@{k} by query origin")
+        grouped_bar("query_origin.png", ["original", "synthetic-translation"], values,
+                    f"Recall@{k}", f"Query origin: original vs synthetic (Recall@{k})")
 
     # 5) language-pair heatmap for the best model
     if best and corpus_lang and langs:
@@ -286,6 +353,7 @@ def run_question_analysis(
     k: int = DEFAULT_K,
     model_names: list[str] | None = None,
     make_plots: bool = True,
+    query_metadata_csv: str | Path | None = None,
 ) -> Path:
     """Write a question-level analysis report from saved per-query predictions.
 
@@ -323,7 +391,17 @@ def run_question_analysis(
     q_id_col = _id_column(list(queries.column_names), "query_id")
     q_lang_col = _query_language_column(list(queries.column_names))
     synth_col = "is_synthetic_translation" if "is_synthetic_translation" in queries.column_names else None
-    query_lang, query_synth = {}, {}
+    mode_col, strat_col = _query_metadata_columns(list(queries.column_names))
+
+    # If the queries config lacks mode/strategy, optionally attach them from a metadata CSV.
+    csv_by_text, csv_by_cid_lang = {}, {}
+    if (mode_col is None or strat_col is None) and query_metadata_csv:
+        try:
+            csv_by_text, csv_by_cid_lang = _load_query_metadata_csv(query_metadata_csv)
+        except Exception as exc:
+            print(f"[query-metadata skipped] {exc}")
+
+    query_lang, query_synth, query_mode, query_strategy = {}, {}, {}, {}
     for row in queries:
         qid = str(row[q_id_col])
         lang = str(row.get(q_lang_col) or "").strip().lower() if q_lang_col else ""
@@ -332,6 +410,18 @@ def run_question_analysis(
             query_lang[qid] = lang
         if synth_col is not None:
             query_synth[qid] = str(row.get(synth_col)).strip().lower() in {"true", "1", "yes"}
+        mode_val = str(row.get(mode_col) or "").strip().lower() if mode_col else ""
+        strat_val = _strategy_display(row.get(strat_col)) if strat_col and row.get(strat_col) not in (None, "") else ""
+        if (not mode_val or not strat_val) and (csv_by_text or csv_by_cid_lang):
+            meta = (csv_by_text.get(str(row.get("text") or "").strip())
+                    or csv_by_cid_lang.get((str(row.get("corpus_id") or "").strip(), lang)))
+            if meta:
+                mode_val = mode_val or (meta[0] or "")
+                strat_val = strat_val or (meta[1] or "")
+        if mode_val:
+            query_mode[qid] = mode_val
+        if strat_val:
+            query_strategy[qid] = strat_val
 
     c_id_col = _id_column(list(corpus.column_names), "corpus_id")
     c_lang_col = _corpus_language_column(list(corpus.column_names))
@@ -382,6 +472,19 @@ def run_question_analysis(
     if synth_col is not None:
         n_synth = sum(1 for q in qids if query_synth.get(q))
         emit(f"- Original: {len(qids) - n_synth}  |  synthetic-translation: {n_synth}")
+    if query_mode:
+        mode_counts = defaultdict(int)
+        for q in qids:
+            if query_mode.get(q):
+                mode_counts[query_mode[q]] += 1
+        emit("- Questions by mode: " + ", ".join(f"{m}={mode_counts[m]}" for m in MODE_ORDER if mode_counts.get(m)))
+    if query_strategy:
+        strat_counts = defaultdict(int)
+        for q in qids:
+            if query_strategy.get(q):
+                strat_counts[query_strategy[q]] += 1
+        strat_keys = [s for s in STRATEGY_ORDER if strat_counts.get(s)] + sorted(s for s in strat_counts if s not in STRATEGY_ORDER)
+        emit("- Questions by strategy: " + ", ".join(f"{s}={strat_counts[s]}" for s in strat_keys))
     if query_lang:
         by_lang = defaultdict(int)
         for q in qids:
@@ -392,7 +495,7 @@ def run_question_analysis(
     emit("- Models analysed: " + ", ".join(labels))
     emit("")
 
-    def grouped_table(title, group_of, key):
+    def grouped_table(title, group_of, key, order=None):
         emit(f"## {title}")
         groups = set()
         for label in labels:
@@ -400,9 +503,13 @@ def run_question_analysis(
                 g = group_of(qid)
                 if g is not None and pq.get(key) is not None:
                     groups.add(g)
+        if order:
+            ordered = [g for g in order if g in groups] + sorted(g for g in groups if g not in order)
+        else:
+            ordered = sorted(groups)
         emit("| Group | n | " + " | ".join(labels) + " |")
         emit("|" + "---|" * (len(labels) + 2))
-        for g in sorted(groups):
+        for g in ordered:
             ref = labels[0]
             n = sum(1 for qid, pq in pq_by_model[ref].items() if group_of(qid) == g and pq.get(key) is not None)
             cells = []
@@ -417,16 +524,24 @@ def run_question_analysis(
         grouped_table(f"1) Recall@{k} by query language", lambda q: query_lang.get(q), "recall")
         grouped_table(f"   MRR@{k} by query language", lambda q: query_lang.get(q), "rr")
 
+    if query_mode:
+        grouped_table(f"2) Recall@{k} by question mode (technical vs semantic)",
+                      lambda q: query_mode.get(q), "recall", order=MODE_ORDER)
+
+    if query_strategy:
+        grouped_table(f"3) Recall@{k} by question strategy",
+                      lambda q: query_strategy.get(q), "recall", order=STRATEGY_ORDER)
+
     if synth_col is not None:
         grouped_table(
-            f"2) Recall@{k} by query origin (strategy)",
+            f"4) Recall@{k} by query origin (original vs synthetic-translation)",
             lambda q: ("synthetic-translation" if query_synth.get(q) else "original"),
-            "recall",
+            "recall", order=["original", "synthetic-translation"],
         )
 
     if corpus_lang:
-        emit(f"## 3) Retrieval mode: same- vs cross-language targets (mean Recall@{k})")
-        emit("| Mode | " + " | ".join(labels) + " |")
+        emit(f"## 5) Cross-lingual targets: same- vs cross-language (mean Recall@{k})")
+        emit("| Target | " + " | ".join(labels) + " |")
         emit("|" + "---|" * (len(labels) + 1))
         for mode, key in [("same-language target", "same_recall"), ("cross-language target", "cross_recall")]:
             cells = []
@@ -437,7 +552,7 @@ def run_question_analysis(
         emit("")
 
     if query_lang and corpus_lang and len(langs) > 1:
-        emit(f"## 4) Language-pair Recall@{k} matrix — {best} (best model)")
+        emit(f"## 6) Language-pair Recall@{k} matrix — {best} (best model)")
         emit("Rows = query language, Cols = relevant-doc language; cell = fraction of those")
         emit("relevant docs retrieved in the top %d (n = #relevant pairs)." % k)
         emit("")
@@ -464,12 +579,14 @@ def run_question_analysis(
     csv_path = output_dir / "question_level_metrics.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["model", "query_id", "query_language", "is_synthetic_translation",
+        writer.writerow(["model", "query_id", "query_language", "mode", "strategy",
+                         "is_synthetic_translation",
                          f"recall_at_{k}", f"rr_at_{k}", f"hit_at_{k}", "n_relevant"])
         for label in labels:
             for qid, pq in pq_by_model[label].items():
                 writer.writerow([
                     label, qid, query_lang.get(qid, ""),
+                    query_mode.get(qid, ""), query_strategy.get(qid, ""),
                     query_synth.get(qid, "") if synth_col is not None else "",
                     round(pq["recall"], 5), round(pq["rr"], 5), int(pq["hit"]), len(pq["rel"]),
                 ])
@@ -481,6 +598,7 @@ def run_question_analysis(
             _make_plots(
                 output_dir, pq_by_model=pq_by_model, labels=labels, langs=langs,
                 query_lang=query_lang, corpus_lang=corpus_lang, query_synth=query_synth,
+                query_mode=query_mode, query_strategy=query_strategy,
                 best=best, summary_metrics=summary_metrics, k=k,
             )
         except Exception as exc:  # pragma: no cover - plotting must never break the analysis

@@ -52,6 +52,7 @@ class PipelineConfig:
     analyze_questions: bool = False
     mteb_analysis_dir: Optional[str] = None
     mteb_no_plots: bool = False
+    mteb_query_metadata: Optional[str] = None
     run_id_label: Optional[str] = None
     generate_mteb_tables: bool = False
     mteb_results_dir: Optional[str] = None
