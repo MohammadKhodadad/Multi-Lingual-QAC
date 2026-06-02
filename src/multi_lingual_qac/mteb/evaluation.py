@@ -1058,6 +1058,7 @@ def run_mteb_evaluation(
     output_dir: str | Path = DEFAULT_MTEB_OUTPUT_DIR,
     revision: str = "main",
     batch_size: int = 32,
+    prediction_dir: str | Path | None = None,
 ) -> list[ModelEvaluationSummary]:
     if not models:
         raise ValueError("Provide at least one model name for MTEB evaluation.")
@@ -1079,6 +1080,10 @@ def run_mteb_evaluation(
         model_output_dir = base_output_dir / model_meta.model_name_as_path() / (
             model_meta.revision or "no_revision_available"
         )
+        run_kwargs: dict[str, Any] = {}
+        if prediction_dir is not None:
+            # Save per-query rankings (one folder per model) for question-level analysis.
+            run_kwargs["prediction_folder"] = Path(prediction_dir) / model_slug
         results = evaluator.run(
             model,
             verbosity=2,
@@ -1086,6 +1091,7 @@ def run_mteb_evaluation(
             eval_splits=["train"],
             overwrite_results=True,
             encode_kwargs={"batch_size": batch_size},
+            **run_kwargs,
         )
         if not results:
             raise ValueError(f"MTEB returned no results for model `{model_name}`.")

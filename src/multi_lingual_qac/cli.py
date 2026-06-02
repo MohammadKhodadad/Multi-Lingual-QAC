@@ -29,6 +29,16 @@ def _normalize_mteb_variant(value: str) -> str:
     return normalized
 
 
+def _resolve_results_dir(project_root: Path, mteb_results_dir: str | None) -> Path:
+    """Where to read existing results from: explicit dir, else the latest run, else legacy."""
+    if mteb_results_dir:
+        return Path(mteb_results_dir)
+    latest = project_root / "reports" / "runs" / "latest"
+    if latest.exists():
+        return latest
+    return project_root / "reports" / "mteb"
+
+
 def parse_args() -> PipelineConfig:
     default_mteb_dataset_repo = "MehdiAstaraki/multi-lingual-qac-chem-patents"
     parser = argparse.ArgumentParser(
@@ -83,6 +93,34 @@ def parse_args() -> PipelineConfig:
         type=int,
         default=32,
         help="Batch size passed to sentence-transformers encoding during MTEB evaluation",
+    )
+    parser.add_argument(
+        "--save-predictions",
+        action="store_true",
+        help="During --evaluate-mteb, save per-query rankings to <output-dir>/predictions/<model> "
+        "(needed for --analyze-questions)",
+    )
+    parser.add_argument(
+        "--analyze-questions",
+        action="store_true",
+        help="Produce a question-level analysis (Recall@10/MRR by query language, query origin, "
+        "same/cross-language mode, language-pair matrix) from saved per-query predictions. "
+        "Implies --save-predictions when combined with --evaluate-mteb; otherwise reads existing "
+        "predictions under --mteb-results-dir/predictions.",
+    )
+    parser.add_argument(
+        "--mteb-analysis-dir",
+        type=str,
+        default=None,
+        help="Output directory for the question-level analysis (default: <output-dir>/question_analysis)",
+    )
+    parser.add_argument(
+        "--run-id",
+        type=str,
+        default=None,
+        metavar="LABEL",
+        help="Optional label appended to the auto UTC timestamp run id, e.g. --run-id add-zh "
+        "produces reports/runs/20260601-143052_add-zh/. Without it the run id is just the timestamp.",
     )
     parser.add_argument(
         "--generate-mteb-tables",
@@ -160,6 +198,10 @@ def parse_args() -> PipelineConfig:
         mteb_dataset_variant=args.mteb_variant,
         mteb_output_dir=args.mteb_output_dir,
         mteb_batch_size=max(1, args.mteb_batch_size),
+        mteb_save_predictions=args.save_predictions,
+        analyze_questions=args.analyze_questions,
+        mteb_analysis_dir=args.mteb_analysis_dir,
+        run_id_label=args.run_id,
         generate_mteb_tables=args.generate_mteb_tables,
         mteb_results_dir=args.mteb_results_dir,
         mteb_tables_dir=args.mteb_tables_dir,
@@ -191,33 +233,137 @@ def main() -> None:
         return
 
     if config.evaluate_mteb_models:
-        from src.multi_lingual_qac.mteb import run_mteb_evaluation
+        from datetime import datetime, timezone
 
-        output_dir = config.mteb_output_dir or (project_root / "reports" / "mteb")
+        from src.multi_lingual_qac.mteb import (
+            generate_mteb_comparison_tables,
+            run_mteb_evaluation,
+        )
+        from src.multi_lingual_qac.mteb.runs import (
+            append_index,
+            dataset_sizes,
+            git_info,
+            make_run_id,
+            update_latest_pointer,
+            write_run_metadata,
+        )
+
+        now = datetime.now(timezone.utc)
+        run_id = make_run_id(config.run_id_label, now=now)
+        runs_root = project_root / "reports" / "runs"
+        default_layout = not config.mteb_output_dir
+        run_dir = Path(config.mteb_output_dir) if config.mteb_output_dir else (runs_root / run_id)
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        save_predictions = config.mteb_save_predictions or config.analyze_questions
+        prediction_dir = (run_dir / "predictions") if save_predictions else None
         summaries = run_mteb_evaluation(
             list(config.evaluate_mteb_models),
             dataset_repo=config.mteb_dataset_repo,
             dataset_variant=config.mteb_dataset_variant,
-            output_dir=output_dir,
+            output_dir=run_dir,
             batch_size=config.mteb_batch_size,
+            prediction_dir=prediction_dir,
         )
+
+        # Comparison tables (cheap, no network/GPU) inside the run folder.
+        generate_mteb_comparison_tables(results_dir=run_dir, output_dir=run_dir / "mteb_tables")
+
+        analysis_report = None
+        if config.analyze_questions:
+            from src.multi_lingual_qac.mteb import run_question_analysis
+
+            analysis_dir = (
+                Path(config.mteb_analysis_dir)
+                if config.mteb_analysis_dir
+                else (run_dir / "question_analysis")
+            )
+            analysis_report = run_question_analysis(
+                prediction_dir,
+                output_dir=analysis_dir,
+                dataset_repo=config.mteb_dataset_repo,
+                dataset_variant=config.mteb_dataset_variant,
+                model_names=list(config.evaluate_mteb_models),
+            )
+
+        # Run identity: metadata + rolling trend index + latest pointer.
+        sizes = dataset_sizes(config.mteb_dataset_repo, "main", config.mteb_dataset_variant)
+        commit, dirty = git_info(project_root)
+        write_run_metadata(
+            run_dir,
+            run_id=run_id,
+            created_at=now.isoformat(),
+            dataset_repo=config.mteb_dataset_repo,
+            dataset_variant=config.mteb_dataset_variant,
+            dataset_revision="main",
+            models=config.evaluate_mteb_models,
+            batch_size=config.mteb_batch_size,
+            summaries=summaries,
+            sizes=sizes,
+            git_commit=commit,
+            git_dirty=dirty,
+        )
+        # Only the default reports/runs/<id> layout joins the global trend log + latest
+        # pointer; an explicit --mteb-output-dir is treated as an unmanaged one-off.
+        if default_layout:
+            append_index(
+                runs_root / "index.csv",
+                run_id=run_id,
+                created_at=now.isoformat(),
+                dataset_repo=config.mteb_dataset_repo,
+                dataset_variant=config.mteb_dataset_variant,
+                git_commit=commit,
+                sizes=sizes,
+                summaries=summaries,
+            )
+            update_latest_pointer(runs_root, run_id)
+
         print("MTEB evaluation finished.")
-        print(f"  Dataset: {config.mteb_dataset_repo}")
-        print(f"  Variant: {config.mteb_dataset_variant}")
-        print(f"  Output: {output_dir}")
+        print(f"  Run id:  {run_id}")
+        print(
+            f"  Dataset: {config.mteb_dataset_repo} ({config.mteb_dataset_variant})"
+            f"  queries={sizes.get('queries')} corpus={sizes.get('corpus')}"
+        )
+        print(f"  Output:  {run_dir}")
         for item in summaries:
             print(f"  {item.model_name}: {item.main_score:.4f}")
+        if analysis_report:
+            print(f"  Question-level analysis: {analysis_report}")
+        if default_layout:
+            print(f"  Trend index: {runs_root / 'index.csv'}")
+        return
+
+    if config.analyze_questions:
+        from src.multi_lingual_qac.mteb import run_question_analysis
+
+        results_dir = _resolve_results_dir(project_root, config.mteb_results_dir)
+        prediction_dir = results_dir / "predictions"
+        analysis_dir = (
+            Path(config.mteb_analysis_dir)
+            if config.mteb_analysis_dir
+            else (results_dir / "question_analysis")
+        )
+        report = run_question_analysis(
+            prediction_dir,
+            output_dir=analysis_dir,
+            dataset_repo=config.mteb_dataset_repo,
+            dataset_variant=config.mteb_dataset_variant,
+        )
+        print("Question-level analysis generated.")
+        print(f"  Results dir: {results_dir}")
+        print(f"  Output: {report}")
         return
 
     if config.generate_mteb_tables:
         from src.multi_lingual_qac.export.hf_upload import upload_benchmark_outputs
-        from src.multi_lingual_qac.mteb import (
-            DEFAULT_MTEB_TABLES_DIR,
-            generate_mteb_comparison_tables,
-        )
+        from src.multi_lingual_qac.mteb import generate_mteb_comparison_tables
 
-        results_dir = config.mteb_results_dir or (project_root / "reports" / "mteb")
-        tables_dir = config.mteb_tables_dir or (project_root / DEFAULT_MTEB_TABLES_DIR)
+        results_dir = _resolve_results_dir(project_root, config.mteb_results_dir)
+        tables_dir = (
+            Path(config.mteb_tables_dir)
+            if config.mteb_tables_dir
+            else (results_dir / "mteb_tables")
+        )
         generated_dir = generate_mteb_comparison_tables(
             results_dir=results_dir,
             output_dir=tables_dir,

@@ -1,0 +1,5 @@
+run_id,created_at,dataset_repo,dataset_variant,git_commit,n_queries,n_corpus,model,main_score,recall_at_10,recall_at_100,ndcg_at_10,map_at_10,mrr_at_10
+20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,BAAI/bge-m3,0.71655,0.71655,0.90876,0.63904,0.57376,0.67239
+20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,intfloat/multilingual-e5-large,0.54501,0.54501,0.84915,0.45729,0.37509,0.51701
+20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,0.49513,0.49513,0.82847,0.41358,0.34503,0.4489
+20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,0.58881,0.58881,0.82482,0.50341,0.43678,0.53135

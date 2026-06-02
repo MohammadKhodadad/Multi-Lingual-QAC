@@ -48,6 +48,10 @@ class PipelineConfig:
     mteb_dataset_variant: str = "multilingual"
     mteb_output_dir: Optional[str] = None
     mteb_batch_size: int = 32
+    mteb_save_predictions: bool = False
+    analyze_questions: bool = False
+    mteb_analysis_dir: Optional[str] = None
+    run_id_label: Optional[str] = None
     generate_mteb_tables: bool = False
     mteb_results_dir: Optional[str] = None
     mteb_tables_dir: Optional[str] = None

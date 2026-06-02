@@ -40,6 +40,33 @@ uv run main.py --qa-sample 50 --qa-no-batch   # force single-threaded Q&A genera
 uv run main.py --push-hf --hf-repo username/multi-lingual-chemical-qac   # push to Hugging Face
 ```
 
+### Benchmarking (MTEB) and question-level analysis
+
+Each benchmark run is written to its own dated folder `reports/runs/<run_id>/` (run id = UTC
+timestamp, e.g. `20260601-143052`, optionally suffixed via `--run-id <label>`). A run folder
+holds `summary.{json,csv,md}`, `mteb_tables/`, `predictions/`, `question_analysis/`, and
+`run_metadata.json`. A rolling `reports/runs/index.csv` (one row per run × model) and a
+`reports/runs/latest` pointer make day-to-day trends easy to track.
+
+```bash
+uv run main.py --evaluate-mteb --save-predictions --analyze-questions   # full run -> reports/runs/<ts>/
+uv run main.py --evaluate-mteb --run-id daily                           # tag the run -> ..._daily/
+uv run main.py --evaluate-mteb BAAI/bge-m3                              # benchmark specific model(s)
+uv run main.py --analyze-questions                                      # (re)analyse the latest run
+uv run main.py --generate-mteb-tables                                  # (re)build tables for the latest run
+```
+
+An `--evaluate-mteb` run automatically also writes the comparison tables, `run_metadata.json`
+(dataset + sizes, models, git commit, host, scores), and appends to the trend index; with
+`--analyze-questions` it adds the per-query analysis. `--analyze-questions` /
+`--generate-mteb-tables` without `--mteb-results-dir` operate on the latest run.
+
+The question-level analysis (`question_analysis/question_level_analysis.md` + a per-query CSV)
+breaks Recall@10 / MRR@10 down by query language, query origin (original vs
+synthetic-translation), same- vs cross-language targets, and a query×target language-pair
+matrix. It is dataset-agnostic (each breakdown is skipped when the relevant column is absent).
+For running on an HPC cluster, see [cluster/HOWTO.md](cluster/HOWTO.md).
+
 At the end of an interactive run, the CLI can ask whether to batch-create QAs using available CPUs. If the corpus and QAC files are ready, it can also ask whether you want to push to Hugging Face and then ask for the repo ID.
 
 By default, Q&A generation now uses a stronger OpenAI model for English question creation and quality judging, while keeping translation and lighter validation checks on a cheaper model.
