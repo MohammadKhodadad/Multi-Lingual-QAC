@@ -64,7 +64,8 @@ An `--evaluate-mteb` run automatically also writes the comparison tables, `run_m
 The question-level analysis (`question_analysis/question_level_analysis.md` + a per-query CSV)
 breaks Recall@10 / MRR@10 down by query language, query origin (original vs
 synthetic-translation), same- vs cross-language targets, and a query×target language-pair
-matrix. It is dataset-agnostic (each breakdown is skipped when the relevant column is absent).
+matrix, and also writes PNG plots to `question_analysis/plots/` (disable with `--no-plots`).
+It is dataset-agnostic (each breakdown is skipped when the relevant column is absent).
 For running on an HPC cluster, see [cluster/HOWTO.md](cluster/HOWTO.md).
 
 At the end of an interactive run, the CLI can ask whether to batch-create QAs using available CPUs. If the corpus and QAC files are ready, it can also ask whether you want to push to Hugging Face and then ask for the repo ID.
