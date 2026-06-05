@@ -124,6 +124,23 @@ def _resolve_jrc_qa_filter_profile(config: PipelineConfig) -> str:
             print(exc)
 
 
+def _required_corpus_artifacts(paths: PipelinePaths, source: str) -> list[Path]:
+    artifacts = [
+        paths.corpus_csv,
+        paths.corpus_full_csv,
+    ]
+    if source == "jrc-acquis":
+        artifacts.append(paths.preprocessed_dir / "document_corpus_stats.json")
+    return artifacts
+
+
+def _corpus_artifact_status(paths: PipelinePaths, source: str) -> tuple[list[Path], list[Path]]:
+    artifacts = _required_corpus_artifacts(paths, source)
+    existing = [path for path in artifacts if path.exists()]
+    missing = [path for path in artifacts if not path.exists()]
+    return existing, missing
+
+
 def parse_args() -> PipelineConfig:
     parser = argparse.ArgumentParser(
         description="Multi-Lingual Chemical QAC: prepare source data and build QAC."
@@ -152,6 +169,11 @@ def parse_args() -> PipelineConfig:
         "--build-corpus-batch",
         action="store_true",
         help="Build corpus using multiple CPU workers (default: single CPU)",
+    )
+    parser.add_argument(
+        "--force-rebuild-corpus",
+        action="store_true",
+        help="Rebuild corpus artifacts even when an existing corpus is already present",
     )
     parser.add_argument(
         "--label-qrels",
@@ -285,6 +307,7 @@ def parse_args() -> PipelineConfig:
         prepare_source=args.prepare_source,
         build_corpus=args.build_corpus,
         build_corpus_batch=args.build_corpus_batch,
+        force_rebuild_corpus=args.force_rebuild_corpus,
         label_qrels=args.label_qrels,
         label_qrels_batch_size=max(1, args.label_qrels_batch_size),
         yes=args.yes,
@@ -555,6 +578,40 @@ def main() -> None:
         return
 
     if config.build_corpus:
+        existing_corpus_artifacts, missing_corpus_artifacts = _corpus_artifact_status(
+            paths,
+            config.build_corpus,
+        )
+        corpus_is_complete = bool(existing_corpus_artifacts) and not missing_corpus_artifacts
+        if corpus_is_complete and not config.force_rebuild_corpus:
+            print(f"Corpus is already built at {paths.corpus_csv}.")
+            if config.yes:
+                print("Reusing existing corpus. Pass --force-rebuild-corpus to rebuild it.")
+                return
+            redo = ask_interactive(
+                "Do you want to rebuild it? (y/N): ",
+                "n",
+            )
+            if redo != "y":
+                print("Reusing existing corpus.")
+                return
+        elif existing_corpus_artifacts and missing_corpus_artifacts:
+            print("Existing corpus artifacts are incomplete.")
+            print("  Existing:")
+            for artifact in existing_corpus_artifacts:
+                print("   -", artifact)
+            print("  Missing:")
+            for artifact in missing_corpus_artifacts:
+                print("   -", artifact)
+            if not config.yes and not config.force_rebuild_corpus:
+                repair = ask_interactive(
+                    "Rebuild corpus artifacts to repair this incomplete corpus? (Y/n): ",
+                    "y",
+                )
+                if repair != "y":
+                    print("Corpus build skipped.")
+                    return
+
         build_workers = 1
         build_jrc_chemical_only = config.jrc_chemical_only
         build_jrc_qa_filter_profile = config.jrc_qa_filter_profile or "strict"
@@ -583,6 +640,7 @@ def main() -> None:
             build_corpus=config.build_corpus,
             build_corpus_batch=config.build_corpus_batch,
             build_workers=build_workers,
+            force_rebuild_corpus=config.force_rebuild_corpus,
             yes=config.yes,
             no_extraction=config.no_extraction,
             limit=config.limit,

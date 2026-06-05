@@ -49,6 +49,7 @@ class PipelineConfig:
     build_corpus: Optional[str] = None
     build_corpus_batch: bool = False
     build_workers: int = 1
+    force_rebuild_corpus: bool = False
     label_qrels: Optional[str] = None
     label_qrels_batch_size: int = 5
     yes: bool = False
