@@ -26,6 +26,12 @@ class PipelinePaths:
         normalized_source = source.strip().lower()
         data_dir = project_root / "data" / normalized_source.upper()
         prepared_dir = data_dir / ("xmls" if normalized_source == "epo" else "prepared")
+        if normalized_source == "jrc-acquis":
+            corpus_full_csv = data_dir / "preprocessed" / "source_document_pool_full.csv"
+            corpus_csv = data_dir / "source_document_pool.csv"
+        else:
+            corpus_full_csv = data_dir / "preprocessed" / "corpus_full.csv"
+            corpus_csv = data_dir / "corpus.csv"
         return cls(
             project_root=project_root,
             source=normalized_source,
@@ -35,8 +41,8 @@ class PipelinePaths:
             raw_pages_dir=prepared_dir / "pages",
             xml_dir=prepared_dir,
             preprocessed_dir=data_dir / "preprocessed",
-            corpus_full_csv=data_dir / "preprocessed" / "corpus_full.csv",
-            corpus_csv=data_dir / "corpus.csv",
+            corpus_full_csv=corpus_full_csv,
+            corpus_csv=corpus_csv,
             qac_dir=data_dir / "qac",
         )
 

@@ -169,14 +169,14 @@ def _artifact_status(paths: PipelinePaths) -> dict[str, Any]:
     artifacts = {
         "raw_documents_jsonl": paths.prepared_dir / "raw_documents.jsonl",
         "raw_load_stats_json": paths.prepared_dir / "raw_load_stats.json",
-        "corpus_full_csv": paths.corpus_full_csv,
-        "corpus_csv": paths.corpus_csv,
+        "source_document_pool_full_csv": paths.corpus_full_csv,
+        "source_document_pool_csv": paths.corpus_csv,
         "document_corpus_stats_json": paths.preprocessed_dir / "document_corpus_stats.json",
         "corpus_multilingual_full_csv": paths.preprocessed_dir / "corpus_multilingual_full.csv",
         "corpus_qa_candidates_csv": paths.preprocessed_dir / "corpus_qa_candidates.csv",
         "qa_selection_stats_json": paths.qac_dir / "qa_selection_stats.json",
         "qa_generation_sources_csv": paths.qac_dir / "qa_generation_sources.csv",
-        "qa_retrieval_corpus_csv": paths.qac_dir / "corpus.csv",
+        "benchmark_hf_corpus_csv": paths.qac_dir / "corpus.csv",
         "qac_csv": paths.qac_dir / "qac.csv",
         "qac_generation_stats_json": paths.qac_dir / "qac_generation_stats.json",
     }

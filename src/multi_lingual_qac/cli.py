@@ -27,7 +27,12 @@ from src.multi_lingual_qac.preprocess.corpus import (
     prepare_corpus_source,
 )
 from src.multi_lingual_qac.reporting import update_jrc_pipeline_report
-from src.multi_lingual_qac.pipeline import ask_interactive, ask_text, run_pipeline
+from src.multi_lingual_qac.pipeline import (
+    ask_interactive,
+    ask_text,
+    migrate_legacy_jrc_source_pool_paths,
+    run_pipeline,
+)
 from src.multi_lingual_qac.qac_generation.label_wikidata_qrels import run_wikidata_qrels_labeling
 
 
@@ -113,7 +118,7 @@ def _resolve_jrc_qa_filter_profile(config: PipelineConfig) -> str:
         return "strict"
     while True:
         raw = input(
-            "JRC QA candidate filter profile for corpus build "
+            "JRC QA candidate filter profile for source document pool build "
             "(1=strict/current, 2=soft/more documents) [1]: "
         ).strip()
         if not raw:
@@ -419,6 +424,7 @@ def main() -> None:
         or config.source
     )
     paths = PipelinePaths.from_project_root(project_root, source=active_source)
+    migrate_legacy_jrc_source_pool_paths(paths)
 
     if config.label_qrels:
         if config.label_qrels != "wikidata":
@@ -584,16 +590,17 @@ def main() -> None:
         )
         corpus_is_complete = bool(existing_corpus_artifacts) and not missing_corpus_artifacts
         if corpus_is_complete and not config.force_rebuild_corpus:
-            print(f"Corpus is already built at {paths.corpus_csv}.")
+            corpus_label = "source document pool" if config.build_corpus == "jrc-acquis" else "corpus"
+            print(f"{corpus_label.capitalize()} is already built at {paths.corpus_csv}.")
             if config.yes:
-                print("Reusing existing corpus. Pass --force-rebuild-corpus to rebuild it.")
+                print(f"Reusing existing {corpus_label}. Pass --force-rebuild-corpus to rebuild it.")
                 return
             redo = ask_interactive(
                 "Do you want to rebuild it? (y/N): ",
                 "n",
             )
             if redo != "y":
-                print("Reusing existing corpus.")
+                print(f"Reusing existing {corpus_label}.")
                 return
         elif existing_corpus_artifacts and missing_corpus_artifacts:
             print("Existing corpus artifacts are incomplete.")
@@ -668,7 +675,7 @@ def main() -> None:
             print(f"  Chunks: {stats['corpus_rows']} corpus rows")
         elif config.build_corpus == "jrc-acquis":
             print(
-                f"Built {source_label} document corpus:"
+                f"Built {source_label} source document pool:"
                 f" {stats['documents_written']} multilingual documents"
                 f" from {stats['celex_total']} CELEX ids."
             )
@@ -707,8 +714,12 @@ def main() -> None:
             )
             print(f"  All parsed rows: {stats['all_rows']}")
             print("  Parsed records:", paths.preprocessed_dir / "all_epo_records.csv")
-        print("  Corpus (full):", paths.corpus_full_csv)
-        print("  Corpus (MTEB):", paths.corpus_csv)
+        if config.build_corpus == "jrc-acquis":
+            print("  Source document pool (full):", paths.corpus_full_csv)
+            print("  Source document pool (MTEB-style):", paths.corpus_csv)
+        else:
+            print("  Corpus (full):", paths.corpus_full_csv)
+            print("  Corpus (MTEB):", paths.corpus_csv)
         return
 
     run_pipeline(config, paths)

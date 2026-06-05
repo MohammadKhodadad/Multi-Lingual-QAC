@@ -1244,8 +1244,8 @@ def build_jrc_acquis_document_corpus(
     Build a document-level multilingual corpus from `raw_documents.jsonl`.
 
     Outputs:
-    - `corpus_full.csv`: one row per `(celex, language)` with full document text
-    - `corpus.csv`: MTEB-style document corpus (`_id`, `title`, `text`)
+    - `source_document_pool_full.csv`: one row per `(celex, language)` with full document text
+    - `source_document_pool.csv`: MTEB-style source document pool (`_id`, `title`, `text`)
     - `document_pairs_all.csv`: all undirected language pairs for the same `celex`
     - `document_corpus_stats.json`: summary stats for inspection
     """
@@ -1283,7 +1283,7 @@ def build_jrc_acquis_document_corpus(
         raw_jsonl_path.open("r", encoding="utf-8") as src,
         full_output_path.open("w", encoding="utf-8", newline="") as full_fh,
         output_path.open("w", encoding="utf-8", newline="") as mteb_fh,
-        tqdm(desc="Build JRC document corpus", unit="doc") as pbar,
+        tqdm(desc="Build JRC source document pool", unit="doc") as pbar,
     ):
         full_writer = csv.DictWriter(full_fh, fieldnames=JRC_DOCUMENT_FIELDNAMES)
         full_writer.writeheader()

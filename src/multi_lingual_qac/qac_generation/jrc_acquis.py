@@ -150,6 +150,7 @@ def prepare_jrc_qa_inputs(
     generation_docs_per_language: int,
     allowed_languages: tuple[str, ...] | None = None,
     synthetic_target_languages: tuple[str, ...] = (),
+    exclude_source_ids: set[str] | None = None,
     seed: int = 42,
 ) -> dict[str, Any]:
     """
@@ -191,6 +192,11 @@ def prepare_jrc_qa_inputs(
         for lang in synthetic_target_languages
         if lang and lang.strip()
     ]
+    excluded_source_ids = {
+        source_id.strip()
+        for source_id in (exclude_source_ids or set())
+        if source_id and source_id.strip()
+    }
 
     corpus_fieldnames: list[str] = []
     docs_by_id: dict[str, dict[str, str]] = {}
@@ -220,6 +226,10 @@ def prepare_jrc_qa_inputs(
         celex = row.get("celex", "")
         lang = row.get("language", "").strip().lower()
         if not row_id or not celex or not lang:
+            continue
+        if row_id not in docs_by_id:
+            continue
+        if row_id in excluded_source_ids:
             continue
         if allowed_language_set and lang not in allowed_language_set:
             continue
