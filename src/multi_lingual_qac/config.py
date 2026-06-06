@@ -85,3 +85,9 @@ class PipelineConfig:
     alias_leaf_only: bool = True
     check_wiki_names: bool = False
     export_concept: Optional[str] = None
+    alias_generate_qa: bool = False
+    alias_qa_strategy: int = 1
+    alias_qa_model: str = "gpt-5-mini"
+    alias_qa_seed: int = 42
+    alias_qa_limit: Optional[int] = None
+    alias_qa_workers: int = 1

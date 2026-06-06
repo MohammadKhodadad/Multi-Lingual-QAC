@@ -1,0 +1,35 @@
+Sie sind ein Experte für die Erstellung technischer Such- und Rechercheanfragen in Chemie und Patenten.
+
+Sie erhalten ein KONZEPT (eine bestimmte chemische Entität, angegeben durch ihren Namen und eine Liste ihrer Aliasse) sowie eine oder mehrere Patentpassagen (in beliebiger Sprache), die dieses Konzept erwähnen.
+
+Die Anfrage und die Antwort MÜSSEN auf Deutsch verfasst werden. Bewahren Sie chemische Bezeichnungen, Handelsnamen, Reagenzienabkürzungen sowie alle numerischen Werte, Einheiten und Bereiche in ihrer ursprünglichen Form — übersetzen, runden oder umformatieren Sie diese nicht.
+
+IHRE AUFGABE: Formulieren Sie GENAU EINE technische Suchanfrage, deren ANTWORT das Konzept selbst ist. Ein Chemiker, der den Namen des Konzepts nicht bereits kennt, soll Ihre Anfrage lesen und dieses bestimmte Konzept anhand seiner technischen Beschreibung identifizieren können.
+
+KERNREGELN:
+- Nennen Sie das Konzept NICHT. Die Anfrage darf den Namen des Konzepts oder IRGENDEINEN seiner aufgeführten Aliasse niemals enthalten — in keiner Sprache und keiner Schreibweise. Würde der Name des Konzepts in der Frage erscheinen, formulieren Sie die Frage um.
+- Beschreiben, nicht benennen: Bilden Sie die Anfrage aus den belegten technischen Merkmalen des Konzepts, wie sie in den Passagen angegeben sind — seine Struktur, funktionellen Gruppen, Rolle oder Verwendung, Eigenschaften, die Reaktion oder Zusammensetzung, an der es beteiligt ist, oder charakteristische Parameter.
+- Vollständige direkte Stützung: Jedes unterscheidende Detail, das Sie verwenden, muss explizit in einer Passage über dieses Konzept enthalten sein. Keine Schlussfolgerung, kein externes Wissen.
+- Numerische Treue: Geben Sie alle Zahlen, Einheiten und Bereiche genau so wieder, wie sie erscheinen (z. B. „85–87°C", nicht „etwa 86°C").
+- Eindeutige Antwort: Die Anfrage muss auf genau EIN Konzept zeigen. Machen Sie sie spezifisch genug, dass DIESES Konzept — und nicht ein chemisch ähnliches — die natürliche Antwort ist.
+- Natürliche Suchformulierung: Schreiben Sie sie so, wie ein Forscher sie in eine Suchleiste eingeben würde — kurz, spezifisch und direkt. Keine Patentzusammenfassungs-Sprache und keine Dokumentformeln („in der Erfindung beschrieben", „gemäß dem Text").
+- Spezifisch, nicht generisch: Vermeiden Sie Anfragen, die so breit sind, dass viele verschiedene Verbindungen sie beantworten würden. Stützen Sie sich auf die unterscheidenden Merkmale des Konzepts.
+
+BILDEN SIE DIE ANFRAGE AUS DEM UNTERSCHEIDENDSTEN VON:
+  1. Struktur: funktionelle Gruppen, Grundgerüst, Substituenten, Salz-/Esterform, Summenformel
+  2. Rolle / Verwendung: was das Konzept in der Passage tut oder wofür es verwendet wird
+  3. Eigenschaft: eine charakteristische physikalische oder chemische Eigenschaft
+  4. Reaktion / Verfahren: die Reaktion, der Syntheseschritt oder die Zusammensetzung, an der es beteiligt ist
+  5. Parameter: eine charakteristische Bedingung oder ein Wert, der damit verbunden ist
+
+SELBSTPRÜFUNG vor dem Abschluss:
+- Vermeidet die Anfrage den Namen des Konzepts und jeden Alias?
+- Ist jedes Detail in einer Passage über dieses Konzept belegt?
+- Würde ein Chemiker plausibel mit DIESEM Konzept und nicht mit einem ähnlichen antworten?
+- Liest es sich wie eine echte Suchleisten-Anfrage?
+
+AUSGABE (nur gültiges JSON, kein Markdown):
+{"question": "...", "question_type": "..."}
+- question_type: eines von structure, role, property, reaction, parameter.
+
+Dasselbe Konzept und dieselben Passagen können in mehreren Sprachen vorliegen; dies ändert nichts an Ihrer Ausgabesprache, die oben festgelegt ist. Hier sind das KONZEPT und die Passagen:

@@ -1,0 +1,35 @@
+Vous êtes un expert dans la création de requêtes techniques de recherche documentaire en chimie et en brevets.
+
+On vous fournit un CONCEPT (une entité chimique précise, identifiée par son nom et une liste de ses alias) ainsi qu'une ou plusieurs passages de brevet (dans n'importe quelle langue) qui mentionnent ce concept.
+
+La requête et la réponse DOIVENT être rédigées en français. Conservez les désignations chimiques, les noms commerciaux, les abréviations de réactifs ainsi que toutes les valeurs numériques, unités et plages dans leur forme d'origine — ne les traduisez pas, ne les arrondissez pas et ne les reformatez pas.
+
+VOTRE TÂCHE : Rédigez EXACTEMENT UNE requête technique de recherche dont la RÉPONSE est le concept lui-même. Un chimiste qui ne connaît pas déjà le nom du concept doit pouvoir lire votre requête et identifier ce concept précis à partir de sa description technique.
+
+RÈGLES FONDAMENTALES :
+- Ne nommez PAS le concept. La requête ne doit jamais contenir le nom du concept ni AUCUN de ses alias listés — dans aucune langue ni aucune orthographe. Si le nom du concept devait apparaître dans la question, reformulez la question.
+- Décrire, pas nommer : construisez la requête à partir des attributs techniques attestés du concept tels qu'ils figurent dans les passages — sa structure, ses groupes fonctionnels, son rôle ou son usage, ses propriétés, la réaction ou la composition à laquelle il participe, ou des paramètres caractéristiques.
+- Soutien direct complet : chaque détail distinctif que vous utilisez doit être explicitement présent dans un passage portant sur ce concept. Aucune inférence, aucune connaissance externe.
+- Fidélité numérique : reproduisez tous les nombres, unités et plages exactement tels qu'ils apparaissent (par ex. « 85–87°C », et non « environ 86°C »).
+- Réponse unique : la requête doit pointer vers EXACTEMENT UN concept. Rendez-la suffisamment spécifique pour que CE concept — et non un concept chimiquement similaire — soit la réponse naturelle.
+- Formulation de recherche naturelle : rédigez-la comme un chercheur la taperait dans une barre de recherche — courte, spécifique et directe. Pas de langage de résumé de brevet ni de formules documentaires (« décrit dans l'invention », « selon le texte »).
+- Spécifique, non générique : évitez les requêtes si larges que de nombreux composés différents pourraient y répondre. Ancrez-vous sur les attributs distinctifs du concept.
+
+CONSTRUISEZ LA REQUÊTE À PARTIR DU PLUS DISTINCTIF PARMI :
+  1. Structure : groupes fonctionnels, squelette, substituants, forme sel/ester, formule moléculaire
+  2. Rôle / usage : ce que le concept fait ou ce à quoi il sert dans le passage
+  3. Propriété : une propriété physique ou chimique caractéristique
+  4. Réaction / procédé : la réaction, l'étape de synthèse ou la composition à laquelle il participe
+  5. Paramètre : une condition ou une valeur caractéristique qui lui est associée
+
+AUTOVÉRIFICATION avant de finaliser :
+- La requête évite-t-elle le nom du concept et chacun de ses alias ?
+- Chaque détail est-il attesté dans un passage portant sur ce concept ?
+- Un chimiste répondrait-il plausiblement par CE concept et non par un concept similaire ?
+- Cela se lit-il comme une véritable requête de barre de recherche ?
+
+SORTIE (JSON valide uniquement, sans markdown) :
+{"question": "...", "question_type": "..."}
+- question_type : l'un de structure, role, property, reaction, parameter.
+
+Le même concept et les mêmes passages peuvent apparaître dans plusieurs langues ; cela ne change pas votre langue de sortie, fixée ci-dessus. Voici le CONCEPT et les passages :

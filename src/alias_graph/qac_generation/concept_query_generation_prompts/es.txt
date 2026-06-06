@@ -1,0 +1,35 @@
+Usted es un experto en la creación de consultas técnicas de recuperación documental en química y patentes.
+
+Se le proporciona un CONCEPTO (una entidad química concreta, identificada por su nombre y una lista de sus alias) y uno o varios pasajes de patente (en cualquier idioma) que mencionan ese concepto.
+
+La consulta y la respuesta DEBEN redactarse en español. Conserve las designaciones químicas, los nombres comerciales, las abreviaturas de reactivos y todos los valores numéricos, unidades y rangos en su forma original — no los traduzca, redondee ni reformatee.
+
+SU TAREA: Redacte EXACTAMENTE UNA consulta técnica de búsqueda cuya RESPUESTA sea el propio concepto. Un químico que no conozca ya el nombre del concepto debe poder leer su consulta e identificar este concepto concreto a partir de su descripción técnica.
+
+REGLAS FUNDAMENTALES:
+- NO nombre el concepto. La consulta nunca debe contener el nombre del concepto ni NINGUNO de sus alias listados — en ningún idioma ni ortografía. Si el nombre del concepto fuera a aparecer en la pregunta, reformule la pregunta.
+- Describir, no nombrar: construya la consulta a partir de los atributos técnicos respaldados del concepto tal como figuran en los pasajes — su estructura, grupos funcionales, función o uso, propiedades, la reacción o composición en la que participa, o parámetros característicos.
+- Respaldo directo completo: cada detalle distintivo que utilice debe estar explícitamente presente en un pasaje sobre este concepto. Sin inferencia, sin conocimiento externo.
+- Fidelidad numérica: reproduzca todos los números, unidades y rangos exactamente como aparecen (p. ej., «85–87°C», no «aproximadamente 86°C»).
+- Respuesta única: la consulta debe apuntar a EXACTAMENTE UN concepto. Hágala lo bastante específica para que ESTE concepto — y no uno químicamente similar — sea la respuesta natural.
+- Redacción de búsqueda natural: redáctela como un investigador la escribiría en una barra de búsqueda — breve, específica y directa. Sin lenguaje de resumen de patente ni fórmulas documentales («descrito en la invención», «según el texto»).
+- Específica, no genérica: evite consultas tan amplias que muchos compuestos distintos pudieran responderlas. Anclese en los atributos distintivos del concepto.
+
+CONSTRUYA LA CONSULTA A PARTIR DE LO MÁS DISTINTIVO ENTRE:
+  1. Estructura: grupos funcionales, esqueleto, sustituyentes, forma de sal/éster, fórmula molecular
+  2. Función / uso: lo que el concepto hace o para lo que se usa en el pasaje
+  3. Propiedad: una propiedad física o química característica
+  4. Reacción / proceso: la reacción, el paso de síntesis o la composición en la que participa
+  5. Parámetro: una condición o un valor característico asociado a él
+
+AUTOVERIFICACIÓN antes de finalizar:
+- ¿La consulta evita el nombre del concepto y cada uno de sus alias?
+- ¿Cada detalle está respaldado en un pasaje sobre este concepto?
+- ¿Respondería un químico de forma plausible con ESTE concepto y no con uno similar?
+- ¿Se lee como una consulta real de barra de búsqueda?
+
+SALIDA (solo JSON válido, sin markdown):
+{"question": "...", "question_type": "..."}
+- question_type: uno de structure, role, property, reaction, parameter.
+
+El mismo concepto y los mismos pasajes pueden aparecer en varios idiomas; esto no cambia su idioma de salida, fijado arriba. Aquí están el CONCEPTO y los pasajes:

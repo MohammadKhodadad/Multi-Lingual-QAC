@@ -272,6 +272,46 @@ def parse_args() -> PipelineConfig:
         "corpus, all languages) to a CSV for inspection, e.g. --export-concept CHEBI:2942. "
         "Reads data/alias_graph/alias_graph.json.",
     )
+    parser.add_argument(
+        "--alias-generate-qa",
+        action="store_true",
+        help="Generate one concept-centric technical query per (concept, language) from "
+        "alias_graph.json: the query describes the concept without naming it and the answer "
+        "is the concept. Reuses the faithfulness + technical-quality verifiers. Writes "
+        "<alias-output-dir>/qac/concept_qa.csv.",
+    )
+    parser.add_argument(
+        "--alias-qa-strategy",
+        type=int,
+        default=1,
+        choices=[1, 2, 3, 4],
+        help="Query-language strategy: 1=random any, 2=random missing, 3=random existing, "
+        "4=all languages (default: 1).",
+    )
+    parser.add_argument(
+        "--alias-qa-model",
+        type=str,
+        default="gpt-5-mini",
+        help="OpenAI model for concept-query generation and grading (default: gpt-5-mini)",
+    )
+    parser.add_argument(
+        "--alias-qa-seed",
+        type=int,
+        default=42,
+        help="Random seed for concept-query generation (default: 42)",
+    )
+    parser.add_argument(
+        "--alias-qa-limit",
+        type=int,
+        default=None,
+        help="Process only the first N concepts (for testing)",
+    )
+    parser.add_argument(
+        "--alias-qa-workers",
+        type=int,
+        default=1,
+        help="Worker threads for concept-query generation (default: 1)",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -332,6 +372,12 @@ def parse_args() -> PipelineConfig:
         alias_leaf_only=not args.alias_include_classes,
         check_wiki_names=args.check_wiki_names,
         export_concept=args.export_concept,
+        alias_generate_qa=args.alias_generate_qa,
+        alias_qa_strategy=args.alias_qa_strategy,
+        alias_qa_model=args.alias_qa_model,
+        alias_qa_seed=args.alias_qa_seed,
+        alias_qa_limit=args.alias_qa_limit,
+        alias_qa_workers=args.alias_qa_workers,
     )
 
 
@@ -342,6 +388,32 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.alias_generate_qa:
+        from src.alias_graph.qac_generation import run_concept_qa
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        output_dir = (
+            Path(config.alias_output_dir)
+            if config.alias_output_dir
+            else paths.alias_graph_dir
+        )
+        run_concept_qa(
+            alias_json=output_dir / "alias_graph.json",
+            corpus_path=corpus_csv,
+            output_path=output_dir / "qac" / "concept_qa.csv",
+            strategy=config.alias_qa_strategy,
+            model=config.alias_qa_model,
+            seed=config.alias_qa_seed,
+            limit=config.alias_qa_limit,
+            workers=config.alias_qa_workers,
+        )
+        return
+
     if config.export_concept:
         from src.alias_graph import export_concept
 

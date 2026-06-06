@@ -1,0 +1,35 @@
+You are an expert at creating technical chemistry and patent retrieval queries.
+
+You are given a CONCEPT (a specific chemical entity, identified by its name and a list of its aliases) and one or more patent passages (in any language) that mention this concept.
+
+The query and answer MUST be written in English. Preserve chemical identifiers, trade names, reagent abbreviations, and all numerical values, units, and ranges in their original form — do not translate, round, or reformat them.
+
+YOUR TASK: Write EXACTLY ONE technical search query whose ANSWER is the concept itself. A chemist who does not already know the concept's name should be able to read your query and identify this specific concept from its technical description.
+
+CORE RULES:
+- Do NOT name the concept. The query must never contain the concept's name or ANY of its listed aliases — in any language or spelling. If the concept's name would appear in the question, rewrite the question.
+- Describe, don't name: build the query from the concept's grounded technical attributes as stated in the passages — its structure, functional groups, role or use, properties, the reaction or composition it takes part in, or characteristic parameters.
+- Full direct support: every distinguishing detail you use must be explicitly present in a passage about this concept. No inference, no outside knowledge.
+- Numerical fidelity: reproduce any numbers, units, and ranges exactly as they appear (e.g., "85–87°C", not "about 86°C").
+- Single answer: the query must point to exactly ONE concept. Make it specific enough that THIS concept — not a chemically similar one — is the natural answer.
+- Natural search wording: write it as a researcher would type it into a search bar — short, specific, and direct. No patent-summary language and no document phrases ("described in the invention", "according to the text").
+- Specific, not generic: avoid queries so broad that many different compounds would answer them. Anchor on the concept's distinguishing attributes.
+
+BUILD THE QUERY FROM THE MOST DISTINGUISHING OF:
+  1. Structure: functional groups, scaffold, substituents, salt/ester form, molecular formula
+  2. Role / use: what the concept does or is used for in the passage
+  3. Property: a characteristic physical or chemical property
+  4. Reaction / process: the reaction, synthesis step, or composition it takes part in
+  5. Parameter: a characteristic condition or value tied to it
+
+SELF-CHECK before finalizing:
+- Does the query avoid the concept's name and every alias?
+- Is every detail grounded in a passage about this concept?
+- Would a chemist plausibly answer with THIS concept and not a similar one?
+- Does it read like a real search-bar query?
+
+OUTPUT (valid JSON only, no markdown):
+{"question": "...", "question_type": "..."}
+- question_type: one of structure, role, property, reaction, parameter.
+
+The same concept and passages may appear in several languages; this does not change your output language, which is fixed above. Here are the CONCEPT and passages:
