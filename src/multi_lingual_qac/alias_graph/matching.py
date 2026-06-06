@@ -66,6 +66,30 @@ def _norm_name(surface: str) -> Tuple[str, int]:
     return " ".join(toks), len(toks)
 
 
+def contains_name(text: str, name: str) -> bool:
+    """
+    True if ``name`` occurs in ``text`` under the same normalization the scanner
+    uses: Latin names match on a contiguous token window (word boundaries
+    preserved); CJK names match as a substring of the joined CJK text. Empty or
+    over-long (> MAX_NGRAM tokens) names never match.
+    """
+    name_norm, n_tok = _norm_name(name)
+    if not name_norm:
+        return False
+    if _CJK_RE.search(name_norm):
+        return name_norm.replace(" ", "") in "".join(_normalize(text))
+    if n_tok > MAX_NGRAM:
+        return False
+    tokens = _normalize(text)
+    if n_tok == 1:
+        return name_norm in set(tokens)
+    target = tokens
+    for i in range(0, len(target) - n_tok + 1):
+        if " ".join(target[i : i + n_tok]) == name_norm:
+            return True
+    return False
+
+
 @dataclass
 class NameIndex:
     latin: Dict[str, Set[str]] = field(default_factory=dict)   # norm_name -> chebi ids

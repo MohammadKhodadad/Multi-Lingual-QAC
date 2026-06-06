@@ -256,6 +256,13 @@ def parse_args() -> PipelineConfig:
         help="Allow broad class concepts (those with is_a children) as main concepts. "
         "By default only specific leaf concepts (e.g. named compounds) are used.",
     )
+    parser.add_argument(
+        "--check-wiki-names",
+        action="store_true",
+        help="Validate the Wikipedia-derived names: for a concept mentioned in an English "
+        "doc, check whether its Wikipedia title for language L appears in the parallel "
+        "L-language translation of the same patent. Writes reports/wiki_name_quality/.",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -314,6 +321,7 @@ def parse_args() -> PipelineConfig:
         alias_max_df=args.alias_max_df,
         alias_molecular_only=not args.alias_include_non_molecular,
         alias_leaf_only=not args.alias_include_classes,
+        check_wiki_names=args.check_wiki_names,
     )
 
 
@@ -351,6 +359,29 @@ def main() -> None:
             max_df_ratio=config.alias_max_df,
             molecular_only=config.alias_molecular_only,
             leaf_only=config.alias_leaf_only,
+        )
+        return
+
+    if config.check_wiki_names:
+        from src.multi_lingual_qac.alias_graph import check_wiki_name_quality
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        output_dir = (
+            Path(config.alias_output_dir)
+            if config.alias_output_dir
+            else paths.wiki_quality_dir
+        )
+        check_wiki_name_quality(
+            corpus_csv=corpus_csv,
+            chebi_cache_dir=paths.chebi_dir,
+            output_dir=output_dir,
+            langs=config.alias_langs,
+            variant=config.chebi_variant,
         )
         return
 

@@ -20,6 +20,7 @@ class PipelinePaths:
     multilingual_corpus_csv: Path
     chebi_dir: Path
     alias_graph_dir: Path
+    wiki_quality_dir: Path
 
     @classmethod
     def from_project_root(cls, project_root: Path) -> "PipelinePaths":
@@ -37,6 +38,7 @@ class PipelinePaths:
             multilingual_corpus_csv=data_dir / "multilingual_corpus.csv",
             chebi_dir=project_root / "data" / "chebi",
             alias_graph_dir=project_root / "data" / "alias_graph",
+            wiki_quality_dir=project_root / "reports" / "wiki_name_quality",
         )
 
 
@@ -81,3 +83,4 @@ class PipelineConfig:
     alias_max_df: float = 0.02
     alias_molecular_only: bool = True
     alias_leaf_only: bool = True
+    check_wiki_names: bool = False

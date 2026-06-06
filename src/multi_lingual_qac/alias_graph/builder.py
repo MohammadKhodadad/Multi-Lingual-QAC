@@ -26,8 +26,8 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 import networkx as nx
 
-from src.multi_lingual_qac.dataloaders.chebi import load_chebi_graph, taxonomic_neighbors
-from src.multi_lingual_qac.dataloaders.wikidata_names import (
+from src.multi_lingual_qac.alias_graph.chebi import load_chebi_graph, taxonomic_neighbors
+from src.multi_lingual_qac.alias_graph.wikidata_names import (
     DEFAULT_LANGS,
     fetch_wikipedia_names,
 )
