@@ -189,15 +189,15 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
         if config.force_rebuild_corpus:
             jrc_hf_corpus_rebuild = True
         elif jrc_hf_corpus_path.is_file() and not config.yes:
-            rebuild_corpus = ask_interactive(
+            reuse_corpus = ask_interactive(
                 f"Benchmark/HF corpus is already built at {jrc_hf_corpus_path} ({_count_rows(jrc_hf_corpus_path)} rows). "
-                "Do you want to rebuild it? (y/N): ",
-                "n",
+                "Do you want to reuse it? (Y/n): ",
+                "y",
             )
-            if rebuild_corpus == "y":
-                jrc_hf_corpus_rebuild = True
-            else:
+            if reuse_corpus == "y":
                 print("Reusing existing benchmark/HF corpus.")
+            else:
+                jrc_hf_corpus_rebuild = True
         elif not jrc_hf_corpus_path.is_file():
             print("No JRC benchmark/HF corpus exists yet; it will be created during QA source selection.")
     elif config.force_rebuild_corpus:
@@ -217,6 +217,10 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
 
     if not config.yes:
         if config.source == "jrc-acquis":
+            reuse_jrc_benchmark_corpus = (
+                jrc_hf_corpus_path.is_file()
+                and not jrc_hf_corpus_rebuild
+            )
             if jrc_qa_languages is None:
                 use_default_subset = (
                     ask_interactive(
@@ -235,11 +239,18 @@ def run_pipeline(config: PipelineConfig, paths: PipelinePaths) -> None:
                     )
                     == "y"
                 )
-            if qa_pairs_per_language is None:
+            if reuse_jrc_benchmark_corpus:
+                if qa_pairs_per_language is None:
+                    qa_pairs_per_language = max(1, _count_rows(jrc_hf_corpus_path))
+                if qa_docs_per_language is None:
+                    qa_docs_per_language = ask_int(
+                        "How many QAC rows per language should be generated from the fixed benchmark/HF corpus? Enter 0 to skip: "
+                    )
+            elif qa_pairs_per_language is None:
                 qa_pairs_per_language = ask_int(
                     "How many multilingual CELEX-group source documents should be sampled per source language for JRC QA prep? Enter 0 to skip: "
                 )
-            if qa_pairs_per_language > 0 and qa_docs_per_language is None:
+            if not reuse_jrc_benchmark_corpus and qa_pairs_per_language > 0 and qa_docs_per_language is None:
                 qa_docs_per_language = ask_int(
                     "How many sampled source documents per language should be retained for JRC question generation? Enter 0 to skip: "
                 )
