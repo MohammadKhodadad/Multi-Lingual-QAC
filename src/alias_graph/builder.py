@@ -21,6 +21,7 @@ import json
 import re
 import sys
 import unicodedata
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
@@ -51,8 +52,7 @@ CORPUS_FIELDS: Tuple[str, ...] = (
     "source", "ipc_codes",
 )
 EXTRA_FIELDS: Tuple[str, ...] = (
-    "role", "concept_chebi_id", "concept_name",
-    "matched_chebi_id", "matched_name", "matched_lang", "relation",
+    "role", "concept_chebi_id", "concept_name", "matched_chebi_id", "relation",
 )
 OUTPUT_FIELDS: Tuple[str, ...] = CORPUS_FIELDS + EXTRA_FIELDS
 
@@ -174,13 +174,21 @@ def build_alias_graph(
     )
     prune_names(index, stop_grams)
     print("Re-scanning corpus (Wikipedia names folded in, stopwords pruned) ...")
-    concept_to_docs, match_info, _ = scan_corpus(rows, index, field=match_field)
+    concept_to_docs, _, _ = scan_corpus(rows, index, field=match_field)
     print(f"  concepts found in corpus: {len(concept_to_docs)}")
 
+    # Documents are stored by publication_number (i.e. the doc id with the
+    # `_<lang>` suffix stripped): the per-language versions of one patent are the
+    # same gold/negative item, and their text lives once in the corpus CSV. This
+    # avoids the 16x text duplication of writing a CSV per concept.
+    concept_to_pubs: Dict[str, Set[str]] = {}
+    for cid, docs in concept_to_docs.items():
+        concept_to_pubs[cid] = {doc_by_id[d]["publication_number"] for d in docs}
+
     # Candidate main concepts: specific molecular entities (leaves of the is_a
-    # graph -- not broad classes) with enough gold docs, most-attested first.
+    # graph -- not broad classes) with enough gold publications, most-attested first.
     def _is_candidate(cid: str) -> bool:
-        if len(concept_to_docs[cid]) < min_gold:
+        if len(concept_to_pubs[cid]) < min_gold:
             return False
         if mol_entity_set is not None and cid not in mol_entity_set:
             return False
@@ -189,81 +197,57 @@ def build_alias_graph(
         return True
 
     candidates = sorted(
-        (cid for cid in concept_to_docs if _is_candidate(cid)),
-        key=lambda c: len(concept_to_docs[c]),
+        (cid for cid in concept_to_pubs if _is_candidate(cid)),
+        key=lambda c: len(concept_to_pubs[c]),
         reverse=True,
     )
     kind = "leaf molecular" if leaf_only else "molecular"
-    print(f"Candidate concepts ({kind}, >= {min_gold} gold docs): {len(candidates)}")
+    print(f"Candidate concepts ({kind}, >= {min_gold} gold pubs): {len(candidates)}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    manifest: List[dict] = []
+    concepts: List[dict] = []
 
     for cid in candidates:
-        if max_concepts is not None and len(manifest) >= max_concepts:
+        if max_concepts is not None and len(concepts) >= max_concepts:
             break
-        gold_docs = concept_to_docs[cid]
+        gold_pubs = concept_to_pubs[cid]
         relations = _neighbor_relations(graph, cid)
 
-        # Hard negatives: docs mentioning a neighbor but NOT the main concept.
-        hard_neg: Dict[str, Tuple[str, str]] = {}  # doc_id -> (neighbor_id, relation)
+        # Hard negatives: publications that mention a neighbor but NOT the concept.
+        hard_neg: Dict[str, Tuple[str, str]] = {}  # pub -> (neighbor_id, relation)
         neighbors_in_corpus: Set[str] = set()
         for nid, rel in relations.items():
-            nid_docs = concept_to_docs.get(nid)
-            if not nid_docs:
+            nid_pubs = concept_to_pubs.get(nid)
+            if not nid_pubs:
                 continue
             neighbors_in_corpus.add(nid)
-            for doc_id in nid_docs - gold_docs:
-                hard_neg.setdefault(doc_id, (nid, rel))
+            for pub in nid_pubs - gold_pubs:
+                hard_neg.setdefault(pub, (nid, rel))
 
         if len(hard_neg) < min_neg:
             continue
 
         concept_name = graph.nodes[cid].get("name", cid)
         name_set = _concept_name_set(graph, cid, wiki_names)
+        gold_langs = sorted({doc_by_id[d]["language"] for d in concept_to_docs[cid]})
 
-        # Write the per-concept CSV (gold first, then hard negatives).
-        out_path = output_dir / f"{cid.replace(':', '_')}__{_slug(concept_name)}.csv"
-        with out_path.open("w", encoding="utf-8", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=OUTPUT_FIELDS, extrasaction="ignore")
-            writer.writeheader()
-            for doc_id in sorted(gold_docs):
-                row = doc_by_id[doc_id]
-                surf, mlang = match_info[doc_id][cid]
-                writer.writerow({
-                    **{k: row.get(k, "") for k in CORPUS_FIELDS},
-                    "role": "gold", "concept_chebi_id": cid, "concept_name": concept_name,
-                    "matched_chebi_id": cid, "matched_name": surf,
-                    "matched_lang": mlang, "relation": "self",
-                })
-            for doc_id in sorted(hard_neg):
-                row = doc_by_id[doc_id]
-                nid, rel = hard_neg[doc_id]
-                surf, mlang = match_info[doc_id][nid]
-                writer.writerow({
-                    **{k: row.get(k, "") for k in CORPUS_FIELDS},
-                    "role": "hard_negative", "concept_chebi_id": cid, "concept_name": concept_name,
-                    "matched_chebi_id": nid, "matched_name": surf,
-                    "matched_lang": mlang, "relation": rel,
-                })
-
-        gold_pubs = {doc_by_id[d]["publication_number"] for d in gold_docs}
-        gold_langs = sorted({doc_by_id[d]["language"] for d in gold_docs})
-        manifest.append({
+        concepts.append({
             "chebi_id": cid,
             "name": concept_name,
             "name_set": name_set,
             "query_names": sorted({n for names in name_set.values() for n in names}),
-            "n_gold_docs": len(gold_docs),
-            "n_gold_pubs": len(gold_pubs),
+            "gold": sorted(gold_pubs),
+            "hard_negatives": [
+                {"pub": pub, "neighbor": nid, "relation": rel}
+                for pub, (nid, rel) in sorted(hard_neg.items())
+            ],
+            "n_gold": len(gold_pubs),
+            "n_hard_neg": len(hard_neg),
             "gold_langs": gold_langs,
-            "n_hard_neg_docs": len(hard_neg),
-            "n_neighbors_total": len(relations),
             "n_neighbors_in_corpus": len(neighbors_in_corpus),
-            "csv_path": str(out_path.relative_to(output_dir)),
         })
 
-    _write_manifest(output_dir, manifest)
+    _write_outputs(output_dir, corpus_csv, concepts)
 
     summary = {
         "corpus": str(corpus_csv),
@@ -272,30 +256,86 @@ def build_alias_graph(
         "use_wikipedia": use_wikipedia,
         "concepts_in_corpus": len(concept_to_docs),
         "candidates": len(candidates),
-        "concepts_written": len(manifest),
+        "concepts_written": len(concepts),
         "output_dir": str(output_dir),
     }
     print(
-        f"Wrote {len(manifest)} concept files -> {output_dir}\n"
-        f"  manifest: {output_dir / 'manifest.csv'}"
+        f"Wrote {len(concepts)} concepts -> {output_dir / 'alias_graph.json'}\n"
+        f"  summary: {output_dir / 'manifest.csv'}"
     )
     return summary
 
 
-def _write_manifest(output_dir: Path, manifest: List[dict]) -> None:
-    json_path = output_dir / "manifest.json"
+def _write_outputs(output_dir: Path, corpus_csv: Path, concepts: List[dict]) -> None:
+    """One JSON of id-only benchmark data + a tiny CSV summary (no document text)."""
+    json_path = output_dir / "alias_graph.json"
     with json_path.open("w", encoding="utf-8") as fh:
-        json.dump(manifest, fh, ensure_ascii=False, indent=2)
+        json.dump(
+            {
+                "corpus": str(corpus_csv),
+                "id_field": "publication_number",
+                "n_concepts": len(concepts),
+                "concepts": concepts,
+            },
+            fh, ensure_ascii=False, indent=2,
+        )
 
     csv_path = output_dir / "manifest.csv"
-    cols = [
-        "chebi_id", "name", "n_gold_docs", "n_gold_pubs", "gold_langs",
-        "n_hard_neg_docs", "n_neighbors_total", "n_neighbors_in_corpus", "csv_path",
-    ]
+    cols = ["chebi_id", "name", "n_gold", "n_hard_neg", "gold_langs", "n_neighbors_in_corpus"]
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
         writer.writeheader()
-        for entry in manifest:
-            row = dict(entry)
+        for entry in concepts:
+            row = {k: entry[k] for k in cols if k != "gold_langs"}
             row["gold_langs"] = "|".join(entry["gold_langs"])
             writer.writerow(row)
+
+
+def export_concept(
+    json_path: Path,
+    corpus_csv: Path,
+    chebi_id: str,
+    output_csv: Optional[Path] = None,
+) -> Path:
+    """
+    Materialize one concept's gold + hard-negative documents (all language
+    versions, joined from the corpus) into a CSV for inspection -- the on-demand
+    replacement for storing a CSV per concept.
+    """
+    json_path = Path(json_path)
+    cid = chebi_id if chebi_id.upper().startswith("CHEBI:") else f"CHEBI:{chebi_id}"
+    with json_path.open(encoding="utf-8") as fh:
+        data = json.load(fh)
+    entry = next((c for c in data["concepts"] if c["chebi_id"].upper() == cid.upper()), None)
+    if entry is None:
+        raise ValueError(f"{cid} not found in {json_path}")
+
+    by_pub: Dict[str, List[dict]] = defaultdict(list)
+    for r in _read_corpus(corpus_csv):
+        by_pub[r["publication_number"]].append(r)
+
+    cname = entry["name"]
+    out_rows: List[dict] = []
+    for pub in entry["gold"]:
+        for r in by_pub.get(pub, []):
+            out_rows.append({
+                **{k: r.get(k, "") for k in CORPUS_FIELDS},
+                "role": "gold", "concept_chebi_id": cid, "concept_name": cname,
+                "matched_chebi_id": cid, "relation": "self",
+            })
+    for neg in entry["hard_negatives"]:
+        for r in by_pub.get(neg["pub"], []):
+            out_rows.append({
+                **{k: r.get(k, "") for k in CORPUS_FIELDS},
+                "role": "hard_negative", "concept_chebi_id": cid, "concept_name": cname,
+                "matched_chebi_id": neg["neighbor"], "relation": neg["relation"],
+            })
+
+    output_csv = Path(output_csv) if output_csv else json_path.parent / f"{cid.replace(':', '_')}__{_slug(cname)}.csv"
+    with output_csv.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=OUTPUT_FIELDS, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(out_rows)
+    n_gold = sum(1 for x in out_rows if x["role"] == "gold")
+    print(f"Exported {cid} ({cname}): {n_gold} gold + {len(out_rows) - n_gold} hard-neg doc rows -> {output_csv}")
+    return output_csv

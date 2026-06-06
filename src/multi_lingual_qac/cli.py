@@ -263,6 +263,15 @@ def parse_args() -> PipelineConfig:
         "doc, check whether its Wikipedia title for language L appears in the parallel "
         "L-language translation of the same patent. Writes reports/wiki_name_quality/.",
     )
+    parser.add_argument(
+        "--export-concept",
+        type=str,
+        default=None,
+        metavar="CHEBI_ID",
+        help="Materialize one concept's gold + hard-negative documents (joined from the "
+        "corpus, all languages) to a CSV for inspection, e.g. --export-concept CHEBI:2942. "
+        "Reads data/alias_graph/alias_graph.json.",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -322,6 +331,7 @@ def parse_args() -> PipelineConfig:
         alias_molecular_only=not args.alias_include_non_molecular,
         alias_leaf_only=not args.alias_include_classes,
         check_wiki_names=args.check_wiki_names,
+        export_concept=args.export_concept,
     )
 
 
@@ -332,6 +342,33 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.export_concept:
+        from src.alias_graph import export_concept
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        output_dir = (
+            Path(config.alias_output_dir)
+            if config.alias_output_dir
+            else paths.alias_graph_dir
+        )
+        try:
+            export_concept(
+                json_path=output_dir / "alias_graph.json",
+                corpus_csv=corpus_csv,
+                chebi_id=config.export_concept,
+            )
+        except (ValueError, FileNotFoundError) as exc:
+            print(
+                f"Cannot export {config.export_concept}: {exc}\n"
+                "(It may have been filtered out -- see data/alias_graph/manifest.csv for available concepts.)"
+            )
+        return
+
     if config.build_alias_graph:
         from src.alias_graph import build_alias_graph
 

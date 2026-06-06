@@ -84,3 +84,4 @@ class PipelineConfig:
     alias_molecular_only: bool = True
     alias_leaf_only: bool = True
     check_wiki_names: bool = False
+    export_concept: Optional[str] = None
