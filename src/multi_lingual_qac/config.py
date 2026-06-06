@@ -17,6 +17,9 @@ class PipelinePaths:
     epo_data_dir: Path
     epo_manifest_path: Path
     epo_corpus_path: Path
+    multilingual_corpus_csv: Path
+    chebi_dir: Path
+    alias_graph_dir: Path
 
     @classmethod
     def from_project_root(cls, project_root: Path) -> "PipelinePaths":
@@ -31,6 +34,9 @@ class PipelinePaths:
             epo_data_dir=epo_dir,
             epo_manifest_path=epo_dir / "manifest.json",
             epo_corpus_path=epo_dir / "multilingual_corpus.csv",
+            multilingual_corpus_csv=data_dir / "multilingual_corpus.csv",
+            chebi_dir=project_root / "data" / "chebi",
+            alias_graph_dir=project_root / "data" / "alias_graph",
         )
 
 
@@ -63,3 +69,15 @@ class PipelineConfig:
     epo_ingest: bool = False
     epo_num_batches: int = 1
     epo_chemistry_strict: bool = False
+    build_alias_graph: bool = False
+    alias_corpus: Optional[str] = None
+    alias_output_dir: Optional[str] = None
+    chebi_variant: str = "full"
+    alias_langs: tuple[str, ...] = ("zh", "en", "de", "fr", "es")
+    alias_use_wikipedia: bool = True
+    alias_min_gold: int = 2
+    alias_min_neg: int = 3
+    alias_max_concepts: Optional[int] = None
+    alias_max_df: float = 0.02
+    alias_molecular_only: bool = True
+    alias_leaf_only: bool = True

@@ -179,6 +179,83 @@ def parse_args() -> PipelineConfig:
         action="store_true",
         help="With --epo-ingest, keep only docs whose chemistry signal comes from CPC/IPC classification (drop title-keyword-only matches)",
     )
+    parser.add_argument(
+        "--build-alias-graph",
+        action="store_true",
+        help="Build the Alias-Graph Retrieval benchmark: pick ChEBI concepts, find gold docs + "
+        "taxonomic-neighbor hard negatives in a corpus CSV, write one CSV per concept + a manifest.",
+    )
+    parser.add_argument(
+        "--alias-corpus",
+        type=str,
+        default="data/google_patents/multilingual_corpus.csv",
+        metavar="CSV",
+        help="Corpus CSV to search for gold/hard-negative documents "
+        "(default: data/google_patents/multilingual_corpus.csv)",
+    )
+    parser.add_argument(
+        "--alias-output-dir",
+        type=str,
+        default=None,
+        help="Output directory for per-concept CSVs and manifest (default: data/alias_graph)",
+    )
+    parser.add_argument(
+        "--chebi-variant",
+        type=str,
+        default="full",
+        choices=["full", "core", "lite"],
+        help="ChEBI OBO release to use. Only `full` carries synonyms (needed for balanced "
+        "matching); `core`/`lite` are lighter, primary-name-only. Default: full.",
+    )
+    parser.add_argument(
+        "--alias-langs",
+        nargs="+",
+        default=["zh", "en", "de", "fr", "es"],
+        help="Target languages for Wikipedia names (default: zh en de fr es)",
+    )
+    parser.add_argument(
+        "--alias-no-wikipedia",
+        action="store_true",
+        help="Skip the ChEBI->Wikidata->Wikipedia name bridge (KG names only).",
+    )
+    parser.add_argument(
+        "--alias-min-gold",
+        type=int,
+        default=2,
+        help="Minimum gold documents a concept must have to qualify (default: 2)",
+    )
+    parser.add_argument(
+        "--alias-min-neg",
+        type=int,
+        default=3,
+        help="Minimum hard-negative documents a concept must have to qualify (default: 3)",
+    )
+    parser.add_argument(
+        "--max-concepts",
+        type=int,
+        default=None,
+        help="With --build-alias-graph, cap the number of concept files written "
+        "(most-attested concepts first). Default: no cap.",
+    )
+    parser.add_argument(
+        "--alias-max-df",
+        type=float,
+        default=0.02,
+        help="Drop any concept name appearing in more than this fraction of documents "
+        "as a corpus stopword (default: 0.02).",
+    )
+    parser.add_argument(
+        "--alias-include-non-molecular",
+        action="store_true",
+        help="Do not restrict main concepts to the ChEBI molecular-entity subtree "
+        "(by default role/group/atom classes are excluded).",
+    )
+    parser.add_argument(
+        "--alias-include-classes",
+        action="store_true",
+        help="Allow broad class concepts (those with is_a children) as main concepts. "
+        "By default only specific leaf concepts (e.g. named compounds) are used.",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -225,6 +302,18 @@ def parse_args() -> PipelineConfig:
         epo_ingest=args.epo_ingest,
         epo_num_batches=max(1, args.num_batches),
         epo_chemistry_strict=args.chemistry_strict,
+        build_alias_graph=args.build_alias_graph,
+        alias_corpus=args.alias_corpus,
+        alias_output_dir=args.alias_output_dir,
+        chebi_variant=args.chebi_variant,
+        alias_langs=tuple(args.alias_langs),
+        alias_use_wikipedia=not args.alias_no_wikipedia,
+        alias_min_gold=args.alias_min_gold,
+        alias_min_neg=args.alias_min_neg,
+        alias_max_concepts=args.max_concepts,
+        alias_max_df=args.alias_max_df,
+        alias_molecular_only=not args.alias_include_non_molecular,
+        alias_leaf_only=not args.alias_include_classes,
     )
 
 
@@ -235,6 +324,36 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.build_alias_graph:
+        from src.multi_lingual_qac.alias_graph import build_alias_graph
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        output_dir = (
+            Path(config.alias_output_dir)
+            if config.alias_output_dir
+            else paths.alias_graph_dir
+        )
+        build_alias_graph(
+            corpus_csv=corpus_csv,
+            output_dir=output_dir,
+            chebi_cache_dir=paths.chebi_dir,
+            variant=config.chebi_variant,
+            langs=config.alias_langs,
+            use_wikipedia=config.alias_use_wikipedia,
+            min_gold=config.alias_min_gold,
+            min_neg=config.alias_min_neg,
+            max_concepts=config.alias_max_concepts,
+            max_df_ratio=config.alias_max_df,
+            molecular_only=config.alias_molecular_only,
+            leaf_only=config.alias_leaf_only,
+        )
+        return
+
     if config.epo_ingest:
         from src.multi_lingual_qac.dataloaders.epo_bdds import ingest_n_batches
 
