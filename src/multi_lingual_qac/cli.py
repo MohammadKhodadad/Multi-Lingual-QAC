@@ -333,7 +333,7 @@ def main() -> None:
 
     config = parse_args()
     if config.build_alias_graph:
-        from src.multi_lingual_qac.alias_graph import build_alias_graph
+        from src.alias_graph import build_alias_graph
 
         paths = PipelinePaths.from_project_root(project_root)
         corpus_csv = (
@@ -363,7 +363,7 @@ def main() -> None:
         return
 
     if config.check_wiki_names:
-        from src.multi_lingual_qac.alias_graph import check_wiki_name_quality
+        from src.alias_graph import check_wiki_name_quality
 
         paths = PipelinePaths.from_project_root(project_root)
         corpus_csv = (

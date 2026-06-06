@@ -29,15 +29,15 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from src.multi_lingual_qac.alias_graph.builder import _read_corpus
-from src.multi_lingual_qac.alias_graph.chebi import load_chebi_graph
-from src.multi_lingual_qac.alias_graph.matching import (
+from src.alias_graph.builder import _read_corpus
+from src.alias_graph.chebi import load_chebi_graph
+from src.alias_graph.matching import (
     build_name_index,
     contains_name,
     prune_names,
     scan_corpus,
 )
-from src.multi_lingual_qac.alias_graph.wikidata_names import (
+from src.alias_graph.wikidata_names import (
     DEFAULT_LANGS,
     fetch_wikipedia_names,
 )
