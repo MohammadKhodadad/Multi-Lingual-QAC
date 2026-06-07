@@ -21,6 +21,7 @@ class PipelinePaths:
     chebi_dir: Path
     alias_graph_dir: Path
     wiki_quality_dir: Path
+    code_switched_dir: Path
 
     @classmethod
     def from_project_root(cls, project_root: Path) -> "PipelinePaths":
@@ -39,6 +40,7 @@ class PipelinePaths:
             chebi_dir=project_root / "data" / "chebi",
             alias_graph_dir=project_root / "data" / "alias_graph",
             wiki_quality_dir=project_root / "reports" / "wiki_name_quality",
+            code_switched_dir=project_root / "data" / "code_switched",
         )
 
 
@@ -91,3 +93,9 @@ class PipelineConfig:
     alias_qa_seed: int = 42
     alias_qa_limit: Optional[int] = None
     alias_qa_workers: int = 1
+    build_code_switched: bool = False
+    cs_variants: str = "A,B,C,D,F"
+    cs_limit: Optional[int] = None
+    cs_model: str = "gpt-5-mini"
+    cs_seed: int = 42
+    cs_output_dir: Optional[str] = None

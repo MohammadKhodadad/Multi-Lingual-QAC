@@ -312,6 +312,43 @@ def parse_args() -> PipelineConfig:
         default=1,
         help="Worker threads for concept-query generation (default: 1)",
     )
+    parser.add_argument(
+        "--build-code-switched",
+        action="store_true",
+        help="Idea 2: build code-switched document variants (A-F) from alias_graph.json + corpus, "
+        "with change-tracking columns. Writes data/code_switched/code_switched_corpus.csv.",
+    )
+    parser.add_argument(
+        "--cs-variants",
+        type=str,
+        default="A,B,C,D,F",
+        help="Comma-separated variants to emit: A(baseline) B(in-set) C(out-of-set) "
+        "D(noisy) E(non-chem, LLM) F(chebi). Default: A,B,C,D,F (E excluded).",
+    )
+    parser.add_argument(
+        "--cs-limit",
+        type=int,
+        default=None,
+        help="With --build-code-switched, process only the first N concepts.",
+    )
+    parser.add_argument(
+        "--cs-model",
+        type=str,
+        default="gpt-5-mini",
+        help="LLM for variant E (default: gpt-5-mini).",
+    )
+    parser.add_argument(
+        "--cs-seed",
+        type=int,
+        default=42,
+        help="Random seed for code-switching (default: 42).",
+    )
+    parser.add_argument(
+        "--cs-output-dir",
+        type=str,
+        default=None,
+        help="Output directory for the variant corpus (default: data/code_switched).",
+    )
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -378,6 +415,12 @@ def parse_args() -> PipelineConfig:
         alias_qa_seed=args.alias_qa_seed,
         alias_qa_limit=args.alias_qa_limit,
         alias_qa_workers=args.alias_qa_workers,
+        build_code_switched=args.build_code_switched,
+        cs_variants=args.cs_variants,
+        cs_limit=args.cs_limit,
+        cs_model=args.cs_model,
+        cs_seed=args.cs_seed,
+        cs_output_dir=args.cs_output_dir,
     )
 
 
@@ -388,6 +431,31 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.build_code_switched:
+        from src.alias_graph.code_switch import run_code_switch
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        output_dir = (
+            Path(config.cs_output_dir)
+            if config.cs_output_dir
+            else paths.code_switched_dir
+        )
+        run_code_switch(
+            alias_json=paths.alias_graph_dir / "alias_graph.json",
+            corpus_path=corpus_csv,
+            output_path=output_dir / "code_switched_corpus.csv",
+            variants=[v.strip() for v in config.cs_variants.split(",") if v.strip()],
+            limit=config.cs_limit,
+            model=config.cs_model,
+            seed=config.cs_seed,
+        )
+        return
+
     if config.alias_generate_qa:
         from src.alias_graph.qac_generation import run_concept_qa
 
