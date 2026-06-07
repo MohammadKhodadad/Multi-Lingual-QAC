@@ -99,3 +99,8 @@ class PipelineConfig:
     cs_model: str = "gpt-5-mini"
     cs_seed: int = 42
     cs_output_dir: Optional[str] = None
+    cs_generate_qa: bool = False
+    cs_qa_model: str = "gpt-5-mini"
+    cs_qa_seed: int = 42
+    cs_qa_limit: Optional[int] = None
+    cs_qa_workers: int = 1

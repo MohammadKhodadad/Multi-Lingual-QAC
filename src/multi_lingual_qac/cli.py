@@ -349,6 +349,20 @@ def parse_args() -> PipelineConfig:
         default=None,
         help="Output directory for the variant corpus (default: data/code_switched).",
     )
+    parser.add_argument(
+        "--cs-generate-qa",
+        action="store_true",
+        help="Generate questions for the code-switched variants: B/C/D/F use the ORIGINAL "
+        "term verbatim (gold = the variant doc); E is a normal doc QA. Reads "
+        "<cs-output-dir>/code_switched_corpus.csv, writes code_switched_qac.csv.",
+    )
+    parser.add_argument("--cs-qa-model", type=str, default="gpt-5-mini",
+                        help="LLM for variant QA generation/grading (default: gpt-5-mini).")
+    parser.add_argument("--cs-qa-seed", type=int, default=42, help="Seed for variant QA (default: 42).")
+    parser.add_argument("--cs-qa-limit", type=int, default=None,
+                        help="Process only the first N B/C/D/F groups (and N E docs).")
+    parser.add_argument("--cs-qa-workers", type=int, default=1,
+                        help="Worker threads for variant QA (default: 1).")
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -421,6 +435,11 @@ def parse_args() -> PipelineConfig:
         cs_model=args.cs_model,
         cs_seed=args.cs_seed,
         cs_output_dir=args.cs_output_dir,
+        cs_generate_qa=args.cs_generate_qa,
+        cs_qa_model=args.cs_qa_model,
+        cs_qa_seed=args.cs_qa_seed,
+        cs_qa_limit=args.cs_qa_limit,
+        cs_qa_workers=args.cs_qa_workers,
     )
 
 
@@ -453,6 +472,32 @@ def main() -> None:
             limit=config.cs_limit,
             model=config.cs_model,
             seed=config.cs_seed,
+        )
+        return
+
+    if config.cs_generate_qa:
+        from src.alias_graph.qac_generation import run_variant_qa
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        output_dir = (
+            Path(config.cs_output_dir)
+            if config.cs_output_dir
+            else paths.code_switched_dir
+        )
+        run_variant_qa(
+            corpus_csv=output_dir / "code_switched_corpus.csv",
+            source_corpus=corpus_csv,
+            alias_json=paths.alias_graph_dir / "alias_graph.json",
+            output_path=output_dir / "code_switched_qac.csv",
+            model=config.cs_qa_model,
+            seed=config.cs_qa_seed,
+            limit=config.cs_qa_limit,
+            workers=config.cs_qa_workers,
         )
         return
 
