@@ -47,6 +47,24 @@ _BLACKLIST = {
     "agua", "sel", "eau", "wasser", "salz", "saeure", "acide", "acido", "acida",
 }
 
+# Registry / regulatory codes that ChEBI lists as "synonyms" but which are not
+# names (E-numbers, refrigerant numbers, company/database codes, CAS/EC numbers).
+# Used to keep them out of name sets and the matching index. Chemical formulas
+# (CO2) are intentionally NOT treated as codes here.
+_CODE_PATTERNS = [
+    re.compile(r"^E[ \-]?\d{3,4}[a-z]?$", re.IGNORECASE),       # E290, E-290, E 290, E160a
+    re.compile(r"^R[ \-]?\d{2,4}[a-z]?$", re.IGNORECASE),       # R-744, R134a
+    re.compile(r"^\d{1,7}-\d{2}-\d$"),                           # CAS, e.g. 50-00-0
+    re.compile(r"^\d{3}-\d{3}-\d$"),                             # EC / EINECS
+    re.compile(r"^[A-Z]{2,5}[ \-]?\d{2,6}(-\d{1,5})?[a-z]?$"),   # CGA 248757, KIH-9201, BAY 12-9566
+]
+
+
+def is_code_like_name(name: str) -> bool:
+    """True if ``name`` is a registry/regulatory code rather than a real name."""
+    stripped = (name or "").strip()
+    return any(p.match(stripped) for p in _CODE_PATTERNS)
+
 
 def _normalize(text: str) -> List[str]:
     """NFKC + casefold + whitespace-tokenize, stripping surrounding punctuation
@@ -112,6 +130,8 @@ def _iter_concept_names(
         if name:
             yield cid, name, "chebi", True
         for syn in data.get("synonyms", ()):
+            if is_code_like_name(syn):
+                continue  # registry/regulatory code, not a matchable name
             yield cid, syn, "chebi", False
     for cid, by_lang in wiki_names.items():
         if cid in graph:

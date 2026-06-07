@@ -34,6 +34,7 @@ from src.alias_graph.wikidata_names import (
 )
 from src.alias_graph.matching import (
     build_name_index,
+    is_code_like_name,
     prune_names,
     scan_corpus,
 )
@@ -68,23 +69,42 @@ def _read_corpus(path: Path) -> List[dict]:
         return list(csv.DictReader(fh))
 
 
+def _dedupe_keep_first(names: List[str]) -> List[str]:
+    """Case-insensitive dedupe, preserving the first (canonical) casing."""
+    out: List[str] = []
+    seen: Set[str] = set()
+    for n in names:
+        key = n.casefold()
+        if key not in seen:
+            seen.add(key)
+            out.append(n)
+    return out
+
+
 def _concept_name_set(
     graph: nx.DiGraph,
     cid: str,
     wiki_names: Dict[str, Dict[str, str]],
-) -> Dict[str, List[str]]:
-    """Multilingual name set (the query) for a concept, grouped by source."""
+) -> Tuple[Dict[str, List[str]], List[str]]:
+    """
+    Return (name_set, codes) for a concept. The multilingual name_set (the
+    query/answer side) holds only real names; registry/regulatory codes
+    (E-numbers, refrigerant numbers, company/CAS codes) are split into ``codes``.
+    The ChEBI primary name always stays in name_set; only synonyms are classified.
+    """
     data = graph.nodes[cid]
     name_set: Dict[str, List[str]] = {}
-    chebi_names = []
+    chebi_names: List[str] = []
+    codes: List[str] = []
     if data.get("name"):
         chebi_names.append(data["name"])
-    chebi_names.extend(data.get("synonyms", ()))
+    for syn in data.get("synonyms", ()):
+        (codes if is_code_like_name(syn) else chebi_names).append(syn)
     if chebi_names:
-        name_set["chebi"] = chebi_names
+        name_set["chebi"] = _dedupe_keep_first(chebi_names)
     for lang, title in wiki_names.get(cid, {}).items():
         name_set.setdefault(lang, []).append(title)
-    return name_set
+    return name_set, _dedupe_keep_first(codes)
 
 
 def _neighbor_relations(graph: nx.DiGraph, cid: str) -> Dict[str, str]:
@@ -228,13 +248,14 @@ def build_alias_graph(
             continue
 
         concept_name = graph.nodes[cid].get("name", cid)
-        name_set = _concept_name_set(graph, cid, wiki_names)
+        name_set, codes = _concept_name_set(graph, cid, wiki_names)
         gold_langs = sorted({doc_by_id[d]["language"] for d in concept_to_docs[cid]})
 
         concepts.append({
             "chebi_id": cid,
             "name": concept_name,
             "name_set": name_set,
+            "codes": codes,
             "query_names": sorted({n for names in name_set.values() for n in names}),
             "gold": sorted(gold_pubs),
             "hard_negatives": [
