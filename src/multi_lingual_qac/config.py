@@ -109,8 +109,3 @@ class PipelineConfig:
     hf_dry_run: bool = False
     hf_private: bool = False
     analyze_confusion: bool = False
-    confusion_dataset: str = "MehdiAstaraki/multi-lingual-qac-alias-graph"
-    confusion_models: tuple[str, ...] = ()
-    confusion_output_dir: Optional[str] = None
-    confusion_batch_size: int = 32
-    confusion_query_limit: Optional[int] = None

@@ -378,19 +378,11 @@ def parse_args() -> PipelineConfig:
     parser.add_argument(
         "--analyze-confusion",
         action="store_true",
-        help="Analyze how often a confusable wrong compound (hard negative) outranks the right one "
-        "(gold), per query language, with embedding models. Writes reports/confusion_analysis/.",
+        help="With --evaluate-mteb (or --analyze-questions on an existing run): also compute, per "
+        "query language, how often a confusable wrong compound (hard negative) outranks the right "
+        "one (gold), from the saved per-query predictions. Writes <run>/confusion/ (+ plot). "
+        "Implies prediction saving.",
     )
-    parser.add_argument("--confusion-dataset", type=str,
-                        default="MehdiAstaraki/multi-lingual-qac-alias-graph",
-                        help="HF dataset repo (default) or a local hf_export dir.")
-    parser.add_argument("--confusion-models", nargs="+", default=None,
-                        help="Embedding models (default: the standard MTEB model set).")
-    parser.add_argument("--confusion-output-dir", type=str, default=None,
-                        help="Output dir (default: reports/confusion_analysis).")
-    parser.add_argument("--confusion-batch-size", type=int, default=32)
-    parser.add_argument("--confusion-query-limit", type=int, default=None,
-                        help="Process only the first N queries (for testing).")
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -473,11 +465,6 @@ def parse_args() -> PipelineConfig:
         hf_dry_run=args.hf_dry_run,
         hf_private=args.hf_private,
         analyze_confusion=args.analyze_confusion,
-        confusion_dataset=args.confusion_dataset,
-        confusion_models=tuple(args.confusion_models) if args.confusion_models else (),
-        confusion_output_dir=args.confusion_output_dir,
-        confusion_batch_size=args.confusion_batch_size,
-        confusion_query_limit=args.confusion_query_limit,
     )
 
 
@@ -488,19 +475,6 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
-    if config.analyze_confusion:
-        from src.alias_graph.confusion_analysis import run_confusion_analysis
-
-        run_confusion_analysis(
-            dataset=config.confusion_dataset,
-            output_dir=Path(config.confusion_output_dir)
-            if config.confusion_output_dir
-            else (project_root / "reports" / "confusion_analysis"),
-            models=config.confusion_models or None,
-            batch_size=config.confusion_batch_size,
-            query_limit=config.confusion_query_limit,
-        )
-        return
 
     if config.push_alias_graph_hf:
         from src.alias_graph.hf_export import push_alias_graph_to_hub
@@ -719,7 +693,7 @@ def main() -> None:
         run_dir = Path(config.mteb_output_dir) if config.mteb_output_dir else (runs_root / run_id)
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        save_predictions = config.mteb_save_predictions or config.analyze_questions
+        save_predictions = config.mteb_save_predictions or config.analyze_questions or config.analyze_confusion
         prediction_dir = (run_dir / "predictions") if save_predictions else None
         summaries = run_mteb_evaluation(
             list(config.evaluate_mteb_models),
@@ -750,6 +724,18 @@ def main() -> None:
                 model_names=list(config.evaluate_mteb_models),
                 make_plots=not config.mteb_no_plots,
                 query_metadata_csv=config.mteb_query_metadata,
+            )
+
+        if config.analyze_confusion:
+            from src.alias_graph.confusion_analysis import run_confusion_from_predictions
+
+            run_confusion_from_predictions(
+                prediction_dir,
+                run_dir / "confusion",
+                dataset_repo=config.mteb_dataset_repo,
+                dataset_variant=config.mteb_dataset_variant,
+                model_names=list(config.evaluate_mteb_models),
+                make_plots=not config.mteb_no_plots,
             )
 
         # Run identity: metadata + rolling trend index + latest pointer.
@@ -799,27 +785,38 @@ def main() -> None:
             print(f"  Trend index: {runs_root / 'index.csv'}")
         return
 
-    if config.analyze_questions:
-        from src.multi_lingual_qac.mteb import run_question_analysis
-
+    if config.analyze_questions or config.analyze_confusion:
         results_dir = _resolve_results_dir(project_root, config.mteb_results_dir)
         prediction_dir = results_dir / "predictions"
-        analysis_dir = (
-            Path(config.mteb_analysis_dir)
-            if config.mteb_analysis_dir
-            else (results_dir / "question_analysis")
-        )
-        report = run_question_analysis(
-            prediction_dir,
-            output_dir=analysis_dir,
-            dataset_repo=config.mteb_dataset_repo,
-            dataset_variant=config.mteb_dataset_variant,
-            make_plots=not config.mteb_no_plots,
-            query_metadata_csv=config.mteb_query_metadata,
-        )
-        print("Question-level analysis generated.")
-        print(f"  Results dir: {results_dir}")
-        print(f"  Output: {report}")
+        if config.analyze_questions:
+            from src.multi_lingual_qac.mteb import run_question_analysis
+
+            analysis_dir = (
+                Path(config.mteb_analysis_dir)
+                if config.mteb_analysis_dir
+                else (results_dir / "question_analysis")
+            )
+            report = run_question_analysis(
+                prediction_dir,
+                output_dir=analysis_dir,
+                dataset_repo=config.mteb_dataset_repo,
+                dataset_variant=config.mteb_dataset_variant,
+                make_plots=not config.mteb_no_plots,
+                query_metadata_csv=config.mteb_query_metadata,
+            )
+            print("Question-level analysis generated.")
+            print(f"  Results dir: {results_dir}")
+            print(f"  Output: {report}")
+        if config.analyze_confusion:
+            from src.alias_graph.confusion_analysis import run_confusion_from_predictions
+
+            run_confusion_from_predictions(
+                prediction_dir,
+                results_dir / "confusion",
+                dataset_repo=config.mteb_dataset_repo,
+                dataset_variant=config.mteb_dataset_variant,
+                make_plots=not config.mteb_no_plots,
+            )
         return
 
     if config.generate_mteb_tables:
