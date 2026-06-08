@@ -76,6 +76,82 @@ def load_corpus(corpus_path: Path) -> list[dict]:
     return rows
 
 
+def _corpus_readme(repo_id: str) -> str:
+    return (
+        "---\n"
+        "configs:\n"
+        "- config_name: corpus\n"
+        "  data_files:\n"
+        "  - split: train\n"
+        "    path: data/corpus/*.parquet\n"
+        "---\n\n"
+        f"# {repo_id}\n\n"
+        "Shared multilingual patent **corpus** (one document per publication × language) used as\n"
+        "the retrieval haystack for the Multi-Lingual-QAC benchmarks (referenced at eval time via\n"
+        "`--mteb-corpus-repo`). Columns: `_id`, `title`, `text`, `corpus_language`, "
+        "`publication_number`.\n"
+        + DATASET_CARD_ATTRIBUTION
+    )
+
+
+def push_corpus_to_hub(
+    corpus_csv: Path,
+    repo_id: str,
+    *,
+    token: Optional[str] = None,
+    private: bool = False,
+    dry_run: bool = False,
+) -> str:
+    """Publish the full patent corpus as a single-`corpus`-config HF dataset.
+
+    This shared corpus is the retrieval haystack used by every benchmark evaluation
+    (see ``--mteb-corpus-repo``). One document per (publication, language); ``text`` is
+    ``context`` or ``abstract`` — matching the per-benchmark corpora — so a gold doc has
+    identical text whichever corpus is loaded. ``dry_run`` writes parquet locally instead.
+    """
+    corpus_csv = Path(corpus_csv)
+    rows = load_corpus(corpus_csv)
+    corpus_data = [
+        {
+            "_id": str(r.get("id", "")).strip(),
+            "title": r.get("title", ""),
+            "text": r.get("context") or r.get("abstract") or "",
+            "corpus_language": str(r.get("language", "")).strip(),
+            "publication_number": str(r.get("publication_number", "")).strip(),
+        }
+        for r in rows
+        if str(r.get("id", "")).strip()
+    ]
+    ds = Dataset.from_list(corpus_data)
+    print(f"  corpus: {len(ds)} rows | columns: {ds.column_names}")
+
+    readme = _corpus_readme(repo_id).encode("utf-8")
+    if dry_run:
+        out_dir = corpus_csv.parent / "hf_corpus_export"
+        (out_dir / "corpus").mkdir(parents=True, exist_ok=True)
+        ds.to_parquet(str(out_dir / "corpus" / "corpus.parquet"))
+        (out_dir / "README.md").write_bytes(readme)
+        print(f"Dry run: wrote corpus -> {out_dir}")
+        return str(out_dir)
+
+    token = token or os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    if not token:
+        raise ValueError("Set HF_TOKEN in .env for Hugging Face upload.")
+    api = HfApi(token=token)
+    api.create_repo(repo_id=repo_id, repo_type="dataset", private=private, exist_ok=True)
+    ds.push_to_hub(
+        repo_id, config_name="corpus", split="train",
+        data_dir="data/corpus", token=token, private=private,
+    )
+    api.upload_file(
+        path_or_fileobj=io.BytesIO(readme),
+        path_in_repo="README.md", repo_id=repo_id, repo_type="dataset",
+    )
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    print(f"Pushed corpus to {url}")
+    return url
+
+
 def load_qac(qac_path: Path) -> list[dict]:
     rows = []
     with qac_path.open(encoding="utf-8") as f:

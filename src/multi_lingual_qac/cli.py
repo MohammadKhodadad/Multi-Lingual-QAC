@@ -106,6 +106,16 @@ def parse_args() -> PipelineConfig:
         ),
     )
     parser.add_argument(
+        "--mteb-corpus-repo",
+        type=str,
+        default="MehdiAstaraki/multilingual_GP",
+        help=(
+            "Shared corpus repo used as the retrieval haystack for every evaluation "
+            "(default: MehdiAstaraki/multilingual_GP). Queries/qrels still come from "
+            "--mteb-dataset-repo. Pass an empty string to use the dataset's own corpus config."
+        ),
+    )
+    parser.add_argument(
         "--mteb-variant",
         type=_normalize_mteb_variant,
         default="multilingual",
@@ -310,10 +320,10 @@ def parse_args() -> PipelineConfig:
     parser.add_argument(
         "--alias-generate-qa",
         action="store_true",
-        help="Generate one concept-centric technical query per (concept, language) from "
+        help="Generate one concept-centric technical query per selected document from "
         "alias_graph.json: the query describes the concept without naming it and the answer "
-        "is the concept. Reuses the faithfulness + technical-quality verifiers. Writes "
-        "<alias-output-dir>/qac/concept_qa.csv.",
+        "is the concept. All language variants of the document feed the prompt. Reuses the "
+        "faithfulness + technical-quality verifiers. Writes <alias-output-dir>/qac/concept_qa.csv.",
     )
     parser.add_argument(
         "--alias-qa-strategy",
@@ -339,22 +349,17 @@ def parse_args() -> PipelineConfig:
         "--alias-qa-limit",
         type=int,
         default=None,
-        help="Process only the first N concepts (for testing)",
+        help="Select documents balanced by language: about N/5 documents existing in each of "
+        "en/de/fr/es/zh (soft cap; a language with fewer eligible docs is warned and taken "
+        "as-is). One query per document; query language is chosen by --alias-qa-strategy. The "
+        "total may be below N since a multilingual document counts for every language it "
+        "contains. Omit to use every eligible document.",
     )
     parser.add_argument(
         "--alias-qa-workers",
         type=int,
         default=1,
         help="Worker threads for concept-query generation (default: 1)",
-    )
-    parser.add_argument(
-        "--alias-qa-total",
-        type=int,
-        default=None,
-        help="Balanced mode: total number of concept queries, split equally across the 5 "
-        "languages (en de fr es zh). Each language's queries are grounded on distinct "
-        "documents that exist in that language; a language with too few gold docs (e.g. zh) "
-        "is capped and warned. Omit for the default one-query-per-concept behavior.",
     )
     parser.add_argument(
         "--build-code-switched",
@@ -420,6 +425,14 @@ def parse_args() -> PipelineConfig:
                         help="With --push-alias-graph-hf, write parquet locally instead of uploading.")
     parser.add_argument("--hf-private", action="store_true", help="Create the HF dataset repo as private.")
     parser.add_argument(
+        "--push-corpus-hf",
+        action="store_true",
+        help="Publish the full patent corpus (data/google_patents/multilingual_corpus.csv) as a "
+        "single-`corpus`-config HF dataset (the shared retrieval haystack). Honors --hf-dry-run/--hf-private.",
+    )
+    parser.add_argument("--corpus-hf-repo", type=str, default="MehdiAstaraki/multilingual_GP",
+                        help="Target HF dataset repo for --push-corpus-hf (default: MehdiAstaraki/multilingual_GP).")
+    parser.add_argument(
         "--analyze-confusion",
         action="store_true",
         help="With --evaluate-mteb (or --analyze-questions on an existing run): also compute, per "
@@ -445,6 +458,7 @@ def parse_args() -> PipelineConfig:
         hf_repo=args.hf_repo,
         evaluate_mteb_models=_resolve_eval_models(args.evaluate_mteb),
         mteb_dataset_repo=args.mteb_dataset_repo,
+        mteb_corpus_repo=args.mteb_corpus_repo,
         mteb_dataset_variant=args.mteb_variant,
         mteb_output_dir=args.mteb_output_dir,
         mteb_batch_size=max(1, args.mteb_batch_size),
@@ -482,7 +496,6 @@ def parse_args() -> PipelineConfig:
         alias_qa_seed=args.alias_qa_seed,
         alias_qa_limit=args.alias_qa_limit,
         alias_qa_workers=args.alias_qa_workers,
-        alias_qa_total=args.alias_qa_total,
         build_code_switched=args.build_code_switched,
         cs_variants=args.cs_variants,
         cs_limit=args.cs_limit,
@@ -499,6 +512,8 @@ def parse_args() -> PipelineConfig:
         hf_dry_run=args.hf_dry_run,
         hf_private=args.hf_private,
         analyze_confusion=args.analyze_confusion,
+        push_corpus_hf=args.push_corpus_hf,
+        corpus_hf_repo=args.corpus_hf_repo,
     )
 
 
@@ -509,6 +524,18 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+
+    if config.push_corpus_hf:
+        from src.multi_lingual_qac.export.hf_upload import push_corpus_to_hub
+
+        paths = PipelinePaths.from_project_root(project_root)
+        push_corpus_to_hub(
+            corpus_csv=paths.multilingual_corpus_csv,
+            repo_id=config.corpus_hf_repo,
+            private=config.hf_private,
+            dry_run=config.hf_dry_run,
+        )
+        return
 
     if config.push_alias_graph_hf:
         from src.alias_graph.hf_export import push_alias_graph_to_hub
@@ -609,7 +636,6 @@ def main() -> None:
             seed=config.alias_qa_seed,
             limit=config.alias_qa_limit,
             workers=config.alias_qa_workers,
-            total=config.alias_qa_total,
         )
         return
 
@@ -738,6 +764,7 @@ def main() -> None:
             output_dir=run_dir,
             batch_size=config.mteb_batch_size,
             prediction_dir=prediction_dir,
+            corpus_repo=config.mteb_corpus_repo,
         )
 
         # Comparison tables (cheap, no network/GPU) inside the run folder.
@@ -764,6 +791,7 @@ def main() -> None:
             dataset_repo=config.mteb_dataset_repo,
             dataset_variant=config.mteb_dataset_variant,
             dataset_revision="main",
+            corpus_repo=config.mteb_corpus_repo,
             models=config.evaluate_mteb_models,
             batch_size=config.mteb_batch_size,
             summaries=summaries,

@@ -19,9 +19,10 @@ from __future__ import annotations
 import csv
 import json
 import random
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
 from tqdm import tqdm
 
@@ -220,34 +221,6 @@ def generate_concept_query(
     }
 
 
-def _select_gold_pub(
-    gold: Sequence[str],
-    groups: Dict[str, List[Dict[str, Any]]],
-    target_lang: str,
-    rng: random.Random,
-    name_set: Optional[Dict[str, Any]] = None,
-) -> Optional[str]:
-    """Pick a gold publication to ground generation, preferring one available in
-    the target language AND whose passages actually contain a concept name (so the
-    model has the concept to describe — guards against any residual false golds)."""
-    in_corpus = [p for p in gold if p in groups]
-    if not in_corpus:
-        return None
-    preferred = [
-        p for p in in_corpus
-        if any(r.get("language") == target_lang for r in groups[p])
-    ]
-    pool = list(preferred or in_corpus)
-    rng.shuffle(pool)
-    names = [n for v in (name_set or {}).values() for n in (v if isinstance(v, list) else [v])]
-    if names:
-        for pub in pool[:30]:
-            text = _build_all_passages_text(groups[pub])
-            if any(contains_name(text, nm) for nm in names):
-                return pub
-    return pool[0] if pool else None
-
-
 def _build_row(
     entry: Dict[str, Any],
     qa: Dict[str, str],
@@ -371,164 +344,121 @@ def _process_item(
     return row
 
 
-def _process_concept(
-    entry: Dict[str, Any],
-    groups: Dict[str, List[Dict[str, Any]]],
-    *,
-    strategy: int,
-    model: str,
-    seed: int,
+def _groundable_concepts(
+    pub_concepts: List[Dict[str, Any]], passages: str
 ) -> List[Dict[str, Any]]:
-    rng = random.Random(f"{seed}:{entry['chebi_id']}")
-    available_langs = entry.get("gold_langs", [])
-    target_langs = pick_target_languages(strategy, available_langs)
-    name_set = entry.get("name_set", {})
-    aliases = _all_aliases(name_set)
-    client = _get_client()
-    rows: List[Dict[str, Any]] = []
-
-    for target_lang in target_langs:
-        pub = _select_gold_pub(entry.get("gold", []), groups, target_lang, rng, name_set)
-        if pub is None:
-            continue
-        row = _process_item(
-            client, entry, groups[pub], pub, target_lang, name_set, aliases,
-            strategy=strategy, model=model,
-        )
-        if row is not None:
-            rows.append(row)
-
-    return rows
+    """Concepts (gold for this pub) whose name actually appears in the passages."""
+    out: List[Dict[str, Any]] = []
+    for entry in pub_concepts:
+        names = _all_aliases(entry.get("name_set", {}))
+        if names and any(contains_name(passages, nm) for nm in names):
+            out.append(entry)
+    return out
 
 
-def _build_balanced_plan(
+def _build_document_plan(
     entries: List[Dict[str, Any]],
     groups: Dict[str, List[Dict[str, Any]]],
-    per_lang: int,
+    *,
+    per_lang: Optional[int],
+    strategy: int,
     rng: random.Random,
 ) -> List[Tuple[Dict[str, Any], str, str]]:
-    """Build a language-balanced work list of (concept, gold pub, target language).
+    """Select unique documents and build a (concept, pub, query language) work list.
 
-    Each language L in ``ALL_LANGS`` gets up to ``per_lang`` items, each grounded
-    on a DISTINCT publication that (a) has a row in language L and (b) whose
-    passages contain the concept name (same grounding check as ``_select_gold_pub``).
-    Distinct concepts are preferred within a language; concept reuse is allowed
-    only in a relaxed second pass when a language would otherwise fall short. If a
-    language still cannot reach ``per_lang`` (e.g. zh, with few gold docs), it is
-    capped at what's available and a warning is printed.
+    Each selected publication is paired with a single answer-concept (a concept it
+    is gold for whose name appears in the passages) and one query per language
+    returned by ``strategy``: a single language for strategies 1-3, all five for
+    strategy 4 ("all"). Selection is balanced by *source* language: each language L in
+    ``ALL_LANGS`` should be present in at least ``per_lang`` selected documents (a
+    multilingual document counts toward every language it contains), so the total
+    number of documents may be below ``5 * per_lang``. A language with too few
+    eligible documents is capped and warned. When ``per_lang`` is None, every
+    eligible document is selected (no cap).
     """
     langs = list(ALL_LANGS)
-    selected: Dict[str, List[Tuple[Dict[str, Any], str]]] = {L: [] for L in langs}
-    used_pubs: Dict[str, Set[str]] = {L: set() for L in langs}
-    used_concepts: Dict[str, Set[str]] = {L: set() for L in langs}
-    # pub -> (combined passages text, set of ALL_LANGS present in that pub)
-    pub_cache: Dict[str, Tuple[str, Set[str]]] = {}
 
-    order = list(entries)
-    rng.shuffle(order)
+    # Invert concept -> gold into pub -> [concept entries this pub is gold for].
+    pub_concepts: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for entry in entries:
+        for pub in entry.get("gold", []):
+            if pub in groups:
+                pub_concepts[pub].append(entry)
 
-    def fill(allow_concept_reuse: bool) -> None:
-        for entry in order:
-            if all(len(selected[L]) >= per_lang for L in langs):
-                return
-            names = _all_aliases(entry.get("name_set", {}))
-            if not names:
-                continue
-            cid = entry["chebi_id"]
-            gold = [p for p in entry.get("gold", []) if p in groups]
-            rng.shuffle(gold)
-            for p in gold:
-                if p not in pub_cache:
-                    rows = groups[p]
-                    text = _build_all_passages_text(rows)
-                    present = {r.get("language") for r in rows} & set(langs)
-                    pub_cache[p] = (text, present)
-                text, present = pub_cache[p]
-                if not present or not any(contains_name(text, nm) for nm in names):
+    # Per candidate pub: present languages + the concepts groundable in its text.
+    present_by_pub: Dict[str, Set[str]] = {}
+    groundable_by_pub: Dict[str, List[Dict[str, Any]]] = {}
+    candidates: List[str] = []
+    for pub, concepts in pub_concepts.items():
+        rows = groups[pub]
+        present = {r.get("language") for r in rows} & set(langs)
+        if not present:
+            continue
+        passages = _build_all_passages_text(rows)
+        if not passages.strip():
+            continue
+        grounded = _groundable_concepts(concepts, passages)
+        if not grounded:
+            continue
+        present_by_pub[pub] = present
+        groundable_by_pub[pub] = grounded
+        candidates.append(pub)
+
+    rng.shuffle(candidates)
+
+    if per_lang is None:
+        selected = list(candidates)
+    else:
+        # Assign up to ``per_lang`` DISTINCT documents to each language (each
+        # document counts toward exactly one language), so the total is ~``limit``
+        # (= 5 * per_lang) rather than collapsing when documents are multilingual.
+        # Process scarcer languages first so they claim their few documents before
+        # abundant ones (en/fr) can take them; ``candidates`` is already shuffled,
+        # so the per-language pick is uniform-random.
+        selected_set: Set[str] = set()
+        langs_by_scarcity = sorted(
+            langs, key=lambda L: sum(1 for pub in candidates if L in present_by_pub[pub])
+        )
+        for L in langs_by_scarcity:
+            picked = 0
+            for pub in candidates:
+                if picked >= per_lang:
+                    break
+                if pub in selected_set or L not in present_by_pub[pub]:
                     continue
-                for L in present:
-                    if len(selected[L]) >= per_lang:
-                        continue
-                    if p in used_pubs[L]:
-                        continue
-                    if not allow_concept_reuse and cid in used_concepts[L]:
-                        continue
-                    selected[L].append((entry, p))
-                    used_pubs[L].add(p)
-                    used_concepts[L].add(cid)
-
-    fill(allow_concept_reuse=False)
-    if any(len(selected[L]) < per_lang for L in langs):
-        fill(allow_concept_reuse=True)
+                selected_set.add(pub)
+                picked += 1
+        selected = [pub for pub in candidates if pub in selected_set]
+        # Warn on each language's true coverage in the final set (a document
+        # assigned to one language may also exist in others).
+        for L in langs:
+            have = sum(1 for pub in selected if L in present_by_pub[pub])
+            if have < per_lang:
+                print(f"  [balance] {L}: only {have}/{per_lang} eligible documents (selected all available)")
 
     plan: List[Tuple[Dict[str, Any], str, str]] = []
-    for L in langs:
-        n = len(selected[L])
-        if n < per_lang:
-            print(f"  [balance] {L}: only {n}/{per_lang} eligible documents (capped + warned)")
-        for entry, p in selected[L]:
-            plan.append((entry, p, L))
+    for pub in selected:
+        grounded = list(groundable_by_pub[pub])
+        rng.shuffle(grounded)
+        entry = grounded[0]
+        # One query per language returned by the strategy: a single language for
+        # strategies 1-3, all five for strategy 4 ("all"). Document selection
+        # (which/how many docs) is independent of this.
+        for target_lang in pick_target_languages(strategy, list(present_by_pub[pub])):
+            plan.append((entry, pub, target_lang))
     return plan
 
 
-def _generate_per_concept(
-    entries: List[Dict[str, Any]],
+def _iter_results(
+    plan: List[Tuple[Dict[str, Any], str, str]],
     groups: Dict[str, List[Dict[str, Any]]],
     *,
     strategy: int,
     model: str,
-    seed: int,
     workers: int,
-) -> List[Dict[str, Any]]:
-    """Default mode: one query per (concept, strategy-chosen language)."""
-    print(
-        f"Concept-query QA generation: {len(entries)} concepts, "
-        f"strategy={STRATEGY_NAMES.get(strategy, strategy)}, model={model}, workers={workers}"
-    )
-    results: List[List[Dict[str, Any]]] = []
-    if workers > 1 and entries:
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {
-                executor.submit(
-                    _process_concept, entry, groups, strategy=strategy, model=model, seed=seed
-                ): entry
-                for entry in entries
-            }
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Concept Q&A", unit="concept"):
-                results.append(future.result())
-    else:
-        for entry in tqdm(entries, desc="Concept Q&A", unit="concept"):
-            results.append(_process_concept(entry, groups, strategy=strategy, model=model, seed=seed))
-    return [row for group in results for row in group]
-
-
-def _generate_balanced(
-    entries: List[Dict[str, Any]],
-    groups: Dict[str, List[Dict[str, Any]]],
-    *,
-    strategy: int,
-    model: str,
-    seed: int,
-    total: int,
-    workers: int,
-) -> List[Dict[str, Any]]:
-    """Balanced mode: ``total`` queries split equally across ``ALL_LANGS``, each
-    grounded on a document that exists in its query language."""
-    langs = list(ALL_LANGS)
-    per_lang = total // len(langs)
-    if per_lang == 0:
-        raise ValueError(f"--alias-qa-total {total} is below the number of languages ({len(langs)}).")
-    if total % len(langs) != 0:
-        print(
-            f"  [balance] total={total} not divisible by {len(langs)} languages; "
-            f"using {per_lang}/language ({per_lang * len(langs)} total)"
-        )
-    plan = _build_balanced_plan(entries, groups, per_lang, random.Random(seed))
-    print(
-        f"Concept-query QA (balanced): {len(plan)} items, target {per_lang}/language across "
-        f"{', '.join(langs)}; strategy={STRATEGY_NAMES.get(strategy, strategy)}, model={model}, workers={workers}"
-    )
-
+) -> Iterator[Dict[str, Any]]:
+    """Yield one graded query row per planned (concept, pub, query language) item,
+    as soon as it is ready, so the caller can persist results incrementally."""
     client = _get_client()
 
     def work(item: Tuple[Dict[str, Any], str, str]) -> Optional[Dict[str, Any]]:
@@ -539,20 +469,18 @@ def _generate_balanced(
             strategy=strategy, model=model,
         )
 
-    rows: List[Dict[str, Any]] = []
     if workers > 1 and plan:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = [executor.submit(work, item) for item in plan]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Concept Q&A (balanced)", unit="item"):
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Concept Q&A", unit="query"):
                 row = future.result()
                 if row is not None:
-                    rows.append(row)
+                    yield row
     else:
-        for item in tqdm(plan, desc="Concept Q&A (balanced)", unit="item"):
+        for item in tqdm(plan, desc="Concept Q&A", unit="query"):
             row = work(item)
             if row is not None:
-                rows.append(row)
-    return rows
+                yield row
 
 
 def _output_fieldnames() -> List[str]:
@@ -575,35 +503,46 @@ def run_concept_qa(
     seed: int = 42,
     limit: Optional[int] = None,
     workers: int = 1,
-    total: Optional[int] = None,
 ) -> int:
-    """Generate concept-centric technical queries and write them to ``output_path``.
+    """Generate concept-centric technical queries (one per selected document) and
+    write them to ``output_path``.
 
-    When ``total`` is given, run in balanced mode (``total`` queries split equally
-    across ``ALL_LANGS``, grounded on documents that exist in each query language);
-    otherwise generate one query per (concept, strategy-chosen language).
+    Documents are selected balanced by *source* language: with ``limit`` set, each
+    of the five languages should appear in at least ``limit // 5`` selected
+    documents (soft cap; a language with too few eligible documents is warned, and
+    the document total may be below ``limit`` since a multilingual document counts
+    for every language it contains). Without ``limit`` every eligible document is
+    used. Each document's query is grounded on all of its language variants. The
+    query language is chosen by ``strategy``; strategy 4 ("all") emits one query
+    per language for each document. Rows are written to ``output_path`` as they are
+    generated (incrementally flushed).
     """
     entries = load_alias_graph(alias_json)
-    if limit is not None:
-        entries = entries[:limit]
     groups = load_multilingual_corpus(corpus_path)
     random.seed(seed)
 
-    if total is not None:
-        all_rows = _generate_balanced(
-            entries, groups, strategy=strategy, model=model, seed=seed, total=total, workers=workers
-        )
-    else:
-        all_rows = _generate_per_concept(
-            entries, groups, strategy=strategy, model=model, seed=seed, workers=workers
-        )
+    per_lang = max(1, limit // len(ALL_LANGS)) if limit is not None else None
+    plan = _build_document_plan(
+        entries, groups, per_lang=per_lang, strategy=strategy, rng=random.Random(seed)
+    )
+    n_docs = len({pub for _, pub, _ in plan})
+    target = f"~{per_lang}/language" if per_lang is not None else "all eligible"
+    print(
+        f"Concept-query QA: {n_docs} documents ({target}) -> {len(plan)} queries, "
+        f"strategy={STRATEGY_NAMES.get(strategy, strategy)}, model={model}, workers={workers}"
+    )
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
     with output_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=_output_fieldnames())
         writer.writeheader()
-        writer.writerows(all_rows)
+        fh.flush()
+        for row in _iter_results(plan, groups, strategy=strategy, model=model, workers=workers):
+            writer.writerow(row)
+            fh.flush()
+            written += 1
 
-    print(f"\nWrote {len(all_rows)} concept-query rows -> {output_path}")
-    return len(all_rows)
+    print(f"\nWrote {written} concept-query rows -> {output_path}")
+    return written

@@ -91,7 +91,10 @@ def save_retrieval_results(
             for rank, (doc, score) in enumerate(ranked, start=1):
                 rows.append({
                     "model": label, "query_id": qid, "query_language": ql, "chebi_id": cid,
-                    "rank": rank, "corpus_id": doc, "corpus_language": c_lang.get(doc, ""),
+                    # shared-corpus distractors may be absent from the benchmark's corpus
+                    # config; ids encode the language (`_en`/`_de`/…), so infer as fallback.
+                    "rank": rank, "corpus_id": doc,
+                    "corpus_language": c_lang.get(doc) or _infer_language(doc),
                     "score": round(float(score), 6), "relevance": relevance.get((qid, doc), ""),
                 })
 

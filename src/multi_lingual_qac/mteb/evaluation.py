@@ -5,6 +5,7 @@ import json
 import math
 import os
 import re
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -116,9 +117,13 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
         dataset_repo: str,
         revision: str,
         dataset_variant: str,
+        corpus_repo: str = "",
     ):
         self.metadata = metadata
         self.dataset_repo = dataset_repo
+        # Shared retrieval corpus (haystack). When set and different from dataset_repo,
+        # the corpus loaded from this repo replaces the dataset's own corpus config.
+        self.corpus_repo = corpus_repo if corpus_repo and corpus_repo != dataset_repo else ""
         self.revision = revision
         self.dataset_variant = dataset_variant
         self._query_language_by_id: dict[str, str] | None = None
@@ -152,6 +157,39 @@ class HubDatasetRetrievalTask(AbsTaskRetrieval):
             super().load_data(num_proc=num_proc, **kwargs)
         finally:
             _rdl.get_dataset_config_names = original_get_config_names
+        if self.corpus_repo:
+            self._swap_in_shared_corpus()
+
+    def _swap_in_shared_corpus(self) -> None:
+        """Replace each split's corpus with the shared corpus loaded from ``corpus_repo``.
+
+        Any judged (qrels) document not present in the shared corpus is unioned in from
+        the dataset's own corpus, so every gold / look-alike doc stays retrievable even
+        if a benchmark's qrels reference ids outside the shared corpus.
+        """
+        from datasets import concatenate_datasets
+
+        shared = _load_corpus_dataset(self.corpus_repo, self.revision)
+        keep = [c for c in ("id", "title", "text") if c in shared.column_names]
+        shared = shared.select_columns(keep)
+        shared_ids = set(shared["id"])
+        for subset, splits in self.dataset.items():
+            for split, data in splits.items():
+                judged: set[str] = set()
+                for docs in data["relevant_docs"].values():
+                    judged.update(str(d) for d in docs)
+                missing = judged - shared_ids
+                corpus = shared
+                if missing:
+                    own = data["corpus"]
+                    extra = own.filter(lambda r: str(r["id"]) in missing).select_columns(
+                        [c for c in keep if c in own.column_names]
+                    )
+                    corpus = concatenate_datasets([shared, extra])
+                    print(f"[corpus] {subset}/{split}: unioned {len(extra)} judged doc(s) "
+                          f"missing from {self.corpus_repo}")
+                data["corpus"] = corpus
+        print(f"[corpus] retrieval haystack = {self.corpus_repo} ({len(shared_ids)} docs)")
 
     def _get_query_language_by_id(self) -> dict[str, str]:
         if self._query_language_by_id is not None:
@@ -426,6 +464,26 @@ def _dataset_config_name(
     return f"{subset}-{base_config}" if subset is not None else base_config
 
 
+def _load_corpus_dataset(corpus_repo: str, revision: str):
+    """Load a shared `corpus` config from a HF repo or a local dir; expose an `id` column.
+
+    Local dirs use the dry-run export layout (``<dir>/corpus/corpus.parquet`` or
+    ``<dir>/corpus.parquet``), so the shared corpus can be tested offline.
+    """
+    path = Path(corpus_repo)
+    if path.is_dir():
+        pq = path / "corpus" / "corpus.parquet"
+        if not pq.exists():
+            pq = path / "corpus.parquet"
+        corpus = load_dataset("parquet", data_files=str(pq), split="train")
+    else:
+        config = _dataset_config_name(corpus_repo, revision, "multilingual", "corpus")
+        corpus = load_dataset(corpus_repo, config, split="train", revision=revision)
+    if "id" not in corpus.column_names and "_id" in corpus.column_names:
+        corpus = corpus.rename_column("_id", "id")
+    return corpus
+
+
 def _resolve_dataset_subset(dataset_repo: str, revision: str, dataset_variant: str) -> str | None:
     variant = _normalize_dataset_variant(dataset_variant)
     dataset_configs = set(get_dataset_config_names(dataset_repo, revision=revision))
@@ -525,6 +583,7 @@ def build_mteb_task(
     *,
     revision: str = "main",
     dataset_variant: str = DEFAULT_MTEB_VARIANT,
+    corpus_repo: str = "",
 ) -> HubDatasetRetrievalTask:
     dataset_variant = _normalize_dataset_variant(dataset_variant)
     subset = _resolve_dataset_subset(dataset_repo, revision, dataset_variant)
@@ -558,6 +617,7 @@ def build_mteb_task(
         dataset_repo=dataset_repo,
         revision=revision,
         dataset_variant=dataset_variant,
+        corpus_repo=corpus_repo,
     )
 
 
@@ -1077,12 +1137,15 @@ def run_mteb_evaluation(
     revision: str = "main",
     batch_size: int = 32,
     prediction_dir: str | Path | None = None,
+    corpus_repo: str = "",
 ) -> list[ModelEvaluationSummary]:
     if not models:
         raise ValueError("Provide at least one model name for MTEB evaluation.")
 
     dataset_variant = _normalize_dataset_variant(dataset_variant)
-    task = build_mteb_task(dataset_repo, revision=revision, dataset_variant=dataset_variant)
+    task = build_mteb_task(
+        dataset_repo, revision=revision, dataset_variant=dataset_variant, corpus_repo=corpus_repo
+    )
     evaluator = MTEB(tasks=[task])
     base_output_dir = Path(output_dir)
     base_output_dir.mkdir(parents=True, exist_ok=True)
@@ -1090,52 +1153,82 @@ def run_mteb_evaluation(
     summaries: list[ModelEvaluationSummary] = []
     eval_languages = _detect_query_languages(dataset_repo, revision, dataset_variant)
 
+    # Load queries/qrels (+ swap in the shared corpus) once, up front, so a
+    # dataset/corpus error fails fast and clearly instead of being swallowed by the
+    # per-model resilience loop (and so every model uses the same swapped corpus).
+    try:
+        task.load_data()
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to load evaluation data (dataset_repo={dataset_repo}, "
+            f"corpus_repo={corpus_repo or dataset_repo}). If using the shared corpus, "
+            "publish it first with `--push-corpus-hf`, or pass --mteb-corpus-repo '' to use "
+            f"the dataset's own corpus. Original error: {exc}"
+        ) from exc
+
+    failed: list[tuple[str, str]] = []
     for model_name in models:
         model_slug = _slugify(model_name)
         print(f"Evaluating `{model_name}` on `{dataset_repo}` ({dataset_variant})...")
-        # Prefer MTEB's registry loader (correct per-model prompts / trust_remote_code /
-        # ColBERT late interaction); fall back to a plain SentenceTransformer for models
-        # MTEB does not know (e.g. SapBERT).
+        # A failing model (e.g. gated/missing weights, missing extra package, OOM) is logged
+        # as a warning and skipped so the rest of the run still completes.
         try:
-            model = mteb.get_model(model_name)
-            model_meta = mteb.get_model_meta(model_name)
-        except Exception:
-            model = SentenceTransformer(
-                model_name, cache_folder=str(model_cache_dir), trust_remote_code=True
+            # Prefer MTEB's registry loader (correct per-model prompts / trust_remote_code /
+            # ColBERT late interaction); fall back to a plain SentenceTransformer for models
+            # MTEB does not know (e.g. SapBERT).
+            try:
+                model = mteb.get_model(model_name)
+                model_meta = mteb.get_model_meta(model_name)
+            except Exception:
+                model = SentenceTransformer(
+                    model_name, cache_folder=str(model_cache_dir), trust_remote_code=True
+                )
+                model_meta = evaluator.create_model_meta(model)
+            model_output_dir = base_output_dir / model_meta.model_name_as_path() / (
+                model_meta.revision or "no_revision_available"
             )
-            model_meta = evaluator.create_model_meta(model)
-        model_output_dir = base_output_dir / model_meta.model_name_as_path() / (
-            model_meta.revision or "no_revision_available"
-        )
-        run_kwargs: dict[str, Any] = {}
-        if prediction_dir is not None:
-            # Save per-query rankings (one folder per model) for question-level analysis.
-            run_kwargs["prediction_folder"] = Path(prediction_dir) / model_slug
-        results = evaluator.run(
-            model,
-            verbosity=2,
-            output_folder=str(base_output_dir),
-            eval_splits=["train"],
-            overwrite_results=True,
-            encode_kwargs={"batch_size": batch_size},
-            **run_kwargs,
-        )
-        if not results:
-            raise ValueError(f"MTEB returned no results for model `{model_name}`.")
+            run_kwargs: dict[str, Any] = {}
+            if prediction_dir is not None:
+                # Save per-query rankings (one folder per model) for question-level analysis.
+                run_kwargs["prediction_folder"] = Path(prediction_dir) / model_slug
+            results = evaluator.run(
+                model,
+                verbosity=2,
+                output_folder=str(base_output_dir),
+                eval_splits=["train"],
+                overwrite_results=True,
+                encode_kwargs={"batch_size": batch_size},
+                **run_kwargs,
+            )
+            if not results:
+                raise ValueError(f"MTEB returned no results for model `{model_name}`.")
 
-        result = results[0]
-        metrics = _extract_numeric_metrics(result)
-        summary = ModelEvaluationSummary(
-            model_name=model_name,
-            model_slug=model_slug,
-            dataset_variant=dataset_variant,
-            main_score=float(result.main_score),
-            metrics=metrics,
-            output_dir=str(model_output_dir),
-            eval_languages=eval_languages,
-            evaluation_time_seconds=result.evaluation_time,
-        )
-        summaries.append(summary)
+            result = results[0]
+            metrics = _extract_numeric_metrics(result)
+            summary = ModelEvaluationSummary(
+                model_name=model_name,
+                model_slug=model_slug,
+                dataset_variant=dataset_variant,
+                main_score=float(result.main_score),
+                metrics=metrics,
+                output_dir=str(model_output_dir),
+                eval_languages=eval_languages,
+                evaluation_time_seconds=result.evaluation_time,
+            )
+            summaries.append(summary)
+        except Exception as exc:  # noqa: BLE001 - resilience: skip the model, keep going
+            failed.append((model_name, f"{type(exc).__name__}: {exc}"))
+            print(f"\n[WARNING] Skipping `{model_name}` — evaluation failed: {type(exc).__name__}: {exc}")
+            traceback.print_exc()
+            print()
+
+    if failed:
+        print(f"\n{len(failed)} model(s) skipped due to errors:")
+        for name, err in failed:
+            print(f"  - {name}: {err}")
+    if not summaries:
+        print("\n[WARNING] No models evaluated successfully; no summary reports written.")
+        return summaries
 
     _write_summary_reports(base_output_dir, dataset_repo, dataset_variant, summaries)
     return summaries

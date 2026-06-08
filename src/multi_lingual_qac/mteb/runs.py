@@ -86,11 +86,13 @@ def write_run_metadata(
     sizes: dict[str, int],
     git_commit: str | None,
     git_dirty: bool,
+    corpus_repo: str = "",
 ) -> Path:
     metadata: dict[str, Any] = {
         "run_id": run_id,
         "created_at": created_at,
         "dataset_repo": dataset_repo,
+        "corpus_repo": corpus_repo or dataset_repo,
         "dataset_variant": dataset_variant,
         "dataset_revision": dataset_revision,
         "dataset_sizes": sizes,

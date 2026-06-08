@@ -55,6 +55,7 @@ class PipelineConfig:
     hf_repo: Optional[str] = None
     evaluate_mteb_models: tuple[str, ...] = ()
     mteb_dataset_repo: str = ""
+    mteb_corpus_repo: str = "MehdiAstaraki/multilingual_GP"
     mteb_dataset_variant: str = "multilingual"
     mteb_output_dir: Optional[str] = None
     mteb_batch_size: int = 32
@@ -93,7 +94,6 @@ class PipelineConfig:
     alias_qa_seed: int = 42
     alias_qa_limit: Optional[int] = None
     alias_qa_workers: int = 1
-    alias_qa_total: Optional[int] = None
     build_code_switched: bool = False
     cs_variants: str = "A,B,C,D,F"
     cs_limit: Optional[int] = None
@@ -110,3 +110,5 @@ class PipelineConfig:
     hf_dry_run: bool = False
     hf_private: bool = False
     analyze_confusion: bool = False
+    push_corpus_hf: bool = False
+    corpus_hf_repo: str = "MehdiAstaraki/multilingual_GP"
