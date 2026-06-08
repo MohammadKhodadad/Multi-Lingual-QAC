@@ -93,6 +93,7 @@ class PipelineConfig:
     alias_qa_seed: int = 42
     alias_qa_limit: Optional[int] = None
     alias_qa_workers: int = 1
+    alias_qa_total: Optional[int] = None
     build_code_switched: bool = False
     cs_variants: str = "A,B,C,D,F"
     cs_limit: Optional[int] = None

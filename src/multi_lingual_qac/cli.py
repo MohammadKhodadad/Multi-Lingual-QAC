@@ -348,6 +348,15 @@ def parse_args() -> PipelineConfig:
         help="Worker threads for concept-query generation (default: 1)",
     )
     parser.add_argument(
+        "--alias-qa-total",
+        type=int,
+        default=None,
+        help="Balanced mode: total number of concept queries, split equally across the 5 "
+        "languages (en de fr es zh). Each language's queries are grounded on distinct "
+        "documents that exist in that language; a language with too few gold docs (e.g. zh) "
+        "is capped and warned. Omit for the default one-query-per-concept behavior.",
+    )
+    parser.add_argument(
         "--build-code-switched",
         action="store_true",
         help="Idea 2: build code-switched document variants (A-F) from alias_graph.json + corpus, "
@@ -473,6 +482,7 @@ def parse_args() -> PipelineConfig:
         alias_qa_seed=args.alias_qa_seed,
         alias_qa_limit=args.alias_qa_limit,
         alias_qa_workers=args.alias_qa_workers,
+        alias_qa_total=args.alias_qa_total,
         build_code_switched=args.build_code_switched,
         cs_variants=args.cs_variants,
         cs_limit=args.cs_limit,
@@ -599,6 +609,7 @@ def main() -> None:
             seed=config.alias_qa_seed,
             limit=config.alias_qa_limit,
             workers=config.alias_qa_workers,
+            total=config.alias_qa_total,
         )
         return
 

@@ -21,12 +21,13 @@ import json
 import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from tqdm import tqdm
 
 from src.alias_graph.matching import contains_name
 from src.multi_lingual_qac.qac_generation.multilingual_qa import (
+    ALL_LANGS,
     DEFAULT_GENERATION_REASONING_EFFORT,
     DEFAULT_MODEL,
     DEFAULT_REASONING_EFFORT,
@@ -291,6 +292,85 @@ def _build_row(
     return row
 
 
+def _process_item(
+    client,
+    entry: Dict[str, Any],
+    doc_rows: List[Dict[str, Any]],
+    pub: str,
+    target_lang: str,
+    name_set: Dict[str, Any],
+    aliases: Sequence[str],
+    *,
+    strategy: int,
+    model: str,
+) -> Optional[Dict[str, Any]]:
+    """Generate + grade ONE (concept, gold publication, target language) item.
+
+    All language variants of *doc_rows* (the same patent in en/de/fr/es/zh) are
+    passed to the generator together; the question is written in *target_lang*.
+    Returns the output row, or None if no valid question/answer could be formed.
+    """
+    all_passages = _build_all_passages_text(doc_rows)
+    if not all_passages.strip():
+        return None
+    context_row, _ = _pick_context(doc_rows, target_lang)
+    context_languages = _serialize_context_languages(doc_rows)
+
+    answer, answer_lang, _grounded = _pick_answer(name_set, target_lang, all_passages)
+    if not answer:
+        return None
+
+    # Retry generation on the same document if the model doesn't respond
+    # (empty question) or errors, up to _MAX_GEN_RETRIES attempts.
+    gen = None
+    for attempt in range(1, _MAX_GEN_RETRIES + 1):
+        try:
+            candidate = generate_concept_query(
+                client, all_passages, entry["name"], aliases, target_lang, model=model
+            )
+        except Exception as exc:
+            tqdm.write(
+                f"  {entry['chebi_id']} [{target_lang}]: generation error "
+                f"(attempt {attempt}/{_MAX_GEN_RETRIES}): {exc}"
+            )
+            continue
+        if candidate["question"]:
+            gen = candidate
+            break
+    if gen is None:
+        tqdm.write(
+            f"  {entry['chebi_id']} [{target_lang}]: no question after "
+            f"{_MAX_GEN_RETRIES} attempts; skipped"
+        )
+        return None
+
+    qa_pair = {"question": gen["question"], "answer": answer}
+    try:
+        faith = grade_faithfulness_single(client, all_passages, qa_pair, model=model)
+        qual = grade_quality_single(client, all_passages, qa_pair, model=model)
+    except Exception as exc:
+        tqdm.write(f"  {entry['chebi_id']} [{target_lang}]: grading error: {exc}")
+        return None
+
+    row = _build_row(
+        entry,
+        {"question": gen["question"], "answer": answer, "question_type": gen["question_type"]},
+        faith,
+        qual,
+        strategy=strategy,
+        corpus_id=context_row.get("id", ""),
+        publication_number=pub,
+        question_language=target_lang,
+        answer_language=answer_lang,
+        context_language=context_languages,
+    )
+    tqdm.write(
+        f"  {entry['chebi_id']} ({entry['name']}) [{target_lang}]: "
+        f"ok (total={row['total_score']})"
+    )
+    return row
+
+
 def _process_concept(
     entry: Dict[str, Any],
     groups: Dict[str, List[Dict[str, Any]]],
@@ -311,67 +391,167 @@ def _process_concept(
         pub = _select_gold_pub(entry.get("gold", []), groups, target_lang, rng, name_set)
         if pub is None:
             continue
-        doc_rows = groups[pub]
-        all_passages = _build_all_passages_text(doc_rows)
-        if not all_passages.strip():
-            continue
-        context_row, _ = _pick_context(doc_rows, target_lang)
-        context_languages = _serialize_context_languages(doc_rows)
+        row = _process_item(
+            client, entry, groups[pub], pub, target_lang, name_set, aliases,
+            strategy=strategy, model=model,
+        )
+        if row is not None:
+            rows.append(row)
 
-        answer, answer_lang, _grounded = _pick_answer(name_set, target_lang, all_passages)
-        if not answer:
-            continue
+    return rows
 
-        # Retry generation on the same document if the model doesn't respond
-        # (empty question) or errors, up to _MAX_GEN_RETRIES attempts.
-        gen = None
-        for attempt in range(1, _MAX_GEN_RETRIES + 1):
-            try:
-                candidate = generate_concept_query(
-                    client, all_passages, entry["name"], aliases, target_lang, model=model
-                )
-            except Exception as exc:
-                tqdm.write(
-                    f"  {entry['chebi_id']} [{target_lang}]: generation error "
-                    f"(attempt {attempt}/{_MAX_GEN_RETRIES}): {exc}"
-                )
+
+def _build_balanced_plan(
+    entries: List[Dict[str, Any]],
+    groups: Dict[str, List[Dict[str, Any]]],
+    per_lang: int,
+    rng: random.Random,
+) -> List[Tuple[Dict[str, Any], str, str]]:
+    """Build a language-balanced work list of (concept, gold pub, target language).
+
+    Each language L in ``ALL_LANGS`` gets up to ``per_lang`` items, each grounded
+    on a DISTINCT publication that (a) has a row in language L and (b) whose
+    passages contain the concept name (same grounding check as ``_select_gold_pub``).
+    Distinct concepts are preferred within a language; concept reuse is allowed
+    only in a relaxed second pass when a language would otherwise fall short. If a
+    language still cannot reach ``per_lang`` (e.g. zh, with few gold docs), it is
+    capped at what's available and a warning is printed.
+    """
+    langs = list(ALL_LANGS)
+    selected: Dict[str, List[Tuple[Dict[str, Any], str]]] = {L: [] for L in langs}
+    used_pubs: Dict[str, Set[str]] = {L: set() for L in langs}
+    used_concepts: Dict[str, Set[str]] = {L: set() for L in langs}
+    # pub -> (combined passages text, set of ALL_LANGS present in that pub)
+    pub_cache: Dict[str, Tuple[str, Set[str]]] = {}
+
+    order = list(entries)
+    rng.shuffle(order)
+
+    def fill(allow_concept_reuse: bool) -> None:
+        for entry in order:
+            if all(len(selected[L]) >= per_lang for L in langs):
+                return
+            names = _all_aliases(entry.get("name_set", {}))
+            if not names:
                 continue
-            if candidate["question"]:
-                gen = candidate
-                break
-        if gen is None:
-            tqdm.write(
-                f"  {entry['chebi_id']} [{target_lang}]: no question after "
-                f"{_MAX_GEN_RETRIES} attempts; skipped"
-            )
-            continue
+            cid = entry["chebi_id"]
+            gold = [p for p in entry.get("gold", []) if p in groups]
+            rng.shuffle(gold)
+            for p in gold:
+                if p not in pub_cache:
+                    rows = groups[p]
+                    text = _build_all_passages_text(rows)
+                    present = {r.get("language") for r in rows} & set(langs)
+                    pub_cache[p] = (text, present)
+                text, present = pub_cache[p]
+                if not present or not any(contains_name(text, nm) for nm in names):
+                    continue
+                for L in present:
+                    if len(selected[L]) >= per_lang:
+                        continue
+                    if p in used_pubs[L]:
+                        continue
+                    if not allow_concept_reuse and cid in used_concepts[L]:
+                        continue
+                    selected[L].append((entry, p))
+                    used_pubs[L].add(p)
+                    used_concepts[L].add(cid)
 
-        qa_pair = {"question": gen["question"], "answer": answer}
-        try:
-            faith = grade_faithfulness_single(client, all_passages, qa_pair, model=model)
-            qual = grade_quality_single(client, all_passages, qa_pair, model=model)
-        except Exception as exc:
-            tqdm.write(f"  {entry['chebi_id']} [{target_lang}]: grading error: {exc}")
-            continue
+    fill(allow_concept_reuse=False)
+    if any(len(selected[L]) < per_lang for L in langs):
+        fill(allow_concept_reuse=True)
 
-        row = _build_row(
-            entry,
-            {"question": gen["question"], "answer": answer, "question_type": gen["question_type"]},
-            faith,
-            qual,
-            strategy=strategy,
-            corpus_id=context_row.get("id", ""),
-            publication_number=pub,
-            question_language=target_lang,
-            answer_language=answer_lang,
-            context_language=context_languages,
+    plan: List[Tuple[Dict[str, Any], str, str]] = []
+    for L in langs:
+        n = len(selected[L])
+        if n < per_lang:
+            print(f"  [balance] {L}: only {n}/{per_lang} eligible documents (capped + warned)")
+        for entry, p in selected[L]:
+            plan.append((entry, p, L))
+    return plan
+
+
+def _generate_per_concept(
+    entries: List[Dict[str, Any]],
+    groups: Dict[str, List[Dict[str, Any]]],
+    *,
+    strategy: int,
+    model: str,
+    seed: int,
+    workers: int,
+) -> List[Dict[str, Any]]:
+    """Default mode: one query per (concept, strategy-chosen language)."""
+    print(
+        f"Concept-query QA generation: {len(entries)} concepts, "
+        f"strategy={STRATEGY_NAMES.get(strategy, strategy)}, model={model}, workers={workers}"
+    )
+    results: List[List[Dict[str, Any]]] = []
+    if workers > 1 and entries:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(
+                    _process_concept, entry, groups, strategy=strategy, model=model, seed=seed
+                ): entry
+                for entry in entries
+            }
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Concept Q&A", unit="concept"):
+                results.append(future.result())
+    else:
+        for entry in tqdm(entries, desc="Concept Q&A", unit="concept"):
+            results.append(_process_concept(entry, groups, strategy=strategy, model=model, seed=seed))
+    return [row for group in results for row in group]
+
+
+def _generate_balanced(
+    entries: List[Dict[str, Any]],
+    groups: Dict[str, List[Dict[str, Any]]],
+    *,
+    strategy: int,
+    model: str,
+    seed: int,
+    total: int,
+    workers: int,
+) -> List[Dict[str, Any]]:
+    """Balanced mode: ``total`` queries split equally across ``ALL_LANGS``, each
+    grounded on a document that exists in its query language."""
+    langs = list(ALL_LANGS)
+    per_lang = total // len(langs)
+    if per_lang == 0:
+        raise ValueError(f"--alias-qa-total {total} is below the number of languages ({len(langs)}).")
+    if total % len(langs) != 0:
+        print(
+            f"  [balance] total={total} not divisible by {len(langs)} languages; "
+            f"using {per_lang}/language ({per_lang * len(langs)} total)"
         )
-        rows.append(row)
-        tqdm.write(
-            f"  {entry['chebi_id']} ({entry['name']}) [{target_lang}]: "
-            f"ok (total={row['total_score']})"
+    plan = _build_balanced_plan(entries, groups, per_lang, random.Random(seed))
+    print(
+        f"Concept-query QA (balanced): {len(plan)} items, target {per_lang}/language across "
+        f"{', '.join(langs)}; strategy={STRATEGY_NAMES.get(strategy, strategy)}, model={model}, workers={workers}"
+    )
+
+    client = _get_client()
+
+    def work(item: Tuple[Dict[str, Any], str, str]) -> Optional[Dict[str, Any]]:
+        entry, pub, target_lang = item
+        name_set = entry.get("name_set", {})
+        return _process_item(
+            client, entry, groups[pub], pub, target_lang, name_set, _all_aliases(name_set),
+            strategy=strategy, model=model,
         )
 
+    rows: List[Dict[str, Any]] = []
+    if workers > 1 and plan:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(work, item) for item in plan]
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Concept Q&A (balanced)", unit="item"):
+                row = future.result()
+                if row is not None:
+                    rows.append(row)
+    else:
+        for item in tqdm(plan, desc="Concept Q&A (balanced)", unit="item"):
+            row = work(item)
+            if row is not None:
+                rows.append(row)
     return rows
 
 
@@ -395,35 +575,29 @@ def run_concept_qa(
     seed: int = 42,
     limit: Optional[int] = None,
     workers: int = 1,
+    total: Optional[int] = None,
 ) -> int:
-    """Generate concept-centric technical queries and write them to ``output_path``."""
+    """Generate concept-centric technical queries and write them to ``output_path``.
+
+    When ``total`` is given, run in balanced mode (``total`` queries split equally
+    across ``ALL_LANGS``, grounded on documents that exist in each query language);
+    otherwise generate one query per (concept, strategy-chosen language).
+    """
     entries = load_alias_graph(alias_json)
     if limit is not None:
         entries = entries[:limit]
     groups = load_multilingual_corpus(corpus_path)
     random.seed(seed)
 
-    print(
-        f"Concept-query QA generation: {len(entries)} concepts, "
-        f"strategy={STRATEGY_NAMES.get(strategy, strategy)}, model={model}, workers={workers}"
-    )
-
-    results: List[List[Dict[str, Any]]] = []
-    if workers > 1 and entries:
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {
-                executor.submit(
-                    _process_concept, entry, groups, strategy=strategy, model=model, seed=seed
-                ): entry
-                for entry in entries
-            }
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Concept Q&A", unit="concept"):
-                results.append(future.result())
+    if total is not None:
+        all_rows = _generate_balanced(
+            entries, groups, strategy=strategy, model=model, seed=seed, total=total, workers=workers
+        )
     else:
-        for entry in tqdm(entries, desc="Concept Q&A", unit="concept"):
-            results.append(_process_concept(entry, groups, strategy=strategy, model=model, seed=seed))
+        all_rows = _generate_per_concept(
+            entries, groups, strategy=strategy, model=model, seed=seed, workers=workers
+        )
 
-    all_rows = [row for group in results for row in group]
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as fh:

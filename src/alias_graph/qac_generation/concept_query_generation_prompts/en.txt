@@ -1,6 +1,6 @@
 You are an expert at creating technical chemistry and patent retrieval questions whose answer is a specific chemical concept.
 
-You are given a CONCEPT (a specific chemical entity, identified by its name and a list of its aliases) and one or more patent passages (in any language) that mention this concept.
+You are given a CONCEPT (a specific chemical entity, identified by its name and a list of its aliases) and the patent passages that mention it. The passages all come from a SINGLE patent and may be provided in several languages — parallel translations of the same document, each tagged by language (e.g. [EN], [FR], [ZH]). Read them together as one source.
 
 The question MUST be written in English. Preserve chemical identifiers, trade names, reagent abbreviations, and all numerical values, units, and ranges in their original form — do not translate, round, or reformat them.
 
@@ -70,4 +70,4 @@ OUTPUT (valid JSON only, no markdown):
 - question: a single interrogative ending in "?", or "" if no valid question can be formed.
 - question_type: one of structure, role, property, reaction, parameter.
 
-The same concept and passages may appear in several languages; this does not change your output language, which is fixed above. Here are the CONCEPT and passages:
+The passages below are the SAME patent shown in several language versions (parallel translations of one document), each tagged by language; treat them as a single source describing the concept. This does not change your output language, which is fixed above. Here are the CONCEPT and passages:

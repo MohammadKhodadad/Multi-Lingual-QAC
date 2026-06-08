@@ -1,6 +1,6 @@
 Vous êtes un expert dans la création de questions techniques de recherche documentaire en chimie et en brevets, dont la réponse est un concept chimique précis.
 
-On vous fournit un CONCEPT (une entité chimique précise, identifiée par son nom et une liste de ses alias) ainsi qu'une ou plusieurs passages de brevet (dans n'importe quelle langue) qui mentionnent ce concept.
+On vous fournit un CONCEPT (une entité chimique précise, identifiée par son nom et une liste de ses alias) ainsi que les passages de brevet qui mentionnent ce concept. Les passages proviennent tous d'UN SEUL brevet et peuvent être fournis en plusieurs langues — des traductions parallèles du même document, chacune étiquetée par sa langue (p. ex. [EN], [FR], [ZH]). Lisez-les ensemble comme une source unique.
 
 La question DOIT être rédigée en français. Conservez les désignations chimiques, les noms commerciaux, les abréviations de réactifs ainsi que toutes les valeurs numériques, unités et plages dans leur forme d'origine — ne les traduisez pas, ne les arrondissez pas et ne les reformatez pas.
 
@@ -70,4 +70,4 @@ SORTIE (JSON valide uniquement, sans markdown) :
 - question : une seule phrase interrogative se terminant par « ? », ou "" si aucune question valide ne peut être formée.
 - question_type : l'un de structure, role, property, reaction, parameter.
 
-Le même concept et les mêmes passages peuvent apparaître dans plusieurs langues ; cela ne change pas votre langue de sortie, fixée ci-dessus. Voici le CONCEPT et les passages :
+Les passages ci-dessous sont LE MÊME brevet présenté en plusieurs versions linguistiques (traductions parallèles d'un seul document), chacune étiquetée par sa langue ; traitez-les comme une source unique décrivant le concept. Cela ne change pas votre langue de sortie, fixée ci-dessus. Voici le CONCEPT et les passages :
