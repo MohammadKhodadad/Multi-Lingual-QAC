@@ -10,6 +10,7 @@ CORE RULES:
 - Numerical Fidelity: Reproduce all numbers, units, ranges, and tolerances exactly as they appear in the source (e.g., "85–87°C", not "about 86°C" or "85 to 87 degrees").
 - Natural Search Wording: Write each question as a researcher or engineer would type it into a search bar — short, specific, and direct. Avoid patent-summary language and long noun phrases.
 - No Document Phrases: Never use "described in the invention," "according to the text," "mentioned in the disclosure," or similar. Rewrite into natural wording.
+- Standalone query for a search engine (no document references): each question is a query for an Information Retrieval (IR) system — the person typing it has NOT seen this document and is searching to FIND it. Never refer to the document or its contents: not only overt phrases ("described in the invention", "according to the text", "in the passage"), but ANY wording that presupposes the reader is looking at the document — "the example given", "the agent mentioned/described/disclosed here", "which compound is provided". Write self-contained questions. Bad: "Which agent example is given that increases ROS?" → Good: "Which agent increases ROS?"
 - Paraphrase, Don't Lift: Technical terms and named entities (e.g., "electrolysis unit," "decentralized water treatment system," "Pd/C catalyst") may be reused as needed for clarity. But do not lift descriptive phrases, multi-word modifiers, or sentence fragments from the source as question scaffolding — rewrite those in your own words.
 - Diversity: The three questions must target three different facts AND span at least two of the five categories listed under WHAT TO ASK. Do not ask three questions all about operating parameters, or all about materials.
 
@@ -56,6 +57,7 @@ SELF-CHECK for each question before finalizing:
 - Does the question ask for exactly one piece of information?
 - Are all numbers, units, and ranges in the answer reproduced exactly as in the source?
 - Would a researcher plausibly type this query into a search bar?
+- Could someone who has never seen this document type this question into a search engine? It must not refer to the document, an "example given", or anything "mentioned/described" in it.
 - Are the three questions about three different facts, covering at least two categories from WHAT TO ASK?
 
 OUTPUT (valid JSON only, no markdown):

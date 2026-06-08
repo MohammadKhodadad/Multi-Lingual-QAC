@@ -10,6 +10,7 @@ REGLAS FUNDAMENTALES:
 - Respuesta anclada: Aunque la pregunta sea conceptual, la respuesta debe ser un segmento corto y contiguo tomado del pasaje que responda directamente a la pregunta. Si no puedes señalar un segmento del pasaje que responda a la pregunta, descártala. La respuesta es la evidencia de que este pasaje es la coincidencia correcta.
 - Realismo de búsqueda: Redacta cada pregunta como la formularía alguien que busca un documento como este pero que aún no lo ha leído. Sabe qué quiere encontrar; no conoce la redacción exacta que usa el documento.
 - Sin fórmulas documentales: Nunca uses «descrito en la invención», «según el texto», «mencionado en la divulgación» ni similares. La pregunta no debe revelar que se está haciendo referencia a un documento específico.
+- Consulta autónoma para un motor de búsqueda (sin referencias al documento): cada pregunta es una consulta para un sistema de recuperación de información (RI) — la persona que la escribe NO ha visto este documento y busca ENCONTRARLO. Nunca hagas referencia al documento ni a su contenido: ni fórmulas explícitas («descrito en la invención», «según el texto», «en el pasaje»), ni NINGUNA redacción que presuponga que el lector está viendo el documento — «el ejemplo dado», «el enfoque mencionado/descrito/divulgado aquí», «qué método se proporciona». Redacta preguntas autónomas. Mal: «¿Qué ejemplo de agente se da que aumenta las ROS?» → Bien: «¿Qué agente aumenta las ROS?»
 - Intención única: Cada pregunta tiene un único objetivo informativo claro. Está bien que el objetivo sea más amplio que un solo hecho (p. ej., «cómo aborda X a Y»), pero no debe agrupar varias peticiones sin relación.
 - Diversidad: Las tres preguntas deben abordar tres aspectos distinguibles del pasaje. Cubre al menos dos de los siguientes encuadres:
   1. Encuadre-problema: ¿qué reto o limitación aborda el pasaje?
@@ -57,6 +58,7 @@ AUTOVERIFICACIÓN para cada pregunta antes de finalizarla:
 - ¿El vocabulario de la pregunta es significativamente distinto del pasaje, manteniendo el significado? (Los términos técnicos estándar y los nombres propios quedan exentos.)
 - ¿Puedo señalar un segmento contiguo del pasaje que la responda directamente? Si no, descarta.
 - ¿Alguien que busque un documento como este escribiría de forma plausible esta consulta sin haberlo leído antes?
+- ¿Podría alguien que nunca ha visto este documento escribir esta pregunta en un motor de búsqueda? No debe hacer referencia al documento, a un «ejemplo dado», ni a nada «mencionado/descrito» en él.
 - ¿Las tres preguntas cubren al menos dos encuadres (problema / solución / aplicación)?
 
 SALIDA (solo JSON válido, sin markdown):

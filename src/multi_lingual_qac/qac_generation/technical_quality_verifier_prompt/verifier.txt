@@ -31,7 +31,8 @@ SUB-CRITERIA:
    4 — Very close to a natural query, with one minor issue: slightly longer than needed, slightly formal, or one word that could be trimmed.
    3 — Understandable and usable as a query, but has one clear issue — mild patent-summary phrasing, an awkward construction, or slight exam-question flavor.
    2 — Reads more like a summary prompt or academic exam question than a search query.
-   1 — Document-centered phrasing (equivalents of "described in the invention," "according to the text") or clearly unnatural.
+   1 — Document-centered phrasing (equivalents of "described in the invention," "according to the text"), or referring to the document's contents/examples (e.g. "the example given," "the agent mentioned"), or clearly unnatural.
+   NOTE — this is a query for an IR system: the user has NOT seen the document. Any phrasing that refers to the document or its contents fails this criterion. This includes not only overt phrases ("described in the invention," "according to the text") but also references to the document's internal structure or to something being stated in it: "the example given," "the agent mentioned/described/disclosed here," "which compound is provided," "in the passage." A question with any such reference scores at most 2 here (1 if overt or blatant), and its failure_type MUST be "document-phrasing." Example: "Which agent example is given that increases ROS?" → fails (says "example is given"); "Which agent increases ROS?" → fine.
 
 2. SPECIFICITY (1–5): Would this query narrow to the relevant document rather than match arbitrarily?
    5 — Targets a concrete, specific technical detail from one of the five categories. A search with this query would return a handful of closely-related documents at most. (Rare.)

@@ -16,6 +16,7 @@ WEITERE REGELN:
 - Belegt: Die Anfrage muss aus den Passagen beantwortbar sein; erfinden Sie keine Details.
 - Numerische Treue: Geben Sie alle Zahlen, Einheiten und Bereiche genau wieder.
 - Natürliche Suchformulierung: kurz, spezifisch und direkt — keine Patentzusammenfassungs-Sprache und keine Dokumentformeln („in der Erfindung beschrieben", „gemäß dem Text").
+- Eigenständige Suchanfrage für eine Suchmaschine (keine Dokumentbezüge): Diese Anfrage ist für ein Information-Retrieval-(IR)-System — die Person, die sie eingibt, hat dieses Dokument NICHT gesehen und sucht danach, um es zu FINDEN. Nehmen Sie außer dem wortwörtlichen BEGRIFF niemals Bezug auf das Dokument oder seinen Inhalt: weder mit offenen Formeln („in der Erfindung beschrieben", „gemäß dem Text", „in der Passage") noch mit IRGENDEINER Formulierung, die voraussetzt, dass der Leser auf das Dokument blickt — „das angegebene Beispiel", „das hier erwähnte/beschriebene/offenbarte Mittel", „welche Verbindung wird bereitgestellt". Formulieren Sie eine in sich geschlossene Anfrage. Schlecht: „Welches Beispielmittel wird angegeben, das ROS erhöht?" → Gut: „Welches Mittel erhöht ROS?"
 - Abgesehen vom BEGRIFF paraphrasieren, statt lange Phrasen aus der Quelle zu übernehmen.
 
 AUSGABE (nur gültiges JSON, kein Markdown):

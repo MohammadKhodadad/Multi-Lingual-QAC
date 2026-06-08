@@ -31,7 +31,8 @@ SUB-CRITERIA:
    4 — Very close to a natural query, with one minor issue: slightly long, slightly formal, or one word that could be trimmed.
    3 — Understandable and usable as a query, but has one clear issue — mild patent-summary phrasing, an awkward construction, or slight exam-question flavor.
    2 — Reads more like a summary prompt or academic question than a search query.
-   1 — Document-centered phrasing (equivalents of "described in the invention," "according to the text") or clearly unnatural.
+   1 — Document-centered phrasing (equivalents of "described in the invention," "according to the text"), or referring to the document's contents/examples (e.g. "the example given," "the approach mentioned"), or clearly unnatural.
+   NOTE — this is a query for an IR system: the user has NOT seen the document. Any phrasing that refers to the document or its contents fails this criterion. This includes not only overt phrases ("described in the invention," "according to the text") but also references to the document's internal structure or to something being stated in it: "the example given," "the approach mentioned/described/disclosed here," "which method is provided," "in the passage." A question with any such reference scores at most 2 here (1 if overt or blatant), and its failure_type MUST be "document-phrasing." Example: "Which agent example is given that increases ROS?" → fails (says "example is given"); "Which agent increases ROS?" → fine.
 
 2. LEXICAL DISTANCE (1–5): Is the question meaningfully paraphrased from the passage's vocabulary?
    5 — Uses natural synonyms and paraphrases throughout. Only unavoidable shared vocabulary: proper nouns, compound identifiers, and established standard technical terms (e.g., "Pd/C," "polymerase," "electrolysis"). A keyword-based retriever would not trivially match this question to the passage. (Rare.)

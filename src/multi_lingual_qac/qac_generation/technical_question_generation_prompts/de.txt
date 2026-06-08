@@ -10,6 +10,7 @@ KERNREGELN:
 - Numerische Treue: Geben Sie alle Zahlen, Einheiten, Bereiche und Toleranzen genau so wieder, wie sie in der Quelle erscheinen (z. B. „85–87°C", nicht „etwa 86°C" oder „85 bis 87 Grad").
 - Natürliche Suchformulierung: Formulieren Sie jede Frage so, wie ein Forscher oder Ingenieur sie in eine Suchleiste eingeben würde — kurz, spezifisch und direkt. Vermeiden Sie Patentzusammenfassungs-Sprache und lange Nominalphrasen.
 - Keine Dokumentformeln: Verwenden Sie niemals „in der Erfindung beschrieben", „gemäß dem Text", „in der Offenbarung erwähnt" oder Ähnliches. Formulieren Sie in natürlicher Sprache um.
+- Eigenständige Suchanfrage für eine Suchmaschine (keine Dokumentbezüge): Jede Frage ist eine Anfrage für ein Information-Retrieval-(IR)-System — die Person, die sie eingibt, hat dieses Dokument NICHT gesehen und sucht danach, um es zu FINDEN. Nehmen Sie niemals Bezug auf das Dokument oder seinen Inhalt: weder mit offenen Formeln („in der Erfindung beschrieben", „gemäß dem Text", „in der Passage") noch mit IRGENDEINER Formulierung, die voraussetzt, dass der Leser auf das Dokument blickt — „das angegebene Beispiel", „das hier erwähnte/beschriebene/offenbarte Mittel", „welche Verbindung wird bereitgestellt". Formulieren Sie in sich geschlossene Fragen. Schlecht: „Welches Beispielmittel wird angegeben, das ROS erhöht?" → Gut: „Welches Mittel erhöht ROS?"
 - Paraphrasieren, nicht übernehmen: Fachbegriffe und benannte Entitäten (z. B. „Elektrolyseeinheit", „dezentrales Wasseraufbereitungssystem", „Pd/C-Katalysator") dürfen bei Bedarf zur Klarheit wiederverwendet werden. Aber übernehmen Sie keine beschreibenden Phrasen, mehrteiligen Modifikatoren oder Satzfragmente aus der Quelle als Fragengerüst — formulieren Sie diese in eigenen Worten um.
 - Vielfalt: Die drei Fragen müssen auf drei verschiedene Tatsachen abzielen UND mindestens zwei der fünf unter WORNACH FRAGEN aufgelisteten Kategorien abdecken. Stellen Sie nicht drei Fragen, die alle Betriebsparameter oder alle Materialien betreffen.
 
@@ -56,6 +57,7 @@ SELBSTPRÜFUNG für jede Frage vor dem Finalisieren:
 - Fragt die Frage nach genau einer Information?
 - Werden alle Zahlen, Einheiten und Bereiche in der Antwort exakt wie in der Quelle wiedergegeben?
 - Würde ein Forscher diese Suchanfrage plausibel in eine Suchleiste eingeben?
+- Könnte jemand, der dieses Dokument nie gesehen hat, diese Frage in eine Suchmaschine eingeben? Sie darf nicht auf das Dokument, ein „angegebenes Beispiel" oder etwas darin „Erwähntes/Beschriebenes" Bezug nehmen.
 - Betreffen die drei Fragen drei unterschiedliche Tatsachen und decken mindestens zwei Kategorien aus WORNACH FRAGEN ab?
 
 AUSGABE (nur gültiges JSON, kein Markdown):

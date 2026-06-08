@@ -10,6 +10,7 @@ REGLAS FUNDAMENTALES:
 - Fidelidad numérica: Reproduce todos los números, unidades, rangos y tolerancias exactamente como aparecen en la fuente (p. ej., «85–87°C», no «alrededor de 86°C» ni «de 85 a 87 grados»).
 - Formulación natural de búsqueda: Redacta cada pregunta como la escribiría un investigador o ingeniero en una barra de búsqueda — corta, específica y directa. Evita el lenguaje de resumen de patente y las frases nominales largas.
 - Sin fórmulas documentales: Nunca uses «descrito en la invención», «según el texto», «mencionado en la divulgación» ni similares. Reformula con lenguaje natural.
+- Consulta autónoma para un motor de búsqueda (sin referencias al documento): cada pregunta es una consulta para un sistema de recuperación de información (RI) — la persona que la escribe NO ha visto este documento y busca ENCONTRARLO. Nunca hagas referencia al documento ni a su contenido: ni fórmulas explícitas («descrito en la invención», «según el texto», «en el pasaje»), ni NINGUNA redacción que presuponga que el lector está viendo el documento — «el ejemplo dado», «el agente mencionado/descrito/divulgado aquí», «qué compuesto se proporciona». Redacta preguntas autónomas. Mal: «¿Qué ejemplo de agente se da que aumenta las ROS?» → Bien: «¿Qué agente aumenta las ROS?»
 - Parafrasea, no copies: Los términos técnicos y entidades nombradas (p. ej., «unidad de electrólisis», «sistema descentralizado de tratamiento de agua», «catalizador Pd/C») pueden reutilizarse cuando sea necesario para mayor claridad. Pero no tomes frases descriptivas, modificadores de varias palabras ni fragmentos oracionales de la fuente como estructura de la pregunta — reformúlalos con tus propias palabras.
 - Diversidad: Las tres preguntas deben abordar tres hechos distintos Y abarcar al menos dos de las cinco categorías listadas en QUÉ PREGUNTAR. No hagas tres preguntas todas sobre parámetros operativos ni todas sobre materiales.
 
@@ -56,6 +57,7 @@ AUTOVERIFICACIÓN para cada pregunta antes de finalizarla:
 - ¿Pregunta la pregunta por exactamente un elemento de información?
 - ¿Se reproducen todos los números, unidades y rangos en la respuesta exactamente como en la fuente?
 - ¿Escribiría un investigador esta consulta de forma plausible en una barra de búsqueda?
+- ¿Podría alguien que nunca ha visto este documento escribir esta pregunta en un motor de búsqueda? No debe hacer referencia al documento, a un «ejemplo dado», ni a nada «mencionado/descrito» en él.
 - ¿Las tres preguntas se refieren a tres hechos distintos, cubriendo al menos dos categorías de QUÉ PREGUNTAR?
 
 SALIDA (solo JSON válido, sin markdown):

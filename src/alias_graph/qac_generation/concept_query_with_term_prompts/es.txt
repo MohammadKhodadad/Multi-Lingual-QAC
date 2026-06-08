@@ -16,6 +16,7 @@ OTRAS REGLAS:
 - Respaldada: la consulta debe poder responderse a partir de los pasajes; no invente detalles.
 - Fidelidad numérica: reproduzca todos los números, unidades y rangos exactamente.
 - Redacción de búsqueda natural: breve, específica y directa — sin lenguaje de resumen de patente ni fórmulas documentales («descrito en la invención», «según el texto»).
+- Consulta autónoma para un motor de búsqueda (sin referencias al documento): esta consulta es para un sistema de recuperación de información (RI) — la persona que la escribe NO ha visto este documento y busca ENCONTRARLO. Salvo el TÉRMINO copiado tal cual, nunca hagas referencia al documento ni a su contenido: ni fórmulas explícitas («descrito en la invención», «según el texto», «en el pasaje»), ni NINGUNA redacción que presuponga que el lector está viendo el documento — «el ejemplo dado», «el agente mencionado/descrito/divulgado aquí», «qué compuesto se proporciona». Redacta una consulta autónoma. Mal: «¿Qué ejemplo de agente se da que aumenta las ROS?» → Bien: «¿Qué agente aumenta las ROS?»
 - Salvo el TÉRMINO, parafrasee en lugar de copiar frases largas de la fuente.
 
 SALIDA (solo JSON válido, sin markdown):

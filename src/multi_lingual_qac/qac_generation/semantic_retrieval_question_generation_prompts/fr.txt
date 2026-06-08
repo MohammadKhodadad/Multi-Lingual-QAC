@@ -10,6 +10,7 @@ RÈGLES FONDAMENTALES :
 - Réponse ancrée : Même si la question est conceptuelle, la réponse doit être un segment court et continu tiré du passage qui répond directement à la question. Si vous ne pouvez pas pointer vers un segment du passage qui répond à la question, écartez-la. La réponse est la preuve que ce passage est la bonne correspondance.
 - Réalisme de recherche : Rédigez chaque question comme la formulerait quelqu'un qui cherche un document comme celui-ci mais ne l'a pas encore lu. Il sait ce qu'il veut trouver ; il ne connaît pas la formulation exacte utilisée par le document.
 - Pas de formules documentaires : N'utilisez jamais « décrit dans l'invention », « selon le texte », « mentionné dans la divulgation » ou similaire. La question ne doit pas révéler qu'un document spécifique est référencé.
+- Requête autonome pour un moteur de recherche (aucune référence au document) : chaque question est une requête pour un système de recherche d'information (RI) — la personne qui la tape n'a PAS vu ce document et cherche à le TROUVER. Ne faites jamais référence au document ni à son contenu : ni les formules explicites (« décrit dans l'invention », « selon le texte », « dans le passage »), ni AUCUNE formulation présupposant que le lecteur a le document sous les yeux — « l'exemple donné », « l'approche mentionnée/décrite/divulguée ici », « quelle méthode est fournie ». Rédigez des questions autonomes. Mauvais : « Quel exemple d'agent est donné qui augmente les ROS ? » → Bon : « Quel agent augmente les ROS ? »
 - Intention unique : Chaque question a un seul objectif informationnel clair. Il est acceptable que l'objectif soit plus large qu'un fait unique (p. ex. « comment X aborde-t-il Y »), mais elle ne doit pas regrouper plusieurs demandes sans lien.
 - Diversité : Les trois questions doivent cibler trois aspects distinguables du passage. Couvrez au moins deux des cadrages suivants :
   1. Cadrage-problème : quel défi ou quelle limitation le passage aborde-t-il ?
@@ -57,6 +58,7 @@ AUTO-VÉRIFICATION pour chaque question avant de la finaliser :
 - Le vocabulaire de la question est-il significativement différent de celui du passage, tout en préservant le sens ? (Termes techniques standards et noms propres exemptés.)
 - Puis-je pointer vers un segment continu du passage qui y répond directement ? Sinon, écartez.
 - Quelqu'un cherchant un document comme celui-ci taperait-il plausiblement cette requête sans l'avoir lu auparavant ?
+- Quelqu'un qui n'a jamais vu ce document pourrait-il taper cette question dans un moteur de recherche ? Elle ne doit pas faire référence au document, à un « exemple donné », ni à quoi que ce soit qui y est « mentionné/décrit ».
 - Les trois questions couvrent-elles au moins deux cadrages (problème / solution / application) ?
 
 SORTIE (JSON valide uniquement, pas de markdown) :

@@ -15,6 +15,7 @@ CORE RULES:
 - Retrieval Realism: Write each question the way someone would phrase a search when they are looking for a document like this one but haven't read it yet. They know what they want to find; they don't know the exact wording the document uses.
 
 - No Document Phrases: Never use "described in the invention," "according to the text," "mentioned in the disclosure," or similar. The question should not reveal that a specific document is being referenced.
+- Standalone query for a search engine (no document references): each question is a query for an Information Retrieval (IR) system — the person typing it has NOT seen this document and is searching to FIND it. Never refer to the document or its contents: not only overt phrases ("described in the invention", "according to the text", "in the passage"), but ANY wording that presupposes the reader is looking at the document — "the example given", "the approach mentioned/described/disclosed here", "which method is provided". Write self-contained questions. Bad: "Which agent example is given that increases ROS?" → Good: "Which agent increases ROS?"
 
 - Single Intent: Each question has one clear informational goal. It's fine if the goal is broader than a single fact (e.g., "how does X address Y"), but it should not bundle multiple unrelated asks.
 
@@ -64,6 +65,7 @@ SELF-CHECK for each question before finalizing:
 - Is the question's vocabulary meaningfully different from the passage's, while preserving meaning? (Standard technical terms and proper nouns exempt.)
 - Can I point to a contiguous span in the passage that directly answers it? If not, discard.
 - Would someone searching for a document like this one plausibly type this query without already having read it?
+- Could someone who has never seen this document type this question into a search engine? It must not refer to the document, an "example given", or anything "mentioned/described" in it.
 - Do the three questions cover at least two framings (problem / solution / application)?
 
 OUTPUT (valid JSON only, no markdown):
