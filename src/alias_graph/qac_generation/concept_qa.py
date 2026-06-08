@@ -49,6 +49,7 @@ from src.multi_lingual_qac.qac_generation.multilingual_qa import (
 
 _BASE_DIR = Path(__file__).resolve().parent
 _PROMPT_DIR = _BASE_DIR / "concept_query_generation_prompts"
+_MAX_GEN_RETRIES = 3  # retry generation on empty/errored response (same document)
 _prompt_cache: Dict[str, str] = {}
 
 # Order in which to prefer a language when grounding the answer surface form.
@@ -312,14 +313,28 @@ def _process_concept(
         if not answer:
             continue
 
-        try:
-            gen = generate_concept_query(
-                client, all_passages, entry["name"], aliases, target_lang, model=model
+        # Retry generation on the same document if the model doesn't respond
+        # (empty question) or errors, up to _MAX_GEN_RETRIES attempts.
+        gen = None
+        for attempt in range(1, _MAX_GEN_RETRIES + 1):
+            try:
+                candidate = generate_concept_query(
+                    client, all_passages, entry["name"], aliases, target_lang, model=model
+                )
+            except Exception as exc:
+                tqdm.write(
+                    f"  {entry['chebi_id']} [{target_lang}]: generation error "
+                    f"(attempt {attempt}/{_MAX_GEN_RETRIES}): {exc}"
+                )
+                continue
+            if candidate["question"]:
+                gen = candidate
+                break
+        if gen is None:
+            tqdm.write(
+                f"  {entry['chebi_id']} [{target_lang}]: no question after "
+                f"{_MAX_GEN_RETRIES} attempts; skipped"
             )
-        except Exception as exc:
-            tqdm.write(f"  {entry['chebi_id']} [{target_lang}]: generation error: {exc}")
-            continue
-        if not gen["question"]:
             continue
 
         qa_pair = {"question": gen["question"], "answer": answer}

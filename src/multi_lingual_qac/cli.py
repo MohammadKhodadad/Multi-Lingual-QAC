@@ -375,6 +375,22 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--hf-dry-run", action="store_true",
                         help="With --push-alias-graph-hf, write parquet locally instead of uploading.")
     parser.add_argument("--hf-private", action="store_true", help="Create the HF dataset repo as private.")
+    parser.add_argument(
+        "--analyze-confusion",
+        action="store_true",
+        help="Analyze how often a confusable wrong compound (hard negative) outranks the right one "
+        "(gold), per query language, with embedding models. Writes reports/confusion_analysis/.",
+    )
+    parser.add_argument("--confusion-dataset", type=str,
+                        default="MehdiAstaraki/multi-lingual-qac-alias-graph",
+                        help="HF dataset repo (default) or a local hf_export dir.")
+    parser.add_argument("--confusion-models", nargs="+", default=None,
+                        help="Embedding models (default: the standard MTEB model set).")
+    parser.add_argument("--confusion-output-dir", type=str, default=None,
+                        help="Output dir (default: reports/confusion_analysis).")
+    parser.add_argument("--confusion-batch-size", type=int, default=32)
+    parser.add_argument("--confusion-query-limit", type=int, default=None,
+                        help="Process only the first N queries (for testing).")
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -456,6 +472,12 @@ def parse_args() -> PipelineConfig:
         alias_hf_repo=args.alias_hf_repo,
         hf_dry_run=args.hf_dry_run,
         hf_private=args.hf_private,
+        analyze_confusion=args.analyze_confusion,
+        confusion_dataset=args.confusion_dataset,
+        confusion_models=tuple(args.confusion_models) if args.confusion_models else (),
+        confusion_output_dir=args.confusion_output_dir,
+        confusion_batch_size=args.confusion_batch_size,
+        confusion_query_limit=args.confusion_query_limit,
     )
 
 
@@ -466,6 +488,20 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.analyze_confusion:
+        from src.alias_graph.confusion_analysis import run_confusion_analysis
+
+        run_confusion_analysis(
+            dataset=config.confusion_dataset,
+            output_dir=Path(config.confusion_output_dir)
+            if config.confusion_output_dir
+            else (project_root / "reports" / "confusion_analysis"),
+            models=config.confusion_models or None,
+            batch_size=config.confusion_batch_size,
+            query_limit=config.confusion_query_limit,
+        )
+        return
+
     if config.push_alias_graph_hf:
         from src.alias_graph.hf_export import push_alias_graph_to_hub
 
