@@ -47,8 +47,9 @@ _VARIANT_FILES = {
     "lite": "chebi_lite.obo.gz",
 }
 
-# `synonym: "text" SCOPE ...` — capture the quoted text and the scope token.
-_SYNONYM_RE = re.compile(r'^synonym:\s+"((?:[^"\\]|\\.)*)"\s+(\w+)')
+# `synonym: "text" SCOPE [TYPE] [xrefs]` — capture the quoted text, the scope, and
+# the optional OBO synonym-type id (e.g. IUPAC:NAME, INN, BRAND:NAME).
+_SYNONYM_RE = re.compile(r'^synonym:\s+"((?:[^"\\]|\\.)*)"\s+(\w+)(?:\s+([A-Za-z][\w:]*))?')
 
 
 def _variant_filename(variant: str) -> str:
@@ -91,6 +92,7 @@ def _parse_obo(obo_gz: Path) -> Tuple[nx.DiGraph, Dict[str, str]]:
     cur_id: Optional[str] = None
     cur_name: Optional[str] = None
     cur_syns: Set[str] = set()
+    cur_brands: Set[str] = set()
     cur_parents: list[str] = []
     cur_alts: list[str] = []
     cur_wiki: Optional[str] = None
@@ -104,6 +106,7 @@ def _parse_obo(obo_gz: Path) -> Tuple[nx.DiGraph, Dict[str, str]]:
             cur_id,
             name=cur_name or "",
             synonyms=sorted(cur_syns),
+            brand_names=sorted(cur_brands),
             wiki_en=cur_wiki,
         )
         for alt in cur_alts:
@@ -119,6 +122,7 @@ def _parse_obo(obo_gz: Path) -> Tuple[nx.DiGraph, Dict[str, str]]:
                 in_term = line == "[Term]"
                 cur_id = cur_name = cur_wiki = None
                 cur_syns = set()
+                cur_brands = set()
                 cur_parents = []
                 cur_alts = []
                 cur_obsolete = False
@@ -141,7 +145,13 @@ def _parse_obo(obo_gz: Path) -> Tuple[nx.DiGraph, Dict[str, str]]:
             elif line.startswith("synonym: "):
                 m = _SYNONYM_RE.match(line)
                 if m and m.group(2) in _KEEP_SYNONYM_SCOPES:
-                    cur_syns.add(_unescape(m.group(1)))
+                    text = _unescape(m.group(1))
+                    # Trade/product names (often common words like "Action", "Balance")
+                    # are unreliable for matching — keep them out of `synonyms`.
+                    if m.group(3) == "BRAND:NAME":
+                        cur_brands.add(text)
+                    else:
+                        cur_syns.add(text)
             elif line.startswith("xref: Wikipedia:"):
                 cur_wiki = line[len("xref: Wikipedia:"):].strip().replace("_", " ")
         commit()
@@ -167,6 +177,7 @@ def _write_cache(path: Path, graph: nx.DiGraph, alt_to_primary: Dict[str, str]) 
             n: {
                 "name": d.get("name", ""),
                 "synonyms": d.get("synonyms", []),
+                "brand_names": d.get("brand_names", []),
                 "wiki_en": d.get("wiki_en"),
             }
             for n, d in graph.nodes(data=True)
@@ -188,6 +199,7 @@ def _read_cache(path: Path) -> Tuple[nx.DiGraph, Dict[str, str]]:
             node_id,
             name=data.get("name", ""),
             synonyms=data.get("synonyms", []),
+            brand_names=data.get("brand_names", []),
             wiki_en=data.get("wiki_en"),
         )
     graph.add_edges_from(payload["is_a"])

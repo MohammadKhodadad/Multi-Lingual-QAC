@@ -224,9 +224,11 @@ def _select_gold_pub(
     groups: Dict[str, List[Dict[str, Any]]],
     target_lang: str,
     rng: random.Random,
+    name_set: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
-    """Pick a gold publication to ground generation, preferring one available
-    in the target language."""
+    """Pick a gold publication to ground generation, preferring one available in
+    the target language AND whose passages actually contain a concept name (so the
+    model has the concept to describe — guards against any residual false golds)."""
     in_corpus = [p for p in gold if p in groups]
     if not in_corpus:
         return None
@@ -234,8 +236,15 @@ def _select_gold_pub(
         p for p in in_corpus
         if any(r.get("language") == target_lang for r in groups[p])
     ]
-    pool = preferred or in_corpus
-    return rng.choice(pool)
+    pool = list(preferred or in_corpus)
+    rng.shuffle(pool)
+    names = [n for v in (name_set or {}).values() for n in (v if isinstance(v, list) else [v])]
+    if names:
+        for pub in pool[:30]:
+            text = _build_all_passages_text(groups[pub])
+            if any(contains_name(text, nm) for nm in names):
+                return pub
+    return pool[0] if pool else None
 
 
 def _build_row(
@@ -299,7 +308,7 @@ def _process_concept(
     rows: List[Dict[str, Any]] = []
 
     for target_lang in target_langs:
-        pub = _select_gold_pub(entry.get("gold", []), groups, target_lang, rng)
+        pub = _select_gold_pub(entry.get("gold", []), groups, target_lang, rng, name_set)
         if pub is None:
             continue
         doc_rows = groups[pub]

@@ -85,11 +85,13 @@ def _concept_name_set(
     graph: nx.DiGraph,
     cid: str,
     wiki_names: Dict[str, Dict[str, str]],
-) -> Tuple[Dict[str, List[str]], List[str]]:
+) -> Tuple[Dict[str, List[str]], List[str], List[str]]:
     """
-    Return (name_set, codes) for a concept. The multilingual name_set (the
-    query/answer side) holds only real names; registry/regulatory codes
+    Return (name_set, codes, brand_names) for a concept. The multilingual name_set
+    (the query/answer side) holds only real names; registry/regulatory codes
     (E-numbers, refrigerant numbers, company/CAS codes) are split into ``codes``.
+    ChEBI ``BRAND:NAME`` synonyms are already excluded from the graph's ``synonyms``
+    (kept out of matching) and surfaced here as ``brand_names`` for provenance.
     The ChEBI primary name always stays in name_set; only synonyms are classified.
     """
     data = graph.nodes[cid]
@@ -104,7 +106,7 @@ def _concept_name_set(
         name_set["chebi"] = _dedupe_keep_first(chebi_names)
     for lang, title in wiki_names.get(cid, {}).items():
         name_set.setdefault(lang, []).append(title)
-    return name_set, _dedupe_keep_first(codes)
+    return name_set, _dedupe_keep_first(codes), _dedupe_keep_first(list(data.get("brand_names", [])))
 
 
 def _neighbor_relations(graph: nx.DiGraph, cid: str) -> Dict[str, str]:
@@ -248,7 +250,7 @@ def build_alias_graph(
             continue
 
         concept_name = graph.nodes[cid].get("name", cid)
-        name_set, codes = _concept_name_set(graph, cid, wiki_names)
+        name_set, codes, brand_names = _concept_name_set(graph, cid, wiki_names)
         gold_langs = sorted({doc_by_id[d]["language"] for d in concept_to_docs[cid]})
 
         concepts.append({
@@ -256,6 +258,7 @@ def build_alias_graph(
             "name": concept_name,
             "name_set": name_set,
             "codes": codes,
+            "brand_names": brand_names,
             "query_names": sorted({n for names in name_set.values() for n in names}),
             "gold": sorted(gold_pubs),
             "hard_negatives": [
