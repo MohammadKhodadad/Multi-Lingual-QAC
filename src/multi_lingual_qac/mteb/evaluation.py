@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from datasets import get_dataset_config_names, load_dataset
+import mteb
 from mteb import MTEB
 from mteb.abstasks import AbsTaskRetrieval
 from mteb.abstasks.task_metadata import TaskMetadata
@@ -30,6 +31,23 @@ DEFAULT_MTEB_MODELS = [
     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
     "intfloat/multilingual-e5-large",
     "BAAI/bge-m3",
+]
+
+# Curated multilingual model set for the alias-graph benchmark (and the default for
+# `--evaluate-mteb`). Loaded via `mteb.get_model` so instruction/query prompts,
+# trust_remote_code and ColBERT late-interaction are handled per the MTEB registry;
+# SapBERT (not registered) falls back to a plain SentenceTransformer.
+ALIAS_GRAPH_MODELS = [
+    "Qwen/Qwen3-Embedding-0.6B",
+    "intfloat/multilingual-e5-large-instruct",
+    "BAAI/bge-m3",
+    "jinaai/jina-embeddings-v3",
+    "Alibaba-NLP/gte-multilingual-base",                 # mGTE
+    "google/embeddinggemma-300m",                        # gated on HF
+    "ibm-granite/granite-embedding-278m-multilingual",
+    "jinaai/jina-colbert-v2",                            # ColBERT (needs pylate)
+    "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR",  # ST fallback (not in MTEB registry)
+    "sentence-transformers/LaBSE",
 ]
 
 LANGUAGE_TO_MTEB = {
@@ -1075,8 +1093,17 @@ def run_mteb_evaluation(
     for model_name in models:
         model_slug = _slugify(model_name)
         print(f"Evaluating `{model_name}` on `{dataset_repo}` ({dataset_variant})...")
-        model = SentenceTransformer(model_name, cache_folder=str(model_cache_dir))
-        model_meta = evaluator.create_model_meta(model)
+        # Prefer MTEB's registry loader (correct per-model prompts / trust_remote_code /
+        # ColBERT late interaction); fall back to a plain SentenceTransformer for models
+        # MTEB does not know (e.g. SapBERT).
+        try:
+            model = mteb.get_model(model_name)
+            model_meta = mteb.get_model_meta(model_name)
+        except Exception:
+            model = SentenceTransformer(
+                model_name, cache_folder=str(model_cache_dir), trust_remote_code=True
+            )
+            model_meta = evaluator.create_model_meta(model)
         model_output_dir = base_output_dir / model_meta.model_name_as_path() / (
             model_meta.revision or "no_revision_available"
         )

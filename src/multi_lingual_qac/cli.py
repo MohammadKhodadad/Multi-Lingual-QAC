@@ -29,6 +29,22 @@ def _normalize_mteb_variant(value: str) -> str:
     return normalized
 
 
+def _resolve_eval_models(values: list[str] | None) -> tuple[str, ...]:
+    """Resolve `--evaluate-mteb MODEL...`: flag absent -> (); no models or `all`
+    -> the curated ALIAS_GRAPH_MODELS set; else the given ids with any `all` token
+    expanded, order-preserving de-dupe. (Lazy import keeps non-eval commands light.)"""
+    if values is None:
+        return ()
+    from src.multi_lingual_qac.mteb.evaluation import ALIAS_GRAPH_MODELS
+
+    if not values or [v.lower() for v in values] == ["all"]:
+        return tuple(ALIAS_GRAPH_MODELS)
+    out: list[str] = []
+    for v in values:
+        out.extend(ALIAS_GRAPH_MODELS if v.lower() == "all" else [v])
+    return tuple(dict.fromkeys(out))
+
+
 def _resolve_results_dir(project_root: Path, mteb_results_dir: str | None) -> Path:
     """Where to read existing results from: explicit dir, else the latest run, else legacy."""
     if mteb_results_dir:
@@ -74,7 +90,10 @@ def parse_args() -> PipelineConfig:
         metavar="MODEL",
         help=(
             "Evaluate embedding models against the HF retrieval dataset via MTEB. "
-            "If no models are provided, uses the built-in multilingual default set."
+            "Pass specific HF model ids, or `all` (or no models) to run the curated "
+            "10-model set (ALIAS_GRAPH_MODELS: Qwen3-Embedding-0.6B, e5-large-instruct, "
+            "bge-m3, jina-v3, gte-multilingual-base, embeddinggemma-300m, granite-278m, "
+            "jina-colbert-v2, SapBERT-XLMR, LaBSE)."
         ),
     )
     parser.add_argument(
@@ -415,18 +434,7 @@ def parse_args() -> PipelineConfig:
         qa_batch=qa_batch,
         push_hf=args.push_hf,
         hf_repo=args.hf_repo,
-        evaluate_mteb_models=tuple(
-            args.evaluate_mteb
-            if args.evaluate_mteb is not None and len(args.evaluate_mteb) > 0
-            else (
-                "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-                "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
-                "intfloat/multilingual-e5-large",
-                "BAAI/bge-m3",
-            )
-            if args.evaluate_mteb is not None
-            else ()
-        ),
+        evaluate_mteb_models=_resolve_eval_models(args.evaluate_mteb),
         mteb_dataset_repo=args.mteb_dataset_repo,
         mteb_dataset_variant=args.mteb_variant,
         mteb_output_dir=args.mteb_output_dir,
