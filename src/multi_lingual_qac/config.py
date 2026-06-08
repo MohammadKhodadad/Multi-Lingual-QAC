@@ -104,3 +104,7 @@ class PipelineConfig:
     cs_qa_seed: int = 42
     cs_qa_limit: Optional[int] = None
     cs_qa_workers: int = 1
+    push_alias_graph_hf: bool = False
+    alias_hf_repo: str = "MehdiAstaraki/multi-lingual-qac-alias-graph"
+    hf_dry_run: bool = False
+    hf_private: bool = False

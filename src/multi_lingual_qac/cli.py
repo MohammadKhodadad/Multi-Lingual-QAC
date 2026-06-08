@@ -363,6 +363,18 @@ def parse_args() -> PipelineConfig:
                         help="Process only the first N B/C/D/F groups (and N E docs).")
     parser.add_argument("--cs-qa-workers", type=int, default=1,
                         help="Worker threads for variant QA (default: 1).")
+    parser.add_argument(
+        "--push-alias-graph-hf",
+        action="store_true",
+        help="Publish the Alias-Graph Retrieval benchmark (alias_graph.json + concept_qa.csv + corpus) "
+        "to Hugging Face as corpus/queries/qrels/hard_negatives/qac/concepts configs.",
+    )
+    parser.add_argument("--alias-hf-repo", type=str,
+                        default="MehdiAstaraki/multi-lingual-qac-alias-graph",
+                        help="Target HF dataset repo for --push-alias-graph-hf.")
+    parser.add_argument("--hf-dry-run", action="store_true",
+                        help="With --push-alias-graph-hf, write parquet locally instead of uploading.")
+    parser.add_argument("--hf-private", action="store_true", help="Create the HF dataset repo as private.")
     args = parser.parse_args()
     qa_batch = None
     if args.qa_batch and args.qa_no_batch:
@@ -440,6 +452,10 @@ def parse_args() -> PipelineConfig:
         cs_qa_seed=args.cs_qa_seed,
         cs_qa_limit=args.cs_qa_limit,
         cs_qa_workers=args.cs_qa_workers,
+        push_alias_graph_hf=args.push_alias_graph_hf,
+        alias_hf_repo=args.alias_hf_repo,
+        hf_dry_run=args.hf_dry_run,
+        hf_private=args.hf_private,
     )
 
 
@@ -450,6 +466,31 @@ def main() -> None:
         sys.path.insert(0, str(project_root))
 
     config = parse_args()
+    if config.push_alias_graph_hf:
+        from src.alias_graph.hf_export import push_alias_graph_to_hub
+
+        paths = PipelinePaths.from_project_root(project_root)
+        corpus_csv = (
+            Path(config.alias_corpus)
+            if config.alias_corpus
+            else paths.multilingual_corpus_csv
+        )
+        alias_dir = (
+            Path(config.alias_output_dir)
+            if config.alias_output_dir
+            else paths.alias_graph_dir
+        )
+        push_alias_graph_to_hub(
+            alias_json=alias_dir / "alias_graph.json",
+            qac_csv=alias_dir / "qac" / "concept_qa.csv",
+            corpus_csv=corpus_csv,
+            repo_id=config.alias_hf_repo,
+            private=config.hf_private,
+            dry_run=config.hf_dry_run,
+            chebi_cache_dir=paths.chebi_dir,
+        )
+        return
+
     if config.build_code_switched:
         from src.alias_graph.code_switch import run_code_switch
 
