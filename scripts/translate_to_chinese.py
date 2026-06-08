@@ -14,14 +14,13 @@ rebuilt in code with the same logic as the original dataloader
     parts = []
     if title:       parts.append(f"Title: {title}")
     if abstract:    parts.append(f"Abstract: {abstract}")
-    if first_claim: parts.append(f"First claim: {first_claim}")
     context = "\\n\\n".join(parts).strip()
 
 so the structural labels stay in English exactly as they appear in every
 other row, while the body is in Chinese. ``description`` is never part of
 ``context`` (it isn't in the dataloader either) and is copied through
-unchanged. The model is only asked to translate ``title``, ``abstract`` and
-``first_claim``.
+unchanged. The model is only asked to translate ``title`` and ``abstract``;
+``first_claim`` is empty across the corpus and is carried through unchanged.
 
 Translation guidance (encoded in the prompt):
   - Translate fluent prose into natural simplified Chinese.
@@ -77,13 +76,13 @@ CORPUS_FIELDS = [
     "source",
 ]
 
-# Fields whose body the model translates. ``first_claim`` is currently always
-# empty in the corpus, but the original dataloader does include it in
-# ``context`` when populated, so we translate it for parity.
-TRANSLATABLE_FIELDS = ("title", "abstract", "first_claim")
+# Fields whose body the model translates. Only ``title`` and ``abstract`` are
+# translated, and ``context`` is rebuilt from these two.
+TRANSLATABLE_FIELDS = ("title", "abstract")
 # Carried through unchanged. ``description`` is never part of ``context`` in
-# the dataloader, so we leave it as-is.
-COPY_AS_IS_FIELDS = ("description",)
+# the dataloader, and ``first_claim`` is empty across the corpus, so both are
+# left as-is.
+COPY_AS_IS_FIELDS = ("description", "first_claim")
 
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_REASONING_EFFORT = "low"
@@ -156,19 +155,18 @@ def _pick_source_row(rows: List[Dict[str, str]]) -> Optional[Dict[str, str]]:
     return None
 
 
-def _build_context(title: str, abstract: str, first_claim: str) -> str:
-    """Reconstruct the ``context`` field exactly the way the original corpus
-    builder does in ``src/multi_lingual_qac/dataloaders/google_patents.py``:
-    English structural labels, only non-empty parts included, joined with a
-    blank line, stripped. ``description`` is intentionally not part of the
-    context (matches the dataloader)."""
+def _build_context(title: str, abstract: str) -> str:
+    """Reconstruct the ``context`` field from the translated title and
+    abstract, mirroring the original corpus builder in
+    ``src/multi_lingual_qac/dataloaders/google_patents.py``: English structural
+    labels, only non-empty parts included, joined with a blank line, stripped.
+    ``description`` is intentionally not part of the context (matches the
+    dataloader)."""
     parts: List[str] = []
     if title:
         parts.append(f"Title: {title}")
     if abstract:
         parts.append(f"Abstract: {abstract}")
-    if first_claim:
-        parts.append(f"First claim: {first_claim}")
     return "\n\n".join(parts).strip()
 
 
@@ -206,9 +204,7 @@ def translate_row(
         new_row[field] = "" if value is None else str(value)
     for field in COPY_AS_IS_FIELDS:
         new_row[field] = source.get(field, "") or ""
-    new_row["context"] = _build_context(
-        new_row["title"], new_row["abstract"], new_row["first_claim"]
-    )
+    new_row["context"] = _build_context(new_row["title"], new_row["abstract"])
     return new_row
 
 
