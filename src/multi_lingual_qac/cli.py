@@ -39,6 +39,22 @@ def _resolve_results_dir(project_root: Path, mteb_results_dir: str | None) -> Pa
     return project_root / "reports" / "mteb"
 
 
+def _dataset_from_run_metadata(results_dir: Path) -> tuple[str | None, str | None]:
+    """Read (dataset_repo, dataset_variant) from a run's run_metadata.json, if present.
+
+    Lets the analysis step target whatever dataset the run was evaluated against,
+    so the user does not have to re-specify --mteb-dataset-repo.
+    """
+    import json
+
+    meta_path = Path(results_dir) / "run_metadata.json"
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None, None
+    return meta.get("dataset_repo"), meta.get("dataset_variant")
+
+
 def parse_args() -> PipelineConfig:
     default_mteb_dataset_repo = "MehdiAstaraki/multi-lingual-qac-chem-patents"
     parser = argparse.ArgumentParser(
@@ -693,8 +709,9 @@ def main() -> None:
         run_dir = Path(config.mteb_output_dir) if config.mteb_output_dir else (runs_root / run_id)
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        save_predictions = config.mteb_save_predictions or config.analyze_questions or config.analyze_confusion
-        prediction_dir = (run_dir / "predictions") if save_predictions else None
+        # Evaluation always saves everything later analysis needs: per-query
+        # predictions + a tidy scored-rankings table (reporting is a separate step).
+        prediction_dir = run_dir / "predictions"
         summaries = run_mteb_evaluation(
             list(config.evaluate_mteb_models),
             dataset_repo=config.mteb_dataset_repo,
@@ -707,36 +724,16 @@ def main() -> None:
         # Comparison tables (cheap, no network/GPU) inside the run folder.
         generate_mteb_comparison_tables(results_dir=run_dir, output_dir=run_dir / "mteb_tables")
 
-        analysis_report = None
-        if config.analyze_questions:
-            from src.multi_lingual_qac.mteb import run_question_analysis
+        # Persist the embedding model's rankings as a tidy table (for future metrics, e.g. CLIR@k).
+        from src.alias_graph.retrieval_results import save_retrieval_results
 
-            analysis_dir = (
-                Path(config.mteb_analysis_dir)
-                if config.mteb_analysis_dir
-                else (run_dir / "question_analysis")
-            )
-            analysis_report = run_question_analysis(
-                prediction_dir,
-                output_dir=analysis_dir,
-                dataset_repo=config.mteb_dataset_repo,
-                dataset_variant=config.mteb_dataset_variant,
-                model_names=list(config.evaluate_mteb_models),
-                make_plots=not config.mteb_no_plots,
-                query_metadata_csv=config.mteb_query_metadata,
-            )
-
-        if config.analyze_confusion:
-            from src.alias_graph.confusion_analysis import run_confusion_from_predictions
-
-            run_confusion_from_predictions(
-                prediction_dir,
-                run_dir / "confusion",
-                dataset_repo=config.mteb_dataset_repo,
-                dataset_variant=config.mteb_dataset_variant,
-                model_names=list(config.evaluate_mteb_models),
-                make_plots=not config.mteb_no_plots,
-            )
+        save_retrieval_results(
+            prediction_dir,
+            run_dir / "retrieval_results",
+            dataset_repo=config.mteb_dataset_repo,
+            dataset_variant=config.mteb_dataset_variant,
+            model_names=list(config.evaluate_mteb_models),
+        )
 
         # Run identity: metadata + rolling trend index + latest pointer.
         sizes = dataset_sizes(config.mteb_dataset_repo, "main", config.mteb_dataset_variant)
@@ -779,15 +776,24 @@ def main() -> None:
         print(f"  Output:  {run_dir}")
         for item in summaries:
             print(f"  {item.model_name}: {item.main_score:.4f}")
-        if analysis_report:
-            print(f"  Question-level analysis: {analysis_report}")
         if default_layout:
             print(f"  Trend index: {runs_root / 'index.csv'}")
+        if config.analyze_questions or config.analyze_confusion:
+            print("  Note: analysis is a separate step and was NOT run during evaluation.")
+        print("  Next (analysis, re-runnable without re-evaluating):")
+        print(
+            f"    qac --analyze-questions --analyze-confusion --mteb-results-dir {run_dir}"
+        )
         return
 
     if config.analyze_questions or config.analyze_confusion:
         results_dir = _resolve_results_dir(project_root, config.mteb_results_dir)
         prediction_dir = results_dir / "predictions"
+        # Read the dataset the run was evaluated against (so it need not be re-specified).
+        meta_repo, meta_variant = _dataset_from_run_metadata(results_dir)
+        dataset_repo = meta_repo or config.mteb_dataset_repo
+        dataset_variant = meta_variant or config.mteb_dataset_variant
+        print(f"Analyzing run: {results_dir}  (dataset: {dataset_repo} / {dataset_variant})")
         if config.analyze_questions:
             from src.multi_lingual_qac.mteb import run_question_analysis
 
@@ -799,22 +805,20 @@ def main() -> None:
             report = run_question_analysis(
                 prediction_dir,
                 output_dir=analysis_dir,
-                dataset_repo=config.mteb_dataset_repo,
-                dataset_variant=config.mteb_dataset_variant,
+                dataset_repo=dataset_repo,
+                dataset_variant=dataset_variant,
                 make_plots=not config.mteb_no_plots,
                 query_metadata_csv=config.mteb_query_metadata,
             )
-            print("Question-level analysis generated.")
-            print(f"  Results dir: {results_dir}")
-            print(f"  Output: {report}")
+            print(f"  Question-level analysis: {report}")
         if config.analyze_confusion:
             from src.alias_graph.confusion_analysis import run_confusion_from_predictions
 
             run_confusion_from_predictions(
                 prediction_dir,
                 results_dir / "confusion",
-                dataset_repo=config.mteb_dataset_repo,
-                dataset_variant=config.mteb_dataset_variant,
+                dataset_repo=dataset_repo,
+                dataset_variant=dataset_variant,
                 make_plots=not config.mteb_no_plots,
             )
         return

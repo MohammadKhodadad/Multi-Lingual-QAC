@@ -66,7 +66,10 @@ def run_confusion_from_predictions(
 
     queries = _load_config(dataset_repo, "queries", variant, revision)
     qrels = _load_config(dataset_repo, "qrels", variant, revision)
-    hard_neg = _load_config(dataset_repo, "hard_negatives", variant, revision)
+    try:
+        hard_neg = _load_config(dataset_repo, "hard_negatives", variant, revision)
+    except Exception:
+        hard_neg = []  # dataset has no hard-negative labels (e.g. no look-alikes)
 
     qid_col = "_id" if "_id" in queries.column_names else "query_id"
     q_lang = {str(r[qid_col]): str(r.get("query_language", "")).strip().lower() for r in queries}
