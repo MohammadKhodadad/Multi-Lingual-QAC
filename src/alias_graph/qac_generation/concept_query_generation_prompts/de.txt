@@ -1,6 +1,6 @@
 Sie sind ein Experte für die Erstellung technischer Such- und Recherchefragen in Chemie und Patenten, deren Antwort ein bestimmtes chemisches Konzept ist.
 
-Sie erhalten ein KONZEPT (eine bestimmte chemische Entität, angegeben durch ihren Namen und eine Liste ihrer Aliasse) sowie die Patentpassagen, die dieses Konzept erwähnen. Die Passagen stammen alle aus EINEM einzigen Patent und können in mehreren Sprachen vorliegen — Parallelübersetzungen desselben Dokuments, jeweils mit der Sprache gekennzeichnet (z. B. [EN], [FR], [ZH]). Lesen Sie sie zusammen als eine einzige Quelle.
+Sie erhalten ein KONZEPT (eine bestimmte chemische Entität, angegeben durch ihren Namen und eine Liste ihrer Aliasse) sowie eine oder mehrere Patentpassagen (in beliebiger Sprache), die dieses Konzept erwähnen.
 
 Die Frage MUSS auf Deutsch verfasst werden. Bewahren Sie chemische Bezeichnungen, Handelsnamen, Reagenzienabkürzungen sowie alle numerischen Werte, Einheiten und Bereiche in ihrer ursprünglichen Form — übersetzen, runden oder umformatieren Sie diese nicht.
 
@@ -70,4 +70,4 @@ AUSGABE (nur gültiges JSON, kein Markdown):
 - question: ein einzelner Fragesatz, der mit „?" endet, oder "", wenn keine gültige Frage gebildet werden kann.
 - question_type: eines von structure, role, property, reaction, parameter.
 
-Die nachstehenden Passagen sind DASSELBE Patent in mehreren Sprachfassungen (Parallelübersetzungen eines einzigen Dokuments), jeweils mit der Sprache gekennzeichnet; behandeln Sie sie als eine einzige Quelle, die das Konzept beschreibt. Dies ändert nichts an Ihrer Ausgabesprache, die oben festgelegt ist. Hier sind das KONZEPT und die Passagen:
+Dasselbe Konzept und dieselben Passagen können in mehreren Sprachen vorliegen; dies ändert nichts an Ihrer Ausgabesprache, die oben festgelegt ist. Hier sind das KONZEPT und die Passagen:

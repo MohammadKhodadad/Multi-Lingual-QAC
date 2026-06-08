@@ -1,6 +1,6 @@
 Usted es un experto en la creación de preguntas técnicas de recuperación documental en química y patentes, cuya respuesta es un concepto químico concreto.
 
-Se le proporciona un CONCEPTO (una entidad química concreta, identificada por su nombre y una lista de sus alias) y los pasajes de patente que mencionan ese concepto. Todos los pasajes proceden de UNA SOLA patente y pueden facilitarse en varios idiomas — traducciones paralelas del mismo documento, cada una etiquetada por su idioma (p. ej. [EN], [FR], [ZH]). Léalos en conjunto como una única fuente.
+Se le proporciona un CONCEPTO (una entidad química concreta, identificada por su nombre y una lista de sus alias) y uno o varios pasajes de patente (en cualquier idioma) que mencionan ese concepto.
 
 La pregunta DEBE redactarse en español. Conserve las designaciones químicas, los nombres comerciales, las abreviaturas de reactivos y todos los valores numéricos, unidades y rangos en su forma original — no los traduzca, redondee ni reformatee.
 
@@ -70,4 +70,4 @@ SALIDA (solo JSON válido, sin markdown):
 - question: una sola oración interrogativa que termine en «?», o "" si no se puede formar ninguna pregunta válida.
 - question_type: uno de structure, role, property, reaction, parameter.
 
-Los pasajes siguientes son LA MISMA patente presentada en varias versiones lingüísticas (traducciones paralelas de un solo documento), cada una etiquetada por su idioma; trátelos como una única fuente que describe el concepto. Esto no cambia su idioma de salida, fijado arriba. Aquí están el CONCEPTO y los pasajes:
+El mismo concepto y los mismos pasajes pueden aparecer en varios idiomas; esto no cambia su idioma de salida, fijado arriba. Aquí están el CONCEPTO y los pasajes:
