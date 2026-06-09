@@ -1,0 +1,108 @@
+{
+  "interpretation": "concept_level",
+  "description": "Gold = every document of every publication attesting the query's concept (\"find all patents about compound X\"). This is the benchmark as shipped; Recall@10 is mechanically capped because there are many relevant docs per query.",
+  "eval_units": 132,
+  "avg_relevant_per_unit": 109.27,
+  "ranked_by": "recall_10",
+  "models": [
+    {
+      "model_name": "google-embeddinggemma-300m",
+      "metrics": {
+        "recall_10": 0.08066,
+        "recall_100": 0.15152,
+        "P_10": 0.30758,
+        "ndcg_cut_10": 0.39367,
+        "recip_rank": 0.7305,
+        "map": 0.11279
+      }
+    },
+    {
+      "model_name": "qwen-qwen3-embedding-0-6b",
+      "metrics": {
+        "recall_10": 0.0643,
+        "recall_100": 0.12621,
+        "P_10": 0.27879,
+        "ndcg_cut_10": 0.36227,
+        "recip_rank": 0.73456,
+        "map": 0.07926
+      }
+    },
+    {
+      "model_name": "nomic-ai-nomic-embed-text-v2-moe",
+      "metrics": {
+        "recall_10": 0.05703,
+        "recall_100": 0.11209,
+        "P_10": 0.23561,
+        "ndcg_cut_10": 0.31866,
+        "recip_rank": 0.69593,
+        "map": 0.06765
+      }
+    },
+    {
+      "model_name": "sentence-transformers-labse",
+      "metrics": {
+        "recall_10": 0.05613,
+        "recall_100": 0.09723,
+        "P_10": 0.1947,
+        "ndcg_cut_10": 0.26515,
+        "recip_rank": 0.57411,
+        "map": 0.06181
+      }
+    },
+    {
+      "model_name": "ibm-granite-granite-embedding-278m-multilingual",
+      "metrics": {
+        "recall_10": 0.05607,
+        "recall_100": 0.1057,
+        "P_10": 0.20455,
+        "ndcg_cut_10": 0.27511,
+        "recip_rank": 0.5811,
+        "map": 0.0663
+      }
+    },
+    {
+      "model_name": "baai-bge-m3",
+      "metrics": {
+        "recall_10": 0.05415,
+        "recall_100": 0.11327,
+        "P_10": 0.22652,
+        "ndcg_cut_10": 0.31138,
+        "recip_rank": 0.70997,
+        "map": 0.06454
+      }
+    },
+    {
+      "model_name": "cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr",
+      "metrics": {
+        "recall_10": 0.0496,
+        "recall_100": 0.10202,
+        "P_10": 0.14318,
+        "ndcg_cut_10": 0.19607,
+        "recip_rank": 0.45249,
+        "map": 0.05907
+      }
+    },
+    {
+      "model_name": "intfloat-multilingual-e5-large-instruct",
+      "metrics": {
+        "recall_10": 0.02922,
+        "recall_100": 0.07323,
+        "P_10": 0.13712,
+        "ndcg_cut_10": 0.17881,
+        "recip_rank": 0.46301,
+        "map": 0.03506
+      }
+    },
+    {
+      "model_name": "alibaba-nlp-gte-multilingual-base",
+      "metrics": {
+        "recall_10": 0.0062,
+        "recall_100": 0.0147,
+        "P_10": 0.02955,
+        "ndcg_cut_10": 0.03908,
+        "recip_rank": 0.13423,
+        "map": 0.00502
+      }
+    }
+  ]
+}
