@@ -10,3 +10,5 @@ cluster/
 data/
 # benchmark runs: keep summaries/tables/metadata/index trackable, ignore the heavy parts
 .claude
+reports/runs/alias_graph/experimental_plots
+reports/runs/alias_graph/experimental_codes
