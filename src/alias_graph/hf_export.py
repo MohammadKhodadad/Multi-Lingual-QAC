@@ -4,7 +4,11 @@ Publish the Alias-Graph Retrieval benchmark to the Hugging Face Hub.
 Mirrors the MTEB structure of MehdiAstaraki/multi-lingual-qac-chem-patents
 (`corpus` / `queries` / `qrels` / `qac`) and adds the task-specific pieces:
 - queries carry the concept identity + the multilingual **name_set** (alias query),
+  plus the `source_publication` they were actually generated from,
 - `qrels` mark gold docs (score 1) AND the chemically-similar look-alikes (score 0),
+- a `source_qrels` config pins each query to the exact publication it was generated
+  from and that publication's translations (the gold document, in every language),
+  as distinct from `qrels` which marks every document about the concept,
 - a `hard_negatives` config names each look-alike's neighbor concept + relation
   (so one can later measure how often a confusable wrong compound outranks the gold),
 - a `concepts` config carries the full per-concept alias-graph record.
@@ -28,7 +32,7 @@ from datasets import Dataset
 from src.alias_graph.builder import _read_corpus
 from src.multi_lingual_qac.export.hf_upload import DATASET_CARD_ATTRIBUTION
 
-_CONFIGS = ["corpus", "queries", "qrels", "hard_negatives", "qac", "concepts"]
+_CONFIGS = ["corpus", "queries", "qrels", "source_qrels", "hard_negatives", "qac", "concepts"]
 
 README_YAML = "---\nconfigs:\n" + "".join(
     f"- config_name: {c}\n  data_files:\n  - split: train\n    path: data/{c}/*.parquet\n"
@@ -79,6 +83,7 @@ def _build_configs(
 
     queries_data: List[dict] = []
     qrels_data: List[dict] = []
+    source_qrels_data: List[dict] = []
     hard_neg_data: List[dict] = []
     qac_data: List[dict] = []
     seen_qids: set[str] = set()
@@ -87,6 +92,8 @@ def _build_configs(
         cid = r.get("chebi_id", "")
         c = concept_by_cid.get(cid, {})
         lang = r.get("question_language", "")
+        # The single publication this query was generated from (the gold document).
+        src_pub = (r.get("publication_number") or "").strip()
         qid = f"{cid.replace(':', '_')}__{lang}"
         if qid in seen_qids:
             qid = f"{qid}__{i}"
@@ -98,12 +105,22 @@ def _build_configs(
             "chebi_id": cid, "concept_name": r.get("concept_name", ""),
             "answer": r.get("answer", ""), "answer_language": r.get("answer_language", ""),
             "question_type": r.get("question_type", ""),
+            "source_publication": src_pub,
             "total_score": int(r.get("total_score") or 0),
             "faith_overall": int(r.get("faith_overall") or 0),
             "qual_overall": int(r.get("qual_overall") or 0),
             "name_set_json": name_set_json,
             "codes_json": json.dumps(c.get("codes", []), ensure_ascii=False),
         })
+
+        # Exact (query -> source publication) mapping: the gold document the query
+        # was written from, plus its translations (one row per language variant).
+        for doc in docs_by_pub.get(src_pub, []):
+            source_qrels_data.append({
+                "query-id": qid, "corpus-id": doc["id"],
+                "publication_number": src_pub,
+                "corpus_language": str(doc.get("language", "")).strip(),
+            })
 
         gold_pubs = c.get("gold", [])
         for pub in gold_pubs:
@@ -124,6 +141,7 @@ def _build_configs(
             "query_id": qid, "chebi_id": cid, "concept_name": r.get("concept_name", ""),
             "question": r.get("question", ""), "answer": r.get("answer", ""),
             "question_type": r.get("question_type", ""), "query_language": lang,
+            "source_publication": src_pub,
             "total_score": int(r.get("total_score") or 0),
             "gold_pubs_json": json.dumps(gold_pubs, ensure_ascii=False),
             "n_gold": c.get("n_gold", len(gold_pubs)),
@@ -146,7 +164,8 @@ def _build_configs(
 
     return {
         "corpus": corpus_data, "queries": queries_data, "qrels": qrels_data,
-        "hard_negatives": hard_neg_data, "qac": qac_data, "concepts": concepts_data,
+        "source_qrels": source_qrels_data, "hard_negatives": hard_neg_data,
+        "qac": qac_data, "concepts": concepts_data,
     }
 
 
@@ -158,10 +177,12 @@ def _readme(repo_id: str) -> bytes:
         "that genuinely talk about it, across languages, **without being fooled by documents about "
         "chemically similar look-alike concepts**?\n\n"
         "Configs: `corpus` (gold + hard-negative documents), `queries` (technical questions about each "
-        "concept, plus the concept's multilingual `name_set`), `qrels` (gold docs = score 1, "
-        "designated look-alike docs = score 0), `hard_negatives` (each look-alike's neighbor concept "
-        "and `relation`), `qac` (full triplets), and `concepts` (the per-concept alias-graph record). "
-        "Each config has a `train` split.\n"
+        "concept, plus the concept's multilingual `name_set` and the `source_publication` each query "
+        "was generated from), `qrels` (every document about the concept: gold docs = score 1, "
+        "designated look-alike docs = score 0), `source_qrels` (the exact publication each query was "
+        "generated from and its translations — the gold document in every language), `hard_negatives` "
+        "(each look-alike's neighbor concept and `relation`), `qac` (full triplets), and `concepts` "
+        "(the per-concept alias-graph record). Each config has a `train` split.\n"
         + DATASET_CARD_ATTRIBUTION
     )
     return body.encode("utf-8")
@@ -190,12 +211,24 @@ def push_alias_graph_to_hub(
     private: bool = False,
     dry_run: bool = False,
     chebi_cache_dir: Optional[Path] = None,
+    only_configs: Optional[List[str]] = None,
 ) -> str:
     """Build the Alias-Graph dataset configs and push them (or, if ``dry_run``,
-    write parquet under data/alias_graph/hf_export/ and skip the upload)."""
+    write parquet under data/alias_graph/hf_export/ and skip the upload).
+
+    ``only_configs`` restricts the push/write to the named configs (e.g.
+    ``["queries", "qac", "source_qrels"]`` to patch an existing dataset in place
+    without re-uploading the large, unchanged corpus); the README is always
+    refreshed so the config listing stays accurate.
+    """
     configs = _build_configs(
         alias_json, qac_csv, corpus_csv, neighbor_names=_neighbor_name_map(chebi_cache_dir)
     )
+    if only_configs is not None:
+        unknown = set(only_configs) - set(configs)
+        if unknown:
+            raise ValueError(f"Unknown config(s) for only_configs: {sorted(unknown)}")
+        configs = {name: configs[name] for name in only_configs}
     datasets = {name: Dataset.from_list(rows) for name, rows in configs.items()}
     for name, ds in datasets.items():
         print(f"  {name}: {len(ds)} rows | columns: {ds.column_names}")
