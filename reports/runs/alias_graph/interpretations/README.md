@@ -2,30 +2,26 @@
 
 Gold = every document of every publication attesting the query's concept ("find all patents about compound X"). This is the benchmark as shipped; Recall@10 is mechanically capped because there are many relevant docs per query.
 
-Gold = a single gold publication's language variants ("find this patent's cross-language versions"). Each (query, gold-publication) pair is one eval unit; the concept's other gold publications are excluded from the candidate ranking.
+Gold = the query's OWN source publication's language variants -- the single patent each query was generated from (the dataset's `source_publication` column). One eval unit per query (~2-3 gold docs). Standard full-corpus ranking: every other document, including the concept's other gold patents, counts as non-relevant.
 
 Files:
-- `concept_level/` — leaderboard.md + summary.json (gold = all concept docs)
-- `per_publication/` — leaderboard.md + summary.json (gold = one publication's variants)
+- `concept_level/` — leaderboard.md + summary.json (gold = all of the concept's patents)
+- `per_publication/` — leaderboard.md + summary.json (gold = the query's own source patent's variants)
 - `comparison.md` — both lenses side by side
 
 Both are re-scored from `../predictions/` with pytrec_eval; the models were NOT re-run.
+The per_publication lens uses the dataset's `source_publication` column (the single patent each
+query was generated from), so each query has only ~2-3 gold docs and Recall@10 is not capped.
 
 ## What this shows
 
-- **Model ranking is the same under both lenses** (embeddinggemma > Qwen3 > nomic > bge-m3 > … > gte),
-  so the leaderboard is robust to the choice of relevance definition.
-- **Per-publication Recall@10 is *lower*, not higher** (~0.04 vs ~0.08), even though each unit has
-  only ~2.2 gold docs. Reason: the queries are **concept-generic** (`CHEBI_x__lang`), so a model has
-  no signal to prefer one of the concept's ~50 attesting publications. It concentrates retrieval on a
-  few easy publications, so a *typical* publication's specific cross-language variants rank low. So the
-  low Recall@10 is **not merely an artifact of the ~109-gold count** — retrieving a *specific* patent's
-  translations from a concept-only query is intrinsically hard.
-- The big drop in MRR/nDCG (concept ≈0.7/0.39 → per-pub ≈0.03/0.03) says the same thing: models
-  reliably put *some* concept doc near the top, but rarely a *given* publication's doc.
-
-## Caveat on the per-publication lens
-The dataset does not store which single publication each query was generated from, so "per publication"
-is realised by treating every (query, gold-publication) pair as an independent unit. A *true*
-per-document benchmark (one query tied to one source publication; gold = that publication's ~2.3
-translations) would require regenerating `queries`+`qrels` to record the source publication.
+- **Per-document Recall@10 is large and discriminative (0.24–0.67)** — confirming the tiny
+  concept-level Recall@10 (~0.08) was purely a many-positives artifact (~109 gold/query), not poor
+  retrieval. With the true ~2.4 gold/query, the top models retrieve a query's source patent's
+  cross-language variants well (embeddinggemma 0.67, Qwen3 0.64, bge-m3 0.60, nomic 0.58).
+- **Model ranking is the same under both lenses**, so the leaderboard is robust to the relevance
+  definition.
+- **gte-multilingual-base is a genuine outlier** (per-doc R@10 0.047 vs 0.5–0.67), ~10× below the
+  pack under *both* lenses — its weak score is real, not an artifact of the position_ids fix.
+- This per_publication lens (gold = the query's own source patent) is the meaningful headline for
+  this benchmark; concept_level Recall@10 should not be used as the main score.

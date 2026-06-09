@@ -59,16 +59,24 @@ def _pub_of(doc_id: str, pub_lookup: dict[str, str]) -> str:
 
 
 def load_gold_and_pubs():
-    """per-query gold docs (score>0) and a doc_id -> publication_number lookup for them."""
-    qrels = load_dataset(DATASET_REPO, "qrels", split="train")
-    corpus = load_dataset(DATASET_REPO, "corpus", split="train")
+    """per-query concept gold docs (score>0), a doc_id -> publication_number lookup, and a
+    query_id -> source_publication map (the single patent each query was generated from)."""
+    # force_redownload: the dataset was re-pushed to add `source_publication`.
+    dl = "force_redownload"
+    qrels = load_dataset(DATASET_REPO, "qrels", split="train", download_mode=dl)
+    corpus = load_dataset(DATASET_REPO, "corpus", split="train", download_mode=dl)
+    queries = load_dataset(DATASET_REPO, "queries", split="train", download_mode=dl)
     cid = "_id" if "_id" in corpus.column_names else "corpus-id"
     pub_lookup = {str(r[cid]): str(r["publication_number"]) for r in corpus} if "publication_number" in corpus.column_names else {}
+    qid = "_id" if "_id" in queries.column_names else "query-id"
+    if "source_publication" not in queries.column_names:
+        sys.exit("queries config has no `source_publication` column — re-pull the dataset.")
+    src_pub = {str(r[qid]): str(r["source_publication"]) for r in queries}
     gold: dict[str, set[str]] = defaultdict(set)
     for r in qrels:
         if float(r["score"]) > 0:
             gold[str(r["query-id"])].add(str(r["corpus-id"]))
-    return gold, pub_lookup
+    return gold, pub_lookup, src_pub
 
 
 def avg(vals: list[float]) -> float:
@@ -85,27 +93,29 @@ def score_concept(preds, gold):
     return metrics, len(qrels), avg(gold_sizes)
 
 
-def score_per_publication(preds, gold, pub_lookup):
-    """Lens 2: one eval unit per (query, gold-publication); gold = that pub's variants;
-    sibling gold docs removed from the candidate ranking."""
+def score_per_document(preds, gold, pub_lookup, src_pub):
+    """Lens 2 (true per-document): one eval unit per query; gold = the query's OWN source
+    publication's language variants (the patent it was generated from). Standard full-corpus
+    ranking -- every other doc (including the concept's other gold patents) is non-relevant."""
     qrels: dict[str, dict[str, int]] = {}
     run: dict[str, dict[str, float]] = {}
     gold_sizes: list[int] = []
+    missing = 0
     for q, docs in gold.items():
         if q not in preds:
             continue
-        ranking = preds[q]
-        by_pub: dict[str, set[str]] = defaultdict(set)
-        for d in docs:
-            by_pub[_pub_of(d, pub_lookup)].add(d)
-        for pub, pdocs in by_pub.items():
-            siblings = docs - pdocs  # the concept's other gold docs
-            pseudo = f"{q}@@{pub}"
-            qrels[pseudo] = {d: 1 for d in pdocs}
-            run[pseudo] = {d: s for d, s in ranking.items() if d not in siblings}
-            gold_sizes.append(len(pdocs))
+        sp = src_pub.get(q)
+        gdocs = {d for d in docs if _pub_of(d, pub_lookup) == sp} if sp else set()
+        if not gdocs:
+            missing += 1
+            continue
+        qrels[q] = {d: 1 for d in gdocs}
+        run[q] = preds[q]
+        gold_sizes.append(len(gdocs))
+    if missing:
+        print(f"   [warn] {missing} query/ies had no gold doc matching their source_publication")
     res = pytrec_eval.RelevanceEvaluator(qrels, MEASURES).evaluate(run)
-    metrics = {k: avg([res[p][k] for p in res]) for k in OUT_KEYS}
+    metrics = {k: avg([res[q][k] for q in res]) for k in OUT_KEYS}
     return metrics, len(qrels), avg(gold_sizes)
 
 
@@ -138,8 +148,8 @@ def write_lens(name: str, blurb: str, rows: list[dict], n_units: int, avg_gold: 
 def main():
     if not PRED_DIR.is_dir():
         sys.exit(f"No predictions under {PRED_DIR}. Run cluster/combine_alias_graph.sh first.")
-    print(">> loading qrels + corpus ...")
-    gold, pub_lookup = load_gold_and_pubs()
+    print(">> loading qrels + corpus + queries (source_publication) ...")
+    gold, pub_lookup, src_pub = load_gold_and_pubs()
     models = _discover_models(PRED_DIR, None)
     print(f">> {len(models)} model(s) with predictions")
 
@@ -150,17 +160,18 @@ def main():
         if not preds:
             print(f"   [skip] {label}: no predictions"); continue
         cm, c_units, c_gold = score_concept(preds, gold)
-        pm, p_units, p_gold = score_per_publication(preds, gold, pub_lookup)
+        pm, p_units, p_gold = score_per_document(preds, gold, pub_lookup, src_pub)
         concept_rows.append({"model": label, "metrics": cm})
         pp_rows.append({"model": label, "metrics": pm})
-        print(f"   {label:48s} concept R@10={cm['recall_10']:.4f}  per-pub R@10={pm['recall_10']:.4f}")
+        print(f"   {label:48s} concept R@10={cm['recall_10']:.4f}  per-doc R@10={pm['recall_10']:.4f}")
 
     c_blurb = ("Gold = every document of every publication attesting the query's concept "
                "(\"find all patents about compound X\"). This is the benchmark as shipped; "
                "Recall@10 is mechanically capped because there are many relevant docs per query.")
-    p_blurb = ("Gold = a single gold publication's language variants (\"find this patent's "
-               "cross-language versions\"). Each (query, gold-publication) pair is one eval unit; "
-               "the concept's other gold publications are excluded from the candidate ranking.")
+    p_blurb = ("Gold = the query's OWN source publication's language variants -- the single patent "
+               "each query was generated from (the dataset's `source_publication` column). One eval "
+               "unit per query (~2-3 gold docs). Standard full-corpus ranking: every other document, "
+               "including the concept's other gold patents, counts as non-relevant.")
     c_ranked = write_lens("concept_level", c_blurb, concept_rows, c_units, c_gold)
     p_ranked = write_lens("per_publication", p_blurb, pp_rows, p_units, p_gold)
 
@@ -168,10 +179,10 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     cmp = ["# Alias-graph: two relevance interpretations", "",
            "Same models, same saved rankings — only the definition of *relevant* differs.", "",
-           f"- **concept_level**: {c_units} queries, ~{c_gold:.0f} gold docs each.",
-           f"- **per_publication**: {p_units} (query, publication) units, ~{p_gold:.1f} gold docs each.", "",
+           f"- **concept_level**: {c_units} queries, ~{c_gold:.0f} gold docs each (all patents about the concept).",
+           f"- **per_publication**: {p_units} queries, ~{p_gold:.1f} gold docs each (the query's own source patent's language variants).", "",
            "## Recall@10 / nDCG@10 / MRR side by side (ranked by per-publication Recall@10)", "",
-           "| Model | concept R@10 | per-pub R@10 | concept nDCG@10 | per-pub nDCG@10 | concept MRR | per-pub MRR |",
+           "| Model | concept R@10 | per-doc R@10 | concept nDCG@10 | per-doc nDCG@10 | concept MRR | per-doc MRR |",
            "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
     cm = {r["model"]: r["metrics"] for r in concept_rows}
     pm = {r["model"]: r["metrics"] for r in pp_rows}
@@ -185,10 +196,12 @@ def main():
         "# Two relevance interpretations of the alias-graph run\n\n"
         f"{c_blurb}\n\n{p_blurb}\n\n"
         "Files:\n"
-        "- `concept_level/` — leaderboard.md + summary.json (gold = all concept docs)\n"
-        "- `per_publication/` — leaderboard.md + summary.json (gold = one publication's variants)\n"
+        "- `concept_level/` — leaderboard.md + summary.json (gold = all of the concept's patents)\n"
+        "- `per_publication/` — leaderboard.md + summary.json (gold = the query's own source patent's variants)\n"
         "- `comparison.md` — both lenses side by side\n\n"
-        "Both are re-scored from `../predictions/` with pytrec_eval; the models were NOT re-run.\n",
+        "Both are re-scored from `../predictions/` with pytrec_eval; the models were NOT re-run.\n"
+        "The per_publication lens uses the dataset's `source_publication` column (the single patent each\n"
+        "query was generated from), so each query has only ~2-3 gold docs and Recall@10 is not capped.\n",
         encoding="utf-8",
     )
     print(f"\n>> wrote {OUT_DIR}")

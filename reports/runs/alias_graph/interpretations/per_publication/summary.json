@@ -1,107 +1,107 @@
 {
   "interpretation": "per_publication",
-  "description": "Gold = a single gold publication's language variants (\"find this patent's cross-language versions\"). Each (query, gold-publication) pair is one eval unit; the concept's other gold publications are excluded from the candidate ranking.",
-  "eval_units": 6609,
-  "avg_relevant_per_unit": 2.18,
+  "description": "Gold = the query's OWN source publication's language variants -- the single patent each query was generated from (the dataset's `source_publication` column). One eval unit per query (~2-3 gold docs). Standard full-corpus ranking: every other document, including the concept's other gold patents, counts as non-relevant.",
+  "eval_units": 132,
+  "avg_relevant_per_unit": 2.42,
   "ranked_by": "recall_10",
   "models": [
     {
       "model_name": "google-embeddinggemma-300m",
       "metrics": {
-        "recall_10": 0.03894,
-        "recall_100": 0.11786,
-        "P_10": 0.00946,
-        "ndcg_cut_10": 0.02901,
-        "recip_rank": 0.03253,
-        "map": 0.02814
+        "recall_10": 0.67045,
+        "recall_100": 0.83965,
+        "P_10": 0.16742,
+        "ndcg_cut_10": 0.60746,
+        "recip_rank": 0.63347,
+        "map": 0.57215
       }
     },
     {
       "model_name": "qwen-qwen3-embedding-0-6b",
       "metrics": {
-        "recall_10": 0.02746,
-        "recall_100": 0.0872,
-        "P_10": 0.00658,
-        "ndcg_cut_10": 0.02205,
-        "recip_rank": 0.02743,
-        "map": 0.02134
-      }
-    },
-    {
-      "model_name": "nomic-ai-nomic-embed-text-v2-moe",
-      "metrics": {
-        "recall_10": 0.02483,
-        "recall_100": 0.07656,
-        "P_10": 0.00596,
-        "ndcg_cut_10": 0.02018,
-        "recip_rank": 0.0259,
-        "map": 0.01903
+        "recall_10": 0.64141,
+        "recall_100": 0.77778,
+        "P_10": 0.15909,
+        "ndcg_cut_10": 0.57338,
+        "recip_rank": 0.62843,
+        "map": 0.51585
       }
     },
     {
       "model_name": "baai-bge-m3",
       "metrics": {
-        "recall_10": 0.02328,
-        "recall_100": 0.07452,
-        "P_10": 0.00555,
-        "ndcg_cut_10": 0.01857,
-        "recip_rank": 0.02335,
-        "map": 0.01784
+        "recall_10": 0.60354,
+        "recall_100": 0.77778,
+        "P_10": 0.14773,
+        "ndcg_cut_10": 0.56001,
+        "recip_rank": 0.64551,
+        "map": 0.51004
+      }
+    },
+    {
+      "model_name": "nomic-ai-nomic-embed-text-v2-moe",
+      "metrics": {
+        "recall_10": 0.57955,
+        "recall_100": 0.75505,
+        "P_10": 0.14167,
+        "ndcg_cut_10": 0.52854,
+        "recip_rank": 0.61209,
+        "map": 0.47382
       }
     },
     {
       "model_name": "ibm-granite-granite-embedding-278m-multilingual",
       "metrics": {
-        "recall_10": 0.02031,
-        "recall_100": 0.06588,
-        "P_10": 0.00484,
-        "ndcg_cut_10": 0.0162,
-        "recip_rank": 0.01985,
-        "map": 0.01603
+        "recall_10": 0.52904,
+        "recall_100": 0.69318,
+        "P_10": 0.13106,
+        "ndcg_cut_10": 0.47022,
+        "recip_rank": 0.51112,
+        "map": 0.42902
       }
     },
     {
       "model_name": "sentence-transformers-labse",
       "metrics": {
-        "recall_10": 0.01811,
-        "recall_100": 0.0581,
-        "P_10": 0.00443,
-        "ndcg_cut_10": 0.0151,
-        "recip_rank": 0.01979,
-        "map": 0.01451
-      }
-    },
-    {
-      "model_name": "intfloat-multilingual-e5-large-instruct",
-      "metrics": {
-        "recall_10": 0.01478,
-        "recall_100": 0.05269,
-        "P_10": 0.00354,
-        "ndcg_cut_10": 0.01142,
-        "recip_rank": 0.01928,
-        "map": 0.00903
+        "recall_10": 0.51136,
+        "recall_100": 0.70076,
+        "P_10": 0.12652,
+        "ndcg_cut_10": 0.46533,
+        "recip_rank": 0.52987,
+        "map": 0.41761
       }
     },
     {
       "model_name": "cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr",
       "metrics": {
-        "recall_10": 0.01417,
-        "recall_100": 0.05856,
-        "P_10": 0.00345,
-        "ndcg_cut_10": 0.01122,
-        "recip_rank": 0.01607,
-        "map": 0.01083
+        "recall_10": 0.35227,
+        "recall_100": 0.53914,
+        "P_10": 0.08561,
+        "ndcg_cut_10": 0.31117,
+        "recip_rank": 0.38065,
+        "map": 0.26916
+      }
+    },
+    {
+      "model_name": "intfloat-multilingual-e5-large-instruct",
+      "metrics": {
+        "recall_10": 0.23737,
+        "recall_100": 0.44192,
+        "P_10": 0.05833,
+        "ndcg_cut_10": 0.23079,
+        "recip_rank": 0.37021,
+        "map": 0.18356
       }
     },
     {
       "model_name": "alibaba-nlp-gte-multilingual-base",
       "metrics": {
-        "recall_10": 0.00275,
-        "recall_100": 0.00994,
-        "P_10": 0.00067,
-        "ndcg_cut_10": 0.00202,
-        "recip_rank": 0.00371,
-        "map": 0.00152
+        "recall_10": 0.04672,
+        "recall_100": 0.07576,
+        "P_10": 0.01288,
+        "ndcg_cut_10": 0.04125,
+        "recip_rank": 0.07533,
+        "map": 0.0263
       }
     }
   ]
