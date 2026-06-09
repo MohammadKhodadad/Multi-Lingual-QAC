@@ -1,0 +1,31 @@
+{
+  "run_id": "20260609-025032",
+  "created_at": "2026-06-09T02:50:32.023894+00:00",
+  "dataset_repo": "MehdiAstaraki/multi-lingual-qac-alias-graph",
+  "corpus_repo": "MehdiAstaraki/multilingual_GP",
+  "dataset_variant": "multilingual",
+  "dataset_revision": "main",
+  "dataset_sizes": {
+    "queries": 132,
+    "corpus": 5841,
+    "qrels": 72118
+  },
+  "models": [
+    "nomic-ai/nomic-embed-text-v2-moe"
+  ],
+  "batch_size": 64,
+  "git_commit": "7bf2dee",
+  "git_dirty": true,
+  "hostname": "fc11004",
+  "slurm_job_id": "43538375",
+  "scores": {
+    "nomic-ai/nomic-embed-text-v2-moe": {
+      "main_score": 0.05703,
+      "recall_at_10": 0.05703,
+      "recall_at_100": 0.11209,
+      "ndcg_at_10": 0.31866,
+      "map_at_10": 0.19815,
+      "mrr_at_10": 0.6899801587301588
+    }
+  }
+}

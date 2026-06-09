@@ -1,0 +1,31 @@
+{
+  "run_id": "20260609-012214",
+  "created_at": "2026-06-09T01:22:14.591843+00:00",
+  "dataset_repo": "MehdiAstaraki/multi-lingual-qac-alias-graph",
+  "corpus_repo": "MehdiAstaraki/multilingual_GP",
+  "dataset_variant": "multilingual",
+  "dataset_revision": "main",
+  "dataset_sizes": {
+    "queries": 132,
+    "corpus": 5841,
+    "qrels": 72118
+  },
+  "models": [
+    "sentence-transformers/LaBSE"
+  ],
+  "batch_size": 64,
+  "git_commit": "7bf2dee",
+  "git_dirty": true,
+  "hostname": "fc10702",
+  "slurm_job_id": "43532199",
+  "scores": {
+    "sentence-transformers/LaBSE": {
+      "main_score": 0.05613,
+      "recall_at_10": 0.05613,
+      "recall_at_100": 0.09723,
+      "ndcg_at_10": 0.26515,
+      "map_at_10": 0.16448,
+      "mrr_at_10": 0.5649621212121212
+    }
+  }
+}

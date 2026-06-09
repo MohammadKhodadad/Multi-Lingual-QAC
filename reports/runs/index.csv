@@ -3,3 +3,12 @@ run_id,created_at,dataset_repo,dataset_variant,git_commit,n_queries,n_corpus,mod
 20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,intfloat/multilingual-e5-large,0.54501,0.54501,0.84915,0.45729,0.37509,0.51701
 20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,0.49513,0.49513,0.82847,0.41358,0.34503,0.4489
 20260601-235117_137questions,2026-06-01T23:51:17+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,a378711,137,1110,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,0.58881,0.58881,0.82482,0.50341,0.43678,0.53135
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,Alibaba-NLP/gte-multilingual-base,0.0062,0.0062,0.0147,0.03885,0.01612,0.12071
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,BAAI/bge-m3,0.05415,0.05415,0.11327,0.31138,0.18545,0.70244
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,0.0496,0.0496,0.10202,0.19607,0.11461,0.44135
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,google/embeddinggemma-300m,0.08066,0.08066,0.15152,0.39367,0.26681,0.72528
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,ibm-granite/granite-embedding-278m-multilingual,0.05607,0.05607,0.1057,0.27511,0.16979,0.57075
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,intfloat/multilingual-e5-large-instruct,0.02922,0.02922,0.07323,0.17881,0.09572,0.45121
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,nomic-ai/nomic-embed-text-v2-moe,0.05703,0.05703,0.11209,0.31866,0.19815,0.68998
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,Qwen/Qwen3-Embedding-0.6B,0.0643,0.0643,0.12621,0.36227,0.22805,0.72995
+alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,sentence-transformers/LaBSE,0.05613,0.05613,0.09723,0.26515,0.16448,0.56496

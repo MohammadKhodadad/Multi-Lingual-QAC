@@ -25,6 +25,12 @@ DEFAULT_MTEB_OUTPUT_DIR = "reports/mteb"
 DEFAULT_MTEB_TABLES_DIR = "reports/mteb_tables"
 DEFAULT_MTEB_CACHE_DIR = ".cache/huggingface"
 DEFAULT_MTEB_MAIN_SCORE = "recall_at_10"
+# Instruction handed to instruction-based models (Qwen3-Embedding, e5-instruct) for our
+# CUSTOM Hub task. Set on TaskMetadata.prompt so MTEB's get_instruction() returns it
+# directly instead of falling back to get_task(name) -- which KeyErrors because our task
+# isn't in MTEB's static registry. Value mirrors AbsTaskRetrieval.abstask_prompt, so the
+# behavior matches a built-in retrieval task. Instruct wrappers apply it to queries only.
+DEFAULT_MTEB_RETRIEVAL_PROMPT = "Retrieve text based on user query."
 RETRIEVAL_CUTOFFS = (10, 20, 50, 100)
 SAME_LANGUAGE_DIAGNOSTIC_LANGS = ("de", "en", "es", "fr", "pt", "zh")
 DEFAULT_MTEB_MODELS = [
@@ -49,7 +55,42 @@ ALIAS_GRAPH_MODELS = [
     "jinaai/jina-colbert-v2",                            # ColBERT (needs pylate)
     "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR",  # ST fallback (not in MTEB registry)
     "sentence-transformers/LaBSE",
+    "nomic-ai/nomic-embed-text-v2-moe",                  # MoE; mteb registry loader applies search_query/document prompts
 ]
+
+# Some custom-code models register a NON-persistent `position_ids = arange(max_pos)` buffer in
+# __init__; transformers 5.x can leave that buffer UNINITIALISED (garbage memory) after loading,
+# so the model then indexes its RoPE table with garbage position ids and crashes on the first
+# encode -- as an out-of-bounds IndexError on CPU, or an opaque "CUDA error: device-side assert
+# triggered" on GPU. gte-multilingual-base hits exactly this. Fix: re-fill the buffer post-load.
+MODELS_NEEDING_POSITION_IDS_REPAIR = {
+    "Alibaba-NLP/gte-multilingual-base",
+}
+
+
+def _repair_position_ids_buffers(model: Any) -> None:
+    """Re-initialise any 1-D integer `position_ids` buffer that the loader left as garbage to a
+    correct ``arange``. Called ONLY for MODELS_NEEDING_POSITION_IDS_REPAIR, so it cannot affect
+    models whose position_ids legitimately differ. Handles both the MTEB wrapper (``.model``) and
+    a plain SentenceTransformer (an nn.Module itself)."""
+    import torch
+
+    module = model if isinstance(model, torch.nn.Module) else getattr(model, "model", None)
+    if not isinstance(module, torch.nn.Module):
+        return
+    fixed = 0
+    for sub in module.modules():
+        buf = sub._buffers.get("position_ids")
+        if isinstance(buf, torch.Tensor) and buf.dim() == 1 and not torch.is_floating_point(buf):
+            sub.register_buffer(
+                "position_ids",
+                torch.arange(buf.numel(), dtype=buf.dtype, device=buf.device),
+                persistent=False,
+            )
+            fixed += 1
+    if fixed:
+        print(f"[fixup] re-initialised {fixed} position_ids buffer(s) for `{model}` "
+              "(transformers non-persistent-buffer bug)")
 
 LANGUAGE_TO_MTEB = {
     "ar": "arb-Arab",
@@ -604,6 +645,7 @@ def build_mteb_task(
         eval_splits=["train"],
         eval_langs=eval_langs_config,
         main_score=DEFAULT_MTEB_MAIN_SCORE,
+        prompt=DEFAULT_MTEB_RETRIEVAL_PROMPT,  # short-circuits get_instruction() -> no registry KeyError
         domains=["Chemistry", "Engineering"],
         task_subtypes=["Question Answering Retrieval"],
         license="not specified",
@@ -1184,6 +1226,11 @@ def run_mteb_evaluation(
                     model_name, cache_folder=str(model_cache_dir), trust_remote_code=True
                 )
                 model_meta = evaluator.create_model_meta(model)
+            # Work around a transformers non-persistent-buffer bug for known-affected models
+            # (e.g. gte-multilingual-base): a garbage position_ids buffer otherwise crashes the
+            # first encode (OOB IndexError on CPU / "device-side assert" on GPU).
+            if model_name in MODELS_NEEDING_POSITION_IDS_REPAIR:
+                _repair_position_ids_buffers(model)
             model_output_dir = base_output_dir / model_meta.model_name_as_path() / (
                 model_meta.revision or "no_revision_available"
             )

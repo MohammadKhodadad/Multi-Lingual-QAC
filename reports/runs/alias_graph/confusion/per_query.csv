@@ -1,0 +1,1187 @@
+model,query_id,query_language,concept_name,best_gold_rank,best_hardneg_rank,win,top_neighbor_name,top_relation
+alibaba-nlp-gte-multilingual-base,CHEBI_15138__en,en,sulfide(2-),,238,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_15138__de,de,sulfide(2-),72,57,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_15138__fr,fr,sulfide(2-),752,38,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30488__en,en,sulfonium,306,376,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_30488__de,de,sulfonium,604,246,1,ammonium,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30488__fr,fr,sulfonium,,405,1,ammonium,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30488__es,es,sulfonium,240,1,1,ammonium,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30488__zh,zh,sulfonium,,427,1,sulfanyl,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16716__en,en,benzene,221,34,1,ethanol,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16716__fr,fr,benzene,151,14,1,ethanol,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16716__de,de,benzene,155,4,1,ethanol,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16716__zh,zh,benzene,,112,1,cyclopentane,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16716__es,es,benzene,12,65,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17359__en,en,sulfite,10,84,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17359__de,de,sulfite,73,25,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17359__fr,fr,sulfite,278,4,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17359__zh,zh,sulfite,,309,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17359__es,es,sulfite,155,9,1,sulfate,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17115__en,en,L-serine,973,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17115__de,de,L-serine,,7,1,L-glutamic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17115__fr,fr,L-serine,58,22,1,glycine,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__en,en,urethane,3,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17115__zh,zh,L-serine,144,256,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__de,de,urethane,23,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__fr,fr,urethane,59,115,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__es,es,urethane,5,294,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__zh,zh,urethane,393,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__en__27,en,urethane,100,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__de__28,de,urethane,26,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__fr__29,fr,urethane,4,956,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__es__30,es,urethane,29,744,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__en,en,protein polypeptide chain,28,1,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_17967__zh__32,zh,urethane,379,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__de,de,protein polypeptide chain,91,12,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__fr,fr,protein polypeptide chain,64,5,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__es,es,protein polypeptide chain,88,2,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__zh,zh,protein polypeptide chain,44,77,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16898__en,en,pyrimidine,252,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16898__es,es,pyrimidine,435,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16898__zh,zh,pyrimidine,61,125,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29309__de,de,methyl,42,15,1,ethyl,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29309__en,en,methyl,34,50,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29309__fr,fr,methyl,74,37,1,ethyl,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29309__es,es,methyl,41,27,1,ethyl,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29309__zh,zh,methyl,152,270,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_62801__en,en,ethyl,69,55,1,trichloromethyl(.),sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_62801__de,de,ethyl,52,75,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_62801__fr,fr,ethyl,295,2,1,methyl,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_62801__es,es,ethyl,1,152,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_62801__zh,zh,ethyl,89,129,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29191__en,en,hydroxyl,1,369,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29191__de,de,hydroxyl,132,5,1,ozone,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29191__fr,fr,hydroxyl,152,77,1,hydroxide,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29191__es,es,hydroxyl,25,77,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29191__zh,zh,hydroxyl,54,118,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__en__57,en,protein polypeptide chain,10,2,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__de__58,de,protein polypeptide chain,30,186,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__fr__59,fr,protein polypeptide chain,124,22,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__es__60,es,protein polypeptide chain,57,6,1,polypeptide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_16541__zh__61,zh,protein polypeptide chain,19,138,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29389__en,en,silane,108,13,1,ammonia,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29389__de,de,silane,36,58,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29389__fr,fr,silane,99,210,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29389__zh,zh,silane,80,76,1,ammonia,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_29389__es,es,silane,61,37,1,ammonia,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30832__en,en,adipic acid,300,363,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_30832__de,de,adipic acid,,676,1,itaconic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30832__fr,fr,adipic acid,566,467,1,succinic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_30832__es,es,adipic acid,,819,1,sebacic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,2,161,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_30832__zh,zh,adipic acid,,405,1,itaconic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,59,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,2,26,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,216,205,1,polyhexamethylene biguanide,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,9,45,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16052__en,en,propene,314,4,1,ammonia,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16052__de,de,propene,9,13,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16052__fr,fr,propene,73,117,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16052__es,es,propene,179,1,1,hydrogen chloride,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16052__zh,zh,propene,2,7,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_25219__en,en,methacrylic acid,2,35,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_25219__de,de,methacrylic acid,13,1,1,acrylic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_25219__fr,fr,methacrylic acid,149,117,1,retinoic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_25219__es,es,methacrylic acid,189,236,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_25219__zh,zh,methacrylic acid,431,6,1,acrylic acid,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16134__en,en,ammonia,11,7,1,propene,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16134__fr,fr,ammonia,122,97,1,ethene,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16134__de,de,ammonia,1,41,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16134__es,es,ammonia,12,4,1,ethene,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16134__zh,zh,ammonia,412,5,1,propene,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,530,337,1,poly(ether) macromolecule,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,127,156,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,,19,1,poly(ethylene glycol),sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,174,172,1,poly(ethylene glycol),sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,354,63,1,poly(ethylene glycol),sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_53284__de,de,polyurethane macromolecule,1,4,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_53284__en,en,polyurethane macromolecule,1,10,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_53284__fr,fr,polyurethane macromolecule,1,45,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_53284__es,es,polyurethane macromolecule,25,31,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_53284__zh,zh,polyurethane macromolecule,25,9,1,poly(vinyl alcohol) macromolecule,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17909__en,en,polysulfur,661,51,1,elemental sulfur,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_17909__de,de,polysulfur,185,13,1,elemental sulfur,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_17909__fr,fr,polysulfur,2,27,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17909__zh,zh,polysulfur,137,34,1,elemental sulfur,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_17909__es,es,polysulfur,21,32,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29390__en,en,silicon carbide,6,26,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29390__de,de,silicon carbide,221,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29390__fr,fr,silicon carbide,32,,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29390__zh,zh,silicon carbide,1,854,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_29390__es,es,silicon carbide,6,706,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_15882__en,en,phenol,17,13,1,serotonin,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_15882__de,de,phenol,751,95,1,bisphenol,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_15882__fr,fr,phenol,288,670,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_15882__es,es,phenol,107,20,1,SN-38,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,336,17,1,poly(alkylene) macromolecule,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_15882__zh,zh,phenol,43,468,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,8,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,36,2,1,polyurethane macromolecule,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,760,53,1,polyurethane macromolecule,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,3,33,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_136511__en,en,manganese dioxide,1,41,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_136511__fr,fr,manganese dioxide,,28,1,metal oxide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_136511__de,de,manganese dioxide,,392,1,metal oxide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_136511__es,es,manganese dioxide,,60,1,metal oxide,parent
+alibaba-nlp-gte-multilingual-base,CHEBI_136511__zh,zh,manganese dioxide,1,302,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16526__en,en,carbon dioxide,4,3,1,methanol,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16526__de,de,carbon dioxide,9,5,1,dioxygen,sibling
+alibaba-nlp-gte-multilingual-base,CHEBI_16526__fr,fr,carbon dioxide,14,18,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16526__es,es,carbon dioxide,5,13,0,,
+alibaba-nlp-gte-multilingual-base,CHEBI_16526__zh,zh,carbon dioxide,11,14,0,,
+baai-bge-m3,CHEBI_15138__en,en,sulfide(2-),55,8,1,sulfate,sibling
+baai-bge-m3,CHEBI_15138__de,de,sulfide(2-),6,166,0,,
+baai-bge-m3,CHEBI_15138__fr,fr,sulfide(2-),136,7,1,hydrogenphosphate,sibling
+baai-bge-m3,CHEBI_30488__en,en,sulfonium,1,185,0,,
+baai-bge-m3,CHEBI_30488__de,de,sulfonium,1,296,0,,
+baai-bge-m3,CHEBI_30488__fr,fr,sulfonium,1,129,0,,
+baai-bge-m3,CHEBI_30488__es,es,sulfonium,1,141,0,,
+baai-bge-m3,CHEBI_30488__zh,zh,sulfonium,1,254,0,,
+baai-bge-m3,CHEBI_16716__en,en,benzene,1,54,0,,
+baai-bge-m3,CHEBI_16716__fr,fr,benzene,41,3,1,biphenyl,sibling
+baai-bge-m3,CHEBI_16716__de,de,benzene,2,14,0,,
+baai-bge-m3,CHEBI_16716__zh,zh,benzene,90,1,1,biphenyl,sibling
+baai-bge-m3,CHEBI_16716__es,es,benzene,1,3,0,,
+baai-bge-m3,CHEBI_17359__en,en,sulfite,1,6,0,,
+baai-bge-m3,CHEBI_17359__de,de,sulfite,1,4,0,,
+baai-bge-m3,CHEBI_17359__fr,fr,sulfite,1,3,0,,
+baai-bge-m3,CHEBI_17359__zh,zh,sulfite,129,22,1,sulfonate,sibling
+baai-bge-m3,CHEBI_17359__es,es,sulfite,1,14,0,,
+baai-bge-m3,CHEBI_17115__en,en,L-serine,1,64,0,,
+baai-bge-m3,CHEBI_17115__de,de,L-serine,1,31,0,,
+baai-bge-m3,CHEBI_17115__fr,fr,L-serine,1,58,0,,
+baai-bge-m3,CHEBI_17967__en,en,urethane,1,,0,,
+baai-bge-m3,CHEBI_17115__zh,zh,L-serine,2,21,0,,
+baai-bge-m3,CHEBI_17967__de,de,urethane,1,,0,,
+baai-bge-m3,CHEBI_17967__fr,fr,urethane,1,,0,,
+baai-bge-m3,CHEBI_17967__es,es,urethane,1,,0,,
+baai-bge-m3,CHEBI_17967__zh,zh,urethane,1,,0,,
+baai-bge-m3,CHEBI_17967__en__27,en,urethane,1,,0,,
+baai-bge-m3,CHEBI_17967__de__28,de,urethane,29,,0,,
+baai-bge-m3,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+baai-bge-m3,CHEBI_17967__es__30,es,urethane,4,,0,,
+baai-bge-m3,CHEBI_16541__en,en,protein polypeptide chain,1,3,0,,
+baai-bge-m3,CHEBI_17967__zh__32,zh,urethane,29,,0,,
+baai-bge-m3,CHEBI_16541__de,de,protein polypeptide chain,1,12,0,,
+baai-bge-m3,CHEBI_16541__fr,fr,protein polypeptide chain,1,3,0,,
+baai-bge-m3,CHEBI_16541__es,es,protein polypeptide chain,1,4,0,,
+baai-bge-m3,CHEBI_16541__zh,zh,protein polypeptide chain,1,3,0,,
+baai-bge-m3,CHEBI_16898__en,en,pyrimidine,1,306,0,,
+baai-bge-m3,CHEBI_16898__de,de,pyrimidine,1,338,0,,
+baai-bge-m3,CHEBI_16898__fr,fr,pyrimidine,1,195,0,,
+baai-bge-m3,CHEBI_16898__es,es,pyrimidine,1,36,0,,
+baai-bge-m3,CHEBI_16898__zh,zh,pyrimidine,2,763,0,,
+baai-bge-m3,CHEBI_29309__de,de,methyl,1,85,0,,
+baai-bge-m3,CHEBI_29309__en,en,methyl,18,30,0,,
+baai-bge-m3,CHEBI_29309__fr,fr,methyl,3,173,0,,
+baai-bge-m3,CHEBI_29309__es,es,methyl,13,146,0,,
+baai-bge-m3,CHEBI_29309__zh,zh,methyl,2,39,0,,
+baai-bge-m3,CHEBI_62801__en,en,ethyl,1,22,0,,
+baai-bge-m3,CHEBI_62801__de,de,ethyl,39,4,1,methyl,sibling
+baai-bge-m3,CHEBI_62801__fr,fr,ethyl,1,23,0,,
+baai-bge-m3,CHEBI_62801__es,es,ethyl,4,1,1,methyl,sibling
+baai-bge-m3,CHEBI_62801__zh,zh,ethyl,14,3,1,methyl,sibling
+baai-bge-m3,CHEBI_29191__en,en,hydroxyl,8,581,0,,
+baai-bge-m3,CHEBI_29191__de,de,hydroxyl,13,461,0,,
+baai-bge-m3,CHEBI_29191__fr,fr,hydroxyl,9,125,0,,
+baai-bge-m3,CHEBI_29191__es,es,hydroxyl,4,617,0,,
+baai-bge-m3,CHEBI_29191__zh,zh,hydroxyl,22,373,0,,
+baai-bge-m3,CHEBI_16541__en__57,en,protein polypeptide chain,1,2,0,,
+baai-bge-m3,CHEBI_16541__de__58,de,protein polypeptide chain,1,7,0,,
+baai-bge-m3,CHEBI_16541__fr__59,fr,protein polypeptide chain,5,11,0,,
+baai-bge-m3,CHEBI_16541__es__60,es,protein polypeptide chain,1,12,0,,
+baai-bge-m3,CHEBI_16541__zh__61,zh,protein polypeptide chain,4,16,0,,
+baai-bge-m3,CHEBI_29389__en,en,silane,1,273,0,,
+baai-bge-m3,CHEBI_29389__de,de,silane,1,110,0,,
+baai-bge-m3,CHEBI_29389__fr,fr,silane,1,263,0,,
+baai-bge-m3,CHEBI_29389__zh,zh,silane,1,36,0,,
+baai-bge-m3,CHEBI_29389__es,es,silane,1,50,0,,
+baai-bge-m3,CHEBI_30832__en,en,adipic acid,1,170,0,,
+baai-bge-m3,CHEBI_30832__de,de,adipic acid,1,405,0,,
+baai-bge-m3,CHEBI_30832__fr,fr,adipic acid,13,147,0,,
+baai-bge-m3,CHEBI_30832__es,es,adipic acid,11,61,0,,
+baai-bge-m3,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,9,0,,
+baai-bge-m3,CHEBI_30832__zh,zh,adipic acid,208,198,1,succinic acid,sibling
+baai-bge-m3,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,34,0,,
+baai-bge-m3,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,13,0,,
+baai-bge-m3,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,10,0,,
+baai-bge-m3,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,5,0,,
+baai-bge-m3,CHEBI_16052__en,en,propene,7,1,1,ethene,sibling
+baai-bge-m3,CHEBI_16052__de,de,propene,12,1,1,ethene,sibling
+baai-bge-m3,CHEBI_16052__fr,fr,propene,2,1,1,ethene,sibling
+baai-bge-m3,CHEBI_16052__es,es,propene,1,2,0,,
+baai-bge-m3,CHEBI_16052__zh,zh,propene,59,1,1,dioxygen,sibling
+baai-bge-m3,CHEBI_25219__en,en,methacrylic acid,1,33,0,,
+baai-bge-m3,CHEBI_25219__de,de,methacrylic acid,1,9,0,,
+baai-bge-m3,CHEBI_25219__fr,fr,methacrylic acid,2,20,0,,
+baai-bge-m3,CHEBI_25219__es,es,methacrylic acid,1,27,0,,
+baai-bge-m3,CHEBI_25219__zh,zh,methacrylic acid,51,3,1,acrylic acid,sibling
+baai-bge-m3,CHEBI_16134__en,en,ammonia,1,3,0,,
+baai-bge-m3,CHEBI_16134__fr,fr,ammonia,1,3,0,,
+baai-bge-m3,CHEBI_16134__de,de,ammonia,1,5,0,,
+baai-bge-m3,CHEBI_16134__es,es,ammonia,1,7,0,,
+baai-bge-m3,CHEBI_16134__zh,zh,ammonia,1,5,0,,
+baai-bge-m3,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,1,21,0,,
+baai-bge-m3,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,1,144,0,,
+baai-bge-m3,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,6,26,0,,
+baai-bge-m3,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,7,21,0,,
+baai-bge-m3,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,23,0,,
+baai-bge-m3,CHEBI_53284__de,de,polyurethane macromolecule,1,71,0,,
+baai-bge-m3,CHEBI_53284__en,en,polyurethane macromolecule,1,49,0,,
+baai-bge-m3,CHEBI_53284__fr,fr,polyurethane macromolecule,1,30,0,,
+baai-bge-m3,CHEBI_53284__es,es,polyurethane macromolecule,1,5,0,,
+baai-bge-m3,CHEBI_53284__zh,zh,polyurethane macromolecule,1,20,0,,
+baai-bge-m3,CHEBI_17909__en,en,polysulfur,29,36,0,,
+baai-bge-m3,CHEBI_17909__de,de,polysulfur,1,43,0,,
+baai-bge-m3,CHEBI_17909__fr,fr,polysulfur,1,95,0,,
+baai-bge-m3,CHEBI_17909__zh,zh,polysulfur,30,13,1,elemental sulfur,parent
+baai-bge-m3,CHEBI_17909__es,es,polysulfur,3,72,0,,
+baai-bge-m3,CHEBI_29390__en,en,silicon carbide,1,679,0,,
+baai-bge-m3,CHEBI_29390__de,de,silicon carbide,1,,0,,
+baai-bge-m3,CHEBI_29390__fr,fr,silicon carbide,1,564,0,,
+baai-bge-m3,CHEBI_29390__zh,zh,silicon carbide,1,687,0,,
+baai-bge-m3,CHEBI_29390__es,es,silicon carbide,1,,0,,
+baai-bge-m3,CHEBI_15882__en,en,phenol,3,155,0,,
+baai-bge-m3,CHEBI_15882__de,de,phenol,1,253,0,,
+baai-bge-m3,CHEBI_15882__fr,fr,phenol,11,108,0,,
+baai-bge-m3,CHEBI_15882__es,es,phenol,19,84,0,,
+baai-bge-m3,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,1,4,0,,
+baai-bge-m3,CHEBI_15882__zh,zh,phenol,2,24,0,,
+baai-bge-m3,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,24,0,,
+baai-bge-m3,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,1,5,0,,
+baai-bge-m3,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,1,9,0,,
+baai-bge-m3,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,1,19,0,,
+baai-bge-m3,CHEBI_136511__en,en,manganese dioxide,1,8,0,,
+baai-bge-m3,CHEBI_136511__fr,fr,manganese dioxide,1,7,0,,
+baai-bge-m3,CHEBI_136511__de,de,manganese dioxide,6,26,0,,
+baai-bge-m3,CHEBI_136511__es,es,manganese dioxide,1,12,0,,
+baai-bge-m3,CHEBI_136511__zh,zh,manganese dioxide,1,8,0,,
+baai-bge-m3,CHEBI_16526__en,en,carbon dioxide,1,2,0,,
+baai-bge-m3,CHEBI_16526__de,de,carbon dioxide,2,1,1,dioxygen,sibling
+baai-bge-m3,CHEBI_16526__fr,fr,carbon dioxide,1,3,0,,
+baai-bge-m3,CHEBI_16526__es,es,carbon dioxide,2,1,1,dioxygen,sibling
+baai-bge-m3,CHEBI_16526__zh,zh,carbon dioxide,1,3,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15138__en,en,sulfide(2-),153,1,1,sulfite,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15138__de,de,sulfide(2-),17,4,1,sulfate,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15138__fr,fr,sulfide(2-),978,61,1,sulfate,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30488__en,en,sulfonium,1,25,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30488__de,de,sulfonium,1,262,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30488__fr,fr,sulfonium,1,73,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30488__es,es,sulfonium,28,131,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30488__zh,zh,sulfonium,1,10,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16716__en,en,benzene,1,58,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16716__fr,fr,benzene,223,6,1,anilines,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16716__de,de,benzene,43,28,1,acetonitrile,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16716__zh,zh,benzene,205,34,1,biphenyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16716__es,es,benzene,10,23,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17359__en,en,sulfite,1,4,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17359__de,de,sulfite,1,43,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17359__fr,fr,sulfite,1,28,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17359__zh,zh,sulfite,1,20,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17359__es,es,sulfite,1,14,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17115__en,en,L-serine,1,184,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17115__de,de,L-serine,1,159,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17115__fr,fr,L-serine,1,44,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__en,en,urethane,6,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17115__zh,zh,L-serine,2,38,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__de,de,urethane,206,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__fr,fr,urethane,16,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__es,es,urethane,1,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__zh,zh,urethane,99,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__en__27,en,urethane,1,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__de__28,de,urethane,11,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__es__30,es,urethane,2,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__en,en,protein polypeptide chain,3,18,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17967__zh__32,zh,urethane,1,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__de,de,protein polypeptide chain,52,30,1,polypeptide,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__fr,fr,protein polypeptide chain,2,20,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__es,es,protein polypeptide chain,37,19,1,polypeptide,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__zh,zh,protein polypeptide chain,1,13,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16898__en,en,pyrimidine,1,513,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16898__de,de,pyrimidine,5,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16898__fr,fr,pyrimidine,25,848,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16898__es,es,pyrimidine,5,427,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16898__zh,zh,pyrimidine,6,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29309__de,de,methyl,199,182,1,methyloxidanyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29309__en,en,methyl,24,62,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29309__fr,fr,methyl,16,26,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29309__es,es,methyl,64,76,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29309__zh,zh,methyl,1,226,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_62801__en,en,ethyl,19,9,1,methyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_62801__de,de,ethyl,85,9,1,methyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_62801__fr,fr,ethyl,129,2,1,methyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_62801__es,es,ethyl,62,27,1,methyloxidanyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_62801__zh,zh,ethyl,99,17,1,methyl,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29191__en,en,hydroxyl,9,155,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29191__de,de,hydroxyl,28,56,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29191__fr,fr,hydroxyl,1,28,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29191__es,es,hydroxyl,5,23,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29191__zh,zh,hydroxyl,4,23,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__en__57,en,protein polypeptide chain,5,9,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__de__58,de,protein polypeptide chain,31,5,1,polypeptide,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__fr__59,fr,protein polypeptide chain,90,16,1,polypeptide,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__es__60,es,protein polypeptide chain,1,29,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16541__zh__61,zh,protein polypeptide chain,44,3,1,polypeptide,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29389__en,en,silane,52,111,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29389__de,de,silane,18,345,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29389__fr,fr,silane,2,61,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29389__zh,zh,silane,114,22,1,silanes,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29389__es,es,silane,10,145,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30832__en,en,adipic acid,1,106,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30832__de,de,adipic acid,294,6,1,succinic acid,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30832__fr,fr,adipic acid,25,56,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30832__es,es,adipic acid,29,26,1,malonic acid,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,9,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_30832__zh,zh,adipic acid,7,45,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,50,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,52,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,40,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,24,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16052__en,en,propene,60,1,1,dioxygen,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16052__de,de,propene,14,3,1,ethene,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16052__fr,fr,propene,24,12,1,carbon dioxide,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16052__es,es,propene,13,2,1,ethene,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16052__zh,zh,propene,274,1,1,carbon dioxide,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_25219__en,en,methacrylic acid,1,44,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_25219__de,de,methacrylic acid,2,77,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_25219__fr,fr,methacrylic acid,1,163,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_25219__es,es,methacrylic acid,1,61,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_25219__zh,zh,methacrylic acid,1,23,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16134__en,en,ammonia,4,1,1,methane,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16134__fr,fr,ammonia,2,5,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16134__de,de,ammonia,1,5,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16134__es,es,ammonia,9,3,1,dioxygen,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16134__zh,zh,ammonia,6,3,1,dioxygen,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,19,30,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,1,38,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,31,136,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,44,6,1,poly(ether) macromolecule,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,6,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53284__de,de,polyurethane macromolecule,1,6,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53284__en,en,polyurethane macromolecule,1,13,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53284__fr,fr,polyurethane macromolecule,1,47,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53284__es,es,polyurethane macromolecule,1,63,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_53284__zh,zh,polyurethane macromolecule,1,104,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17909__en,en,polysulfur,152,65,1,elemental sulfur,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17909__de,de,polysulfur,185,24,1,elemental sulfur,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17909__fr,fr,polysulfur,1,6,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17909__zh,zh,polysulfur,49,14,1,elemental sulfur,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17909__es,es,polysulfur,21,5,1,elemental sulfur,parent
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29390__en,en,silicon carbide,1,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29390__de,de,silicon carbide,3,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29390__fr,fr,silicon carbide,1,98,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29390__zh,zh,silicon carbide,1,,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_29390__es,es,silicon carbide,1,406,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15882__en,en,phenol,71,45,1,Trolox,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15882__de,de,phenol,45,165,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15882__fr,fr,phenol,49,115,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15882__es,es,phenol,32,107,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,139,9,1,poly(alkylene) macromolecule,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_15882__zh,zh,phenol,47,232,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,59,7,1,poly(vinyl chloride),sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,46,2,1,polyurethane macromolecule,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,58,4,1,poly(alkylene) macromolecule,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,40,16,1,poly(alkylene) macromolecule,sibling
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_136511__en,en,manganese dioxide,1,6,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_136511__fr,fr,manganese dioxide,1,8,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_136511__de,de,manganese dioxide,1,86,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_136511__es,es,manganese dioxide,1,2,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_136511__zh,zh,manganese dioxide,1,53,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16526__en,en,carbon dioxide,1,5,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16526__de,de,carbon dioxide,2,6,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16526__fr,fr,carbon dioxide,3,8,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16526__es,es,carbon dioxide,7,8,0,,
+cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr,CHEBI_16526__zh,zh,carbon dioxide,4,5,0,,
+google-embeddinggemma-300m,CHEBI_15138__en,en,sulfide(2-),16,13,1,sulfite,sibling
+google-embeddinggemma-300m,CHEBI_15138__de,de,sulfide(2-),1,10,0,,
+google-embeddinggemma-300m,CHEBI_15138__fr,fr,sulfide(2-),16,7,1,thiosulfate(2-),sibling
+google-embeddinggemma-300m,CHEBI_30488__en,en,sulfonium,1,469,0,,
+google-embeddinggemma-300m,CHEBI_30488__de,de,sulfonium,1,465,0,,
+google-embeddinggemma-300m,CHEBI_30488__fr,fr,sulfonium,1,197,0,,
+google-embeddinggemma-300m,CHEBI_30488__es,es,sulfonium,1,665,0,,
+google-embeddinggemma-300m,CHEBI_30488__zh,zh,sulfonium,1,572,0,,
+google-embeddinggemma-300m,CHEBI_16716__en,en,benzene,6,31,0,,
+google-embeddinggemma-300m,CHEBI_16716__fr,fr,benzene,96,21,1,biphenyl,sibling
+google-embeddinggemma-300m,CHEBI_16716__de,de,benzene,6,34,0,,
+google-embeddinggemma-300m,CHEBI_16716__zh,zh,benzene,7,20,0,,
+google-embeddinggemma-300m,CHEBI_16716__es,es,benzene,1,15,0,,
+google-embeddinggemma-300m,CHEBI_17359__en,en,sulfite,1,7,0,,
+google-embeddinggemma-300m,CHEBI_17359__de,de,sulfite,1,4,0,,
+google-embeddinggemma-300m,CHEBI_17359__fr,fr,sulfite,1,9,0,,
+google-embeddinggemma-300m,CHEBI_17359__zh,zh,sulfite,1,6,0,,
+google-embeddinggemma-300m,CHEBI_17359__es,es,sulfite,1,12,0,,
+google-embeddinggemma-300m,CHEBI_17115__en,en,L-serine,5,18,0,,
+google-embeddinggemma-300m,CHEBI_17115__de,de,L-serine,1,33,0,,
+google-embeddinggemma-300m,CHEBI_17115__fr,fr,L-serine,1,6,0,,
+google-embeddinggemma-300m,CHEBI_17967__en,en,urethane,1,,0,,
+google-embeddinggemma-300m,CHEBI_17115__zh,zh,L-serine,5,25,0,,
+google-embeddinggemma-300m,CHEBI_17967__de,de,urethane,1,,0,,
+google-embeddinggemma-300m,CHEBI_17967__fr,fr,urethane,1,,0,,
+google-embeddinggemma-300m,CHEBI_17967__es,es,urethane,1,,0,,
+google-embeddinggemma-300m,CHEBI_17967__zh,zh,urethane,1,,0,,
+google-embeddinggemma-300m,CHEBI_17967__en__27,en,urethane,2,,0,,
+google-embeddinggemma-300m,CHEBI_17967__de__28,de,urethane,93,,0,,
+google-embeddinggemma-300m,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+google-embeddinggemma-300m,CHEBI_17967__es__30,es,urethane,4,,0,,
+google-embeddinggemma-300m,CHEBI_16541__en,en,protein polypeptide chain,1,5,0,,
+google-embeddinggemma-300m,CHEBI_17967__zh__32,zh,urethane,20,,0,,
+google-embeddinggemma-300m,CHEBI_16541__de,de,protein polypeptide chain,3,5,0,,
+google-embeddinggemma-300m,CHEBI_16541__fr,fr,protein polypeptide chain,1,9,0,,
+google-embeddinggemma-300m,CHEBI_16541__es,es,protein polypeptide chain,1,20,0,,
+google-embeddinggemma-300m,CHEBI_16541__zh,zh,protein polypeptide chain,1,3,0,,
+google-embeddinggemma-300m,CHEBI_16898__en,en,pyrimidine,1,,0,,
+google-embeddinggemma-300m,CHEBI_16898__de,de,pyrimidine,1,,0,,
+google-embeddinggemma-300m,CHEBI_16898__fr,fr,pyrimidine,1,,0,,
+google-embeddinggemma-300m,CHEBI_16898__es,es,pyrimidine,2,182,0,,
+google-embeddinggemma-300m,CHEBI_16898__zh,zh,pyrimidine,1,,0,,
+google-embeddinggemma-300m,CHEBI_29309__de,de,methyl,24,133,0,,
+google-embeddinggemma-300m,CHEBI_29309__en,en,methyl,15,203,0,,
+google-embeddinggemma-300m,CHEBI_29309__fr,fr,methyl,6,71,0,,
+google-embeddinggemma-300m,CHEBI_29309__es,es,methyl,18,83,0,,
+google-embeddinggemma-300m,CHEBI_29309__zh,zh,methyl,1,23,0,,
+google-embeddinggemma-300m,CHEBI_62801__en,en,ethyl,6,28,0,,
+google-embeddinggemma-300m,CHEBI_62801__de,de,ethyl,21,7,1,methyl,sibling
+google-embeddinggemma-300m,CHEBI_62801__fr,fr,ethyl,14,15,0,,
+google-embeddinggemma-300m,CHEBI_62801__es,es,ethyl,3,6,0,,
+google-embeddinggemma-300m,CHEBI_62801__zh,zh,ethyl,38,1,1,methyl,sibling
+google-embeddinggemma-300m,CHEBI_29191__en,en,hydroxyl,5,,0,,
+google-embeddinggemma-300m,CHEBI_29191__de,de,hydroxyl,9,284,0,,
+google-embeddinggemma-300m,CHEBI_29191__fr,fr,hydroxyl,10,115,0,,
+google-embeddinggemma-300m,CHEBI_29191__es,es,hydroxyl,16,483,0,,
+google-embeddinggemma-300m,CHEBI_29191__zh,zh,hydroxyl,29,521,0,,
+google-embeddinggemma-300m,CHEBI_16541__en__57,en,protein polypeptide chain,2,3,0,,
+google-embeddinggemma-300m,CHEBI_16541__de__58,de,protein polypeptide chain,1,2,0,,
+google-embeddinggemma-300m,CHEBI_16541__fr__59,fr,protein polypeptide chain,49,2,1,polypeptide,parent
+google-embeddinggemma-300m,CHEBI_16541__es__60,es,protein polypeptide chain,1,3,0,,
+google-embeddinggemma-300m,CHEBI_16541__zh__61,zh,protein polypeptide chain,3,12,0,,
+google-embeddinggemma-300m,CHEBI_29389__en,en,silane,1,283,0,,
+google-embeddinggemma-300m,CHEBI_29389__de,de,silane,3,709,0,,
+google-embeddinggemma-300m,CHEBI_29389__fr,fr,silane,1,613,0,,
+google-embeddinggemma-300m,CHEBI_29389__zh,zh,silane,1,574,0,,
+google-embeddinggemma-300m,CHEBI_29389__es,es,silane,1,526,0,,
+google-embeddinggemma-300m,CHEBI_30832__en,en,adipic acid,1,51,0,,
+google-embeddinggemma-300m,CHEBI_30832__de,de,adipic acid,6,50,0,,
+google-embeddinggemma-300m,CHEBI_30832__fr,fr,adipic acid,1,69,0,,
+google-embeddinggemma-300m,CHEBI_30832__es,es,adipic acid,1,87,0,,
+google-embeddinggemma-300m,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,60,0,,
+google-embeddinggemma-300m,CHEBI_30832__zh,zh,adipic acid,2,58,0,,
+google-embeddinggemma-300m,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,21,0,,
+google-embeddinggemma-300m,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,10,0,,
+google-embeddinggemma-300m,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,16,0,,
+google-embeddinggemma-300m,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,34,0,,
+google-embeddinggemma-300m,CHEBI_16052__en,en,propene,3,1,1,ethene,sibling
+google-embeddinggemma-300m,CHEBI_16052__de,de,propene,5,1,1,ethene,sibling
+google-embeddinggemma-300m,CHEBI_16052__fr,fr,propene,1,2,0,,
+google-embeddinggemma-300m,CHEBI_16052__es,es,propene,1,5,0,,
+google-embeddinggemma-300m,CHEBI_16052__zh,zh,propene,2,3,0,,
+google-embeddinggemma-300m,CHEBI_25219__en,en,methacrylic acid,1,18,0,,
+google-embeddinggemma-300m,CHEBI_25219__de,de,methacrylic acid,1,18,0,,
+google-embeddinggemma-300m,CHEBI_25219__fr,fr,methacrylic acid,1,9,0,,
+google-embeddinggemma-300m,CHEBI_25219__es,es,methacrylic acid,1,19,0,,
+google-embeddinggemma-300m,CHEBI_25219__zh,zh,methacrylic acid,3,19,0,,
+google-embeddinggemma-300m,CHEBI_16134__en,en,ammonia,1,4,0,,
+google-embeddinggemma-300m,CHEBI_16134__fr,fr,ammonia,1,2,0,,
+google-embeddinggemma-300m,CHEBI_16134__de,de,ammonia,1,14,0,,
+google-embeddinggemma-300m,CHEBI_16134__es,es,ammonia,1,5,0,,
+google-embeddinggemma-300m,CHEBI_16134__zh,zh,ammonia,1,7,0,,
+google-embeddinggemma-300m,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,42,4,1,poly(ethylene glycol),sibling
+google-embeddinggemma-300m,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,1,101,0,,
+google-embeddinggemma-300m,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,1,15,0,,
+google-embeddinggemma-300m,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,42,54,0,,
+google-embeddinggemma-300m,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,7,0,,
+google-embeddinggemma-300m,CHEBI_53284__de,de,polyurethane macromolecule,1,7,0,,
+google-embeddinggemma-300m,CHEBI_53284__en,en,polyurethane macromolecule,1,73,0,,
+google-embeddinggemma-300m,CHEBI_53284__fr,fr,polyurethane macromolecule,1,29,0,,
+google-embeddinggemma-300m,CHEBI_53284__es,es,polyurethane macromolecule,1,118,0,,
+google-embeddinggemma-300m,CHEBI_53284__zh,zh,polyurethane macromolecule,1,33,0,,
+google-embeddinggemma-300m,CHEBI_17909__en,en,polysulfur,54,80,0,,
+google-embeddinggemma-300m,CHEBI_17909__de,de,polysulfur,1,94,0,,
+google-embeddinggemma-300m,CHEBI_17909__fr,fr,polysulfur,2,113,0,,
+google-embeddinggemma-300m,CHEBI_17909__zh,zh,polysulfur,1,141,0,,
+google-embeddinggemma-300m,CHEBI_17909__es,es,polysulfur,1,60,0,,
+google-embeddinggemma-300m,CHEBI_29390__en,en,silicon carbide,1,665,0,,
+google-embeddinggemma-300m,CHEBI_29390__de,de,silicon carbide,1,463,0,,
+google-embeddinggemma-300m,CHEBI_29390__fr,fr,silicon carbide,1,,0,,
+google-embeddinggemma-300m,CHEBI_29390__zh,zh,silicon carbide,1,990,0,,
+google-embeddinggemma-300m,CHEBI_29390__es,es,silicon carbide,1,689,0,,
+google-embeddinggemma-300m,CHEBI_15882__en,en,phenol,1,58,0,,
+google-embeddinggemma-300m,CHEBI_15882__de,de,phenol,1,56,0,,
+google-embeddinggemma-300m,CHEBI_15882__fr,fr,phenol,2,193,0,,
+google-embeddinggemma-300m,CHEBI_15882__es,es,phenol,1,31,0,,
+google-embeddinggemma-300m,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,1,4,0,,
+google-embeddinggemma-300m,CHEBI_15882__zh,zh,phenol,2,226,0,,
+google-embeddinggemma-300m,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,9,0,,
+google-embeddinggemma-300m,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,1,7,0,,
+google-embeddinggemma-300m,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,2,5,0,,
+google-embeddinggemma-300m,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,1,8,0,,
+google-embeddinggemma-300m,CHEBI_136511__en,en,manganese dioxide,1,10,0,,
+google-embeddinggemma-300m,CHEBI_136511__fr,fr,manganese dioxide,1,6,0,,
+google-embeddinggemma-300m,CHEBI_136511__de,de,manganese dioxide,1,6,0,,
+google-embeddinggemma-300m,CHEBI_136511__es,es,manganese dioxide,1,8,0,,
+google-embeddinggemma-300m,CHEBI_136511__zh,zh,manganese dioxide,1,6,0,,
+google-embeddinggemma-300m,CHEBI_16526__en,en,carbon dioxide,1,4,0,,
+google-embeddinggemma-300m,CHEBI_16526__de,de,carbon dioxide,1,10,0,,
+google-embeddinggemma-300m,CHEBI_16526__fr,fr,carbon dioxide,1,4,0,,
+google-embeddinggemma-300m,CHEBI_16526__es,es,carbon dioxide,1,4,0,,
+google-embeddinggemma-300m,CHEBI_16526__zh,zh,carbon dioxide,1,10,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15138__en,en,sulfide(2-),40,9,1,sulfite,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15138__de,de,sulfide(2-),1,22,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15138__fr,fr,sulfide(2-),225,3,1,sulfate,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30488__en,en,sulfonium,1,220,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30488__de,de,sulfonium,1,377,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30488__fr,fr,sulfonium,1,288,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30488__es,es,sulfonium,1,373,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30488__zh,zh,sulfonium,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16716__en,en,benzene,42,26,1,biphenyl,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16716__fr,fr,benzene,219,9,1,biphenyl,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16716__de,de,benzene,1,69,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16716__zh,zh,benzene,69,16,1,styrene,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16716__es,es,benzene,1,110,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17359__en,en,sulfite,1,16,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17359__de,de,sulfite,1,10,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17359__fr,fr,sulfite,1,30,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17359__zh,zh,sulfite,104,7,1,sulfate,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17359__es,es,sulfite,1,7,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17115__en,en,L-serine,1,115,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17115__de,de,L-serine,1,242,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17115__fr,fr,L-serine,1,118,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__en,en,urethane,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17115__zh,zh,L-serine,94,27,1,serine,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__de,de,urethane,3,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__fr,fr,urethane,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__es,es,urethane,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__zh,zh,urethane,3,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__en__27,en,urethane,13,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__de__28,de,urethane,5,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__fr__29,fr,urethane,3,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__es__30,es,urethane,25,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__en,en,protein polypeptide chain,1,22,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17967__zh__32,zh,urethane,14,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__de,de,protein polypeptide chain,18,13,1,polypeptide,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__fr,fr,protein polypeptide chain,1,24,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__es,es,protein polypeptide chain,1,24,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__zh,zh,protein polypeptide chain,1,13,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16898__en,en,pyrimidine,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16898__de,de,pyrimidine,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16898__fr,fr,pyrimidine,3,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16898__es,es,pyrimidine,16,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16898__zh,zh,pyrimidine,79,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29309__de,de,methyl,30,122,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29309__en,en,methyl,13,56,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29309__fr,fr,methyl,12,17,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29309__es,es,methyl,14,40,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29309__zh,zh,methyl,1,5,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_62801__en,en,ethyl,1,66,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_62801__de,de,ethyl,3,17,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_62801__fr,fr,ethyl,2,90,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_62801__es,es,ethyl,20,103,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_62801__zh,zh,ethyl,2,26,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29191__en,en,hydroxyl,3,500,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29191__de,de,hydroxyl,26,173,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29191__fr,fr,hydroxyl,5,137,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29191__es,es,hydroxyl,7,380,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29191__zh,zh,hydroxyl,14,608,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__en__57,en,protein polypeptide chain,8,4,1,polypeptide,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__de__58,de,protein polypeptide chain,1,8,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__fr__59,fr,protein polypeptide chain,28,7,1,polypeptide,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__es__60,es,protein polypeptide chain,1,7,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16541__zh__61,zh,protein polypeptide chain,2,11,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29389__en,en,silane,1,417,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29389__de,de,silane,2,265,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29389__fr,fr,silane,1,446,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29389__zh,zh,silane,9,330,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29389__es,es,silane,1,394,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30832__en,en,adipic acid,2,474,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30832__de,de,adipic acid,57,379,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30832__fr,fr,adipic acid,10,126,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30832__es,es,adipic acid,3,381,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,49,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_30832__zh,zh,adipic acid,20,10,1,sebacic acid,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,15,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,8,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,18,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,11,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16052__en,en,propene,20,1,1,ethene,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16052__de,de,propene,43,1,1,ethene,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16052__fr,fr,propene,3,1,1,ethene,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16052__es,es,propene,1,7,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16052__zh,zh,propene,45,3,1,propane,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_25219__en,en,methacrylic acid,1,35,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_25219__de,de,methacrylic acid,7,51,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_25219__fr,fr,methacrylic acid,29,8,1,acrylic acid,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_25219__es,es,methacrylic acid,3,21,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_25219__zh,zh,methacrylic acid,117,2,1,acrylic acid,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16134__en,en,ammonia,1,7,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16134__fr,fr,ammonia,1,3,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16134__de,de,ammonia,1,8,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16134__es,es,ammonia,1,16,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16134__zh,zh,ammonia,1,8,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,,146,1,poly(ether) macromolecule,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,3,113,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,200,28,1,poly(ethylene glycol),sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,965,114,1,nonyl phenoxypolyethoxylethanol,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,11,9,1,poly(ethylene glycol),sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53284__de,de,polyurethane macromolecule,1,72,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53284__en,en,polyurethane macromolecule,1,12,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53284__fr,fr,polyurethane macromolecule,1,193,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53284__es,es,polyurethane macromolecule,26,19,1,poly(alkylene) macromolecule,sibling
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_53284__zh,zh,polyurethane macromolecule,26,52,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17909__en,en,polysulfur,143,18,1,elemental sulfur,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17909__de,de,polysulfur,1,89,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17909__fr,fr,polysulfur,1,65,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17909__zh,zh,polysulfur,33,2,1,elemental sulfur,parent
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17909__es,es,polysulfur,5,43,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29390__en,en,silicon carbide,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29390__de,de,silicon carbide,1,504,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29390__fr,fr,silicon carbide,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29390__zh,zh,silicon carbide,1,696,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_29390__es,es,silicon carbide,1,,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15882__en,en,phenol,2,157,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15882__de,de,phenol,1,262,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15882__fr,fr,phenol,13,139,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15882__es,es,phenol,3,76,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,1,5,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_15882__zh,zh,phenol,5,11,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,12,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,1,6,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,4,7,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,1,14,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_136511__en,en,manganese dioxide,1,4,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_136511__fr,fr,manganese dioxide,1,12,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_136511__de,de,manganese dioxide,1,17,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_136511__es,es,manganese dioxide,1,5,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_136511__zh,zh,manganese dioxide,1,16,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16526__en,en,carbon dioxide,1,8,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16526__de,de,carbon dioxide,2,7,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16526__fr,fr,carbon dioxide,1,15,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16526__es,es,carbon dioxide,2,4,0,,
+ibm-granite-granite-embedding-278m-multilingual,CHEBI_16526__zh,zh,carbon dioxide,1,19,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_15138__en,en,sulfide(2-),21,1,1,thiosulfate(2-),sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_15138__de,de,sulfide(2-),85,64,1,sulfate,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_15138__fr,fr,sulfide(2-),23,7,1,sulfite,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_30488__en,en,sulfonium,1,70,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30488__de,de,sulfonium,1,233,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30488__fr,fr,sulfonium,1,69,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30488__es,es,sulfonium,4,119,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30488__zh,zh,sulfonium,3,100,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16716__en,en,benzene,3,23,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16716__fr,fr,benzene,368,14,1,biphenyl,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16716__de,de,benzene,43,27,1,methanol,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16716__zh,zh,benzene,47,80,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16716__es,es,benzene,2,30,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17359__en,en,sulfite,1,10,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17359__de,de,sulfite,2,3,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17359__fr,fr,sulfite,1,9,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17359__zh,zh,sulfite,158,1,1,sulfonate,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17359__es,es,sulfite,10,12,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17115__en,en,L-serine,1,95,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17115__de,de,L-serine,12,42,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17115__fr,fr,L-serine,1,42,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__en,en,urethane,1,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17115__zh,zh,L-serine,27,42,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__de,de,urethane,28,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__fr,fr,urethane,8,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__es,es,urethane,1,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__zh,zh,urethane,24,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__en__27,en,urethane,7,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__de__28,de,urethane,124,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__es__30,es,urethane,1,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__en,en,protein polypeptide chain,1,10,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17967__zh__32,zh,urethane,163,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__de,de,protein polypeptide chain,2,1,1,polypeptide,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__fr,fr,protein polypeptide chain,1,3,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__es,es,protein polypeptide chain,10,8,1,polypeptide,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__zh,zh,protein polypeptide chain,2,3,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16898__en,en,pyrimidine,1,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16898__de,de,pyrimidine,1,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16898__fr,fr,pyrimidine,19,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16898__es,es,pyrimidine,1,321,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16898__zh,zh,pyrimidine,29,510,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29309__de,de,methyl,17,68,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29309__en,en,methyl,18,45,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29309__fr,fr,methyl,37,32,1,carbene,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_29309__es,es,methyl,22,44,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29309__zh,zh,methyl,2,40,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_62801__en,en,ethyl,3,1,1,methyl,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_62801__de,de,ethyl,15,104,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_62801__fr,fr,ethyl,2,5,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_62801__es,es,ethyl,46,47,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_62801__zh,zh,ethyl,7,28,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29191__en,en,hydroxyl,27,511,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29191__de,de,hydroxyl,133,147,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29191__fr,fr,hydroxyl,10,66,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29191__es,es,hydroxyl,24,218,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29191__zh,zh,hydroxyl,12,56,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__en__57,en,protein polypeptide chain,3,2,1,polypeptide,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__de__58,de,protein polypeptide chain,2,4,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__fr__59,fr,protein polypeptide chain,73,3,1,polypeptide,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__es__60,es,protein polypeptide chain,14,9,1,polypeptide,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_16541__zh__61,zh,protein polypeptide chain,4,5,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29389__en,en,silane,1,303,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29389__de,de,silane,2,71,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29389__fr,fr,silane,1,356,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29389__zh,zh,silane,35,569,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29389__es,es,silane,1,77,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30832__en,en,adipic acid,1,38,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30832__de,de,adipic acid,306,12,1,sebacic acid,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_30832__fr,fr,adipic acid,2,3,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30832__es,es,adipic acid,351,197,1,succinic acid,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,83,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_30832__zh,zh,adipic acid,78,38,1,sebacic acid,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,17,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,17,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,10,8,1,polyurethane macromolecule,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,9,29,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16052__en,en,propene,4,1,1,ethene,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16052__de,de,propene,7,1,1,ethane,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16052__fr,fr,propene,1,2,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16052__es,es,propene,5,4,1,ethene,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16052__zh,zh,propene,3,1,1,alkene,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_25219__en,en,methacrylic acid,1,14,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_25219__de,de,methacrylic acid,1,9,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_25219__fr,fr,methacrylic acid,15,7,1,acrylic acid,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_25219__es,es,methacrylic acid,52,293,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_25219__zh,zh,methacrylic acid,85,2,1,acrylic acid,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16134__en,en,ammonia,1,7,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16134__fr,fr,ammonia,3,1,1,carbon dioxide,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16134__de,de,ammonia,1,3,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16134__es,es,ammonia,23,3,1,carbon dioxide,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_16134__zh,zh,ammonia,9,1,1,dioxygen,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,45,12,1,poly(ethylene glycol),sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,1,67,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,807,45,1,poly(ethylene glycol),sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,459,173,1,poly(ethylene glycol),sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,7,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_53284__de,de,polyurethane macromolecule,1,5,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_53284__en,en,polyurethane macromolecule,1,83,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_53284__fr,fr,polyurethane macromolecule,1,62,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_53284__es,es,polyurethane macromolecule,3,36,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_53284__zh,zh,polyurethane macromolecule,11,9,1,poly(vinyl alcohol) macromolecule,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17909__en,en,polysulfur,122,24,1,elemental sulfur,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_17909__de,de,polysulfur,2,18,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17909__fr,fr,polysulfur,3,36,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17909__zh,zh,polysulfur,88,20,1,elemental sulfur,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_17909__es,es,polysulfur,184,40,1,elemental sulfur,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_29390__en,en,silicon carbide,1,638,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29390__de,de,silicon carbide,1,168,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29390__fr,fr,silicon carbide,1,377,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29390__zh,zh,silicon carbide,1,554,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_29390__es,es,silicon carbide,3,,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_15882__en,en,phenol,10,33,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_15882__de,de,phenol,44,11,1,bisphenol,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_15882__fr,fr,phenol,18,61,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_15882__es,es,phenol,101,94,1,Trolox,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,1,4,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_15882__zh,zh,phenol,3,43,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,2,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,1,30,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,14,6,1,poly(alkylene) macromolecule,sibling
+intfloat-multilingual-e5-large-instruct,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,1,18,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_136511__en,en,manganese dioxide,1,5,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_136511__fr,fr,manganese dioxide,1,2,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_136511__de,de,manganese dioxide,151,10,1,metal oxide,parent
+intfloat-multilingual-e5-large-instruct,CHEBI_136511__es,es,manganese dioxide,1,6,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_136511__zh,zh,manganese dioxide,1,91,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16526__en,en,carbon dioxide,1,4,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16526__de,de,carbon dioxide,1,15,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16526__fr,fr,carbon dioxide,1,4,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16526__es,es,carbon dioxide,13,18,0,,
+intfloat-multilingual-e5-large-instruct,CHEBI_16526__zh,zh,carbon dioxide,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15138__en,en,sulfide(2-),1,8,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15138__de,de,sulfide(2-),1,39,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15138__fr,fr,sulfide(2-),156,7,1,sulfate,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30488__en,en,sulfonium,1,336,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30488__de,de,sulfonium,1,208,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30488__fr,fr,sulfonium,1,370,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30488__es,es,sulfonium,1,509,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30488__zh,zh,sulfonium,5,401,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16716__en,en,benzene,35,25,1,biphenyl,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16716__fr,fr,benzene,241,5,1,ethanol,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16716__de,de,benzene,4,24,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16716__zh,zh,benzene,34,42,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16716__es,es,benzene,1,23,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17359__en,en,sulfite,1,10,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17359__de,de,sulfite,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17359__fr,fr,sulfite,1,5,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17359__zh,zh,sulfite,366,10,1,sulfate,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17359__es,es,sulfite,1,3,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17115__en,en,L-serine,1,85,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17115__de,de,L-serine,1,128,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17115__fr,fr,L-serine,1,102,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__en,en,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17115__zh,zh,L-serine,38,53,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__de,de,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__fr,fr,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__es,es,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__zh,zh,urethane,12,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__en__27,en,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__de__28,de,urethane,74,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__es__30,es,urethane,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__en,en,protein polypeptide chain,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17967__zh__32,zh,urethane,22,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__de,de,protein polypeptide chain,1,5,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__fr,fr,protein polypeptide chain,1,7,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__es,es,protein polypeptide chain,1,7,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__zh,zh,protein polypeptide chain,1,17,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16898__en,en,pyrimidine,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16898__de,de,pyrimidine,1,781,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16898__fr,fr,pyrimidine,2,452,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16898__es,es,pyrimidine,1,124,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16898__zh,zh,pyrimidine,26,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29309__de,de,methyl,35,92,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29309__en,en,methyl,70,9,1,ethynyl,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29309__fr,fr,methyl,33,54,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29309__es,es,methyl,13,26,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29309__zh,zh,methyl,3,33,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_62801__en,en,ethyl,1,5,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_62801__de,de,ethyl,31,9,1,ethynyl,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_62801__fr,fr,ethyl,2,15,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_62801__es,es,ethyl,1,5,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_62801__zh,zh,ethyl,12,24,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29191__en,en,hydroxyl,23,606,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29191__de,de,hydroxyl,24,522,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29191__fr,fr,hydroxyl,7,89,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29191__es,es,hydroxyl,9,224,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29191__zh,zh,hydroxyl,48,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__en__57,en,protein polypeptide chain,1,2,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__de__58,de,protein polypeptide chain,1,13,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__fr__59,fr,protein polypeptide chain,7,12,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__es__60,es,protein polypeptide chain,1,4,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16541__zh__61,zh,protein polypeptide chain,5,2,1,polypeptide,parent
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29389__en,en,silane,1,204,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29389__de,de,silane,1,351,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29389__fr,fr,silane,1,201,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29389__zh,zh,silane,8,149,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29389__es,es,silane,1,71,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30832__en,en,adipic acid,1,419,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30832__de,de,adipic acid,58,207,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30832__fr,fr,adipic acid,1,307,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30832__es,es,adipic acid,1,268,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,40,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_30832__zh,zh,adipic acid,82,146,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,60,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,2,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,28,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,57,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16052__en,en,propene,3,1,1,ethene,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16052__de,de,propene,9,1,1,ethene,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16052__fr,fr,propene,1,2,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16052__es,es,propene,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16052__zh,zh,propene,58,1,1,dioxygen,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_25219__en,en,methacrylic acid,1,19,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_25219__de,de,methacrylic acid,1,68,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_25219__fr,fr,methacrylic acid,10,3,1,acrylic acid,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_25219__es,es,methacrylic acid,1,28,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_25219__zh,zh,methacrylic acid,28,9,1,acrylic acid,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16134__en,en,ammonia,1,8,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16134__fr,fr,ammonia,1,3,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16134__de,de,ammonia,1,9,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16134__es,es,ammonia,1,11,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16134__zh,zh,ammonia,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,1,7,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,9,32,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,40,200,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,4,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53284__de,de,polyurethane macromolecule,1,74,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53284__en,en,polyurethane macromolecule,1,102,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53284__fr,fr,polyurethane macromolecule,1,62,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53284__es,es,polyurethane macromolecule,1,90,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_53284__zh,zh,polyurethane macromolecule,139,46,1,poly(vinyl alcohol) macromolecule,sibling
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17909__en,en,polysulfur,48,1,1,elemental sulfur,parent
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17909__de,de,polysulfur,1,37,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17909__fr,fr,polysulfur,2,119,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17909__zh,zh,polysulfur,4,16,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17909__es,es,polysulfur,3,62,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29390__en,en,silicon carbide,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29390__de,de,silicon carbide,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29390__fr,fr,silicon carbide,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29390__zh,zh,silicon carbide,1,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_29390__es,es,silicon carbide,2,,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15882__en,en,phenol,1,79,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15882__de,de,phenol,1,44,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15882__fr,fr,phenol,3,20,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15882__es,es,phenol,1,43,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,1,7,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_15882__zh,zh,phenol,1,113,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,5,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,1,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,2,6,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,1,9,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_136511__en,en,manganese dioxide,1,13,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_136511__fr,fr,manganese dioxide,1,3,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_136511__de,de,manganese dioxide,2,10,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_136511__es,es,manganese dioxide,1,3,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_136511__zh,zh,manganese dioxide,1,63,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16526__en,en,carbon dioxide,1,4,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16526__de,de,carbon dioxide,1,8,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16526__fr,fr,carbon dioxide,1,3,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16526__es,es,carbon dioxide,1,2,0,,
+nomic-ai-nomic-embed-text-v2-moe,CHEBI_16526__zh,zh,carbon dioxide,1,10,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15138__en,en,sulfide(2-),2,19,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15138__de,de,sulfide(2-),1,23,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15138__fr,fr,sulfide(2-),3,17,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30488__en,en,sulfonium,1,316,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30488__de,de,sulfonium,1,219,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30488__fr,fr,sulfonium,1,266,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30488__es,es,sulfonium,1,259,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30488__zh,zh,sulfonium,1,300,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16716__en,en,benzene,84,1,1,anilines,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16716__fr,fr,benzene,543,4,1,biphenyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16716__de,de,benzene,8,3,1,biphenyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16716__zh,zh,benzene,15,4,1,anilines,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16716__es,es,benzene,1,4,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17359__en,en,sulfite,1,6,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17359__de,de,sulfite,1,4,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17359__fr,fr,sulfite,1,4,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17359__zh,zh,sulfite,1,6,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17359__es,es,sulfite,1,20,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17115__en,en,L-serine,1,34,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17115__de,de,L-serine,1,136,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17115__fr,fr,L-serine,1,79,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__en,en,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17115__zh,zh,L-serine,2,64,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__de,de,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__fr,fr,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__es,es,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__zh,zh,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__en__27,en,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__de__28,de,urethane,30,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__es__30,es,urethane,38,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__en,en,protein polypeptide chain,1,9,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17967__zh__32,zh,urethane,98,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__de,de,protein polypeptide chain,15,5,1,polypeptide,parent
+qwen-qwen3-embedding-0-6b,CHEBI_16541__fr,fr,protein polypeptide chain,1,8,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__es,es,protein polypeptide chain,1,19,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__zh,zh,protein polypeptide chain,1,7,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16898__en,en,pyrimidine,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16898__de,de,pyrimidine,1,803,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16898__fr,fr,pyrimidine,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16898__es,es,pyrimidine,3,43,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16898__zh,zh,pyrimidine,1,364,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29309__de,de,methyl,28,336,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29309__en,en,methyl,5,96,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29309__fr,fr,methyl,6,61,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29309__es,es,methyl,5,79,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29309__zh,zh,methyl,1,67,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_62801__en,en,ethyl,19,5,1,methyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_62801__de,de,ethyl,10,2,1,methyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_62801__fr,fr,ethyl,8,2,1,methyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_62801__es,es,ethyl,35,11,1,methyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_62801__zh,zh,ethyl,2,1,1,methyl,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_29191__en,en,hydroxyl,1,197,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29191__de,de,hydroxyl,2,34,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29191__fr,fr,hydroxyl,1,28,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29191__es,es,hydroxyl,2,98,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29191__zh,zh,hydroxyl,2,81,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__en__57,en,protein polypeptide chain,1,3,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__de__58,de,protein polypeptide chain,2,15,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__fr__59,fr,protein polypeptide chain,19,13,1,polypeptide,parent
+qwen-qwen3-embedding-0-6b,CHEBI_16541__es__60,es,protein polypeptide chain,5,18,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16541__zh__61,zh,protein polypeptide chain,3,2,1,polypeptide,parent
+qwen-qwen3-embedding-0-6b,CHEBI_29389__en,en,silane,1,226,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29389__de,de,silane,6,374,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29389__fr,fr,silane,1,212,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29389__zh,zh,silane,1,166,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29389__es,es,silane,1,468,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30832__en,en,adipic acid,1,124,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30832__de,de,adipic acid,63,43,1,itaconic acid,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_30832__fr,fr,adipic acid,1,206,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30832__es,es,adipic acid,1,136,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,21,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_30832__zh,zh,adipic acid,3,29,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,9,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,7,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,11,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,24,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16052__en,en,propene,2,1,1,ethene,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16052__de,de,propene,5,1,1,ethene,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16052__fr,fr,propene,1,3,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16052__es,es,propene,1,2,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16052__zh,zh,propene,13,3,1,ethene,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_25219__en,en,methacrylic acid,1,30,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_25219__de,de,methacrylic acid,2,26,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_25219__fr,fr,methacrylic acid,1,11,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_25219__es,es,methacrylic acid,1,90,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_25219__zh,zh,methacrylic acid,23,10,1,acrylic acid,sibling
+qwen-qwen3-embedding-0-6b,CHEBI_16134__en,en,ammonia,1,2,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16134__fr,fr,ammonia,1,2,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16134__de,de,ammonia,1,3,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16134__es,es,ammonia,1,2,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16134__zh,zh,ammonia,1,7,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,38,72,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,1,44,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,7,19,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,9,44,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,18,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53284__de,de,polyurethane macromolecule,1,26,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53284__en,en,polyurethane macromolecule,1,292,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53284__fr,fr,polyurethane macromolecule,1,86,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53284__es,es,polyurethane macromolecule,3,98,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_53284__zh,zh,polyurethane macromolecule,1,40,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17909__en,en,polysulfur,5,36,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17909__de,de,polysulfur,1,28,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17909__fr,fr,polysulfur,1,39,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17909__zh,zh,polysulfur,1,56,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17909__es,es,polysulfur,1,60,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29390__en,en,silicon carbide,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29390__de,de,silicon carbide,1,383,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29390__fr,fr,silicon carbide,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29390__zh,zh,silicon carbide,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_29390__es,es,silicon carbide,1,,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15882__en,en,phenol,1,69,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15882__de,de,phenol,1,203,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15882__fr,fr,phenol,2,99,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15882__es,es,phenol,1,118,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,1,16,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_15882__zh,zh,phenol,17,70,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,1,19,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,1,5,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,1,16,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,1,23,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_136511__en,en,manganese dioxide,1,5,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_136511__fr,fr,manganese dioxide,1,3,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_136511__de,de,manganese dioxide,4,7,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_136511__es,es,manganese dioxide,2,4,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_136511__zh,zh,manganese dioxide,1,6,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16526__en,en,carbon dioxide,1,7,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16526__de,de,carbon dioxide,1,6,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16526__fr,fr,carbon dioxide,1,7,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16526__es,es,carbon dioxide,1,9,0,,
+qwen-qwen3-embedding-0-6b,CHEBI_16526__zh,zh,carbon dioxide,1,18,0,,
+sentence-transformers-labse,CHEBI_15138__en,en,sulfide(2-),272,204,1,sulfate,sibling
+sentence-transformers-labse,CHEBI_15138__de,de,sulfide(2-),24,10,1,sulfate,sibling
+sentence-transformers-labse,CHEBI_15138__fr,fr,sulfide(2-),333,63,1,sulfite,sibling
+sentence-transformers-labse,CHEBI_30488__en,en,sulfonium,1,622,0,,
+sentence-transformers-labse,CHEBI_30488__de,de,sulfonium,1,518,0,,
+sentence-transformers-labse,CHEBI_30488__fr,fr,sulfonium,1,962,0,,
+sentence-transformers-labse,CHEBI_30488__es,es,sulfonium,5,167,0,,
+sentence-transformers-labse,CHEBI_30488__zh,zh,sulfonium,1,542,0,,
+sentence-transformers-labse,CHEBI_16716__en,en,benzene,135,32,1,cyclopentane,sibling
+sentence-transformers-labse,CHEBI_16716__fr,fr,benzene,253,7,1,ethyl 2-methylbutyrate,sibling
+sentence-transformers-labse,CHEBI_16716__de,de,benzene,92,11,1,biphenyl,sibling
+sentence-transformers-labse,CHEBI_16716__zh,zh,benzene,26,1,1,biphenyl,sibling
+sentence-transformers-labse,CHEBI_16716__es,es,benzene,106,23,1,biphenyl,sibling
+sentence-transformers-labse,CHEBI_17359__en,en,sulfite,1,9,0,,
+sentence-transformers-labse,CHEBI_17359__de,de,sulfite,1,5,0,,
+sentence-transformers-labse,CHEBI_17359__fr,fr,sulfite,1,2,0,,
+sentence-transformers-labse,CHEBI_17359__zh,zh,sulfite,1,9,0,,
+sentence-transformers-labse,CHEBI_17359__es,es,sulfite,1,2,0,,
+sentence-transformers-labse,CHEBI_17115__en,en,L-serine,1,45,0,,
+sentence-transformers-labse,CHEBI_17115__de,de,L-serine,1,50,0,,
+sentence-transformers-labse,CHEBI_17115__fr,fr,L-serine,1,17,0,,
+sentence-transformers-labse,CHEBI_17967__en,en,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17115__zh,zh,L-serine,5,317,0,,
+sentence-transformers-labse,CHEBI_17967__de,de,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__fr,fr,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__es,es,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__zh,zh,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__en__27,en,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__de__28,de,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__fr__29,fr,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_17967__es__30,es,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_16541__en,en,protein polypeptide chain,1,5,0,,
+sentence-transformers-labse,CHEBI_17967__zh__32,zh,urethane,1,,0,,
+sentence-transformers-labse,CHEBI_16541__de,de,protein polypeptide chain,43,2,1,polypeptide,parent
+sentence-transformers-labse,CHEBI_16541__fr,fr,protein polypeptide chain,1,5,0,,
+sentence-transformers-labse,CHEBI_16541__es,es,protein polypeptide chain,1,10,0,,
+sentence-transformers-labse,CHEBI_16541__zh,zh,protein polypeptide chain,1,3,0,,
+sentence-transformers-labse,CHEBI_16898__en,en,pyrimidine,1,,0,,
+sentence-transformers-labse,CHEBI_16898__de,de,pyrimidine,1,,0,,
+sentence-transformers-labse,CHEBI_16898__fr,fr,pyrimidine,1,,0,,
+sentence-transformers-labse,CHEBI_16898__es,es,pyrimidine,2,604,0,,
+sentence-transformers-labse,CHEBI_16898__zh,zh,pyrimidine,1,,0,,
+sentence-transformers-labse,CHEBI_29309__de,de,methyl,1,51,0,,
+sentence-transformers-labse,CHEBI_29309__en,en,methyl,13,46,0,,
+sentence-transformers-labse,CHEBI_29309__fr,fr,methyl,12,53,0,,
+sentence-transformers-labse,CHEBI_29309__es,es,methyl,15,17,0,,
+sentence-transformers-labse,CHEBI_29309__zh,zh,methyl,1,51,0,,
+sentence-transformers-labse,CHEBI_62801__en,en,ethyl,1,12,0,,
+sentence-transformers-labse,CHEBI_62801__de,de,ethyl,10,5,1,methyl,sibling
+sentence-transformers-labse,CHEBI_62801__fr,fr,ethyl,1,23,0,,
+sentence-transformers-labse,CHEBI_62801__es,es,ethyl,1,27,0,,
+sentence-transformers-labse,CHEBI_62801__zh,zh,ethyl,25,2,1,methyl,sibling
+sentence-transformers-labse,CHEBI_29191__en,en,hydroxyl,2,474,0,,
+sentence-transformers-labse,CHEBI_29191__de,de,hydroxyl,13,282,0,,
+sentence-transformers-labse,CHEBI_29191__fr,fr,hydroxyl,37,83,0,,
+sentence-transformers-labse,CHEBI_29191__es,es,hydroxyl,26,316,0,,
+sentence-transformers-labse,CHEBI_29191__zh,zh,hydroxyl,20,695,0,,
+sentence-transformers-labse,CHEBI_16541__en__57,en,protein polypeptide chain,1,8,0,,
+sentence-transformers-labse,CHEBI_16541__de__58,de,protein polypeptide chain,8,7,1,polypeptide,parent
+sentence-transformers-labse,CHEBI_16541__fr__59,fr,protein polypeptide chain,10,7,1,polypeptide,parent
+sentence-transformers-labse,CHEBI_16541__es__60,es,protein polypeptide chain,1,7,0,,
+sentence-transformers-labse,CHEBI_16541__zh__61,zh,protein polypeptide chain,1,13,0,,
+sentence-transformers-labse,CHEBI_29389__en,en,silane,1,85,0,,
+sentence-transformers-labse,CHEBI_29389__de,de,silane,32,640,0,,
+sentence-transformers-labse,CHEBI_29389__fr,fr,silane,2,382,0,,
+sentence-transformers-labse,CHEBI_29389__zh,zh,silane,29,422,0,,
+sentence-transformers-labse,CHEBI_29389__es,es,silane,6,144,0,,
+sentence-transformers-labse,CHEBI_30832__en,en,adipic acid,4,200,0,,
+sentence-transformers-labse,CHEBI_30832__de,de,adipic acid,101,154,0,,
+sentence-transformers-labse,CHEBI_30832__fr,fr,adipic acid,158,48,1,succinic acid,sibling
+sentence-transformers-labse,CHEBI_30832__es,es,adipic acid,88,28,1,succinic acid,sibling
+sentence-transformers-labse,CHEBI_17246__en,en,poly(vinyl alcohol) macromolecule,1,7,0,,
+sentence-transformers-labse,CHEBI_30832__zh,zh,adipic acid,178,43,1,succinic acid,sibling
+sentence-transformers-labse,CHEBI_17246__de,de,poly(vinyl alcohol) macromolecule,1,7,0,,
+sentence-transformers-labse,CHEBI_17246__fr,fr,poly(vinyl alcohol) macromolecule,1,4,0,,
+sentence-transformers-labse,CHEBI_17246__es,es,poly(vinyl alcohol) macromolecule,1,9,0,,
+sentence-transformers-labse,CHEBI_17246__zh,zh,poly(vinyl alcohol) macromolecule,1,12,0,,
+sentence-transformers-labse,CHEBI_16052__en,en,propene,55,7,1,ethene,sibling
+sentence-transformers-labse,CHEBI_16052__de,de,propene,151,3,1,methane,sibling
+sentence-transformers-labse,CHEBI_16052__fr,fr,propene,140,27,1,ammonia,sibling
+sentence-transformers-labse,CHEBI_16052__es,es,propene,4,5,0,,
+sentence-transformers-labse,CHEBI_16052__zh,zh,propene,32,5,1,methane,sibling
+sentence-transformers-labse,CHEBI_25219__en,en,methacrylic acid,3,75,0,,
+sentence-transformers-labse,CHEBI_25219__de,de,methacrylic acid,2,50,0,,
+sentence-transformers-labse,CHEBI_25219__fr,fr,methacrylic acid,2,16,0,,
+sentence-transformers-labse,CHEBI_25219__es,es,methacrylic acid,2,24,0,,
+sentence-transformers-labse,CHEBI_25219__zh,zh,methacrylic acid,3,55,0,,
+sentence-transformers-labse,CHEBI_16134__en,en,ammonia,10,1,1,ethane,sibling
+sentence-transformers-labse,CHEBI_16134__fr,fr,ammonia,4,1,1,carbon dioxide,sibling
+sentence-transformers-labse,CHEBI_16134__de,de,ammonia,1,21,0,,
+sentence-transformers-labse,CHEBI_16134__es,es,ammonia,2,5,0,,
+sentence-transformers-labse,CHEBI_16134__zh,zh,ammonia,1,3,0,,
+sentence-transformers-labse,CHEBI_53262__de,de,poly(propylene glycol) macromolecule,17,18,0,,
+sentence-transformers-labse,CHEBI_53262__en,en,poly(propylene glycol) macromolecule,2,18,0,,
+sentence-transformers-labse,CHEBI_53262__es,es,poly(propylene glycol) macromolecule,2,11,0,,
+sentence-transformers-labse,CHEBI_53262__zh,zh,poly(propylene glycol) macromolecule,64,6,1,poly(ether) macromolecule,parent
+sentence-transformers-labse,CHEBI_53262__fr,fr,poly(propylene glycol) macromolecule,1,24,0,,
+sentence-transformers-labse,CHEBI_53284__de,de,polyurethane macromolecule,1,22,0,,
+sentence-transformers-labse,CHEBI_53284__en,en,polyurethane macromolecule,1,20,0,,
+sentence-transformers-labse,CHEBI_53284__fr,fr,polyurethane macromolecule,1,26,0,,
+sentence-transformers-labse,CHEBI_53284__es,es,polyurethane macromolecule,1,23,0,,
+sentence-transformers-labse,CHEBI_53284__zh,zh,polyurethane macromolecule,1,53,0,,
+sentence-transformers-labse,CHEBI_17909__en,en,polysulfur,23,91,0,,
+sentence-transformers-labse,CHEBI_17909__de,de,polysulfur,2,27,0,,
+sentence-transformers-labse,CHEBI_17909__fr,fr,polysulfur,1,16,0,,
+sentence-transformers-labse,CHEBI_17909__zh,zh,polysulfur,3,40,0,,
+sentence-transformers-labse,CHEBI_17909__es,es,polysulfur,45,80,0,,
+sentence-transformers-labse,CHEBI_29390__en,en,silicon carbide,1,,0,,
+sentence-transformers-labse,CHEBI_29390__de,de,silicon carbide,1,754,0,,
+sentence-transformers-labse,CHEBI_29390__fr,fr,silicon carbide,1,883,0,,
+sentence-transformers-labse,CHEBI_29390__zh,zh,silicon carbide,1,,0,,
+sentence-transformers-labse,CHEBI_29390__es,es,silicon carbide,1,681,0,,
+sentence-transformers-labse,CHEBI_15882__en,en,phenol,93,13,1,polyphenol,sibling
+sentence-transformers-labse,CHEBI_15882__de,de,phenol,15,164,0,,
+sentence-transformers-labse,CHEBI_15882__fr,fr,phenol,52,97,0,,
+sentence-transformers-labse,CHEBI_15882__es,es,phenol,46,8,1,polyphenol,sibling
+sentence-transformers-labse,CHEBI_17246__en__116,en,poly(vinyl alcohol) macromolecule,24,10,1,poly(alkylene) macromolecule,sibling
+sentence-transformers-labse,CHEBI_15882__zh,zh,phenol,142,69,1,bisphenol,sibling
+sentence-transformers-labse,CHEBI_17246__fr__118,fr,poly(vinyl alcohol) macromolecule,55,3,1,poly(alkylene) macromolecule,sibling
+sentence-transformers-labse,CHEBI_17246__de__119,de,poly(vinyl alcohol) macromolecule,14,9,1,polyurethane macromolecule,sibling
+sentence-transformers-labse,CHEBI_17246__es__120,es,poly(vinyl alcohol) macromolecule,39,1,1,poly(alkylene) macromolecule,sibling
+sentence-transformers-labse,CHEBI_17246__zh__121,zh,poly(vinyl alcohol) macromolecule,45,3,1,poly(alkylene) macromolecule,sibling
+sentence-transformers-labse,CHEBI_136511__en,en,manganese dioxide,1,31,0,,
+sentence-transformers-labse,CHEBI_136511__fr,fr,manganese dioxide,1,27,0,,
+sentence-transformers-labse,CHEBI_136511__de,de,manganese dioxide,1,126,0,,
+sentence-transformers-labse,CHEBI_136511__es,es,manganese dioxide,1,14,0,,
+sentence-transformers-labse,CHEBI_136511__zh,zh,manganese dioxide,1,39,0,,
+sentence-transformers-labse,CHEBI_16526__en,en,carbon dioxide,2,1,1,dioxygen,sibling
+sentence-transformers-labse,CHEBI_16526__de,de,carbon dioxide,1,2,0,,
+sentence-transformers-labse,CHEBI_16526__fr,fr,carbon dioxide,1,2,0,,
+sentence-transformers-labse,CHEBI_16526__es,es,carbon dioxide,3,1,1,hydrogen sulfide,sibling
+sentence-transformers-labse,CHEBI_16526__zh,zh,carbon dioxide,1,3,0,,
