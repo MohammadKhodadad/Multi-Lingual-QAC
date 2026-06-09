@@ -12,3 +12,12 @@ alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-ali
 alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,nomic-ai/nomic-embed-text-v2-moe,0.05703,0.05703,0.11209,0.31866,0.19815,0.68998
 alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,Qwen/Qwen3-Embedding-0.6B,0.0643,0.0643,0.12621,0.36227,0.22805,0.72995
 alias_graph,2026-06-09T03:01:31.462857+00:00,MehdiAstaraki/multi-lingual-qac-alias-graph,multilingual,7bf2dee,132,5841,sentence-transformers/LaBSE,0.05613,0.05613,0.09723,0.26515,0.16448,0.56496
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,Alibaba-NLP/gte-multilingual-base,0.00365,0.00365,0.01825,0.00282,0.00182,0.00365
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,BAAI/bge-m3,0.47567,0.47567,0.66058,0.39063,0.32946,0.40902
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,0.21168,0.21168,0.42457,0.17585,0.14211,0.19988
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,google/embeddinggemma-300m,0.5438,0.5438,0.72384,0.46136,0.40197,0.47863
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,ibm-granite/granite-embedding-278m-multilingual,0.35888,0.35888,0.60097,0.31662,0.27265,0.35792
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,intfloat/multilingual-e5-large-instruct,0.17762,0.17762,0.34307,0.15187,0.1122,0.20664
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,nomic-ai/nomic-embed-text-v2-moe,0.44282,0.44282,0.66423,0.3907,0.33538,0.43784
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,Qwen/Qwen3-Embedding-0.6B,0.46837,0.46837,0.6837,0.39037,0.33307,0.41327
+chem_patents,2026-06-09T23:51:48.376580+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,1ced5dc,137,1110,sentence-transformers/LaBSE,0.27737,0.27737,0.46715,0.22808,0.18176,0.26364
