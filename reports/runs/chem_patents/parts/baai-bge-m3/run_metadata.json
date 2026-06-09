@@ -1,0 +1,31 @@
+{
+  "run_id": "20260609-222425",
+  "created_at": "2026-06-09T22:24:25.478395+00:00",
+  "dataset_repo": "MehdiAstaraki/multi-lingual-qac-chem-patents",
+  "corpus_repo": "MehdiAstaraki/multilingual_GP",
+  "dataset_variant": "multilingual",
+  "dataset_revision": "main",
+  "dataset_sizes": {
+    "queries": 137,
+    "corpus": 1110,
+    "qrels": 322
+  },
+  "models": [
+    "BAAI/bge-m3"
+  ],
+  "batch_size": 64,
+  "git_commit": "d88c53e",
+  "git_dirty": true,
+  "hostname": "fc10613",
+  "slurm_job_id": "43674860",
+  "scores": {
+    "BAAI/bge-m3": {
+      "main_score": 0.47567,
+      "recall_at_10": 0.47567,
+      "recall_at_100": 0.66058,
+      "ndcg_at_10": 0.39063,
+      "map_at_10": 0.32946,
+      "mrr_at_10": 0.4090198123044838
+    }
+  }
+}

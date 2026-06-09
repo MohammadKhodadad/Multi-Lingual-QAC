@@ -1,0 +1,13 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{r l r r r r r r r r r r}
+\hline
+Rank & Model & Main score & Recall@10 & Recall@100 & MAP@10 & MAP@100 & MAP & nDCG@10 & nDCG@100 & Same-lang irr@100 & Time (s) \\
+\hline
+1 & \texttt{Qwen/Qwen3-Embedding-0.6B} & \textbf{0.4684} & \textbf{0.4684} & \textbf{0.6837} & \textbf{0.3331} & \textbf{0.3447} & \textbf{0.3455} & \textbf{0.3904} & \textbf{0.4446} & \textbf{0.3257} & 441.4 \\
+\hline
+\end{tabular}
+\caption{MTEB retrieval comparison on \texttt{MehdiAstaraki/multi-lingual-qac-chem-patents}. Bold marks the best score per metric.}
+\label{tab:mteb-model-comparison}
+\end{table}
