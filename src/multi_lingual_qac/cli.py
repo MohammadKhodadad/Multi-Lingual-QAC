@@ -412,13 +412,27 @@ def parse_args() -> PipelineConfig:
                         help="Process only the first N B/C/D/F groups (and N E docs).")
     parser.add_argument("--cs-qa-workers", type=int, default=1,
                         help="Worker threads for variant QA (default: 1).")
+    # ---- Progressive code-switching: TWO commands ---------------------------- #
+    # (1) DATA CREATION: build the ladder corpus, generate the fixed queries, and push
+    #     the dataset to HF in MTEB retrieval format (corpus/queries/qrels).
     parser.add_argument(
-        "--build-progressive-cs",
+        "--create-progressive-data",
         action="store_true",
-        help="Progressive code-switching: for each base doc build a cumulative ladder "
-        "(clean -> 1 -> ... -> N swaps), each step swapping one more chemistry term with a "
-        "random B/C/D/F mode. Writes data/progressive_cs/progressive_corpus.csv.",
+        help="DATA COMMAND. Progressive code-switching end-to-end: build the cumulative-ladder "
+        "corpus (clean -> 1 -> ... -> N swaps, random B/C/D/F per step), generate one fixed query "
+        "per base doc (about the step-1 term), and push the dataset to HF (corpus/queries/qrels). "
+        "Use --hf-dry-run to write parquet locally instead of uploading.",
     )
+    # (2) EVALUATION: run embedding models against the published dataset + shared haystack.
+    parser.add_argument(
+        "--eval-progressive-cs",
+        action="store_true",
+        help="EVAL COMMAND. Read the published progressive dataset (--pcs-hf-repo) + the shared "
+        "corpus haystack (--mteb-corpus-repo), encode each ladder variant, and measure how retrieval "
+        "rank/score decays with depth. Writes the decay curve + plot under reports/runs/progressive_cs.",
+    )
+    parser.add_argument("--pcs-hf-repo", type=str, default="MehdiAstaraki/progressive-code-switch",
+                        help="HF dataset repo (or local dry-run dir) for the progressive benchmark.")
     parser.add_argument("--pcs-steps", type=int, default=5,
                         help="Number of cumulative replacement steps / ladder depth (default: 5).")
     parser.add_argument("--pcs-modes", type=str, default="B,C,D,F",
@@ -426,35 +440,29 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--pcs-seed", type=int, default=42,
                         help="Random seed for progressive code-switching (default: 42).")
     parser.add_argument("--pcs-limit", type=int, default=None,
-                        help="With --build-progressive-cs, process only the first N base docs.")
+                        help="Process only the first N base docs when building the corpus.")
     parser.add_argument("--pcs-output-dir", type=str, default=None,
-                        help="Output directory for the progressive corpus (default: data/progressive_cs).")
-    parser.add_argument(
-        "--progressive-cs-qa",
-        action="store_true",
-        help="Generate the fixed question per base doc (about the step-1 term, verbatim); gold = all "
-        "ladder variants. Reads <pcs-output-dir>/progressive_corpus.csv, writes progressive_qac.csv.",
-    )
+                        help="Working dir for the progressive CSVs (default: data/progressive_cs).")
     parser.add_argument("--pcs-qa-model", type=str, default="gpt-5-mini",
-                        help="LLM for progressive QA generation/grading (default: gpt-5-mini).")
+                        help="LLM for progressive query generation/grading (default: gpt-5-mini).")
     parser.add_argument("--pcs-qa-seed", type=int, default=42, help="Seed for progressive QA (default: 42).")
     parser.add_argument("--pcs-qa-limit", type=int, default=None,
-                        help="Process only the first N base docs in progressive QA.")
+                        help="Generate queries for only the first N base docs.")
     parser.add_argument("--pcs-qa-workers", type=int, default=1,
-                        help="Worker threads for progressive QA (default: 1).")
-    parser.add_argument(
-        "--eval-progressive-cs",
-        action="store_true",
-        help="Full-corpus realism eval: encode the shared corpus haystack once per model, then measure "
-        "the retrieval rank/score of each ladder variant vs the depth. Writes the decay curve + plot "
-        "under reports/runs/progressive_cs.",
-    )
+                        help="Worker threads for progressive query generation (default: 1).")
     parser.add_argument("--pcs-eval-models", type=str, nargs="*", default=None,
                         help="Embedding models for the progressive eval (default: ALIAS_GRAPH_MODELS).")
     parser.add_argument("--pcs-eval-limit", type=int, default=None,
                         help="Evaluate only the first N base docs (haystack still full).")
     parser.add_argument("--pcs-eval-batch-size", type=int, default=32,
                         help="Encoding batch size for the progressive eval (default: 32).")
+    # Granular sub-steps (optional; --create-progressive-data runs all three in order):
+    parser.add_argument("--build-progressive-cs", action="store_true",
+                        help="Sub-step: only build the ladder corpus CSV (no QA, no push).")
+    parser.add_argument("--progressive-cs-qa", action="store_true",
+                        help="Sub-step: only generate the fixed queries CSV from an existing corpus.")
+    parser.add_argument("--push-progressive-cs", action="store_true",
+                        help="Sub-step: only push the existing corpus+queries CSVs to HF.")
     parser.add_argument(
         "--push-alias-graph-hf",
         action="store_true",
@@ -550,21 +558,24 @@ def parse_args() -> PipelineConfig:
         cs_qa_seed=args.cs_qa_seed,
         cs_qa_limit=args.cs_qa_limit,
         cs_qa_workers=args.cs_qa_workers,
-        build_progressive_cs=args.build_progressive_cs,
+        create_progressive_data=args.create_progressive_data,
+        eval_progressive_cs=args.eval_progressive_cs,
+        pcs_hf_repo=args.pcs_hf_repo,
         pcs_steps=args.pcs_steps,
         pcs_modes=args.pcs_modes,
         pcs_seed=args.pcs_seed,
         pcs_limit=args.pcs_limit,
         pcs_output_dir=args.pcs_output_dir,
-        progressive_cs_qa=args.progressive_cs_qa,
         pcs_qa_model=args.pcs_qa_model,
         pcs_qa_seed=args.pcs_qa_seed,
         pcs_qa_limit=args.pcs_qa_limit,
         pcs_qa_workers=args.pcs_qa_workers,
-        eval_progressive_cs=args.eval_progressive_cs,
         pcs_eval_models=tuple(args.pcs_eval_models) if args.pcs_eval_models else (),
         pcs_eval_limit=args.pcs_eval_limit,
         pcs_eval_batch_size=args.pcs_eval_batch_size,
+        build_progressive_cs=args.build_progressive_cs,
+        progressive_cs_qa=args.progressive_cs_qa,
+        push_progressive_cs=args.push_progressive_cs,
         push_alias_graph_hf=args.push_alias_graph_hf,
         alias_hf_repo=args.alias_hf_repo,
         hf_dry_run=args.hf_dry_run,
@@ -671,47 +682,53 @@ def main() -> None:
         )
         return
 
-    if config.build_progressive_cs:
-        from src.alias_graph.progressive_code_switch import run_progressive_code_switch
-
+    # ---- Progressive code-switching: data-creation + evaluation -------------- #
+    pcs_data = config.create_progressive_data
+    if pcs_data or config.build_progressive_cs or config.progressive_cs_qa or config.push_progressive_cs:
         paths = PipelinePaths.from_project_root(project_root)
-        corpus_csv = (
+        source_corpus = (
             Path(config.alias_corpus) if config.alias_corpus else paths.multilingual_corpus_csv
         )
         output_dir = (
             Path(config.pcs_output_dir) if config.pcs_output_dir else paths.progressive_cs_dir
         )
-        run_progressive_code_switch(
-            alias_json=paths.alias_graph_dir / "alias_graph.json",
-            corpus_path=corpus_csv,
-            output_path=output_dir / "progressive_corpus.csv",
-            n_steps=config.pcs_steps,
-            modes=[m.strip() for m in config.pcs_modes.split(",") if m.strip()],
-            limit=config.pcs_limit,
-            seed=config.pcs_seed,
-        )
-        return
+        corpus_out = output_dir / "progressive_corpus.csv"
+        qac_out = output_dir / "progressive_qac.csv"
 
-    if config.progressive_cs_qa:
-        from src.alias_graph.qac_generation import run_progressive_qa
+        if pcs_data or config.build_progressive_cs:
+            from src.alias_graph.progressive_code_switch import run_progressive_code_switch
+            run_progressive_code_switch(
+                alias_json=paths.alias_graph_dir / "alias_graph.json",
+                corpus_path=source_corpus,
+                output_path=corpus_out,
+                n_steps=config.pcs_steps,
+                modes=[m.strip() for m in config.pcs_modes.split(",") if m.strip()],
+                limit=config.pcs_limit,
+                seed=config.pcs_seed,
+            )
 
-        paths = PipelinePaths.from_project_root(project_root)
-        corpus_csv = (
-            Path(config.alias_corpus) if config.alias_corpus else paths.multilingual_corpus_csv
-        )
-        output_dir = (
-            Path(config.pcs_output_dir) if config.pcs_output_dir else paths.progressive_cs_dir
-        )
-        run_progressive_qa(
-            corpus_csv=output_dir / "progressive_corpus.csv",
-            source_corpus=corpus_csv,
-            alias_json=paths.alias_graph_dir / "alias_graph.json",
-            output_path=output_dir / "progressive_qac.csv",
-            model=config.pcs_qa_model,
-            seed=config.pcs_qa_seed,
-            limit=config.pcs_qa_limit,
-            workers=config.pcs_qa_workers,
-        )
+        if pcs_data or config.progressive_cs_qa:
+            from src.alias_graph.qac_generation import run_progressive_qa
+            run_progressive_qa(
+                corpus_csv=corpus_out,
+                source_corpus=source_corpus,
+                alias_json=paths.alias_graph_dir / "alias_graph.json",
+                output_path=qac_out,
+                model=config.pcs_qa_model,
+                seed=config.pcs_qa_seed,
+                limit=config.pcs_qa_limit,
+                workers=config.pcs_qa_workers,
+            )
+
+        if pcs_data or config.push_progressive_cs:
+            from src.alias_graph.progressive_hf import push_progressive_to_hub
+            push_progressive_to_hub(
+                corpus_csv=corpus_out,
+                qac_csv=qac_out,
+                repo_id=config.pcs_hf_repo,
+                private=config.hf_private,
+                dry_run=config.hf_dry_run,
+            )
         return
 
     if config.eval_progressive_cs:
@@ -722,9 +739,8 @@ def main() -> None:
             Path(config.pcs_output_dir) if config.pcs_output_dir else paths.progressive_cs_dir
         )
         run_progressive_eval(
-            corpus_csv=output_dir / "progressive_corpus.csv",
-            qac_csv=output_dir / "progressive_qac.csv",
-            corpus_repo=config.mteb_corpus_repo,
+            dataset_repo=config.pcs_hf_repo,
+            haystack_repo=config.mteb_corpus_repo,
             output_dir=project_root / "reports" / "runs" / "progressive_cs",
             models=config.pcs_eval_models or None,
             limit=config.pcs_eval_limit,

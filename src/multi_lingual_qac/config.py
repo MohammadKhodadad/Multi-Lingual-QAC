@@ -107,21 +107,27 @@ class PipelineConfig:
     cs_qa_seed: int = 42
     cs_qa_limit: Optional[int] = None
     cs_qa_workers: int = 1
-    build_progressive_cs: bool = False
+    # Data-creation command (build corpus + queries + push to HF):
+    create_progressive_data: bool = False
+    # Evaluation command (run embedding models against the published dataset):
+    eval_progressive_cs: bool = False
+    pcs_hf_repo: str = "MehdiAstaraki/progressive-code-switch"
     pcs_steps: int = 5
     pcs_modes: str = "B,C,D,F"
     pcs_seed: int = 42
     pcs_limit: Optional[int] = None
     pcs_output_dir: Optional[str] = None
-    progressive_cs_qa: bool = False
     pcs_qa_model: str = "gpt-5-mini"
     pcs_qa_seed: int = 42
     pcs_qa_limit: Optional[int] = None
     pcs_qa_workers: int = 1
-    eval_progressive_cs: bool = False
     pcs_eval_models: tuple[str, ...] = ()
     pcs_eval_limit: Optional[int] = None
     pcs_eval_batch_size: int = 32
+    # Granular sub-steps (optional; --create-progressive-data runs all three):
+    build_progressive_cs: bool = False
+    progressive_cs_qa: bool = False
+    push_progressive_cs: bool = False
     push_alias_graph_hf: bool = False
     alias_hf_repo: str = "MehdiAstaraki/multi-lingual-qac-alias-graph"
     hf_dry_run: bool = False

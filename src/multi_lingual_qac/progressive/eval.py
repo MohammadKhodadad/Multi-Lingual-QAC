@@ -35,7 +35,6 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from src.alias_graph.builder import _read_corpus
 from src.multi_lingual_qac.mteb.evaluation import (
     ALIAS_GRAPH_MODELS,
     MODELS_NEEDING_POSITION_IDS_REPAIR,
@@ -56,6 +55,24 @@ def _doc_text(title: Optional[str], text: Optional[str]) -> str:
     """Compose document text exactly as the shared corpus / MTEB does:
     ``title + ' ' + text`` where the haystack's ``text`` is ``context|abstract``."""
     return (str(title or "") + " " + str(text or "")).strip()
+
+
+def _load_pcs_config(dataset_repo: str, config: str, revision: str):
+    """Load a progressive-dataset config (``corpus``/``queries``/``qrels``) from a HF
+    repo or a local dry-run export dir (``<dir>/<config>/<config>.parquet`` or
+    ``<dir>/data/<config>/*.parquet``)."""
+    from datasets import load_dataset
+
+    path = Path(dataset_repo)
+    if path.is_dir():
+        pq = path / config / f"{config}.parquet"
+        if not pq.exists():
+            hits = sorted((path / "data" / config).glob("*.parquet"))
+            if not hits:
+                raise FileNotFoundError(f"No {config} parquet under {path}")
+            pq = hits[0]
+        return load_dataset("parquet", data_files=str(pq), split="train")
+    return load_dataset(dataset_repo, config, split="train", revision=revision)
 
 
 def _task_metadata():
@@ -133,9 +150,8 @@ def _haystack_embeddings(
 
 
 def run_progressive_eval(
-    corpus_csv: Path,
-    qac_csv: Path,
-    corpus_repo: str,
+    dataset_repo: str,
+    haystack_repo: str,
     output_dir: Path,
     *,
     models: Optional[Sequence[str]] = None,
@@ -144,40 +160,47 @@ def run_progressive_eval(
     emb_cache_dir: Optional[Path] = None,
     revision: str = "main",
 ) -> Path:
-    """Run the decay eval; returns the path to the per-(model,depth) summary CSV."""
+    """Run the decay eval against the published progressive dataset.
+
+    ``dataset_repo`` is the progressive benchmark (HF repo id or local dry-run dir)
+    holding the ``corpus`` (ladder variants) + ``queries`` configs; ``haystack_repo``
+    is the shared corpus used as the realistic retrieval haystack. Returns the path
+    to the per-(model, depth) summary CSV.
+    """
     import pandas as pd
 
     models = list(models) if models else list(ALIAS_GRAPH_MODELS)
     output_dir = Path(output_dir)
 
-    # ---- Load ladder variants -------------------------------------------- #
+    # ---- Load ladder variants (from the published corpus config) --------- #
     by_base_depth: Dict[str, Dict[int, str]] = defaultdict(dict)
     variant_text: Dict[str, str] = {}
-    base_steps: Dict[str, list] = {}
+    mode_at_depth: Dict[str, Dict[int, str]] = defaultdict(dict)
     base_pubs: set = set()
-    for r in _read_corpus(corpus_csv):
-        vid, base, depth = r["id"], r["base_id"], int(r["n_replacements"])
+    for r in _load_pcs_config(dataset_repo, "corpus", revision):
+        vid, base, depth = str(r["_id"]), str(r["base_id"]), int(r["depth"])
         by_base_depth[base][depth] = vid
-        variant_text[vid] = _doc_text(r.get("title"), r.get("context") or r.get("abstract"))
-        base_pubs.add(r["source_publication_number"])
-        steps = json.loads(r.get("replacements_json") or "[]")
-        if len(steps) >= len(base_steps.get(base, [])):
-            base_steps[base] = steps  # keep the deepest (full) step list
+        variant_text[vid] = _doc_text(r.get("title"), r.get("text"))
+        mode_at_depth[base][depth] = str(r.get("mode_added") or "")
+        pub = str(r.get("source_publication_number") or "").strip()
+        if pub:
+            base_pubs.add(pub)
 
     # ---- Queries (one per base) ------------------------------------------ #
-    base_query: Dict[str, str] = {}
-    for r in _read_corpus(qac_csv):
-        base_query.setdefault(r["base_id"], r["question"])
+    base_query: Dict[str, str] = {
+        str(r["_id"]): str(r["text"]) for r in _load_pcs_config(dataset_repo, "queries", revision)
+    }
 
     bases = [b for b in by_base_depth if b in base_query]
     if limit is not None:
         bases = bases[:limit]
     if not bases:
-        raise ValueError("No base documents to evaluate (is progressive_qac.csv present?).")
-    print(f"Progressive eval: {len(bases)} base docs, {len(models)} model(s), corpus={corpus_repo}")
+        raise ValueError(f"No base documents to evaluate (check the dataset at {dataset_repo}).")
+    print(f"Progressive eval: {len(bases)} base docs, {len(models)} model(s), "
+          f"dataset={dataset_repo}, haystack={haystack_repo}")
 
     # ---- Haystack (exclude all language versions of the base publications) #
-    ds = _load_corpus_dataset(corpus_repo, revision)
+    ds = _load_corpus_dataset(haystack_repo, revision)
     hay_ids: List[str] = []
     hay_texts: List[str] = []
     for row in ds:
@@ -212,12 +235,11 @@ def run_progressive_eval(
         for bi, b in enumerate(bases):
             q = E_Q[bi]
             s_H = E_H @ q
-            steps = base_steps.get(b, [])
             prev = None
             for k in sorted(by_base_depth[b]):
                 score = float(v_emb[by_base_depth[b][k]] @ q)
                 rank = int(1 + np.count_nonzero(s_H > score))
-                mode = steps[k - 1]["mode"] if 1 <= k <= len(steps) else ""
+                mode = mode_at_depth[b].get(k, "")
                 records.append({
                     "model": name, "model_slug": slug, "base_id": b, "depth": k,
                     "mode_added": mode, "score": score, "rank": rank, "rr": 1.0 / rank,
