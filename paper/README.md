@@ -34,6 +34,11 @@ To resume after an interruption, just run `/paper-loop` again — it reads
 - **Implementer budget.** Prefer 0 API calls; ≤20 requests/round if unavoidable; never run `--evaluate-mteb`. New evals go to `needs_eval.md`.
 - **Paper stands without code-switch results** — code-switch is an optional bonus experiment.
 
+## Venue & length (verified against the EMNLP Industry Track CFP)
+- Venue: **EMNLP Industry Track**, double-blind. Template: ACL (unmodified) — correct, `[review]` mode on.
+- **Page limit: 6 content pages (review), 7 camera-ready.** References, the **Limitations** section, and the **Appendix** do NOT count. Non-conforming papers are rejected without review.
+- Strategy: keep ~5–7 floats in the 6-page body; move all other figures/tables to the Appendix (free).
+
 ## Compiling
 No LaTeX toolchain is installed in this environment. Compile locally / on Overleaf:
 ```
