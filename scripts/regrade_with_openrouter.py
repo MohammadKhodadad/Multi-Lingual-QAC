@@ -9,7 +9,7 @@ Usage:
     python scripts/regrade_with_openrouter.py \
         --input  data/google_patents/qac/balanced_100_qac_all_generated.csv \
         --corpus data/google_patents/multilingual_corpus.csv \
-        --output data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv
+        --output data/google_patents/qac/qac_chempatents.csv
 
 Requires OPENROUTER_API_KEY in environment (or .env file).
 """
@@ -402,7 +402,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv"),
+        default=Path("data/google_patents/qac/qac_chempatents.csv"),
         help="Output CSV path",
     )
     parser.add_argument(

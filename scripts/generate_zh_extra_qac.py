@@ -4,7 +4,7 @@ Generate 40 additional QAC rows that exercise the new Chinese support:
   Phase A — 20 questions whose query language is forced to Chinese.
             Source publications are drawn at random from the corpus,
             EXCLUDING any publication already covered by
-            data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv.
+            data/google_patents/qac/qac_chempatents.csv.
             Source passages are NOT required to be Chinese — the prompt is
             instructed to write the query/answer in Chinese regardless of the
             source language. 10 technical + 10 semantic.
@@ -25,9 +25,9 @@ regraded balanced files, this script APPENDS its results directly into
 those existing files instead of writing standalone outputs:
 
   - all-generated rows (3 candidates per group) ->
-        data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv
+        data/google_patents/qac/qac_chempatents.csv
   - best-only rows (top candidate per group) ->
-        data/google_patents/qac/balanced_100_qac_regraded.csv
+        data/google_patents/qac/qac_chempatents_best.csv
 
 A small manifest is still written separately so each run is traceable.
 
@@ -717,13 +717,13 @@ def main() -> None:
     parser.add_argument(
         "--exclude-from",
         type=Path,
-        default=Path("data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv"),
+        default=Path("data/google_patents/qac/qac_chempatents.csv"),
         help="CSV whose publication_number column lists pubs that Phase A must skip.",
     )
     parser.add_argument(
         "--all-generated",
         type=Path,
-        default=Path("data/google_patents/qac/balanced_100_qac_all_generated_regraded.csv"),
+        default=Path("data/google_patents/qac/qac_chempatents.csv"),
         help=(
             "Existing CSV that the new all-generated rows (3 candidates per group) "
             "are APPENDED to. Must already exist with the standard QAC header."
@@ -732,7 +732,7 @@ def main() -> None:
     parser.add_argument(
         "--best",
         type=Path,
-        default=Path("data/google_patents/qac/balanced_100_qac_regraded.csv"),
+        default=Path("data/google_patents/qac/qac_chempatents_best.csv"),
         help=(
             "Existing CSV that the new best-only rows (top candidate per group) "
             "are APPENDED to. Must already exist with the standard QAC header."
