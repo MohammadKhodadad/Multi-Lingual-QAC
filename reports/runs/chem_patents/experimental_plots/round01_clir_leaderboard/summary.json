@@ -1,0 +1,78 @@
+{
+  "n_queries": 137,
+  "n_original": 57,
+  "n_synthetic": 80,
+  "best_clir_model": "embeddinggemma",
+  "best_clir_at_10": 0.5024,
+  "best_clir_ci": [
+    0.4209,
+    0.5827
+  ],
+  "largest_home_adv_model": "e5-large-instruct",
+  "largest_home_adv": 0.5526,
+  "per_model": [
+    {
+      "short": "embeddinggemma",
+      "recall_at_10": 0.5438,
+      "clir_at_10": 0.5024,
+      "molir_at_10": 0.6667,
+      "home_adv": 0.2193
+    },
+    {
+      "short": "bge-m3",
+      "recall_at_10": 0.4757,
+      "clir_at_10": 0.4367,
+      "molir_at_10": 0.5965,
+      "home_adv": 0.2281
+    },
+    {
+      "short": "qwen3-0.6B",
+      "recall_at_10": 0.4684,
+      "clir_at_10": 0.4331,
+      "molir_at_10": 0.5614,
+      "home_adv": 0.193
+    },
+    {
+      "short": "nomic-v2-moe",
+      "recall_at_10": 0.4428,
+      "clir_at_10": 0.3808,
+      "molir_at_10": 0.6667,
+      "home_adv": 0.3421
+    },
+    {
+      "short": "granite-278m",
+      "recall_at_10": 0.3589,
+      "clir_at_10": 0.3285,
+      "molir_at_10": 0.4561,
+      "home_adv": 0.1667
+    },
+    {
+      "short": "LaBSE",
+      "recall_at_10": 0.2774,
+      "clir_at_10": 0.2384,
+      "molir_at_10": 0.4035,
+      "home_adv": 0.2105
+    },
+    {
+      "short": "SapBERT",
+      "recall_at_10": 0.2117,
+      "clir_at_10": 0.1788,
+      "molir_at_10": 0.3158,
+      "home_adv": 0.1754
+    },
+    {
+      "short": "e5-large-instruct",
+      "recall_at_10": 0.1776,
+      "clir_at_10": 0.0766,
+      "molir_at_10": 0.6316,
+      "home_adv": 0.5526
+    },
+    {
+      "short": "gte-base",
+      "recall_at_10": 0.0036,
+      "clir_at_10": 0.0,
+      "molir_at_10": 0.0175,
+      "home_adv": 0.0175
+    }
+  ]
+}

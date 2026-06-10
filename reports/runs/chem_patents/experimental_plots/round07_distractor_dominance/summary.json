@@ -1,0 +1,59 @@
+{
+  "pooled_same_language_confusion_rate": 0.604,
+  "pooled_mean_sl_blocker_share": 0.431,
+  "most_self_confused_language": {
+    "lang": "fr",
+    "sl_blocker_share": 0.654
+  },
+  "least_self_confused_language": {
+    "lang": "zh",
+    "sl_blocker_share": 0.186
+  },
+  "per_model": [
+    {
+      "short": "embeddinggemma",
+      "rate": 0.4599,
+      "mean_sl_blocker_share": 0.4112
+    },
+    {
+      "short": "bge-m3",
+      "rate": 0.5109,
+      "mean_sl_blocker_share": 0.3508
+    },
+    {
+      "short": "qwen3-0.6B",
+      "rate": 0.5182,
+      "mean_sl_blocker_share": 0.3693
+    },
+    {
+      "short": "nomic-v2-moe",
+      "rate": 0.5401,
+      "mean_sl_blocker_share": 0.4366
+    },
+    {
+      "short": "granite-278m",
+      "rate": 0.5839,
+      "mean_sl_blocker_share": 0.2466
+    },
+    {
+      "short": "LaBSE",
+      "rate": 0.635,
+      "mean_sl_blocker_share": 0.2546
+    },
+    {
+      "short": "SapBERT",
+      "rate": 0.7445,
+      "mean_sl_blocker_share": 0.336
+    },
+    {
+      "short": "e5-large-instruct",
+      "rate": 0.8394,
+      "mean_sl_blocker_share": 0.9588
+    },
+    {
+      "short": "gte-base",
+      "rate": 0.9708,
+      "mean_sl_blocker_share": 0.6254
+    }
+  ]
+}
