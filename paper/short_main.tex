@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+
+% Short 6-page paper draft.
+% Keep paper/main.tex untouched as the existing full draft.
+\usepackage[review]{acl}
+
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xcolor}
+
+\graphicspath{{figures/}}
+
+\title{TODO: Short Paper Title}
+
+\author{Anonymous Submission \\
+  TODO Venue \\
+  \texttt{anonymous@example.com}}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_pipeline}
+\input{sections/03_benchmark}
+\input{sections/04_evaluation}
+\input{sections/05_results}
+\input{sections/06_limitations}
+\input{sections/07_conclusion}
+
+\bibliography{custom}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}
