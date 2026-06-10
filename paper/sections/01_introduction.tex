@@ -11,12 +11,14 @@ that can be semantically close while still being wrong for the user's question.
 For a retrieval system used in a high-trust technical workflow, returning a
 plausible but chemically different document is not a harmless ranking error.
 
-Dense multilingual embedding models are attractive for this setting because
-they promise a single retrieval index over many languages. In practice, however,
-the evaluation signal used to choose such a model is often too coarse. A model
-can achieve a strong average Recall@k by retrieving easy same-language evidence,
-while failing when the intended evidence is in another language, a bias also
-observed in recent cross-lingual retrieval analyses
+Dense retrieval with neural sentence and passage embeddings
+\citep{reimers2019sentencebert,karpukhin2020dpr} is attractive for this setting
+because multilingual embedding models promise a single retrieval index over many
+languages \citep{labse2022,bgem3_2024}. In practice, however, the evaluation
+signal used to choose such a model is often too coarse. A model can achieve a
+strong average Recall@k by retrieving easy same-language evidence, while failing
+when the intended evidence is in another language, a bias also observed in
+recent cross-lingual retrieval analyses
 \citep{whatdrivesclir2025,crosslingualcost2025}. The problem is not only
 whether a multilingual encoder retrieves a relevant document, but whether it
 retrieves the right document when query language, document language, and

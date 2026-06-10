@@ -1,0 +1,28 @@
+\section{Related Work}
+
+Multilingual retrieval benchmarks such as MIRACL, NeuCLIR, MTEB, MMTEB, and
+CLIRMatrix have made cross-lingual retrieval evaluation easier to compare across
+models and languages
+\citep{miracl2023,neuclir2023,muennighoff2023mteb,mmteb2025,clirmatrix2020}.
+They are closest to our evaluation setting, but they are not designed around
+chemistry-specific relevance, controlled language variants, or chemically
+plausible hard negatives. Our benchmark follows this line of work while adding
+domain structure needed to audit multilingual retrieval in technical chemistry
+search.
+
+Recent work on cross-lingual retrieval and multilingual RAG shows that model
+rankings can depend strongly on language, alignment, and same-language
+preference \citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
+These findings motivate our focus on separating same-language from
+cross-language relevance instead of relying only on aggregate recall. In contrast
+to settings where content and language are difficult to disentangle, patent
+publication variants give us a practical way to compare multilingual technical
+evidence under tighter content control.
+
+Patent retrieval has a long evaluation history, including NTCIR and CLEF-IP
+\citep{prime2002,clefip2013}, and recent work has revisited patent embeddings
+\citep{paecter2024,patentembeddings2026}. Our goal is complementary: we do not
+propose a new encoder, but a chemistry-grounded evaluation framework. We use
+chemical ontology and alias structure, including ChEBI \citep{chebi2016}, to
+define hard negatives that are plausible for chemistry search but wrong for the
+intended evidence.
