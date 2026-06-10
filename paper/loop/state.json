@@ -1,40 +1,38 @@
 {
   "paper_dir": "paper",
   "total_rounds": 20,
-  "current_round": 1,
-  "last_round_completed": 1,
+  "current_round": 2,
+  "last_round_completed": 2,
   "status": "running",
   "draft_exists": true,
   "open_issues": [
-    "B1: 'English easiest target' contradicts data (fr 0.375 > en 0.367) — writer fix R2",
-    "Novelty: reframe C2/C3/C4 to 'content-controlled chemistry-patent ...'; add 4 citations (CLEF-IP, CLIRMatrix, 2511.19324, Saleh&Pecina 2020); cite DAPFAM",
-    "Aggregation-invariance FAILS (egemma rank range [1,4]) — demote CLIR-MRS to ordering convenience; lead with per-axis dominance",
-    "Soften 2 of 3 mechanism correlations (over-rep~clir, home_adv~rbo flip sign on n=7); keep auc_cross~clir (+0.96 robust)",
-    "Cohesion: split two-benchmark interleave in Analysis (lines ~578-596); harmonize RBO ceilings (0.39 alias / 0.19 CP) in abstract",
-    "Availability slope NEGATIVE (-0.57): home-advantage is residual encoder bias, not availability artifact"
+    "R3 WRITER: drop the false XRC 'cheapest deployable' superlative (N2); use cost-frontier Pareto-membership framing (egemma unique max-CLIR corner; bge-m3 cheapest-to-read)",
+    "R3 WRITER: soften N1 'statistically indistinguishable' (no sig test) -> 'nearly tied' (fr 0.375 ~ en 0.367)",
+    "R3 WRITER: fix B2 regression at line ~605 ('best model' -> 'any model' for 0.39 RBO ceiling)",
+    "R3 WRITER: close de<->zh +0.23 asymmetry orphan (reference cp_fig04 or drop the named number)",
+    "R3 WRITER: define 'degenerate' once via DEG gate (CLIR@10<0.10 -> {gte,e5}); integrate two-taxes spine",
+    "HONESTY: two-tax rho=-0.59 (p=0.16, n.s.) and trap rho=+0.29 (p=0.53, n.s.) are DIRECTIONAL/descriptive only -- never state as effects",
+    "XRC is population-level (137 cross vs 57 same), not paired -> one-clause caveat"
   ],
-  "resolved_issues": [],
+  "resolved_issues": [
+    "B1 FIXED (English-easiest-target removed; hub-and-spoke)",
+    "B2 FIXED in abstract/intro/conclusion (regression remains at line 605 -> R3)",
+    "B3 FIXED (Fig1 MoLIR-on-57-originals footnote)",
+    "Novelty now defensible (content-controlled framing + CLEF-IP/DAPFAM/CLIRMatrix + 10 cites)",
+    "CLIR-MRS demoted to ordering-convenience; per-axis dominance leads",
+    "XRC + RRC added as headline metrics; cost frontier turns XRC wound into contribution"
+  ],
   "convergence": {
     "clean_rounds": 0,
     "converged": false,
-    "note": "Recorded but does NOT auto-stop; user wants all 20 rounds. R1 correctness raised 1 blocking mismatch (B1)."
+    "note": "R2 correctness raised 1 new mismatch (N2, now addressed by cost-frontier). Does NOT auto-stop."
   },
   "needs_eval": {
-    "count": 5,
-    "note": "Items in paper/loop/needs_eval.md treated as DONE by later critics. R1 added: W4-formula-injection, CLIRMRS-external-validation, XRC-conformal-M2, CCI-hop-distance-law, equivalence-audit-spotcheck."
+    "count": 6,
+    "note": "R1 added 5; R2 added W3-alignment-causal-probe. Treated as DONE by later critics."
   },
   "history": [
-    {
-      "round": 1,
-      "date": "2026-06-10",
-      "story": "industrial thesis + C1-C5 set; section map for 10 sections",
-      "writer": "first full draft: 10 sections, 20 figures, 2 leaderboard tables, 22 bib; self-lint clean; 3 \\todo trace items",
-      "critics": {"novelty": "defensible only after C2/C3/C4 reframe + 4 citations", "correctness": "1 MISMATCH (B1), 0 load-bearing untraceable, 7 threats", "cohesion": "cohesive w/ 6 glue-joint fixes"},
-      "dreamer": "8 analyses + 6 metrics + 14 answers + 6 wildcards; top-3: XRC, aggregation-invariance, RRC",
-      "implementer": {"do_now_items": 8, "new_scripts": 7, "new_figures": 5, "api_calls_used": 0},
-      "reporter": "all 8 analyses verified vs source; no fabrication; 3 honest dreamer-contradicting results flagged",
-      "headline_new_results": {"XRC50_egemma": 3.5, "RRC@100_egemma": 0.74, "lost@1000_egemma": 0.0584, "aggregation_invariance": "FAILS rank-range[1,4]", "availability_slope": -0.57},
-      "needs_eval_added": 5
-    }
+    {"round": 1, "date": "2026-06-10", "summary": "first full draft (10 sec, 20 figs, 2 tables); new analyses XRC/RRC/aggregation-invariance/availability; 0 API; 5 backlog", "headline": {"XRC50_egemma": 3.5, "RRC@100_egemma": 0.74, "lost@1000": 0.0584, "agg_invariance": "FAILS [1,4]", "availability_slope": -0.57}},
+    {"round": 2, "date": "2026-06-10", "summary": "defended draft: B1-B3 fixed, novelty defensible, CLIR-MRS demoted, XRC/RRC headline; new analyses cost-frontier/RRC-budget/two-tax+DEG; 0 API; +1 backlog", "headline": {"pareto_set": ["embeddinggemma","bge-m3","granite-278m"], "egemma": "unique max-CLIR corner (NOT cheapest)", "RRC_knee_K*": 5, "L_inf_egemma": 0.058, "two_tax_rho": -0.59, "two_tax_p": 0.16, "DEG_flags": ["gte-base","e5-large-instruct"]}}
   ]
 }
