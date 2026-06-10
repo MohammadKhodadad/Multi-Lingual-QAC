@@ -1,0 +1,47 @@
+{
+  "scheme1_reproduces_round10_ranks": true,
+  "embeddinggemma_ranks": {
+    "rank_clir_mrs": 1,
+    "rank_borda": 3,
+    "rank_equal_weight": 4,
+    "rank_winner_take_all": 1
+  },
+  "embeddinggemma_rank1_under_n_of_4_schemes": 2,
+  "embeddinggemma_rank_range": [
+    1,
+    4
+  ],
+  "headline": "embeddinggemma is rank-1 under 2/4 schemes; its rank range is [1,4].",
+  "honest_finding": "The deployment recommendation is AGGREGATION-SENSITIVE, not invariant: embeddinggemma leads all 3 capability axes (accuracy/clir/separability) but is weak on the robustness axes (mt_robust, lang_parity), so equal-weight and Borda demote it (rank 4 / rank 3). It is rank-1 only when capability is up-weighted (CLIR-MRS) or by axes-won. The robust, defensible claim is per-axis dominance on the capability axes, NOT composite invariance.",
+  "caveat_winner_take_all": "axes-won is contaminated by the degenerate encoder: lang_parity is won by 'gte-base' and mt_robust by 'gte-base' — both are 'robust/parity' only because they retrieve almost nothing (trivially uniform / unchanged under MT). Treat axes-won with care.",
+  "models_with_rank_range_ge_2": {
+    "embeddinggemma": [
+      1,
+      4
+    ],
+    "bge-m3": [
+      1,
+      4
+    ],
+    "granite-278m": [
+      1,
+      3
+    ],
+    "LaBSE": [
+      4,
+      9
+    ],
+    "SapBERT": [
+      4,
+      7
+    ],
+    "e5-large-instruct": [
+      4,
+      8
+    ],
+    "gte-base": [
+      2,
+      9
+    ]
+  }
+}

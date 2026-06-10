@@ -1,0 +1,804 @@
+\documentclass[11pt]{article}
+
+% Change "review" to "final" for the camera-ready, or "preprint" for a
+% non-anonymous version with page numbers.
+\usepackage[review]{acl}
+
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{xcolor}
+
+\graphicspath{{figures/}}
+
+% \todo{...} marks an unverified or untraced number/claim for the critics.
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% ============================================================================
+% This file is maintained by the `paper-writer` subagent across loop rounds.
+% Industrial-track framing: a practitioner must choose ONE multilingual
+% embedding model to deploy for chemistry-patent retrieval, and must measure
+% cross-lingual robustness honestly (average recall hides cross-lingual
+% collapse). The paper contributes (a) two patent-grounded multilingual/CLIR
+% benchmarks, (b) new robustness metrics (CLIR-MRS / MRS and the cross-lingual
+% RBO / confusion / separability family), and (c) a model-by-model analysis
+% yielding a concrete deployment recommendation.
+% NOTE: Every number in this paper MUST trace to a file under reports/.
+% ============================================================================
+
+\title{Measuring Cross-Lingual Robustness for Chemistry-Patent Retrieval:
+Patent-Grounded Multilingual Benchmarks, New Metrics, and a Deployment Decision}
+
+\author{Anonymous Submission \\
+  EMNLP Industry Track \\
+  \texttt{anonymous@example.com}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A chemistry-patent search team that must deploy a single multilingual
+embedding model typically ranks candidates by average Recall@10---the one
+number that hides the failure they will ship. Average recall is inflated by
+\emph{same-language} hits; the moment a query must reach a patent in another
+language (the normal case in a patent family), recall collapses, and no two
+language versions of the same question return the same documents. We make this
+collapse measurable. We release two patent-grounded multilingual
+chemistry-retrieval benchmarks built only from human-translated patent
+text---an alias-graph benchmark (132 questions, 24 ChEBI compounds, with
+chemically-confusable hard negatives) and a cross-lingual (CLIR) benchmark (137
+questions over a 23{,}487-document shared corpus, with Spanish as a pure
+``no-home'' query language)---and a robustness-metric family that reports
+cross-lingual recall, ranking consistency, confusion, and embedding
+separability \emph{next to} recall. Across nine models, best cross-lingual
+Recall@10 is only $0.50$, the same-language home advantage reaches $+0.55$,
+five language versions of a query agree on barely a third of their top-10
+(cross-lingual RBO ceiling $0.39$), and a wrong but confusable compound
+out-ranks the right one on $14$--$78\%$ of queries. We show the cause is an
+embedding-level separability deficit ($r(\mathrm{AUC},\mathrm{CLIR@10})=+0.96$),
+so the lever is representation alignment at indexing time, not a monolingual
+re-ranker at query time. \texttt{embeddinggemma} survives both benchmarks
+(CLIR-MRS $0.71$), and machine-translating the \emph{question} is safe
+(no significant penalty), so human-translation budget belongs on the corpus.
+\end{abstract}
+
+% ===========================================================================
+\section{Introduction}
+% ===========================================================================
+
+A chemistry-patent search team that goes multilingual faces a deceptively
+simple engineering decision: pick \emph{one} dense multilingual embedding model
+to index a cross-jurisdictional patent corpus, and ship it. The dashboard that
+guides that choice almost always shows a single number---mean Recall@10 on a
+held-out query set---and the team picks the model on top. We argue that this
+number is the wrong number, and that it systematically hides the failure the
+team will actually deploy.
+
+The reason is structural. In a multilingual patent corpus, the same invention
+appears in several languages, and a query in one language must routinely reach
+a document in another (a German chemist searching an English or Chinese family
+member). Average recall, however, is dominated by the \emph{easy}
+same-language case: when a same-language copy of the answer exists, every model
+finds it. The hard, deployment-relevant case---retrieving a \emph{foreign}
+language version---is averaged away. Our cross-lingual benchmark makes this
+concrete by construction: it contains 34 Spanish queries with \emph{zero}
+Spanish gold documents, a built-in ``no-home'' stress test that average recall
+cannot see.
+
+Two distinct failures hide behind that average, and both are deployment bugs.
+First, \textbf{inconsistency}: ask the same compound in five languages and the
+five ranked lists barely overlap---even the best model reaches a cross-lingual
+rank-biased-overlap (RBO) of only $0.39$ on the alias-graph benchmark and
+$0.19$ on the cross-lingual benchmark, meaning two language variants of a query
+share fewer than four of their top-10 documents. Second, \textbf{confusion}: a
+chemically-confusable \emph{wrong} compound out-ranks every correct patent on
+$14$--$78\%$ of queries depending on the model. A search team that reports only
+mean recall sees neither.
+
+We build the instruments to measure both failures, identify the model that
+survives them, and trace the cause to the embedding level. Our contributions
+are:
+
+\begin{itemize}
+  \item \textbf{C1.} Two patent-grounded multilingual chemistry-retrieval
+  benchmarks built only from human-translated patent text: an
+  \emph{alias-graph} benchmark whose gold relevance is defined by a chemical
+  ontology and whose hard negatives are confusable neighbours, and a
+  \emph{cross-lingual} benchmark over a 23{,}487-document shared corpus whose
+  gold is genuinely parallel human-translated patents (\S\ref{sec:benchmarks}).
+  \item \textbf{C2.} A cross-lingual robustness-metric family---CLIR@k and the
+  home-advantage gap, mate-retrieval, cross-lingual RBO, language-collapse, and
+  embedding separability AUC, composed into a single capability$\times$robustness
+  score (CLIR-MRS / MRS)---reported co-equally with recall (\S\ref{sec:metrics}).
+  \item \textbf{C3.} A mechanism finding: cross-lingual failure here is an
+  availability confound plus a chemistry-specific confusability trap plus an
+  embedding-level separability deficit, yielding the falsifiable claim that a
+  monolingual re-ranker cannot recover under-scored foreign twins
+  (\S\ref{sec:analysis}).
+  \item \textbf{C4.} A concrete, audited deployment recommendation with an
+  operating rule: deploy \texttt{embeddinggemma}, report robustness next to
+  recall, do not naively ensemble, and spend human-translation budget on the
+  corpus rather than on the queries (\S\ref{sec:deployment}).
+  \item \textbf{C5.} The reproducible, human-validated QAC generation and audit
+  pipeline the benchmarks rest on (\S\ref{sec:benchmarks}, Appendix).
+\end{itemize}
+
+In one line: report robustness, not mean recall; and fix cross-lingual
+retrieval by aligning representations at index time, not by re-ranking at query
+time. Figure~\ref{fig:teaser} previews the gap that motivates the paper---every
+model loses ground when no same-language document exists.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig01_clir_leaderboard.png}
+  \caption{Cross-lingual vs.\ same-language retrieval, nine models. Overall
+  Recall@10 (grey) sits between the easy same-language case (MoLIR@10, green)
+  and the hard cross-lingual case (CLIR@10, red). The best cross-lingual
+  Recall@10 is only $0.50$ (\texttt{embeddinggemma}); average recall hides the
+  collapse. Source: chem-patents key findings, Fig.~1.}
+  \label{fig:teaser}
+\end{figure}
+
+% ===========================================================================
+\section{Related Work}
+% ===========================================================================
+
+\paragraph{Multilingual and cross-lingual retrieval benchmarks.}
+MIRACL \citep{miracl2023}, MMTEB \citep{mmteb2025}, and the TREC NeuCLIR track
+\citep{neuclir2023} established large multilingual and cross-lingual retrieval
+evaluations, and MTEB \citep{muennighoff2023mteb} is the de facto leaderboard
+practitioners consult. These efforts report a \emph{single averaged} score per
+model; our contribution is orthogonal---a \emph{retrieval-side, ranking-level}
+robustness suite reported co-equally with recall, purpose-built to expose
+same-language bias that an average conceals. Recent work on the contamination
+and maintenance of these benchmarks \citep{mteb_contamination2025} further
+motivates a fresh, content-controlled evaluation asset.
+
+\paragraph{Cross-lingual RAG and language preference.}
+BordIRlines \citep{bordirlines2024}, XRAG \citep{xrag2025}, and Linguistic
+Nepotism \citep{nepotism2025} document that retrievers and RAG systems prefer
+documents in particular languages. Crucially, those studies confound
+\emph{content} with \emph{language}: their multilingual documents differ in
+content (Wikipedia articles that are not translations of one another) or are
+machine-translated English imports (translationese as a confound). Our parallel
+\emph{human-translated} patents are the content-controlled asset that isolates
+the language effect from the content effect---the defense for C1.
+
+\paragraph{Calibration, conformal, and fairness in IR.}
+A growing line scores the \emph{calibration} of retrieval and RAG pipelines:
+TRAQ \citep{traq2023}, CONFLARE \citep{conflare2024}, and Conformal-RAG
+\citep{conformalrag2025} apply conformal prediction, while fairness-via-optimal-transport
+post-processing \citep{fairnessot2023,buyl2022optimal} re-balances scores. Our
+suite is complementary but distinct: it scores \emph{ranking robustness}
+(cross-lingual RBO, confusion, CLIR-MRS), not calibration. A reviewer familiar
+with these tools should read our metrics as measuring \emph{whether the right
+foreign document is ranked highly and consistently}, a question conformal
+coverage does not answer.
+
+\paragraph{Patent IR and patent-family non-equivalence.}
+Patent retrieval has a long history (e.g.\ the PRIME line of NTCIR patent
+experiments \citep{prime2002}). A key reason for our benchmark design is that
+members of a patent family ``may differ in their claims,'' so
+\texttt{publication\_number}-equivalence is an unsafe gold signal. We therefore
+define gold by ontology membership (alias-graph) and by genuinely parallel
+human translation (cross-lingual benchmark), never by family-number equivalence.
+
+\paragraph{Chemistry IR and entity representations.}
+SapBERT \citep{sapbert2021} aligns biomedical entity representations and PaECTER
+\citep{paecter2024} learns patent-level representations, but both are largely
+monolingual. We evaluate cross-lingual chemistry retrieval with ontology-graph
+grounding (ChEBI, \citealp{chebi2016}) and confusable-neighbour hard negatives.
+
+\paragraph{When to translate.}
+Pre-neural CLIR studied translation-quality prediction and routing
+\citep{kishida2008}; our oracle / per-language-routing discussion
+(\S\ref{sec:deployment}) is the modern, embedding-level analogue of that
+``when to translate'' question.
+
+We note for completeness that calibration-flavoured cross-lingual metrics
+(e.g.\ cross-lingual translation consistency or calibration-OT instruments)
+are a natural \emph{future-work} horizon; we do not claim them here.
+
+% ===========================================================================
+\section{Benchmarks}
+\label{sec:benchmarks}
+% ===========================================================================
+
+We release two benchmarks, both grounded in real chemistry-patent text and both
+deliberately avoiding the two shortcuts that make a ``multilingual'' benchmark
+misleading: machine-translated source documents (translationese) and
+family-number gold (non-equivalence).
+
+\paragraph{Shared corpus.}
+Both benchmarks retrieve against one shared haystack, the
+\texttt{multilingual\_GP} corpus of \textbf{23{,}487} documents drawn from
+Google Patents and EPO bulk data in English, German, Spanish, French, and
+Chinese, so that results are directly comparable across benchmarks.\footnote{%
+Corpus row count, chem-patents key findings header.} Descriptive
+corpus-construction statistics (source counts after de-duplication; IPC/A61
+distribution) are reported in the supplementary system description; the
+load-bearing benchmark sizes used by every result below are
+\todo{trace: corpus dedup count 14{,}401 and GP/EPO/JRC coverage matrix live in
+the source system slides, not yet under reports/; restrict load-bearing
+numbers to the two key\_findings files until dumped}.
+
+\paragraph{Alias-graph benchmark.}
+Here a query is a multilingual ChEBI alias set for a compound (e.g.\ tin:
+\emph{tin}/Sn, \emph{Zinn}, \emph{esta\~no}, \emph{\'etain}), the gold set is the
+patents about that concept, and the hard negatives are documents about
+chemically-confusable neighbours (siblings, parents, tautomers) taken from the
+compound's alias graph. The benchmark has \textbf{132} questions over
+\textbf{24} ChEBI compounds in five languages, and reports \emph{two co-equal
+relevance lenses}: a \emph{concept} lens (any patent about the compound;
+$\sim$109 gold per query) and a \emph{per-publication} lens (the query's own
+source patent and its translations; $\sim$2.4 gold per query).\footnote{Alias
+benchmark size and lens definitions, alias-graph key findings header.} The
+per-publication lens is the one we read as a quality score; the concept lens is
+capped by its $\sim$109 positives and must not be read as recall quality.
+
+\paragraph{Cross-lingual (CLIR) benchmark.}
+Here a query is a generated question about a source patent, and the gold set is
+\emph{every language version} of that source patent. The benchmark has
+\textbf{137} questions in English, German, Spanish, French, and Chinese, split
+into two non-symmetric populations: \textbf{57 original} questions, asked in the
+source patent's own language (so each has exactly one same-language gold), and
+\textbf{80 synthetic} questions, machine-translated into another language (so
+they have \emph{no same-language gold at all}---pure cross-lingual
+retrieval).\footnote{Population split and Spanish property, chem-patents key
+findings header and ``defining property.''} \textbf{Spanish is a pure
+query-side language}: 34 Spanish queries map to zero Spanish gold documents,
+giving us a controlled ``no-home'' setting in which average recall has nowhere
+easy to hide.\footnote{Benchmark defining property, chem-patents key findings.}
+
+\paragraph{Honesty by design.}
+Two choices keep the benchmarks honest. (i) \emph{Source text is
+human-translated only.} We never use machine-translated documents in the
+corpus, so a cross-lingual miss is a retrieval failure, not a translationese
+artifact. (ii) \emph{Gold is defined by ontology or by human translation, never
+by \texttt{publication\_number}}, side-stepping the patent-family
+non-equivalence problem (\S2). Machine translation is used only to translate
+\emph{questions} for the synthetic population, and \S\ref{sec:results} shows
+that this introduces no significant cross-lingual penalty.
+
+\paragraph{Generation and validation pipeline (C5).}
+The queries are produced by a reproducible per-(document, language, mode)
+generation pipeline that emits three scored candidates best-first, graded on
+faithfulness and answerability, across technical and semantic question modes.
+A human annotator reviewed a sample of the generated items; the human-rated
+quality and the LLM auto-grader's strictness relative to humans are reported in
+the system description and summarized in the Appendix:
+\todo{trace: human-eval numbers (e.g.\ mean 8.33/10, 97/100 reviewed, 0
+rejected, auto-grader $+4.3$pp stricter) live in the source system slides, not
+yet under reports/; either restrict to descriptive text or dump to reports/}.
+
+% ===========================================================================
+\section{Metrics}
+\label{sec:metrics}
+% ===========================================================================
+
+Recall measures \emph{capability}; it does not measure \emph{robustness to
+language}. We define a family of metrics that isolate the cross-lingual axes a
+single recall number averages away. All are computed per model on both
+benchmarks.
+
+\paragraph{CLIR@k, MoLIR@k, and home advantage.}
+We split Recall@k by whether the retrieved gold is in the query's own language.
+\emph{MoLIR@k} (mono-lingual) restricts to same-language gold; \emph{CLIR@k}
+restricts to cross-language gold. The \emph{home advantage}
+$\mathrm{MoLIR}{-}\mathrm{CLIR}$ is the size of the same-language head start.
+This pair is the direct instrument for ``average recall hides collapse.''
+
+\paragraph{Directional CLIR and asymmetry.}
+We compute a query-language $\rightarrow$ document-language recall matrix and
+its asymmetry, because retrieval is not a symmetric similarity: the recall of
+reaching language $b$ from a query in language $a$ need not equal the reverse.
+
+\paragraph{Mate-retrieval.}
+For a query whose answer also exists as a foreign \emph{twin} (a parallel
+translation), we measure whether that twin is ever retrieved and at what depth:
+mate-hit@k, mate-MRR, and the rank of the first foreign twin. This isolates
+``can the foreign version be found at all'' from ``is it ranked first.''
+
+\paragraph{Cross-lingual RBO.}
+For a compound asked in five languages, we measure rank-biased overlap
+\citep{rbo2010} between the five top-$k$ lists; RBO$=1$ means identical
+rankings, $0$ means disjoint. This is our \emph{consistency} axis: does the
+deployed index return the same patents regardless of query language.
+
+\paragraph{Language collapse / over-representation.}
+We measure how much a query language over-fetches documents in its own
+language relative to the corpus base rate, and how often same-language
+\emph{noise} out-ranks foreign \emph{gold}. This is the bias mechanism behind
+the home advantage.
+
+\paragraph{Separability AUC.}
+We measure $\mathrm{AUC}(\text{score(gold)} > \text{score(non-gold)})$
+separately for same-language and cross-language gold. A low cross-language AUC
+means foreign gold is \emph{under-scored}, not merely mis-ordered---the
+distinction that decides whether a re-ranker can help.
+
+\paragraph{Composite: CLIR-MRS / MRS.}
+We fold these into one deployable number. For the cross-lingual benchmark,
+\begin{equation}
+\label{eq:clirmrs}
+\mathrm{CLIR\text{-}MRS} = \mathrm{cap} \times \bigl(0.5 + 0.5\cdot\mathrm{rob}\bigr),
+\end{equation}
+where capability $\mathrm{cap}$ aggregates accuracy, CLIR, and separability, and
+robustness $\mathrm{rob}$ aggregates consistency, MT-robustness, and
+language-parity; capability is the spine and robustness modulates it by
+$\pm50\%$.\footnote{CLIR-MRS definition, chem-patents key findings ``Verdict.''}
+For the alias-graph benchmark, the analogous MRS is the min--max-normalised mean
+of five axes---accuracy, consistency, confusion-robustness, language-parity, and
+separability---reported with a 95\% bootstrap CI.\footnote{MRS definition,
+alias-graph key findings ``Headline numbers'' footnote.}
+
+% ===========================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+% ===========================================================================
+
+\paragraph{Models.}
+We evaluate \textbf{nine} multilingual embedding models as drop-in dense
+retrievers: \texttt{embeddinggemma}, \texttt{bge-m3} \citep{bgem3_2024},
+\texttt{granite-278m}, \texttt{nomic-v2-moe}, \texttt{qwen3-0.6B},
+\texttt{LaBSE} \citep{labse2022}, \texttt{SapBERT} \citep{sapbert2021},
+\texttt{e5-large-instruct}, and \texttt{gte-base}.
+
+\paragraph{Protocol.}
+Both benchmarks retrieve against the single shared \texttt{multilingual\_GP}
+haystack (23{,}487 documents); queries and qrels come from the respective
+benchmark datasets. We report Recall@10 and the full metric family of
+\S\ref{sec:metrics}. For the alias-graph benchmark we report both relevance
+lenses; for the cross-lingual benchmark we report the original/synthetic split.
+
+\paragraph{Reproducibility.}
+Every figure and number is regenerated by
+\texttt{reports/runs/chem\_patents/experimental\_codes/run\_all.py} and the
+corresponding \texttt{reports/runs/alias\_graph/experimental\_codes/} scripts,
+which also emit the executive summaries this paper cites.
+
+% ===========================================================================
+\section{Results}
+\label{sec:results}
+% ===========================================================================
+
+We report the cross-lingual benchmark findings first (\S\ref{ssec:cp}), then
+the alias-graph findings (\S\ref{ssec:ag}), then the two leaderboards
+(\S\ref{ssec:boards}).
+
+\subsection{The cross-lingual collapse}
+\label{ssec:cp}
+
+\paragraph{Collapse is real and large.}
+Cross-lingual recall trails same-language recall in \emph{every} model
+(Figure~\ref{fig:teaser}). The best CLIR@10 is $0.50$ (\texttt{embeddinggemma}),
+and the home advantage $\mathrm{MoLIR}{-}\mathrm{CLIR}$ reaches $+0.55$ for the
+most biased model (\texttt{e5-large-instruct}): a same-language copy of the
+answer is far easier to retrieve than its foreign twin
+(Figure~\ref{fig:cp_home}).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig02_home_advantage.png}
+  \caption{Same-language home advantage ($\mathrm{MoLIR}{-}\mathrm{CLIR}$) per
+  model on the cross-lingual benchmark; it reaches $+0.55$.
+  Source: chem-patents key findings, Fig.~2.}
+  \label{fig:cp_home}
+\end{figure}
+
+\paragraph{Retrieval is anisotropic.}
+The query-language $\rightarrow$ document-language recall matrix
+(Figure~\ref{fig:cp_dir}) is not symmetric: the hardest direction is
+en$\rightarrow$de (R@10 $=0.12$), English is the easiest \emph{target}, and the
+most asymmetric pair is de$\leftrightarrow$zh (gap $+0.23$). A single ``recall''
+number erases this directionality.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig03_directional_clir_matrix.png}
+  \caption{Query$\rightarrow$document language recall matrix (best model);
+  retrieval direction matters. Source: chem-patents key findings, Fig.~3.}
+  \label{fig:cp_dir}
+\end{figure}
+
+\paragraph{Machine-translating the question is safe.}
+Controlling for the source patent, the paired human$-$MT difference in
+cross-lingual reach is $-0.044$ ($p=0.13$): statistically
+\emph{insignificant} (Figure~\ref{fig:cp_mt}). We read this as a \emph{null}
+result---MT of the query does not significantly hurt and we do not claim it
+helps---which validates the project's ``MT-is-fine-for-the-question''
+assumption.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig05_mt_penalty.png}
+  \caption{Paired human vs.\ machine-translated queries; the cross-lingual
+  difference is $-0.044$ ($p=0.13$), not significant.
+  Source: chem-patents key findings, Fig.~5.}
+  \label{fig:cp_mt}
+\end{figure}
+
+\paragraph{Foreign twins are buried.}
+Pooled mate-hit@10 is $0.38$, and on $15\%$ of (query, model) pairs the foreign
+twin never surfaces even in the top-1000 (Figure~\ref{fig:cp_mate}). The best
+twin-finder, \texttt{embeddinggemma}, reaches its first foreign twin at a median
+rank of $5$ (Figure~\ref{fig:cp_rank})---most models do far worse.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig06_mate_retrieval.png}
+  \caption{Mate-retrieval: mate-hit@10/100 and mate-MRR. Pooled mate-hit@10 is
+  $0.38$. Source: chem-patents key findings, Fig.~6.}
+  \label{fig:cp_mate}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig07_first_foreign_rank.png}
+  \caption{Depth to the first foreign twin; $15\%$ of pairs never reach one in
+  the top-1000. Source: chem-patents key findings, Fig.~7.}
+  \label{fig:cp_rank}
+\end{figure}
+
+\subsection{Inconsistency and confusion (alias-graph)}
+\label{ssec:ag}
+
+\paragraph{Same question, different rankings.}
+Asking the same compound in five languages does \emph{not} return the same
+patents. Even the best model reaches a cross-lingual RBO of only $0.39$
+(Figure~\ref{fig:ag_rbo}); two language variants of a query share fewer than
+four of their top-10 documents, and Chinese is the consistent odd-one-out. The
+embedding space is far from language-agnostic.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig1_cross_lingual_rbo.png}
+  \caption{Same compound, five languages: cross-lingual RBO. The ceiling is
+  $0.39$ (\texttt{embeddinggemma}). Source: alias-graph key findings, Fig.~1.}
+  \label{fig:ag_rbo}
+\end{figure}
+
+\paragraph{Confusable look-alikes out-rank the gold.}
+A chemically-confusable wrong compound out-ranks every gold patent on
+$14$--$78\%$ of queries (per-publication lens) depending on the model, worst for
+German and Chinese, and driven almost entirely by \emph{sibling} compounds
+rather than broader parent classes (Figure~\ref{fig:ag_conf}). The repeat
+offenders are a small set of universal attractors---\emph{polypeptide},
+\emph{methyl}, \emph{ethene}, \emph{hydroxide}, \emph{dioxygen}
+(Figure~\ref{fig:ag_attr}).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig2_confusion_both_lenses.png}
+  \caption{Confusion rate (a look-alike beats all gold), model $\times$ language,
+  both lenses; $14$--$78\%$ on the publication lens.
+  Source: alias-graph key findings, Fig.~2.}
+  \label{fig:ag_conf}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig5_universal_attractors.png}
+  \caption{Universal attractors: look-alikes that most often steal the top rank.
+  Source: alias-graph key findings, Fig.~5.}
+  \label{fig:ag_attr}
+\end{figure}
+
+\subsection{Leaderboards}
+\label{ssec:boards}
+
+Table~\ref{tab:cp_board} ranks the nine models by CLIR-MRS on the cross-lingual
+benchmark and Table~\ref{tab:ag_board} by MRS on the alias-graph benchmark.
+\texttt{embeddinggemma} tops both. The radar views
+(Figures~\ref{fig:cp_radar},~\ref{fig:ag_radar}) show \emph{where} each top
+model wins across the axes.
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    model & R@10 & CLIR@10 & home & sep & CLIR-MRS \\
+    \midrule
+    \texttt{embeddinggemma} & 0.544 & 0.502 & $+0.22$ & 0.90 & \textbf{0.71} \\
+    \texttt{bge-m3}         & 0.476 & 0.437 & $+0.23$ & 0.87 & 0.70 \\
+    \texttt{granite-278m}   & 0.359 & 0.329 & $+0.17$ & 0.86 & 0.67 \\
+    \texttt{nomic-v2-moe}   & 0.443 & 0.381 & $+0.34$ & 0.86 & 0.67 \\
+    \texttt{qwen3-0.6B}     & 0.468 & 0.433 & $+0.19$ & 0.86 & 0.58 \\
+    \texttt{LaBSE}          & 0.277 & 0.238 & $+0.21$ & 0.81 & 0.40 \\
+    \texttt{SapBERT}        & 0.212 & 0.179 & $+0.18$ & 0.79 & 0.40 \\
+    \texttt{e5-large-instruct} & 0.178 & 0.077 & $+0.55$ & 0.71 & 0.26 \\
+    \texttt{gte-base}       & 0.004 & 0.000 & $+0.02$ & 0.49 & 0.00 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Cross-lingual benchmark leaderboard. ``home'' is the home advantage
+  $\mathrm{MoLIR}{-}\mathrm{CLIR}$; ``sep'' is separability AUC.
+  \texttt{embeddinggemma} wins (CLIR-MRS $0.71$, CI $[0.67,0.77]$).
+  Source: chem-patents key findings, Verdict table / \texttt{headline\_numbers.csv}.}
+  \label{tab:cp_board}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{lrrrr}
+    \toprule
+    model & pubR@10 & RBO & conf & MRS \\
+    \midrule
+    \texttt{embeddinggemma} & 0.67  & 0.387 & 0.144 & \textbf{0.991} \\
+    \texttt{qwen3-0.6B}     & 0.641 & 0.349 & 0.227 & 0.902 \\
+    \texttt{bge-m3}         & 0.604 & 0.288 & 0.237 & 0.813 \\
+    \texttt{LaBSE}          & 0.511 & 0.314 & 0.295 & 0.779 \\
+    \texttt{granite-278m}   & 0.529 & 0.289 & 0.318 & 0.757 \\
+    \texttt{nomic-v2-moe}   & 0.580 & 0.239 & 0.215 & 0.727 \\
+    \texttt{SapBERT}        & 0.352 & 0.142 & 0.424 & 0.494 \\
+    \texttt{e5-large-instruct} & 0.237 & 0.021 & 0.481 & 0.239 \\
+    \texttt{gte-base}       & 0.047 & 0.003 & 0.782 & 0.000 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Alias-graph benchmark leaderboard. ``pubR@10'' is per-publication
+  Recall@10; ``conf'' is publication-lens confusion rate.
+  \texttt{embeddinggemma} wins (MRS $0.991$, CI $[0.86,1.00]$).
+  Source: alias-graph key findings, headline table / \texttt{headline\_numbers.csv}.}
+  \label{tab:ag_board}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig14_robustness_radar.png}
+  \caption{Robustness profiles, cross-lingual benchmark.
+  Source: chem-patents key findings, Fig.~14.}
+  \label{fig:cp_radar}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig10_robustness_radar.png}
+  \caption{Robustness profiles, alias-graph benchmark.
+  Source: alias-graph key findings, Fig.~10.}
+  \label{fig:ag_radar}
+\end{figure}
+
+% ===========================================================================
+\section{Analysis}
+\label{sec:analysis}
+% ===========================================================================
+
+Why does cross-lingual retrieval collapse here, and what does the failure tell
+us about the fix?
+
+\paragraph{The lead is an availability confound.}
+English's apparent advantage is mostly \emph{where the gold lives}, not encoder
+skill. Each language retrieves its own-language gold far better
+($0.63$--$0.82$) than foreign-language gold ($0.35$--$0.47$), and because
+English and French source patents dominate, $42\%$ of an English query's gold is
+reachable in-English versus only $8$--$10\%$ for German, Spanish, and
+Chinese.\footnote{Availability shares, alias-graph key findings ``mechanism.''}
+The collapse is visible as language over-fetch: low-resource query languages
+over-fetch their own language up to $49\times$ the corpus base rate, and
+same-language \emph{noise} out-ranks the gold on $60\%$ of queries
+(Figures~\ref{fig:cp_collapse},~\ref{fig:cp_distractor}).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig09_language_collapse.png}
+  \caption{Same-language over-representation by query language; up to $49\times$
+  the base rate. Source: chem-patents key findings, Fig.~9.}
+  \label{fig:cp_collapse}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig10_distractor_language.png}
+  \caption{Language of the documents that bury the gold; same-language noise
+  out-ranks the gold on $60\%$ of queries.
+  Source: chem-patents key findings, Fig.~10.}
+  \label{fig:cp_distractor}
+\end{figure}
+
+\paragraph{Bias drives inconsistency.}
+The more a model leans on its home language, the less consistent it is across
+languages: $r(\text{home advantage},\text{RBO})=-0.85$ on the cross-lingual
+benchmark (Figure~\ref{fig:cp_consist}) and $r(\text{same-language
+share},\text{RBO})=-0.87$ on the alias-graph benchmark
+(Figure~\ref{fig:ag_bias}). The two failures are the same failure seen from two
+angles.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig08_consistency_vs_bias.png}
+  \caption{RBO consistency vs.\ home advantage; $r=-0.85$.
+  Source: chem-patents key findings, Fig.~8.}
+  \label{fig:cp_consist}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig4_bias_drives_inconsistency.png}
+  \caption{Language bias $\Rightarrow$ cross-lingual inconsistency; $r=-0.87$.
+  Source: alias-graph key findings, Fig.~4.}
+  \label{fig:ag_bias}
+\end{figure}
+
+\paragraph{Structure-style questions are the trap.}
+\emph{How} a query is phrased decides whether the model falls into a confuser.
+\emph{Structure}-style questions are the trap (Recall@10 $0.26$, confusion
+$51\%$) because structure descriptions are exactly what sibling compounds
+share, whereas \emph{role} questions are far safer (Recall@10 $0.60$, confusion
+$25\%$); a language-independent \emph{formula token} (e.g.\ H$_2$S, CO$_2$)
+measurably helps ($p<0.01$), even in Chinese
+(Figure~\ref{fig:ag_qtype}).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig6_question_type_effect.png}
+  \caption{Structure questions are the trap (R@10 $0.26$, confusion $51\%$) vs.\
+  role questions ($0.60$, $25\%$). Source: alias-graph key findings, Fig.~6.}
+  \label{fig:ag_qtype}
+\end{figure}
+
+\paragraph{It is a separability deficit, so re-ranking cannot fix it.}
+Behind the confusion, the cosine score barely separates gold from sibling:
+$\mathrm{AUC}(\text{gold}>\text{look-alike})=0.55$ for confused queries versus
+$0.70$ otherwise (Figure~\ref{fig:ag_sep}). On the cross-lingual benchmark the
+same story holds across models: $r(\text{cross-language AUC},\text{CLIR@10})
+=+0.96$ (Figure~\ref{fig:cp_sep})---foreign gold is \emph{under-scored}, not
+merely mis-ordered. This is the crux: a monolingual re-ranker reads a ranked
+list it cannot repair, because the right foreign document was never scored high
+enough to appear. The lever is at the embedding level.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig11_separability.png}
+  \caption{Separability AUC (gold$>$non-gold), same vs.\ cross language;
+  $r(\mathrm{AUC},\mathrm{CLIR@10})=+0.96$.
+  Source: chem-patents key findings, Fig.~11.}
+  \label{fig:cp_sep}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig8_confusion_is_separability.png}
+  \caption{Confusion is a separability collapse: AUC $0.55$ confused vs.\ $0.70$
+  otherwise. Source: alias-graph key findings, Fig.~8.}
+  \label{fig:ag_sep}
+\end{figure}
+
+% ===========================================================================
+\section{Deployment Recommendation}
+\label{sec:deployment}
+% ===========================================================================
+
+The metrics yield a single, actionable decision for a search team.
+
+\paragraph{Deploy \texttt{embeddinggemma}.}
+It wins both composites (CLIR-MRS $0.71$, CI $[0.67,0.77]$; alias MRS $0.991$,
+CI $[0.86,1.00]$), tops cross-lingual Recall@10 ($0.50$), and is the best
+twin-finder (median first-foreign rank $5$). Mean recall alone would already
+rank it first here, but---critically---it is robustness, not recall, that keeps
+it first on the alias-graph benchmark, where mean recall under-rates
+language-balanced encoders.
+
+\paragraph{Report robustness next to recall.}
+We recommend reporting CLIR@10, language-parity, and MRS \emph{alongside}
+recall, never average recall alone. The pure ``no-home'' Spanish queries are the
+reason: a dashboard that averages over them will look healthy while the deployed
+system silently fails on cross-jurisdiction search.
+
+\paragraph{Do not reflexively ensemble.}
+There \emph{is} real headroom---the oracle (any of nine models) reaches CLIR@10
+$0.61$ on the cross-lingual benchmark (Figure~\ref{fig:cp_ens}) and $88\%$
+versus the best single model's $76\%$ on the alias-graph benchmark, with Chinese
+having the largest recoverable headroom (Figure~\ref{fig:ag_ens}). But this
+headroom is \emph{not free}: untuned reciprocal-rank fusion \citep{rrf2009} did
+\emph{not} beat the best single model. The two facts coexist---naive fusion
+loses, yet a score-aware learned combiner or per-language routing (for the
+homeless Spanish and the low-resource Chinese) could win. A residual
+$\sim$12\% ``universal-blind'' core (the methyl/sulfide traps) needs
+chemistry-aware help, not more encoders.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig12_ensemble_headroom.png}
+  \caption{Best-single vs.\ fusion vs.\ router vs.\ oracle (cross-lingual);
+  oracle CLIR@10 $0.61$, but untuned RRF does not beat the best single model.
+  Source: chem-patents key findings, Fig.~12.}
+  \label{fig:cp_ens}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig7_ensemble_headroom.png}
+  \caption{Oracle vs.\ best single model, per language (alias-graph); $88\%$ vs.\
+  $76\%$, Chinese has the largest headroom.
+  Source: alias-graph key findings, Fig.~7.}
+  \label{fig:ag_ens}
+\end{figure}
+
+\paragraph{Align, do not re-rank.}
+Because foreign gold is under-scored at the embedding level
+(\S\ref{sec:analysis}), the durable fix is representation alignment at indexing
+time. A monolingual re-ranker at query time operates on a candidate list that
+already excludes the right foreign document.
+
+\paragraph{Budget rule.}
+Finally, the MT-of-question null result ($-0.044$, $p=0.13$) tells us where to
+spend a finite human-translation budget: \emph{machine-translate the query, but
+human-translate the corpus}. The expensive resource buys the most where it
+matters---the documents being searched, not the questions.
+
+% ===========================================================================
+\section*{Limitations}
+% ===========================================================================
+
+\paragraph{Scale.}
+The benchmarks comprise 132 (alias-graph) and 137 (cross-lingual) questions over
+24 compounds; some language-pair cells are thin, so the directional CLIR matrix
+should be read as indicative rather than definitive in the sparsest cells.
+
+\paragraph{Domain transfer.}
+All results are chemistry-patent-specific. We frame that specificity as the
+contribution---a real deployment niche underserved by general benchmarks---but
+we do not yet provide a general-domain companion measurement:
+\todo{trace: no MMTEB / MIRACL / NeuCLIR transfer number computed yet;
+flagged in needs\_eval as a candidate}.
+
+\paragraph{Judge dependence.}
+The generated queries and the auto-grader rely on an LLM judge. We provide human
+validation of a sample (Appendix), but claim-level patent equivalence is not
+lay-annotatable, and a larger expert re-annotation remains future work.
+
+\paragraph{Language coverage.}
+We cover five languages (en/de/es/fr/zh) with a single non-Latin script
+(Chinese); low-resource scripts are out of scope here.
+
+\paragraph{Out of scope.}
+Calibration-style cross-lingual instruments and a full claim-equivalence audit
+are deliberately left as future work; we do not claim them as results.
+
+% ===========================================================================
+\section{Conclusion}
+% ===========================================================================
+
+For a chemistry-patent search team deploying one multilingual embedding model,
+average Recall@10 is the wrong dashboard: it is inflated by same-language hits
+and hides a cross-lingual collapse (best CLIR@10 $0.50$; home advantage up to
+$+0.55$; five language versions of a query agreeing on barely a third of their
+top-10; a confusable compound beating the gold on $14$--$78\%$ of queries). Our
+two patent-grounded benchmarks and our CLIR robustness suite make that collapse
+measurable, name the survivor (\texttt{embeddinggemma}), and trace the cause to
+an embedding-level separability deficit---so the fix is alignment at index time,
+not re-ranking at query time, and the budget rule is to machine-translate the
+query and human-translate the corpus. Reporting robustness next to recall, and
+treating cross-lingual retrieval as a representation problem, are the two habits
+we recommend any multilingual patent-search team adopt.
+
+\bibliography{custom}
+
+\appendix
+\section{Appendix}
+
+\paragraph{Reproducibility.}
+The full ten-round derivations behind the headline numbers, the per-language and
+per-lens tables, and all figures are produced by the scripts under
+\texttt{reports/runs/\{chem\_patents,alias\_graph\}/experimental\_codes/} and
+summarised in the two \texttt{key\_findings/EXECUTIVE\_SUMMARY.md} files this
+paper cites.
+
+\paragraph{Generation-pipeline validation (C5).}
+A human annotator reviewed a sample of generated queries; the quantitative
+human-rating summary and the LLM auto-grader's strictness relative to humans are
+reported in the system description and will be folded in here once dumped to
+\texttt{reports/}:
+\todo{trace: human-eval numbers (mean rating, items reviewed, rejections,
+auto-grader strictness) currently in source slides only, not under reports/}.
+
+\end{document}

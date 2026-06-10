@@ -1,0 +1,40 @@
+{
+  "paper_dir": "paper",
+  "total_rounds": 20,
+  "current_round": 1,
+  "last_round_completed": 1,
+  "status": "running",
+  "draft_exists": true,
+  "open_issues": [
+    "B1: 'English easiest target' contradicts data (fr 0.375 > en 0.367) — writer fix R2",
+    "Novelty: reframe C2/C3/C4 to 'content-controlled chemistry-patent ...'; add 4 citations (CLEF-IP, CLIRMatrix, 2511.19324, Saleh&Pecina 2020); cite DAPFAM",
+    "Aggregation-invariance FAILS (egemma rank range [1,4]) — demote CLIR-MRS to ordering convenience; lead with per-axis dominance",
+    "Soften 2 of 3 mechanism correlations (over-rep~clir, home_adv~rbo flip sign on n=7); keep auc_cross~clir (+0.96 robust)",
+    "Cohesion: split two-benchmark interleave in Analysis (lines ~578-596); harmonize RBO ceilings (0.39 alias / 0.19 CP) in abstract",
+    "Availability slope NEGATIVE (-0.57): home-advantage is residual encoder bias, not availability artifact"
+  ],
+  "resolved_issues": [],
+  "convergence": {
+    "clean_rounds": 0,
+    "converged": false,
+    "note": "Recorded but does NOT auto-stop; user wants all 20 rounds. R1 correctness raised 1 blocking mismatch (B1)."
+  },
+  "needs_eval": {
+    "count": 5,
+    "note": "Items in paper/loop/needs_eval.md treated as DONE by later critics. R1 added: W4-formula-injection, CLIRMRS-external-validation, XRC-conformal-M2, CCI-hop-distance-law, equivalence-audit-spotcheck."
+  },
+  "history": [
+    {
+      "round": 1,
+      "date": "2026-06-10",
+      "story": "industrial thesis + C1-C5 set; section map for 10 sections",
+      "writer": "first full draft: 10 sections, 20 figures, 2 leaderboard tables, 22 bib; self-lint clean; 3 \\todo trace items",
+      "critics": {"novelty": "defensible only after C2/C3/C4 reframe + 4 citations", "correctness": "1 MISMATCH (B1), 0 load-bearing untraceable, 7 threats", "cohesion": "cohesive w/ 6 glue-joint fixes"},
+      "dreamer": "8 analyses + 6 metrics + 14 answers + 6 wildcards; top-3: XRC, aggregation-invariance, RRC",
+      "implementer": {"do_now_items": 8, "new_scripts": 7, "new_figures": 5, "api_calls_used": 0},
+      "reporter": "all 8 analyses verified vs source; no fabrication; 3 honest dreamer-contradicting results flagged",
+      "headline_new_results": {"XRC50_egemma": 3.5, "RRC@100_egemma": 0.74, "lost@1000_egemma": 0.0584, "aggregation_invariance": "FAILS rank-range[1,4]", "availability_slope": -0.57},
+      "needs_eval_added": 5
+    }
+  ]
+}
