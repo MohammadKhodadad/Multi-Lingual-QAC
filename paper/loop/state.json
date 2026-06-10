@@ -1,38 +1,33 @@
 {
   "paper_dir": "paper",
   "total_rounds": 20,
-  "current_round": 2,
-  "last_round_completed": 2,
+  "current_round": 3,
+  "last_round_completed": 3,
   "status": "running",
   "draft_exists": true,
   "open_issues": [
-    "R3 WRITER: drop the false XRC 'cheapest deployable' superlative (N2); use cost-frontier Pareto-membership framing (egemma unique max-CLIR corner; bge-m3 cheapest-to-read)",
-    "R3 WRITER: soften N1 'statistically indistinguishable' (no sig test) -> 'nearly tied' (fr 0.375 ~ en 0.367)",
-    "R3 WRITER: fix B2 regression at line ~605 ('best model' -> 'any model' for 0.39 RBO ceiling)",
-    "R3 WRITER: close de<->zh +0.23 asymmetry orphan (reference cp_fig04 or drop the named number)",
-    "R3 WRITER: define 'degenerate' once via DEG gate (CLIR@10<0.10 -> {gte,e5}); integrate two-taxes spine",
-    "HONESTY: two-tax rho=-0.59 (p=0.16, n.s.) and trap rho=+0.29 (p=0.53, n.s.) are DIRECTIONAL/descriptive only -- never state as effects",
-    "XRC is population-level (137 cross vs 57 same), not paired -> one-clause caveat"
+    "R4 WRITER: wire cp_fig22 (ARI decomposition) + cp_fig23 (per-route frontier) into the draft",
+    "R4 WRITER: integrate per-route corner-movement as HONEST upside of C4 (egemma still single-model pick: global corner, wins 3/5 routes incl hardest es/zh, lowest L∞=0.058/ARI@100=0.229; router = headroom, NOT free win; attach thin-n caveats de n_same=7/zh=2/es=0; XRC y-axis INDICATIVE)",
+    "R4 WRITER closing fixes: relabel two 'eight non-degenerate' sites -> seven (F1); drop 'sibling-' in fig21 caption (F2, plots confusion_rate 0.182/0.068); add one cascade/recall-ceiling citation for RRC knee (F3)",
+    "reconcile main.tex churn (+218/-80 writer prose from R3) at next correctness pass"
   ],
   "resolved_issues": [
-    "B1 FIXED (English-easiest-target removed; hub-and-spoke)",
-    "B2 FIXED in abstract/intro/conclusion (regression remains at line 605 -> R3)",
-    "B3 FIXED (Fig1 MoLIR-on-57-originals footnote)",
-    "Novelty now defensible (content-controlled framing + CLEF-IP/DAPFAM/CLIRMatrix + 10 cites)",
-    "CLIR-MRS demoted to ordering-convenience; per-axis dominance leads",
-    "XRC + RRC added as headline metrics; cost frontier turns XRC wound into contribution"
+    "B1,B2,B3 all FIXED; N2 superlative dead; novelty defensible; CLIR-MRS demoted; XRC/RRC/cost-frontier/DEG-gate landed",
+    "DEG gate defined once (CLIR@10<0.10 -> {gte,e5}); 'degenerate' anchored",
+    "ARI identity closes 1.0 all 9 models; L∞ alignment-only floor firm"
   ],
   "convergence": {
-    "clean_rounds": 0,
+    "clean_rounds": 1,
     "converged": false,
-    "note": "R2 correctness raised 1 new mismatch (N2, now addressed by cost-frontier). Does NOT auto-stop."
+    "note": "R3 correctness: MISMATCH=0, UNTRACEABLE=0 (first clean round). Cohesion: 4/5 seams closed, 1 one-word relabel. Does NOT auto-stop."
   },
   "needs_eval": {
     "count": 6,
-    "note": "R1 added 5; R2 added W3-alignment-causal-probe. Treated as DONE by later critics."
+    "note": "R1 added 5, R2 added W3. R3 added no new items (cross-ref to W3). Treated as DONE by later critics."
   },
   "history": [
-    {"round": 1, "date": "2026-06-10", "summary": "first full draft (10 sec, 20 figs, 2 tables); new analyses XRC/RRC/aggregation-invariance/availability; 0 API; 5 backlog", "headline": {"XRC50_egemma": 3.5, "RRC@100_egemma": 0.74, "lost@1000": 0.0584, "agg_invariance": "FAILS [1,4]", "availability_slope": -0.57}},
-    {"round": 2, "date": "2026-06-10", "summary": "defended draft: B1-B3 fixed, novelty defensible, CLIR-MRS demoted, XRC/RRC headline; new analyses cost-frontier/RRC-budget/two-tax+DEG; 0 API; +1 backlog", "headline": {"pareto_set": ["embeddinggemma","bge-m3","granite-278m"], "egemma": "unique max-CLIR corner (NOT cheapest)", "RRC_knee_K*": 5, "L_inf_egemma": 0.058, "two_tax_rho": -0.59, "two_tax_p": 0.16, "DEG_flags": ["gte-base","e5-large-instruct"]}}
+    {"round": 1, "date": "2026-06-10", "summary": "first full draft; XRC/RRC/aggregation/availability; 0 API; 5 backlog"},
+    {"round": 2, "date": "2026-06-10", "summary": "defended: B1-B3 fixed, novelty defensible, CLIR-MRS demoted; cost-frontier/RRC-budget/two-tax+DEG; 0 API; +1 backlog", "headline": {"pareto": ["embeddinggemma","bge-m3","granite-278m"], "two_tax_rho": -0.59, "DEG": ["gte","e5"]}},
+    {"round": 3, "date": "2026-06-10", "summary": "consolidation: ARI decomposition + per-route frontier; 0 mismatches (first clean round); 0 API", "headline": {"ARI@100_egemma": 0.229, "L_inf_egemma": 0.058, "identity_closes": "all 9 models", "corner_moves": "3 distinct (en->qwen3, de/es/zh->egemma, fr->nomic)", "decision_flips": "2/5 routes (en,fr)", "es_XRC": "NaN (n_same=0)"}}
   ]
 }

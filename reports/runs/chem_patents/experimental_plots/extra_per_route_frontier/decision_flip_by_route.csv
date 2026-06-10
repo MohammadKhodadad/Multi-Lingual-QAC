@@ -1,0 +1,6 @@
+route,recall_only_pick,frontier_pick,flipped
+en,embeddinggemma,qwen3-0.6B,True
+de,embeddinggemma,embeddinggemma,False
+es,embeddinggemma,embeddinggemma,False
+fr,embeddinggemma,nomic-v2-moe,True
+zh,embeddinggemma,embeddinggemma,False

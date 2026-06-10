@@ -1,0 +1,91 @@
+{
+  "method": "Routes = query languages {en,de,es,fr,zh}. x=CLIR@10_ell=mean per-query clir_at_10 over route's cross-gold queries (robust). y=XRC50_ell=pct_depth(cross,50)/pct_depth(same,50) with the MEDIAN (D50), carrying n_same + censored/thin flags (indicative). es: no same-lang gold -> XRC undefined (not imputed). Per-route Pareto over finite-XRC models; es frontier = CLIR argmax. Decision-flip = argmax(recall@10_ell) vs argmax(CLIR@10_ell).",
+  "routes": [
+    "en",
+    "de",
+    "es",
+    "fr",
+    "zh"
+  ],
+  "deg_cutoff": 0.1,
+  "n_cross_by_route": {
+    "en": 27,
+    "de": 27,
+    "es": 34,
+    "fr": 27,
+    "zh": 22
+  },
+  "n_same_by_route": {
+    "en": 21,
+    "de": 7,
+    "es": 0,
+    "fr": 27,
+    "zh": 2
+  },
+  "xrc_axis_status": {
+    "es": "undefined (n_same=0)",
+    "zh": "thin (n_same=2, indicative)",
+    "de": "thin (n_same=7, indicative)",
+    "en": "credible (n_same=21)",
+    "fr": "credible (n_same=27)"
+  },
+  "frontier_members_by_route": {
+    "en": "qwen3-0.6B;granite-278m;LaBSE",
+    "de": "embeddinggemma;bge-m3;qwen3-0.6B;granite-278m;LaBSE",
+    "es": "embeddinggemma",
+    "fr": "bge-m3;nomic-v2-moe;granite-278m",
+    "zh": "embeddinggemma"
+  },
+  "max_clir_corner_by_route": {
+    "en": "qwen3-0.6B",
+    "de": "embeddinggemma",
+    "es": "embeddinggemma",
+    "fr": "nomic-v2-moe",
+    "zh": "embeddinggemma"
+  },
+  "capability_corner_moves_across_routes": true,
+  "n_distinct_max_clir_corners": 3,
+  "decision_flip_by_route": {
+    "en": true,
+    "de": false,
+    "es": false,
+    "fr": true,
+    "zh": false
+  },
+  "decision_flip_detail": {
+    "en": {
+      "recall_pick": "embeddinggemma",
+      "frontier_pick": "qwen3-0.6B",
+      "flipped": true
+    },
+    "de": {
+      "recall_pick": "embeddinggemma",
+      "frontier_pick": "embeddinggemma",
+      "flipped": false
+    },
+    "es": {
+      "recall_pick": "embeddinggemma",
+      "frontier_pick": "embeddinggemma",
+      "flipped": false
+    },
+    "fr": {
+      "recall_pick": "embeddinggemma",
+      "frontier_pick": "nomic-v2-moe",
+      "flipped": true
+    },
+    "zh": {
+      "recall_pick": "embeddinggemma",
+      "frontier_pick": "embeddinggemma",
+      "flipped": false
+    }
+  },
+  "n_routes_flipped": 2,
+  "global_pareto_set_reference": [
+    "bge-m3",
+    "embeddinggemma",
+    "granite-278m"
+  ],
+  "verify_egemma_global_clir_0.5024": 0.5024,
+  "checks_passed": true,
+  "check_failures": []
+}
