@@ -3,9 +3,10 @@
   "total_rounds": 20,
   "current_round": 5,
   "last_round_completed": 5,
-  "status": "running",
+  "status": "paused_by_user_after_round_5",
   "draft_exists": true,
   "ship_ready": true,
+  "resume_instructions": "Run /paper-loop to continue from round 6 (it reads last_round_completed=5). Round 6's writer will apply the 5-item WRITER-ONLY cleanup in open_issues. Or /paper-round for a single round.",
   "open_issues": [
     "R6 WRITER cleanup (WRITER-ONLY, no compute): W-M1 restore raw tau-bands at L632/L633/L657 (admitted-stable [0.385,0.43]; cheapest-bge [0.33,0.435]); W-N2 harmonize 49x->48.7x at L955/L973 (source overrep=48.71); W-N3 standardize L-inf dual notation '0.058 (5.84%)' at L692 + convert L1030/L1191; W-N1 fig22-before-fig19 float order (typeset pass); W-Guard camera-ready: keep egemma L-inf=0.058 floor distinct from tied ARI@100",
     "3 carried %TODO comment-fenced traces (corpus dedup 14,401 + coverage matrix; human-eval 8.33/10; MMTEB/MIRACL/NeuCLIR transfer) -- only resolvable with source-slide data or new eval"
