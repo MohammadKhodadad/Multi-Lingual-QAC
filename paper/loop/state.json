@@ -1,33 +1,31 @@
 {
   "paper_dir": "paper",
   "total_rounds": 20,
-  "current_round": 3,
-  "last_round_completed": 3,
+  "current_round": 4,
+  "last_round_completed": 4,
   "status": "running",
   "draft_exists": true,
   "open_issues": [
-    "R4 WRITER: wire cp_fig22 (ARI decomposition) + cp_fig23 (per-route frontier) into the draft",
-    "R4 WRITER: integrate per-route corner-movement as HONEST upside of C4 (egemma still single-model pick: global corner, wins 3/5 routes incl hardest es/zh, lowest L∞=0.058/ARI@100=0.229; router = headroom, NOT free win; attach thin-n caveats de n_same=7/zh=2/es=0; XRC y-axis INDICATIVE)",
-    "R4 WRITER closing fixes: relabel two 'eight non-degenerate' sites -> seven (F1); drop 'sibling-' in fig21 caption (F2, plots confusion_rate 0.182/0.068); add one cascade/recall-ceiling citation for RRC knee (F3)",
-    "reconcile main.tex churn (+218/-80 writer prose from R3) at next correctness pass"
+    "R5 WRITER C1 (separability): lead with SIGN-STABILITY P(r>0)=0.9997, present CI [0.73,1.00] as wide (n=7); do NOT present CI as tight",
+    "R5 WRITER C2 (ARI): 'embeddinggemma and qwen3-0.6B are TIED for lowest re-ranker-irreducible residual' (gap 0.004, CI [-0.174,0.176] straddles 0); keep egemma's smallest L∞=0.058 distinct",
+    "R5 WRITER C3 (mechanism): separability-CLIR partial-r|Recall@10 = +0.29 p=0.57 n.s. -> present separability as DESCRIPTIVE correlate of the floor, NOT independent of capability / not-a-tautology",
+    "R5 WRITER C4 (tau): admitted-set stable tau in [0.39,0.43], cheapest=bge-m3 tau in [0.33,0.44], flips to granite below 0.33, only egemma above 0.45; ONLY egemma's max-CLIR corner is tau-invariant; do NOT say 'rule is robust'",
+    "R5 WRITER: execute the 4-float cut (drop radars cp_fig14+ag_fig10; use stitched cp_fig06_07_mate.png + cp_fig09_10_collapse.png) to get under 8-page budget; add appendix robustness table from robustness_table.csv",
+    "R5 WRITER: fig22 caption reconcile (identity holds for 9, figure plots 7 non-deg); add rho_k residual-decomposition cite (arXiv:2604.01506) for ARI; trim §6.1 ARI redundancy"
   ],
   "resolved_issues": [
-    "B1,B2,B3 all FIXED; N2 superlative dead; novelty defensible; CLIR-MRS demoted; XRC/RRC/cost-frontier/DEG-gate landed",
-    "DEG gate defined once (CLIR@10<0.10 -> {gte,e5}); 'degenerate' anchored",
-    "ARI identity closes 1.0 all 9 models; L∞ alignment-only floor firm"
+    "B1/B2/B3, N2, novelty defensible, CLIR-MRS demoted, DEG gate, ARI+per-route wired, cascade cites added, closing fixes F1/F2/F3 landed"
   ],
   "convergence": {
-    "clean_rounds": 1,
-    "converged": false,
-    "note": "R3 correctness: MISMATCH=0, UNTRACEABLE=0 (first clean round). Cohesion: 4/5 seams closed, 1 one-word relabel. Does NOT auto-stop."
+    "clean_rounds": 2,
+    "converged": true,
+    "note": "R3 & R4 correctness MISMATCH=0. Paper structurally converged; rounds 5+ = polish/hardening/trim per critics. Does NOT auto-stop (user wants all 20)."
   },
-  "needs_eval": {
-    "count": 6,
-    "note": "R1 added 5, R2 added W3. R3 added no new items (cross-ref to W3). Treated as DONE by later critics."
-  },
+  "needs_eval": {"count": 6, "note": "R1:5, R2:1. R3/R4 added none. Treated as DONE by later critics."},
   "history": [
-    {"round": 1, "date": "2026-06-10", "summary": "first full draft; XRC/RRC/aggregation/availability; 0 API; 5 backlog"},
-    {"round": 2, "date": "2026-06-10", "summary": "defended: B1-B3 fixed, novelty defensible, CLIR-MRS demoted; cost-frontier/RRC-budget/two-tax+DEG; 0 API; +1 backlog", "headline": {"pareto": ["embeddinggemma","bge-m3","granite-278m"], "two_tax_rho": -0.59, "DEG": ["gte","e5"]}},
-    {"round": 3, "date": "2026-06-10", "summary": "consolidation: ARI decomposition + per-route frontier; 0 mismatches (first clean round); 0 API", "headline": {"ARI@100_egemma": 0.229, "L_inf_egemma": 0.058, "identity_closes": "all 9 models", "corner_moves": "3 distinct (en->qwen3, de/es/zh->egemma, fr->nomic)", "decision_flips": "2/5 routes (en,fr)", "es_XRC": "NaN (n_same=0)"}}
+    {"round": 1, "date": "2026-06-10", "summary": "first full draft; XRC/RRC/aggregation/availability; 0 API"},
+    {"round": 2, "date": "2026-06-10", "summary": "defended; cost-frontier/RRC-budget/two-tax+DEG; novelty defensible; CLIR-MRS demoted; 0 API"},
+    {"round": 3, "date": "2026-06-10", "summary": "first clean round; ARI decomposition + per-route corner-movement (3 corners, flips 2/5); 0 API"},
+    {"round": 4, "date": "2026-06-10", "summary": "2nd clean round; honesty-hardening resamples: separability sign-stable but partial-r|recall n.s. (collinear w/ capability), ARI egemma~qwen3 TIE, narrow tau-band; +2-panel float merges; figure-cut plan; 0 API", "headline": {"sep_r": 0.958, "sep_CI": [0.73,1.00], "sep_signstab": 0.9997, "sep_partial_r": 0.29, "ARI_gap_CI_includes_0": true, "tau_admitted_stable": [0.385,0.430], "egemma_corner_tau_invariant": true}}
   ]
 }

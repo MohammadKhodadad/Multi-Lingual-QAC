@@ -1,0 +1,6 @@
+tau,n_admitted,admitted_set,cheapest_admitted,cheapest_XRC50,max_clir_corner
+0.3,5,bge-m3;embeddinggemma;granite-278m;nomic-v2-moe;qwen3-0.6B,granite-278m,1.25,embeddinggemma
+0.35,4,bge-m3;embeddinggemma;nomic-v2-moe;qwen3-0.6B,bge-m3,2.0,embeddinggemma
+0.4,3,bge-m3;embeddinggemma;qwen3-0.6B,bge-m3,2.0,embeddinggemma
+0.45,1,embeddinggemma,embeddinggemma,3.5,embeddinggemma
+0.5,1,embeddinggemma,embeddinggemma,3.5,embeddinggemma

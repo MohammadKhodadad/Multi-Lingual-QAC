@@ -1,0 +1,81 @@
+{
+  "method": "percentile bootstrap (common.bootstrap_ci family); headline = sign/order stability, not CI width. NO BCa (no helper exists; troubleshooter option a). N_BOOT=10000, seed=20260610, alpha=0.05.",
+  "A1_separability_r": {
+    "point_r_n7": 0.9577,
+    "r_n9": 0.8877,
+    "ci95": [
+      0.7301,
+      0.9977
+    ],
+    "sign_stability_P_r_gt_0": 0.9997,
+    "n_degenerate_bootstrap_draws": 32,
+    "n": 7,
+    "headline": "sign-stability (P(r>0)) is the load-bearing read, not the CI width",
+    "gate_r_point_approx_0.958": true
+  },
+  "A6_XRC50_depth_bootstrap": {
+    "embeddinggemma": {
+      "point_XRC50": 3.5,
+      "ref_XRC50": 3.5,
+      "ci95": [
+        0.9091,
+        12.0
+      ],
+      "censored_draw_frac": 0.0,
+      "ci_is_lower_bound": false,
+      "n_cross": 137,
+      "n_same": 57,
+      "gate_matches_ref": true
+    },
+    "bge-m3": {
+      "point_XRC50": 2.0,
+      "ref_XRC50": 2.0,
+      "ci95": [
+        0.5294,
+        7.0
+      ],
+      "censored_draw_frac": 0.0,
+      "ci_is_lower_bound": false,
+      "n_cross": 137,
+      "n_same": 57,
+      "gate_matches_ref": true
+    },
+    "granite-278m": {
+      "point_XRC50": 1.25,
+      "ref_XRC50": 1.25,
+      "ci95": [
+        0.2838,
+        12.25
+      ],
+      "censored_draw_frac": 0.0,
+      "ci_is_lower_bound": false,
+      "n_cross": 137,
+      "n_same": 57,
+      "gate_matches_ref": true
+    }
+  },
+  "A5_ARI100_gap_egemma_vs_qwen3": {
+    "ari100_egemma": 0.2286,
+    "ari100_qwen3": 0.2326,
+    "gap_qwen3_minus_egemma": 0.004,
+    "gap_ci95": [
+      -0.174,
+      0.1762
+    ],
+    "gap_ci_includes_zero": true,
+    "order_prob_P_egemma_lower": 0.5191,
+    "n_cross_queries": 137,
+    "gate_egemma_0.2286": true,
+    "gate_qwen3_0.2326": true,
+    "honest_read": "the 0.004 ARI@100 gap is NOT a reliable ordering: the paired-bootstrap CI on the gap straddles 0 and the order-probability is near a coin-flip; report the two ARI@100 values as effectively tied, not as a strict egemma<qwen3 win"
+  },
+  "W2_separability_partial_r_controlling_recall10": {
+    "partial_r": 0.2948,
+    "p_two_sided": 0.5706,
+    "zero_order_r": 0.9577,
+    "n": 7,
+    "n_controls": 1,
+    "honest_guidance": "Cross-language AUC and overall Recall@10 are strongly collinear across the 7 non-degenerate models; at this n the separability->CLIR link cannot be statistically disentangled from general capability (partial r=+0.295, n.s.). Frame the separability->floor link as DESCRIPTIVE, not as an effect net of capability. Do NOT claim 'not a capability artifact'."
+  },
+  "gates_all_pass": true
+}

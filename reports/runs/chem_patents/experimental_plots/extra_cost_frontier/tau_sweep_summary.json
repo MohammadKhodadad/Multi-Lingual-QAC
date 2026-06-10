@@ -1,0 +1,73 @@
+{
+  "method": "sweep CLIR@10 admission threshold tau; admitted={short: clir_at_10>=tau}; cheapest=argmin finite XRC50 over admitted (matches extra_cost_frontier read-off).",
+  "tau_grid": [
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5
+  ],
+  "fine_grid_step": 0.005,
+  "tau_sweep_rows": [
+    {
+      "tau": 0.3,
+      "n_admitted": 5,
+      "admitted_set": "bge-m3;embeddinggemma;granite-278m;nomic-v2-moe;qwen3-0.6B",
+      "cheapest_admitted": "granite-278m",
+      "cheapest_XRC50": 1.25,
+      "max_clir_corner": "embeddinggemma"
+    },
+    {
+      "tau": 0.35,
+      "n_admitted": 4,
+      "admitted_set": "bge-m3;embeddinggemma;nomic-v2-moe;qwen3-0.6B",
+      "cheapest_admitted": "bge-m3",
+      "cheapest_XRC50": 2.0,
+      "max_clir_corner": "embeddinggemma"
+    },
+    {
+      "tau": 0.4,
+      "n_admitted": 3,
+      "admitted_set": "bge-m3;embeddinggemma;qwen3-0.6B",
+      "cheapest_admitted": "bge-m3",
+      "cheapest_XRC50": 2.0,
+      "max_clir_corner": "embeddinggemma"
+    },
+    {
+      "tau": 0.45,
+      "n_admitted": 1,
+      "admitted_set": "embeddinggemma",
+      "cheapest_admitted": "embeddinggemma",
+      "cheapest_XRC50": 3.5,
+      "max_clir_corner": "embeddinggemma"
+    },
+    {
+      "tau": 0.5,
+      "n_admitted": 1,
+      "admitted_set": "embeddinggemma",
+      "cheapest_admitted": "embeddinggemma",
+      "cheapest_XRC50": 3.5,
+      "max_clir_corner": "embeddinggemma"
+    }
+  ],
+  "verify_tau040_admitted_set": [
+    "bge-m3",
+    "embeddinggemma",
+    "qwen3-0.6B"
+  ],
+  "verify_tau040_admitted_set_matches_cost_frontier": true,
+  "verify_tau040_cheapest_is_bge_m3": true,
+  "tau_admitted_stable_range": "[0.385, 0.430]",
+  "tau_admitted_stable_range_raw": [
+    0.385,
+    0.43
+  ],
+  "tau_cheapest_bge_range": "[0.330, 0.435]",
+  "tau_cheapest_bge_range_raw": [
+    0.33,
+    0.435
+  ],
+  "egemma_corner_tau_invariant": true,
+  "unique_max_clir_corner": "embeddinggemma",
+  "HONEST_NARROW_BAND": "cheapest admitted reader = bge-m3 holds only for tau in the bge-range above; below it granite-278m (lower-recall but cheaper-to-read, XRC50 1.25 < bge-m3 2.0) enters the admitted set and becomes cheapest (the recommendation FLIPS at tau=0.30); at the high end only embeddinggemma is admitted. embeddinggemma is the unique max-CLIR@10 corner for ALL tau (tau-invariant). Writer: do NOT overstate robustness — the rule is tau-sensitive at the low end; only the egemma corner is unconditional."
+}

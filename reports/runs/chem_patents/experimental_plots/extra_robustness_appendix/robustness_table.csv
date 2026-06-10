@@ -1,0 +1,7 @@
+scalar,point,ci_lo,ci_hi,stability_metric,stability_value,n,note
+"A1: separability Pearson r(auc_cross, CLIR@10), n=7 non-degenerate",0.9577,0.7301,0.9977,sign-stability P(r>0),0.9997,7,r(n9)=0.8877; 32 degenerate draws skipped
+A6: XRC50 (embeddinggemma),3.5,0.9091,12.0,censored-draw fraction,0.0,137 cross / 57 same,ref XRC50=3.5; CI=finite
+A6: XRC50 (bge-m3),2.0,0.5294,7.0,censored-draw fraction,0.0,137 cross / 57 same,ref XRC50=2.0; CI=finite
+A6: XRC50 (granite-278m),1.25,0.2838,12.25,censored-draw fraction,0.0,137 cross / 57 same,ref XRC50=1.25; CI=finite
+A5: ARI@100 gap (qwen3 - embeddinggemma),0.004,-0.174,0.1762,order-prob P(ARI_egemma < ARI_qwen3),0.5191,137,"egemma=0.2286, qwen3=0.2326; gap CI INCLUDES 0"
+"W2: partial r(auc_cross, CLIR@10 | Recall@10), n=7",0.2948,,,two-sided p,0.5706,7,zero-order r=0.9577; WEAK/N.S. once Recall@10 partialled out -> descriptive only
