@@ -51,6 +51,14 @@ def _patent_of(corpus_id: str) -> str:
     return _LANG_SUFFIX.sub("", str(corpus_id))
 
 
+_QUERY_SUFFIX = re.compile(r"__q_(de|en|es|fr|zh)$")
+
+
+def _strip_query_suffix(query_id: str) -> str:
+    """Recover the base id from a query id: 'EP-..._en__q_de' -> 'EP-..._en'."""
+    return _QUERY_SUFFIX.sub("", str(query_id))
+
+
 def _doc_text(title: Optional[str], text: Optional[str]) -> str:
     """Compose document text exactly as the shared corpus / MTEB does:
     ``title + ' ' + text`` where the haystack's ``text`` is ``context|abstract``."""
@@ -186,18 +194,26 @@ def run_progressive_eval(
         if pub:
             base_pubs.add(pub)
 
-    # ---- Queries (one per base) ------------------------------------------ #
-    base_query: Dict[str, str] = {
-        str(r["_id"]): str(r["text"]) for r in _load_pcs_config(dataset_repo, "queries", revision)
-    }
+    # ---- Queries (one per (base, language); strategy="all" => 5 per base) - #
+    queries: List[dict] = [
+        {"query_id": str(r["_id"]), "text": str(r["text"]),
+         "base_id": str(r.get("base_id") or _strip_query_suffix(str(r["_id"]))),
+         "query_language": str(r.get("query_language") or "").strip()}
+        for r in _load_pcs_config(dataset_repo, "queries", revision)
+    ]
+    queries = [q for q in queries if q["base_id"] in by_base_depth]
 
-    bases = [b for b in by_base_depth if b in base_query]
+    # ``limit`` selects base documents (so the haystack/encoding stays bounded);
+    # every query of a selected base is then evaluated.
+    sel_bases = list(dict.fromkeys(q["base_id"] for q in queries))
     if limit is not None:
-        bases = bases[:limit]
-    if not bases:
-        raise ValueError(f"No base documents to evaluate (check the dataset at {dataset_repo}).")
-    print(f"Progressive eval: {len(bases)} base docs, {len(models)} model(s), "
-          f"dataset={dataset_repo}, haystack={haystack_repo}")
+        sel_bases = sel_bases[:limit]
+    sel_set = set(sel_bases)
+    queries = [q for q in queries if q["base_id"] in sel_set]
+    if not queries:
+        raise ValueError(f"No queries to evaluate (check the dataset at {dataset_repo}).")
+    print(f"Progressive eval: {len(queries)} queries over {len(sel_bases)} base docs, "
+          f"{len(models)} model(s), dataset={dataset_repo}, haystack={haystack_repo}")
 
     # ---- Haystack (exclude all language versions of the base publications) #
     ds = _load_corpus_dataset(haystack_repo, revision)
@@ -224,16 +240,17 @@ def run_progressive_eval(
             continue
         try:
             E_H = _haystack_embeddings(model, slug, hay_ids, hay_texts, meta, batch_size, emb_cache_dir)
-            sel_vids = [by_base_depth[b][k] for b in bases for k in sorted(by_base_depth[b])]
+            sel_vids = [by_base_depth[b][k] for b in sel_bases for k in sorted(by_base_depth[b])]
             E_V = _encode(model, [variant_text[v] for v in sel_vids], "document", meta, batch_size)
             v_emb = {vid: E_V[i] for i, vid in enumerate(sel_vids)}
-            E_Q = _encode(model, [base_query[b] for b in bases], "query", meta, batch_size)
+            E_Q = _encode(model, [q["text"] for q in queries], "query", meta, batch_size)
         except Exception as exc:
             print(f"  [skip] encoding failed for `{name}`: {exc}")
             continue
 
-        for bi, b in enumerate(bases):
-            q = E_Q[bi]
+        for qi, qmeta in enumerate(queries):
+            q = E_Q[qi]
+            b = qmeta["base_id"]
             s_H = E_H @ q
             prev = None
             for k in sorted(by_base_depth[b]):
@@ -241,7 +258,8 @@ def run_progressive_eval(
                 rank = int(1 + np.count_nonzero(s_H > score))
                 mode = mode_at_depth[b].get(k, "")
                 records.append({
-                    "model": name, "model_slug": slug, "base_id": b, "depth": k,
+                    "model": name, "model_slug": slug, "query_id": qmeta["query_id"],
+                    "query_language": qmeta["query_language"], "base_id": b, "depth": k,
                     "mode_added": mode, "score": score, "rank": rank, "rr": 1.0 / rank,
                     "r1": int(rank <= 1), "r10": int(rank <= 10), "r100": int(rank <= 100),
                     "cos_drop_from_prev": (prev - score) if prev is not None else np.nan,
@@ -260,7 +278,7 @@ def run_progressive_eval(
     # ---- Per-(model, depth) summary -------------------------------------- #
     summary = (
         df.groupby(["model", "depth"])
-        .agg(n=("base_id", "nunique"), mean_cos=("score", "mean"), mrr=("rr", "mean"),
+        .agg(n=("query_id", "nunique"), mean_cos=("score", "mean"), mrr=("rr", "mean"),
              recall_at_1=("r1", "mean"), recall_at_10=("r10", "mean"),
              recall_at_100=("r100", "mean"), median_rank=("rank", "median"))
         .reset_index()
@@ -268,9 +286,19 @@ def run_progressive_eval(
     summary_path = output_dir / "curve_summary.csv"
     summary.to_csv(summary_path, index=False)
 
+    # Per-(model, query language, depth): monolingual (query lang == anchor) vs
+    # cross-lingual decay — only meaningful with multi-language (strategy=all) queries.
+    lang_summary = (
+        df.groupby(["model", "query_language", "depth"])
+        .agg(n=("query_id", "nunique"), mean_cos=("score", "mean"), mrr=("rr", "mean"),
+             recall_at_10=("r10", "mean"), recall_at_100=("r100", "mean"))
+        .reset_index()
+    )
+    lang_summary.to_csv(output_dir / "curve_summary_by_language.csv", index=False)
+
     mode_breakdown = (
         df[df["depth"] >= 1].groupby(["model", "mode_added"])
-        .agg(n=("base_id", "size"), mean_cos_drop=("cos_drop_from_prev", "mean"))
+        .agg(n=("query_id", "size"), mean_cos_drop=("cos_drop_from_prev", "mean"))
         .reset_index()
     )
     mode_breakdown.to_csv(output_dir / "mode_breakdown.csv", index=False)

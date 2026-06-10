@@ -444,7 +444,13 @@ def parse_args() -> PipelineConfig:
     parser.add_argument("--pcs-output-dir", type=str, default=None,
                         help="Working dir for the progressive CSVs (default: data/progressive_cs).")
     parser.add_argument("--pcs-qa-model", type=str, default="gpt-5-mini",
-                        help="LLM for progressive query generation/grading (default: gpt-5-mini).")
+                        help="LLM for progressive query GENERATION (default: gpt-5-mini, OpenAI).")
+    parser.add_argument("--pcs-grader-model", type=str, default="anthropic/claude-sonnet-4.5",
+                        help="LLM for the two FEEDBACK verifiers, via OpenRouter "
+                        "(default: anthropic/claude-sonnet-4.5).")
+    parser.add_argument("--pcs-qa-strategy", type=int, default=4, choices=[1, 2, 3, 4],
+                        help="Query-language strategy (alias-graph): 1=random_any, 2=random_missing, "
+                        "3=random_existing, 4=all (one query per language). Default: 4.")
     parser.add_argument("--pcs-qa-seed", type=int, default=42, help="Seed for progressive QA (default: 42).")
     parser.add_argument("--pcs-qa-limit", type=int, default=None,
                         help="Generate queries for only the first N base docs.")
@@ -567,6 +573,8 @@ def parse_args() -> PipelineConfig:
         pcs_limit=args.pcs_limit,
         pcs_output_dir=args.pcs_output_dir,
         pcs_qa_model=args.pcs_qa_model,
+        pcs_grader_model=args.pcs_grader_model,
+        pcs_qa_strategy=args.pcs_qa_strategy,
         pcs_qa_seed=args.pcs_qa_seed,
         pcs_qa_limit=args.pcs_qa_limit,
         pcs_qa_workers=args.pcs_qa_workers,
@@ -715,6 +723,8 @@ def main() -> None:
                 alias_json=paths.alias_graph_dir / "alias_graph.json",
                 output_path=qac_out,
                 model=config.pcs_qa_model,
+                grader_model=config.pcs_grader_model,
+                strategy=config.pcs_qa_strategy,
                 seed=config.pcs_qa_seed,
                 limit=config.pcs_qa_limit,
                 workers=config.pcs_qa_workers,

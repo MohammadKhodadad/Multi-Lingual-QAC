@@ -74,26 +74,28 @@ def _build_configs(corpus_csv: Path, qac_csv: Path):
             "source_publication_number": str(r.get("source_publication_number", "")).strip(),
         })
 
-    # One query per base (qac has one row per (base, depth); collapse to the base).
+    # One query per (base, query language); qac has one row per (query, depth).
     queries_data: List[dict] = []
     seen = set()
     for r in qac_rows:
-        base = r["base_id"]
-        if base in seen:
+        qid = r.get("query_id") or r["base_id"]
+        if qid in seen:
             continue
-        seen.add(base)
+        seen.add(qid)
         queries_data.append({
-            "_id": base,
+            "_id": qid,
             "text": r.get("question", ""),
             "query_language": str(r.get("query_language", "")).strip(),
+            "base_id": r["base_id"],
+            "strategy": str(r.get("strategy", "")).strip(),
             "concept_chebi_id": str(r.get("concept_chebi_id", "")).strip(),
             "term_used": r.get("term_used", ""),
         })
 
-    # qrels: each query is gold for all its ladder variants (carry the depth).
+    # qrels: each query is gold for all of its base's ladder variants (carry depth).
     qrels_data: List[dict] = [
-        {"query-id": r["base_id"], "corpus-id": r["gold_id"], "score": 1.0,
-         "depth": int(r["n_replacements"])}
+        {"query-id": (r.get("query_id") or r["base_id"]), "corpus-id": r["gold_id"],
+         "score": 1.0, "depth": int(r["n_replacements"])}
         for r in qac_rows
     ]
     return {

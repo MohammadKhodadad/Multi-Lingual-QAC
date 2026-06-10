@@ -118,6 +118,8 @@ class PipelineConfig:
     pcs_limit: Optional[int] = None
     pcs_output_dir: Optional[str] = None
     pcs_qa_model: str = "gpt-5-mini"
+    pcs_grader_model: str = "anthropic/claude-sonnet-4.5"
+    pcs_qa_strategy: int = 4  # query-language strategy; 4 = "all" (one query per language)
     pcs_qa_seed: int = 42
     pcs_qa_limit: Optional[int] = None
     pcs_qa_workers: int = 1
