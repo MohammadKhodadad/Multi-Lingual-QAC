@@ -1,10 +1,11 @@
 \begin{abstract}
-Chemical knowledge is produced, searched, and reused across language boundaries:
-a technical question may be asked in one language while the strongest evidence
-appears in another. Yet multilingual chemistry retrieval has little clean public
-evaluation data, so models are often judged by aggregate recall even when that
-number hides the failure that matters most: retrieving the right evidence across
-languages rather than an easier same-language match. We address this gap with a
+Chemical knowledge is often searched and reused across language boundaries: a
+user may ask a technical question in one language while the strongest supporting
+document is written in another. Retrieval systems should therefore be tested on
+whether they find that cross-language evidence, not only on whether they retrieve
+an easier same-language match. Yet multilingual chemistry retrieval has little
+clean public evaluation data, so models are often judged by a single aggregate
+recall score that can hide poor cross-language retrieval. We address this gap with a
 multilingual chemistry QAC benchmark and generation pipeline for cross-lingual
 retrieval evaluation. Patents provide the benchmark substrate in this work
 because multilingual publication variants and chemistry ontologies make it
