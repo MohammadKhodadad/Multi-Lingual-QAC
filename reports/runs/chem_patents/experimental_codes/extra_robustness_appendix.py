@@ -221,7 +221,7 @@ def main() -> None:
     # ===================================================================== A5: ARI@100 egemma vs qwen3
     eg_cross = cpq[(cpq.short == EG) & (cpq.n_gold_cross > 0)]["first_cross_rank"].to_numpy(float)
     qw_cross = cpq[(cpq.short == QW) & (cpq.n_gold_cross > 0)]["first_cross_rank"].to_numpy(float)
-    assert eg_cross.size == qw_cross.size == 137, (eg_cross.size, qw_cross.size)
+    assert eg_cross.size == qw_cross.size, (eg_cross.size, qw_cross.size)  # cross-model equality (count data-derived)
     n_q = eg_cross.size
 
     def ari100(cross_vec, idx):

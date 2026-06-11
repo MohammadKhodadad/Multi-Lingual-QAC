@@ -3,12 +3,12 @@
   "tau": 0.4,
   "deg_cutoff": 0.1,
   "frontier_members": [
+    "LaBSE",
     "bge-m3",
     "embeddinggemma",
     "granite-278m"
   ],
   "dominated_finite_models": [
-    "LaBSE",
     "SapBERT",
     "e5-large-instruct",
     "nomic-v2-moe",
@@ -27,18 +27,19 @@
   "tau_admitted_set": [
     "bge-m3",
     "qwen3-0.6B",
-    "embeddinggemma"
+    "embeddinggemma",
+    "nomic-v2-moe"
   ],
   "tau_admitted_min_xrc_model": "bge-m3",
-  "tau_admitted_min_xrc_value": 2.0,
-  "HONEST_CLAIM": "embeddinggemma is the unique max-CLIR@10 corner of the cost frontier and is Pareto-optimal; the cheaper-XRC admitted model at tau=0.4 is 'bge-m3' (XRC50 2.0), so do NOT call egemma 'cheapest deployable'.",
-  "W2_trap_spearman_rho_XRC50_vs_CLIR10_nondeg": 0.2857,
-  "W2_trap_spearman_p": 0.5345,
+  "tau_admitted_min_xrc_value": 3.5,
+  "HONEST_CLAIM": "embeddinggemma is the unique max-CLIR@10 corner of the cost frontier and is Pareto-optimal; the cheaper-XRC admitted model at tau=0.4 is 'bge-m3' (XRC50 3.5), so do NOT call egemma 'cheapest deployable'.",
+  "W2_trap_spearman_rho_XRC50_vs_CLIR10_nondeg": 0.7143,
+  "W2_trap_spearman_p": 0.0713,
   "W2_trap_n_nondeg": 7,
   "W2_trap_supported_positive_rho": true,
   "W2_trap_prose_guidance": "POSITIVE rho => trap sentence valid ('cheapest reader can be the worst retriever')",
-  "verify_egemma_xrc50_3.5": 3.5,
-  "verify_egemma_clir_0.5024": 0.5024,
-  "verify_granite_xrc50_1.25": 1.25,
-  "verify_granite_clir_0.3285": 0.3285
+  "verify_egemma_xrc50_3.5": 5.0,
+  "verify_egemma_clir_0.5024": 0.5413,
+  "verify_granite_xrc50_1.25": 3.2,
+  "verify_granite_clir_0.3285": 0.3899
 }

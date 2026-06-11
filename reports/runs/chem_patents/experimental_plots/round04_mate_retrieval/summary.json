@@ -1,83 +1,83 @@
 {
   "best_mate_mrr_model": "embeddinggemma",
-  "best_mate_mrr": 0.3385,
-  "best_mate_hit10": 0.5328,
-  "best_median_first_foreign_rank": 5,
-  "pooled_mate_hit10": 0.375,
-  "pooled_lost_share_top1000": 0.1542,
+  "best_mate_mrr": 0.361,
+  "best_mate_hit10": 0.5954,
+  "best_median_first_foreign_rank": 4,
+  "pooled_mate_hit10": 0.4134,
+  "pooled_lost_share_top1000": 0.1675,
   "weakest_query_language": "fr",
   "per_model": [
     {
       "short": "embeddinggemma",
-      "mate_hit10": 0.5328,
-      "mate_hit100": 0.7445,
-      "mate_mrr": 0.3385,
-      "lost_share": 0.0584,
-      "median_first_foreign_rank": 5.0
+      "mate_hit10": 0.5954,
+      "mate_hit100": 0.7767,
+      "mate_mrr": 0.361,
+      "lost_share": 0.0725,
+      "median_first_foreign_rank": 4.0
     },
     {
       "short": "bge-m3",
-      "mate_hit10": 0.5036,
-      "mate_hit100": 0.7007,
-      "mate_mrr": 0.3167,
-      "lost_share": 0.1095,
-      "median_first_foreign_rank": 6.0
+      "mate_hit10": 0.5401,
+      "mate_hit100": 0.7176,
+      "mate_mrr": 0.3346,
+      "lost_share": 0.1031,
+      "median_first_foreign_rank": 4.0
     },
     {
       "short": "qwen3-0.6B",
-      "mate_hit10": 0.4964,
-      "mate_hit100": 0.6861,
-      "mate_mrr": 0.3026,
-      "lost_share": 0.073,
-      "median_first_foreign_rank": 7.0
+      "mate_hit10": 0.5095,
+      "mate_hit100": 0.729,
+      "mate_mrr": 0.3126,
+      "lost_share": 0.0935,
+      "median_first_foreign_rank": 6.0
     },
     {
       "short": "nomic-v2-moe",
-      "mate_hit10": 0.4307,
-      "mate_hit100": 0.6861,
-      "mate_mrr": 0.2865,
-      "lost_share": 0.0876,
-      "median_first_foreign_rank": 16.0
+      "mate_hit10": 0.4828,
+      "mate_hit100": 0.687,
+      "mate_mrr": 0.2922,
+      "lost_share": 0.1183,
+      "median_first_foreign_rank": 7.0
     },
     {
       "short": "granite-278m",
-      "mate_hit10": 0.3942,
-      "mate_hit100": 0.6496,
-      "mate_mrr": 0.2731,
-      "lost_share": 0.146,
-      "median_first_foreign_rank": 16.0
+      "mate_hit10": 0.4618,
+      "mate_hit100": 0.6679,
+      "mate_mrr": 0.2749,
+      "lost_share": 0.1546,
+      "median_first_foreign_rank": 8.0
     },
     {
       "short": "LaBSE",
-      "mate_hit10": 0.3212,
-      "mate_hit100": 0.5401,
-      "mate_mrr": 0.224,
-      "lost_share": 0.1606,
-      "median_first_foreign_rank": 32.0
+      "mate_hit10": 0.355,
+      "mate_hit100": 0.563,
+      "mate_mrr": 0.2271,
+      "lost_share": 0.2042,
+      "median_first_foreign_rank": 20.0
     },
     {
       "short": "SapBERT",
-      "mate_hit10": 0.2263,
-      "mate_hit100": 0.4599,
-      "mate_mrr": 0.1513,
-      "lost_share": 0.2263,
-      "median_first_foreign_rank": 46.5
+      "mate_hit10": 0.2385,
+      "mate_hit100": 0.4389,
+      "mate_mrr": 0.1516,
+      "lost_share": 0.2691,
+      "median_first_foreign_rank": 44.0
     },
     {
       "short": "e5-large-instruct",
-      "mate_hit10": 0.0949,
-      "mate_hit100": 0.2847,
-      "mate_mrr": 0.0443,
-      "lost_share": 0.3723,
-      "median_first_foreign_rank": 131.5
+      "mate_hit10": 0.124,
+      "mate_hit100": 0.3149,
+      "mate_mrr": 0.0601,
+      "lost_share": 0.3244,
+      "median_first_foreign_rank": 122.0
     },
     {
       "short": "gte-base",
       "mate_hit10": 0.0,
-      "mate_hit100": 0.0,
+      "mate_hit100": 0.0019,
       "mate_mrr": 0.0002,
-      "lost_share": 0.9124,
-      "median_first_foreign_rank": 559.5
+      "lost_share": 0.9485,
+      "median_first_foreign_rank": 562.0
     }
   ]
 }

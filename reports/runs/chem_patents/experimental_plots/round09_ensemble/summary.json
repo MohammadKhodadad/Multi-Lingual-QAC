@@ -6,20 +6,20 @@
     "qwen3-0.6B",
     "nomic-v2-moe"
   ],
-  "best_single_clir10": 0.5024,
-  "rrf_top4_clir10": 0.4842,
-  "rrf_all_clir10": 0.4586,
-  "router_clir10": 0.5134,
-  "oracle_clir10": 0.6119,
-  "rrf_top4_gain": -0.0182,
-  "rrf_all_gain": -0.0438,
-  "oracle_headroom": 0.1095,
+  "best_single_clir10": 0.5413,
+  "rrf_top4_clir10": 0.5052,
+  "rrf_all_clir10": 0.4723,
+  "router_clir10": 0.5413,
+  "oracle_clir10": 0.6636,
+  "rrf_top4_gain": -0.0361,
+  "rrf_all_gain": -0.069,
+  "oracle_headroom": 0.1223,
   "best_model_per_language": {
     "de": "embeddinggemma",
-    "en": "qwen3-0.6B",
+    "en": "embeddinggemma",
     "es": "embeddinggemma",
-    "fr": "nomic-v2-moe",
+    "fr": "embeddinggemma",
     "zh": "embeddinggemma"
   },
-  "n_distinct_winners": 3
+  "n_distinct_winners": 1
 }

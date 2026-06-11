@@ -194,7 +194,8 @@ def main() -> None:
             "gap": round(float(asym_long.iloc[0]["asymmetry_xy_minus_yx"]), 3)}),
         "weakest_query_language": {"lang": worst_qlang["lang"],
                                    "clir_at_10": round(float(worst_qlang["clir"]), 3)},
-        "spanish_clir_at_10": round(float(bydf[bydf.lang == "es"]["clir"].iloc[0]), 3),
+        "spanish_clir_at_10": (round(float(bydf[bydf.lang == "es"]["clir"].iloc[0]), 3)
+                               if (bydf.lang == "es").any() else None),
         "english_as_doc_target_meanrecall": round(float(mp["en"].mean()), 3),
     }
     C.jdump(summary, out / "summary.json")

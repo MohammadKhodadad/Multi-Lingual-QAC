@@ -1,4 +1,4 @@
 pair,expected,pearson_n8_pool,pearson_n7,pearson_n9_all,spearman_n8_pool,spearman_n7,n8,n7
-auc_cross ~ clir_at_10,"+0.961 (round08, n=8 pool)",0.961,0.958,0.888,0.976,0.964,8,7
-mean_overrep ~ clir_at_10,"-0.600 (round06, n=8 pool)",-0.6,0.419,-0.615,-0.048,0.429,8,7
-home_adv ~ rbo,"-0.846 (round05, n=8 pool)",-0.846,0.186,-0.187,-0.262,0.107,8,7
+auc_cross ~ clir_at_10,"+0.961 (round08, n=8 pool)",0.98,0.98,0.915,0.952,0.929,8,7
+mean_overrep ~ clir_at_10,"-0.600 (round06, n=8 pool)",-0.583,0.416,-0.663,-0.048,0.429,8,7
+home_adv ~ rbo,"-0.846 (round05, n=8 pool)",-0.887,-0.159,-0.308,-0.619,-0.429,8,7

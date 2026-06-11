@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,B,103,-0.0002564573750912564
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,C,114,0.0009747738378089771
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,D,236,0.0010916977110555616
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,F,217,0.0017272742113210089

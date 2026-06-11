@@ -1,6 +1,6 @@
 route,n_cross,n_same,xrc_axis,frontier_members,max_clir_corner,max_clir_value
-en,27,21,ok,qwen3-0.6B;granite-278m;LaBSE,qwen3-0.6B,0.4444
-de,27,7,thin,embeddinggemma;bge-m3;qwen3-0.6B;granite-278m;LaBSE,embeddinggemma,0.6358
-es,34,0,undefined (no same-lang gold),embeddinggemma,embeddinggemma,0.5441
-fr,27,27,ok,bge-m3;nomic-v2-moe;granite-278m,nomic-v2-moe,0.3889
-zh,22,2,thin,embeddinggemma,embeddinggemma,0.553
+en,119,119,ok,embeddinggemma;LaBSE,embeddinggemma,0.5574
+de,112,13,ok,embeddinggemma;qwen3-0.6B;gte-base,embeddinggemma,0.5357
+es,103,27,undefined (no same-lang gold),embeddinggemma;bge-m3,embeddinggemma,0.5356
+fr,98,80,ok,embeddinggemma;granite-278m,embeddinggemma,0.5323
+zh,92,22,ok,embeddinggemma;LaBSE;SapBERT,embeddinggemma,0.5435

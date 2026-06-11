@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+ibm-granite/granite-embedding-278m-multilingual,B,103,-0.0006989709381918306
+ibm-granite/granite-embedding-278m-multilingual,C,114,0.0004732289858031691
+ibm-granite/granite-embedding-278m-multilingual,D,236,0.0006920318987409948
+ibm-granite/granite-embedding-278m-multilingual,F,217,0.0010970745767865861

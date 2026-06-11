@@ -110,7 +110,10 @@ def main() -> None:
 
     # ---- bootstrap CI for MRS (resample queries; fixed axes held constant) -----------------------
     qids = base["query_id"].unique()
-    pivots = {a: base.pivot_table(index="model", columns="query_id", values=col, aggfunc="mean")
+    # dropna=False keeps every query as a column even when a metric is all-NaN for it (e.g. a query
+    # with no cross-gold has NaN clir); otherwise bootstrap samples of such qids KeyError. nanmean below
+    # ignores the NaNs.
+    pivots = {a: base.pivot_table(index="model", columns="query_id", values=col, aggfunc="mean", dropna=False)
               for a, col in [("accuracy", "recall_at_10"), ("clir", "clir_at_10"),
                              ("separability", "auc_cross")]}
     lang_of_q = base.drop_duplicates("query_id").set_index("query_id")["query_language"]

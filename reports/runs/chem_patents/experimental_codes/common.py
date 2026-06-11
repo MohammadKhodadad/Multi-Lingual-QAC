@@ -68,9 +68,10 @@ HAYSTACK_REPO = "MehdiAstaraki/multilingual_GP"
 
 
 # --------------------------------------------------------------------------- registry
-# all five appear as query languages; only en/de/fr/zh ever appear as gold-doc languages (es=0).
+# all five appear as query languages; with the 524-query dataset all five ALSO appear as gold-doc
+# languages (Spanish now has gold docs — the earlier 137-query release had es=0 gold).
 QUERY_LANGS = ["en", "de", "es", "fr", "zh"]
-DOC_LANGS = ["en", "de", "fr", "zh"]
+DOC_LANGS = ["en", "de", "es", "fr", "zh"]
 LANG_NAME = {"en": "English", "de": "German", "fr": "French", "es": "Spanish", "zh": "Chinese"}
 
 # canonical full model name -> short label, in accuracy (recall@10) order

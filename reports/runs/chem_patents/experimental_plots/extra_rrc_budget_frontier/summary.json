@@ -21,41 +21,41 @@
   "knee_normalization": "log10(K)",
   "embeddinggemma": {
     "K_star": 5,
-    "RRC_at_Kstar": 0.4818,
-    "L_inf": 0.0584,
-    "RRC_at_100": 0.7445,
-    "RRC_at_1000": 0.9416
+    "RRC_at_Kstar": 0.5324,
+    "L_inf": 0.0725,
+    "RRC_at_100": 0.7767,
+    "RRC_at_1000": 0.9275
   },
   "e5_large_instruct": {
     "K_star": 30,
-    "L_inf": 0.3723
+    "L_inf": 0.3244
   },
   "L_inf_by_model": {
-    "embeddinggemma": 0.0584,
-    "bge-m3": 0.1095,
-    "qwen3-0.6B": 0.073,
-    "nomic-v2-moe": 0.0876,
-    "granite-278m": 0.146,
-    "LaBSE": 0.1606,
-    "SapBERT": 0.2263,
-    "e5-large-instruct": 0.3723,
-    "gte-base": 0.9124
+    "embeddinggemma": 0.0725,
+    "bge-m3": 0.1031,
+    "qwen3-0.6B": 0.0935,
+    "nomic-v2-moe": 0.1183,
+    "granite-278m": 0.1546,
+    "LaBSE": 0.2042,
+    "SapBERT": 0.2691,
+    "e5-large-instruct": 0.3244,
+    "gte-base": 0.9485
   },
   "K_star_by_model": {
     "embeddinggemma": 5,
-    "bge-m3": 5,
-    "qwen3-0.6B": 10,
+    "bge-m3": 3,
+    "qwen3-0.6B": 5,
     "nomic-v2-moe": 2,
-    "granite-278m": 20,
-    "LaBSE": 20,
-    "SapBERT": 20,
+    "granite-278m": 3,
+    "LaBSE": 75,
+    "SapBERT": 150,
     "e5-large-instruct": 30,
     "gte-base": 100
   },
   "regression_checks_passed": true,
   "regression_failures": [],
-  "verify_egemma_RRC100_0.7445": 0.7445,
-  "verify_egemma_RRC1000_0.9416": 0.9416,
-  "verify_egemma_Linf_0.0584": 0.0584,
-  "verify_e5_Linf_0.3723": 0.3723
+  "verify_egemma_RRC100_0.7445": 0.7767,
+  "verify_egemma_RRC1000_0.9416": 0.9275,
+  "verify_egemma_Linf_0.0584": 0.0725,
+  "verify_e5_Linf_0.3723": 0.3244
 }

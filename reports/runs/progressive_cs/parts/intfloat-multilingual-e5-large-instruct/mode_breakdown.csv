@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+intfloat/multilingual-e5-large-instruct,B,103,-0.0015102196665643488
+intfloat/multilingual-e5-large-instruct,C,114,-0.0010395316701186331
+intfloat/multilingual-e5-large-instruct,D,236,0.0001811981201171875
+intfloat/multilingual-e5-large-instruct,F,217,0.0008363943495508713

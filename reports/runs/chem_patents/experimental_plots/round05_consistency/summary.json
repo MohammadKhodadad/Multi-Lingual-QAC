@@ -1,65 +1,65 @@
 {
-  "n_patents_multilang": 16,
-  "n_pairs_per_model": 69,
-  "ceiling_rbo": 0.1934,
-  "ceiling_model": "granite-278m",
-  "floor_rbo": 0.0004,
+  "n_patents_multilang": 35,
+  "n_pairs_per_model": 259,
+  "ceiling_rbo": 0.1796,
+  "ceiling_model": "embeddinggemma",
+  "floor_rbo": 0.007,
   "floor_model": "e5-large-instruct",
-  "pearson_homeadv_rbo": -0.846,
-  "most_divergent_pair": "en↔fr",
+  "pearson_homeadv_rbo": -0.887,
+  "most_divergent_pair": "fr↔zh",
   "per_model": [
     {
       "short": "embeddinggemma",
-      "rbo": 0.154,
-      "home_adv": 0.2193,
-      "clir_at_10": 0.5024
+      "rbo": 0.1796,
+      "home_adv": 0.1673,
+      "clir_at_10": 0.5413
     },
     {
       "short": "bge-m3",
-      "rbo": 0.1786,
-      "home_adv": 0.2281,
-      "clir_at_10": 0.4367
+      "rbo": 0.1549,
+      "home_adv": 0.2235,
+      "clir_at_10": 0.4644
     },
     {
       "short": "qwen3-0.6B",
-      "rbo": 0.174,
-      "home_adv": 0.193,
-      "clir_at_10": 0.4331
+      "rbo": 0.1617,
+      "home_adv": 0.2216,
+      "clir_at_10": 0.4507
     },
     {
       "short": "nomic-v2-moe",
-      "rbo": 0.178,
-      "home_adv": 0.3421,
-      "clir_at_10": 0.3808
+      "rbo": 0.145,
+      "home_adv": 0.2948,
+      "clir_at_10": 0.4095
     },
     {
       "short": "granite-278m",
-      "rbo": 0.1934,
-      "home_adv": 0.1667,
-      "clir_at_10": 0.3285
+      "rbo": 0.162,
+      "home_adv": 0.1242,
+      "clir_at_10": 0.3899
     },
     {
       "short": "LaBSE",
-      "rbo": 0.1503,
-      "home_adv": 0.2105,
-      "clir_at_10": 0.2384
+      "rbo": 0.1459,
+      "home_adv": 0.1477,
+      "clir_at_10": 0.2708
     },
     {
       "short": "SapBERT",
-      "rbo": 0.1386,
-      "home_adv": 0.1754,
-      "clir_at_10": 0.1788
+      "rbo": 0.1058,
+      "home_adv": 0.1889,
+      "clir_at_10": 0.1972
     },
     {
       "short": "e5-large-instruct",
-      "rbo": 0.0004,
-      "home_adv": 0.5526,
-      "clir_at_10": 0.0766
+      "rbo": 0.007,
+      "home_adv": 0.6039,
+      "clir_at_10": 0.0945
     },
     {
       "short": "gte-base",
-      "rbo": 0.0031,
-      "home_adv": 0.0175,
+      "rbo": 0.0028,
+      "home_adv": 0.0235,
       "clir_at_10": 0.0
     }
   ]

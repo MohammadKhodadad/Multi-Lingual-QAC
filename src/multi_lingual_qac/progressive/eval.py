@@ -37,6 +37,7 @@ import numpy as np
 
 from src.multi_lingual_qac.mteb.evaluation import (
     ALIAS_GRAPH_MODELS,
+    DEFAULT_MTEB_RETRIEVAL_PROMPT,
     MODELS_NEEDING_POSITION_IDS_REPAIR,
     _load_corpus_dataset,
     _repair_position_ids_buffers,
@@ -90,6 +91,7 @@ def _task_metadata():
         name="ProgressiveCS", description="Progressive code-switching retrieval decay",
         reference=None, type="Retrieval", category="t2t", modalities=["text"],
         eval_splits=["train"], eval_langs=["eng-Latn"], main_score="ndcg_at_10",
+        prompt=DEFAULT_MTEB_RETRIEVAL_PROMPT,  # instruct models (Qwen3/e5-instruct) read this; avoids get_task KeyError
         date=None, domains=None, task_subtypes=None, license=None,
         annotations_creators=None, dialect=None, sample_creation=None,
         bibtex_citation=None, dataset={"path": "local/progressive-cs", "revision": "1.0"},

@@ -2,29 +2,29 @@
   "B1_replacement": {
     "claim_to_drop": "English is the easiest target (round02 L217-218).",
     "correct_hub_scores_incl_diag": {
-      "en": 0.367,
-      "fr": 0.375,
-      "zh": 0.35,
-      "de": 0.309
+      "en": 0.4,
+      "fr": 0.403,
+      "zh": 0.33,
+      "de": 0.354
     },
     "fr_gt_en_gate": true,
     "easiest_target_is": "fr",
-    "hardest_target_is": "de"
+    "hardest_target_is": "zh"
   },
   "hardest_directed_edge": {
     "dir": "en->de",
-    "recall_at_10": 0.125
+    "recall_at_10": 0.159
   },
   "easiest_cross_lingual_edge": {
-    "dir": "es->de",
-    "recall_at_10": 0.427
+    "dir": "en->es",
+    "recall_at_10": 0.425
   },
   "most_asymmetric_pair": {
-    "pair": "de<->zh",
-    "recall_from_to": 0.391,
-    "recall_to_from": 0.156,
-    "gap": 0.234
+    "pair": "de<->en",
+    "recall_from_to": 0.347,
+    "recall_to_from": 0.159,
+    "gap": 0.188
   },
   "corpus_composition_caveat": "Directional asymmetry partly reflects corpus language composition (en 46% / zh 0.4% of documents), not only encoder behaviour: the hub score correlates with how many target-language documents exist to find.",
-  "writer_replacement_sentence": "the hardest direction is en->de (R@10 0.12) and the most asymmetric pair is de<->zh (gap +0.23); no single language is a clean 'easiest target' (fr 0.375 ~ en 0.367), and what asymmetry exists partly tracks corpus composition."
+  "writer_replacement_sentence": "the hardest direction is en->de (R@10 0.16) and the most asymmetric pair is de<->en (gap +0.19); no single language is a clean 'easiest target' (fr 0.375 ~ en 0.367), and what asymmetry exists partly tracks corpus composition."
 }

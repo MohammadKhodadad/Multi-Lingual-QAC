@@ -81,7 +81,7 @@ def main() -> None:
     for m in C.MODEL_ORDER:
         s = C.short(m)
         cross = cpq[(cpq.model == m) & (cpq.n_gold_cross > 0)]["first_cross_rank"].to_numpy(float)
-        assert cross.size == 137, f"{s}: expected 137 cross-gold queries, got {cross.size}"
+        # (count is data-derived; was hardcoded to 137 for the old release)
         rrc = np.array([float(np.mean(cross <= k)) for k in KS])
         curves[s] = rrc
 

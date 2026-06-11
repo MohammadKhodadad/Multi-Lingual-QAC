@@ -2,28 +2,28 @@
   "baseline_population": "8-model reliable pool (gte-base excluded) — matches published rounds",
   "robustness_population": "7 models (also drop e5-large-instruct, the 2nd degenerate encoder)",
   "gates_reproduce_published_n8": {
-    "auc_cross~clir = +0.961": true,
-    "mean_overrep~clir = -0.600": true,
-    "home_adv~rbo = -0.846": true
+    "auc_cross~clir = +0.961": false,
+    "mean_overrep~clir = -0.600": false,
+    "home_adv~rbo = -0.846": false
   },
   "rows": [
     {
       "pair": "auc_cross ~ clir_at_10",
       "expected": "+0.961 (round08, n=8 pool)",
-      "pearson_n8_pool": 0.961,
-      "pearson_n7": 0.958,
-      "pearson_n9_all": 0.888,
-      "spearman_n8_pool": 0.976,
-      "spearman_n7": 0.964,
+      "pearson_n8_pool": 0.98,
+      "pearson_n7": 0.98,
+      "pearson_n9_all": 0.915,
+      "spearman_n8_pool": 0.952,
+      "spearman_n7": 0.929,
       "n8": 8,
       "n7": 7
     },
     {
       "pair": "mean_overrep ~ clir_at_10",
       "expected": "-0.600 (round06, n=8 pool)",
-      "pearson_n8_pool": -0.6,
-      "pearson_n7": 0.419,
-      "pearson_n9_all": -0.615,
+      "pearson_n8_pool": -0.583,
+      "pearson_n7": 0.416,
+      "pearson_n9_all": -0.663,
       "spearman_n8_pool": -0.048,
       "spearman_n7": 0.429,
       "n8": 8,
@@ -32,11 +32,11 @@
     {
       "pair": "home_adv ~ rbo",
       "expected": "-0.846 (round05, n=8 pool)",
-      "pearson_n8_pool": -0.846,
-      "pearson_n7": 0.186,
-      "pearson_n9_all": -0.187,
-      "spearman_n8_pool": -0.262,
-      "spearman_n7": 0.107,
+      "pearson_n8_pool": -0.887,
+      "pearson_n7": -0.159,
+      "pearson_n9_all": -0.308,
+      "spearman_n8_pool": -0.619,
+      "spearman_n7": -0.429,
       "n8": 8,
       "n7": 7
     }
@@ -44,5 +44,5 @@
   "pairs_weakened_on_n7": [
     "home_adv ~ rbo"
   ],
-  "key_observation": "home_adv~rbo is the most fragile: Pearson -0.846 on the n=8 pool but only -0.187 when gte-base is re-included (all 9) — a single degenerate encoder dominates it. On the n=7 set (drop e5 too) it is 0.186. The auc_cross~clir and over-rep~clir mechanisms are more robust (see Spearman n7)."
+  "key_observation": "home_adv~rbo is the most fragile: Pearson -0.846 on the n=8 pool but only -0.308 when gte-base is re-included (all 9) — a single degenerate encoder dominates it. On the n=7 set (drop e5 too) it is -0.159. The auc_cross~clir and over-rep~clir mechanisms are more robust (see Spearman n7)."
 }
