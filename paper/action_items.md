@@ -1,65 +1,73 @@
 # Action Items for the Short Paper
 
-Priority goal: strengthen the paper from a benchmark-construction story into a
-clear workshop / Industry Track story about deployment-oriented model selection
-for multilingual chemistry retrieval.
+Priority goal: finish the light polishing needed for a credible EMNLP Industry
+Track submission. The revised draft is now around `8.0/10`; the remaining work is
+mostly writing-level clarity rather than conceptual restructuring.
 
-## P0: Must Do Before Next Commit
+## Completed
 
-1. Add a short `Deployment Decision` section.
-   - Location: after `sections/05_results.tex`, before `sections/06_limitations.tex`.
-   - Update `short_main.tex` to include the new section.
-   - Purpose: make the paper answer the reviewer's main question: what practical
-     retriever choice follows from the benchmark?
-   - Content to include:
-     - Decision context: choose one multilingual embedding model for a shared
-       chemistry technical retrieval index.
-     - Old signal: aggregate Recall@10 alone can make deployment readiness look
-       better than it is.
-     - New signal: cross-language recall, home advantage, language collapse, and
-       chemistry-confusability expose different risks.
-     - Honest recommendation: `embeddinggemma` is the strongest capability corner;
-       `bge-m3` is a cheaper-to-read alternative in the cost-vs-capability view;
-       do not claim a universal winner without stating the operating threshold.
-     - Practical lesson: aggregate recall alone is not a deployment dashboard.
+- Added a dedicated `Deployment Decision` section after Results.
+- Added the cost-vs-capability figure to the body.
+- Added a compact benchmark statistics table.
+- Added a compact main results table.
+- Made the abstract more result-driven with concrete findings:
+  - best cross-language Recall@10 `0.50`
+  - same-language advantage up to `+0.55`
+  - chemistry-confusability failures `14--78%`
+- Tightened redundant Evaluation, Results, Limitations, and Conclusion prose.
+- Made the conclusion more practitioner-oriented.
 
-2. Add a compact main results table.
+## P0: Final Writing Polish
+
+1. Strengthen the Results prose without expanding much.
    - Location: `sections/05_results.tex`.
-   - Purpose: make the main findings scannable without forcing reviewers to
-     infer them from prose and figures.
-   - Suggested columns: `Finding`, `Metric`, `Takeaway`.
-   - Include:
-     - QAC quality: human mean `8.33/10`.
-     - Human validation: `94/97` good items.
-     - Human vs LLM grader: LLM mean `79.0%` vs human `83.3%`.
-     - Cross-language ceiling: best cross-language Recall@10 `0.50`.
-     - Same-language bias: home advantage up to `+0.55`.
-     - Chemistry confusion: `14--78%` on publication-lens alias-graph queries.
+   - Purpose: Table 2 is strong, but key numbers should also appear in prose.
+   - Add back the following numbers in the relevant paragraphs:
+     - `97` human-reviewed QACs
+     - mean human score `8.33/10`
+     - `94/97` good QACs
+     - LLM vs human scores `79.0%` vs `83.3%`
+     - best cross-language Recall@10 `0.50`
+     - home advantage up to `+0.55`
+     - chemistry confusion `14--78%`
+   - Keep this concise; do not undo the recent page-budget cuts.
 
-3. Make the abstract more result-driven.
-   - Location: `sections/00_abstract.tex`.
-   - Add one concise empirical/deployment sentence.
-   - Possible wording:
-     `Aggregate Recall@10 overstates deployment readiness: the best
-     cross-language Recall@10 is 0.50, same-language advantage reaches +0.55,
-     and chemically confusable documents outrank gold evidence on 14--78% of
-     publication-lens queries.`
-   - Keep the abstract from becoming too long; trim a generic sentence if needed.
+2. Define `XRC50` more clearly.
+   - Location: `sections/06_deployment.tex`.
+   - Add one short sentence before the frontier discussion:
+     `XRC50 measures how much deeper a user must inspect the ranked list,
+     relative to same-language retrieval, before reaching cross-language
+     evidence.`
 
-## P1: High-Value Clarity Improvements
+3. Make the deployment recommendation explicitly conditional.
+   - Location: `sections/06_deployment.tex`.
+   - Soften benchmark-specific wording:
+     - Use `Under a capability-first criterion in this benchmark,
+       embeddinggemma is the recommended choice.`
+     - Add that `bge-m3` becomes preferable under a stricter reading-cost budget
+       if the CLIR@10 threshold is acceptable.
+     - Keep `granite-278m` framed as a lower-capability, cheaper frontier point.
 
-4. Strengthen the "why patents?" explanation.
+4. Add one practical user-workflow sentence.
+   - Best location: `sections/01_introduction.tex`, first paragraph or just
+     after it.
+   - Suggested wording:
+     `In the target workflow, a chemist or technical analyst issues a query in
+     one working language and expects the retrieval system to surface the
+     strongest patent evidence, even when that evidence appears in another
+     language or near chemically similar documents.`
+
+## P1: Optional If Page Budget Allows
+
+5. Strengthen the "why patents?" explanation.
    - Location: `sections/01_introduction.tex` or `sections/03_benchmark.tex`.
-   - Add a compact paragraph clarifying:
-     - patents are not the only target application;
-     - they are the substrate because they combine multilingual publication
-       variants, controlled source identity, chemistry-rich language, and
-       realistic technical retrieval difficulty;
-     - this gives stronger content control than unrelated multilingual corpora.
+   - Clarify that patents are not the only target application; they are the
+     benchmark substrate because they combine multilingual publication variants,
+     controlled source identity, chemistry-rich language, and realistic
+     technical retrieval difficulty.
 
-5. Sharpen the contribution list.
+6. Sharpen the contribution list.
    - Location: `sections/01_introduction.tex`.
-   - Current contribution paragraph is good but broad.
    - Make the contributions more explicit:
      1. multilingual chemistry-patent QAC benchmark with query/document language metadata;
      2. LLM-assisted QAC generation and verification with human validation;
@@ -67,7 +75,7 @@ for multilingual chemistry retrieval.
      4. chemistry-confusability stress test using alias / ontology neighbors;
      5. deployment-oriented model-selection analysis showing why aggregate recall is insufficient.
 
-6. Clarify QAC pipeline details.
+7. Clarify QAC pipeline details.
    - Location: `sections/02_pipeline.tex`.
    - Add only concise details that are already supported:
      - multiple candidates per document/language/mode;
@@ -75,46 +83,25 @@ for multilingual chemistry retrieval.
      - verifier grades faithfulness, answerability, language quality, and
        retrieval usefulness;
      - human validation sample size: `97` reviewed QACs.
-   - Avoid adding model/prompt/threshold specifics unless verified from code or reports.
 
-7. Reduce repeated "aggregate recall hides failure" phrasing.
-   - Locations: abstract, introduction, evaluation, results, conclusion.
-   - Keep the thesis, but make each occurrence do different work:
-     - Abstract: empirical takeaway.
-     - Introduction: motivation.
-     - Method/Benchmark: how the benchmark makes it observable.
-     - Results: evidence.
-     - Conclusion: practitioner lesson.
+## P2: Submission Checks
 
-## P2: Optional / Needs Verification
+8. Verify data/code availability.
+   - Check that the Hugging Face and GitHub links are live.
+   - Confirm anonymization expectations for the target venue.
+   - Confirm the dataset card is clear.
+   - Confirm paper numbers match released artifacts.
 
-8. Add practical model attributes only if verified.
-   - Possible location: Evaluation Setup or Deployment Decision.
+9. Add practical model attributes only if verified.
    - Do not invent cost, latency, license, or model-size values.
-   - If verified model-card data is not available, say explicitly that this paper
-     treats deployment cost through retrieval-depth / candidate-pool behavior
-     rather than measured serving latency or licensing.
+   - If verified model-card data is not available, keep deployment cost framed
+     through retrieval-depth / reading-cost behavior rather than serving latency
+     or licensing.
 
-9. Consider moving one deployment-oriented appendix figure into the body.
-   - Candidate: `cp_fig18_cost_frontier.png`.
-   - Only do this if adding the Deployment Decision section and if page budget allows.
-   - Purpose: visually support the `embeddinggemma` vs `bge-m3` trade-off.
-
-10. Improve Limitations structure if space allows.
-    - Location: `sections/06_limitations.tex`.
-    - Split into clearer categories:
-      - data/domain limitations;
-      - validation limitations;
-      - deployment limitations;
-      - generalization limitations.
-
-11. Make the conclusion more practitioner-oriented.
-    - Location: `sections/07_conclusion.tex`.
-    - Possible final sentence:
-      `For high-trust multilingual retrieval, the central question is not whether
-      the system retrieves something relevant on average, but whether it
-      retrieves the intended evidence when language and technical similarity
-      create tempting shortcuts.`
+10. Recheck page budget after final polish.
+    - Compile `short_main.tex`.
+    - If still too long, move `cp_fig09_10_collapse.png` from Results back to the
+      appendix; this remains the cleanest large space-saving option.
 
 ## Evidence Already Available
 
@@ -137,6 +124,6 @@ for multilingual chemistry retrieval.
 
 ## Current Recommendation
 
-Do not fully restructure the paper yet. First perform the targeted revision:
-Deployment Decision section + results table + abstract update + why-patents
-paragraph. This should address the largest review concerns with minimal churn.
+Do one final light revision bundle: strengthen Results prose, define `XRC50`,
+make the deployment choice explicitly conditional, and add one user-workflow
+sentence. Then compile and check page budget before submission.
