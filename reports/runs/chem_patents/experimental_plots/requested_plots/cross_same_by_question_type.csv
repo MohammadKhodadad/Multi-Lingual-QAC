@@ -1,0 +1,5 @@
+mode,direction,recall_at_10_mean,sem_over_languages,n_languages
+technical,cross,0.2364,0.0285,4
+technical,same,0.3442,0.0362,5
+semantic,cross,0.4753,0.0368,4
+semantic,same,0.5555,0.0338,5

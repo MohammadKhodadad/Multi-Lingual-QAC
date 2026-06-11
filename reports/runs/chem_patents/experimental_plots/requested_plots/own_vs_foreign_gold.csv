@@ -1,0 +1,9 @@
+model,short,n_paired,own_lang_recall_at_10,foreign_lang_recall_at_10,gap,wilcoxon_p,stars
+google/embeddinggemma-300m,embeddinggemma,261,0.7165,0.5511,0.1654,5.531256813292995e-10,***
+BAAI/bge-m3,bge-m3,261,0.659,0.4387,0.2203,1.5762889940188405e-13,***
+Qwen/Qwen3-Embedding-0.6B,qwen3-0.6B,261,0.6513,0.431,0.2203,6.640268862636967e-13,***
+nomic-ai/nomic-embed-text-v2-moe,nomic-v2-moe,261,0.682,0.3902,0.2918,1.550622974589772e-17,***
+ibm-granite/granite-embedding-278m-multilingual,granite-278m,261,0.5326,0.4112,0.1213,8.056515201933638e-08,***
+sentence-transformers/LaBSE,LaBSE,261,0.4215,0.2771,0.1443,6.0562507545047146e-06,***
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,SapBERT,261,0.3716,0.1833,0.1884,1.0381042363593552e-10,***
+intfloat/multilingual-e5-large-instruct,e5-large-instruct,261,0.6973,0.0996,0.5977,2.984908628391367e-35,***

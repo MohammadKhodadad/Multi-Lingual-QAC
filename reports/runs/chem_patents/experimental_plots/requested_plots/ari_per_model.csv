@@ -1,0 +1,9 @@
+model,short,RRC_at_100_cheap,deep_100_to_1000,L_inf_floor,identity_sum,ARI_at_100,clir_at_10
+google/embeddinggemma-300m,embeddinggemma,0.7767,0.1508,0.0725,1.0,0.3248,0.5413
+BAAI/bge-m3,bge-m3,0.7176,0.1794,0.1031,1.0,0.3649,0.4644
+Qwen/Qwen3-Embedding-0.6B,qwen3-0.6B,0.729,0.1775,0.0935,1.0,0.3451,0.4507
+nomic-ai/nomic-embed-text-v2-moe,nomic-v2-moe,0.687,0.1947,0.1183,1.0,0.378,0.4095
+ibm-granite/granite-embedding-278m-multilingual,granite-278m,0.6679,0.1775,0.1546,1.0,0.4655,0.3899
+sentence-transformers/LaBSE,LaBSE,0.563,0.2328,0.2042,1.0,0.4672,0.2708
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,SapBERT,0.4389,0.292,0.2691,1.0,0.4796,0.1972
+intfloat/multilingual-e5-large-instruct,e5-large-instruct,0.3149,0.3607,0.3244,1.0,0.4735,0.0945
