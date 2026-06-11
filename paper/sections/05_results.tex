@@ -26,6 +26,17 @@ is available only in another language. The directed language-pair view further
 shows that the difficulty is not symmetric: query language and document language
 both matter.
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{cp_fig09_10_collapse.png}
+    \caption{Language-collapse diagnostics for the cross-lingual benchmark.
+    Same-language documents are over-represented in retrieved lists, and
+    same-language distractors can bury cross-language gold evidence. This
+    explains why average recall can hide the failure most relevant to
+    multilingual chemistry search.}
+    \label{fig:language-collapse}
+\end{figure}
+
 \paragraph{The errors are not only multilingual; they are chemical.}
 The alias-graph benchmark shows a second failure mode. Even when a retrieved
 document is topically close, it may be chemically wrong. Figure~\ref{fig:alias-confusion}
