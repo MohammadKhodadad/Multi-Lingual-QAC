@@ -5,26 +5,40 @@ answer: whether generated QACs are usable, whether cross-language retrieval is
 harder than same-language retrieval, and whether chemistry-aware hard negatives
 surface failures that ordinary relevance metrics hide.
 
+\begin{table*}[t]
+    \centering
+    \small
+    \begin{tabular}{@{}p{0.20\textwidth}p{0.24\textwidth}p{0.46\textwidth}@{}}
+        \toprule
+        Finding & Metric & Takeaway \\
+        \midrule
+        QAC quality & 8.33/10 mean human score & Generated items are usable for benchmark construction. \\
+        Human validation & 94/97 good QACs & Most reviewed items pass the quality bar. \\
+        LLM grading & 79.0\% LLM vs.\ 83.3\% human & The verifier is slightly stricter than humans. \\
+        Cross-language ceiling & Best Recall@10 = 0.50 & Cross-language evidence remains hard to retrieve. \\
+        Home advantage & Up to +0.55 & Same-language shortcuts can inflate aggregate scores. \\
+        Chemistry confusion & 14--78\% & Plausible wrong chemistry can outrank gold evidence. \\
+        \bottomrule
+    \end{tabular}
+    \caption{Main empirical findings used to interpret the benchmark.}
+    \label{tab:main-results}
+\end{table*}
+
 \paragraph{QAC quality is high enough for benchmark construction.}
-Human review of 97 generated QACs gives a mean score of 8.33/10, with 94 of 97
-items falling in the ``good'' bucket. Technical questions score slightly higher
-than semantic questions on average (8.72 vs.\ 7.91), but both modes remain usable
-for retrieval evaluation. Comparing normalized human and LLM-grader scores, the
-LLM grader is slightly stricter than the human annotator on average (79.0\% vs.\
-83.3\%), with a mean absolute difference of 8.22 percentage points. We read this
-as evidence that the automatic verifier is useful for filtering and auditing,
-while still requiring human validation for claims about benchmark quality.
+Human review shows that the generated QACs are usable for benchmark
+construction, with most items falling in the ``good'' bucket. Technical questions
+score slightly higher than semantic questions on average (8.72 vs.\ 7.91), but
+both modes remain usable for retrieval evaluation. The LLM verifier is slightly
+stricter than the human annotator, supporting its use for filtering and auditing
+while still requiring human validation for benchmark-quality claims.
 
 \paragraph{Average recall hides cross-language weakness.}
-The cross-lingual benchmark shows that standard Recall@10 is not enough to judge
-a multilingual retriever. In Figure~\ref{fig:clir-leaderboard}, same-language
-retrieval is consistently easier than cross-language retrieval: the best
-cross-language Recall@10 is 0.50, and the same-language home advantage reaches
-+0.55 for the most biased model. This means a model can look acceptable under an
-aggregate score while failing on the deployment-relevant case where the evidence
-is available only in another language. The directed language-pair view further
-shows that the difficulty is not symmetric: query language and document language
-both matter.
+Figure~\ref{fig:clir-leaderboard} shows that same-language retrieval is
+consistently easier than cross-language retrieval. A model can therefore look
+acceptable under an aggregate score while failing on the deployment-relevant case
+where the evidence is available only in another language. The directed
+language-pair view further shows that this difficulty is not symmetric: query
+language and document language both matter.
 
 \begin{figure}[t]
     \centering
@@ -40,11 +54,10 @@ both matter.
 \paragraph{The errors are not only multilingual; they are chemical.}
 The alias-graph benchmark shows a second failure mode. Even when a retrieved
 document is topically close, it may be chemically wrong. Figure~\ref{fig:alias-confusion}
-measures how often a chemically confusable document outranks all gold evidence;
-on the publication lens, this happens on 14--78\% of queries depending on the
-model. These failures are especially important for chemistry search because a
-nearby compound, parent class, or sibling concept can look plausible while
-answering the wrong question.
+measures how often a chemically confusable document outranks all gold evidence.
+These failures are especially important for chemistry search because a nearby
+compound, parent class, or sibling concept can look plausible while answering the
+wrong question.
 
 Together, the results support the central lesson of the benchmark: multilingual
 chemistry retrieval should be evaluated with language position and chemical
