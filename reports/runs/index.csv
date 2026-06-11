@@ -21,3 +21,12 @@ chem_patents,2026-06-11T02:57:21.369023+00:00,MehdiAstaraki/multi-lingual-qac-ch
 chem_patents,2026-06-11T02:57:21.369023+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,0928218,524,23787,nomic-ai/nomic-embed-text-v2-moe,0.46692,0.46692,0.66683,0.41719,0.36123,0.46888
 chem_patents,2026-06-11T02:57:21.369023+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,0928218,524,23787,Qwen/Qwen3-Embedding-0.6B,0.49587,0.49587,0.71501,0.43241,0.37579,0.46858
 chem_patents,2026-06-11T02:57:21.369023+00:00,MehdiAstaraki/multi-lingual-qac-chem-patents,multilingual,0928218,524,23787,sentence-transformers/LaBSE,0.30105,0.30105,0.47869,0.25053,0.19812,0.2938
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,Alibaba-NLP/gte-multilingual-base,0.00505,0.00505,0.02525,0.00295,0.00118,0.00354
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,BAAI/bge-m3,0.54545,0.54545,0.76094,0.49881,0.42089,0.58494
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,0.22054,0.22054,0.41246,0.19687,0.15051,0.25847
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,google/embeddinggemma-300m,0.57912,0.57912,0.8064,0.52631,0.46247,0.57701
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,ibm-granite/granite-embedding-278m-multilingual,0.38889,0.38889,0.59596,0.35288,0.31058,0.38104
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,intfloat/multilingual-e5-large-instruct,0.2963,0.2963,0.45118,0.30668,0.22813,0.50004
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,nomic-ai/nomic-embed-text-v2-moe,0.5101,0.5101,0.71212,0.47581,0.40687,0.56794
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,Qwen/Qwen3-Embedding-0.6B,0.46801,0.46801,0.70875,0.43381,0.3723,0.51325
+epo,2026-06-11T22:15:24.450395+00:00,MehdiAstaraki/multi-lingual-qac-epo,multilingual,c244519,198,11315,sentence-transformers/LaBSE,0.27273,0.27273,0.52525,0.23817,0.18597,0.28426

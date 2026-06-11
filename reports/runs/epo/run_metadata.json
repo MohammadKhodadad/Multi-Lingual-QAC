@@ -1,0 +1,103 @@
+{
+  "run_id": "epo",
+  "created_at": "2026-06-11T22:15:24.450395+00:00",
+  "dataset_repo": "MehdiAstaraki/multi-lingual-qac-epo",
+  "corpus_repo": "MehdiAstaraki/multi-lingual-qac-epo",
+  "dataset_variant": "multilingual",
+  "dataset_revision": "main",
+  "dataset_sizes": {
+    "queries": 198,
+    "corpus": 11315,
+    "qrels": 594
+  },
+  "models": [
+    "Alibaba-NLP/gte-multilingual-base",
+    "BAAI/bge-m3",
+    "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR",
+    "google/embeddinggemma-300m",
+    "ibm-granite/granite-embedding-278m-multilingual",
+    "intfloat/multilingual-e5-large-instruct",
+    "nomic-ai/nomic-embed-text-v2-moe",
+    "Qwen/Qwen3-Embedding-0.6B",
+    "sentence-transformers/LaBSE"
+  ],
+  "batch_size": 64,
+  "git_commit": "c244519",
+  "git_dirty": true,
+  "hostname": "login3",
+  "slurm_job_id": null,
+  "scores": {
+    "Alibaba-NLP/gte-multilingual-base": {
+      "main_score": 0.00505,
+      "recall_at_10": 0.00505,
+      "recall_at_100": 0.02525,
+      "ndcg_at_10": 0.00295,
+      "map_at_10": 0.00118,
+      "mrr_at_10": 0.003535353535353535
+    },
+    "BAAI/bge-m3": {
+      "main_score": 0.54545,
+      "recall_at_10": 0.54545,
+      "recall_at_100": 0.76094,
+      "ndcg_at_10": 0.49881,
+      "map_at_10": 0.42089,
+      "mrr_at_10": 0.5849386724386725
+    },
+    "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR": {
+      "main_score": 0.22054,
+      "recall_at_10": 0.22054,
+      "recall_at_100": 0.41246,
+      "ndcg_at_10": 0.19687,
+      "map_at_10": 0.15051,
+      "mrr_at_10": 0.2584736251402918
+    },
+    "google/embeddinggemma-300m": {
+      "main_score": 0.57912,
+      "recall_at_10": 0.57912,
+      "recall_at_100": 0.8064,
+      "ndcg_at_10": 0.52631,
+      "map_at_10": 0.46247,
+      "mrr_at_10": 0.5770101811768478
+    },
+    "ibm-granite/granite-embedding-278m-multilingual": {
+      "main_score": 0.38889,
+      "recall_at_10": 0.38889,
+      "recall_at_100": 0.59596,
+      "ndcg_at_10": 0.35288,
+      "map_at_10": 0.31058,
+      "mrr_at_10": 0.3810445727112394
+    },
+    "intfloat/multilingual-e5-large-instruct": {
+      "main_score": 0.2963,
+      "recall_at_10": 0.2963,
+      "recall_at_100": 0.45118,
+      "ndcg_at_10": 0.30668,
+      "map_at_10": 0.22813,
+      "mrr_at_10": 0.5000400833734168
+    },
+    "nomic-ai/nomic-embed-text-v2-moe": {
+      "main_score": 0.5101,
+      "recall_at_10": 0.5101,
+      "recall_at_100": 0.71212,
+      "ndcg_at_10": 0.47581,
+      "map_at_10": 0.40687,
+      "mrr_at_10": 0.5679353054353055
+    },
+    "Qwen/Qwen3-Embedding-0.6B": {
+      "main_score": 0.46801,
+      "recall_at_10": 0.46801,
+      "recall_at_100": 0.70875,
+      "ndcg_at_10": 0.43381,
+      "map_at_10": 0.3723,
+      "mrr_at_10": 0.5132495590828925
+    },
+    "sentence-transformers/LaBSE": {
+      "main_score": 0.27273,
+      "recall_at_10": 0.27273,
+      "recall_at_100": 0.52525,
+      "ndcg_at_10": 0.23817,
+      "map_at_10": 0.18597,
+      "mrr_at_10": 0.28425525092191767
+    }
+  }
+}
