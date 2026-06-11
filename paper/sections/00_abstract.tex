@@ -15,12 +15,12 @@ for faithfulness and retrieval quality, and validates the automated grading
 against human annotation. We export the resulting data in retrieval-ready form
 with corpus, queries, qrels, and QAC records, enabling evaluation by query
 language, document language, same-language versus cross-language relevance, and
-chemically confusable hard negatives. Across evaluated multilingual embedding
-models, average performance masks systematic cross-language weakness: models can
-prefer same-language or chemically similar but irrelevant documents over the
-intended evidence. The benchmark and pipeline provide a practical framework for
-building and auditing specialized multilingual retrieval evaluations in
-high-trust technical domains. Data and code are available on
+chemically confusable hard negatives. Aggregate Recall@10 overstates deployment
+readiness: the best cross-language Recall@10 is 0.50, same-language advantage
+reaches +0.55, and chemically confusable documents outrank gold evidence on
+14--78\% of publication-lens queries. The benchmark and pipeline provide a
+practical framework for building and auditing specialized multilingual retrieval
+evaluations in high-trust technical domains. Data and code are available on
 \href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-chem-patents}{Hugging Face}
 and
 \href{https://github.com/MohammadKhodadad/Multi-Lingual-QAC}{GitHub}.
