@@ -454,20 +454,20 @@ def _build_phase_a_plan(
     return plan
 
 
-def _allocate_phase_b_quotas(questions_per_mode: int) -> Dict[int, int]:
-    """Quota allocator that is aware of the current ``len(ALL_LANGS)`` so the
-    STRATEGY_ALL bucket produces exactly the right number of questions.
+def _allocate_phase_b_quotas(questions_per_mode: int, n_langs: Optional[int] = None) -> Dict[int, int]:
+    """Quota allocator that is aware of the language count so the STRATEGY_ALL
+    bucket produces exactly the right number of questions.
 
-    A single STRATEGY_ALL document generates one question per language, which
-    is now ``len(ALL_LANGS)`` (5 with Chinese added). The remaining
-    questions are distributed across strategies 1-3 as evenly as possible.
+    A single STRATEGY_ALL document generates one question per language
+    (``n_langs``). The remaining questions are distributed across strategies 1-3
+    as evenly as possible. ``n_langs`` defaults to ``len(ALL_LANGS)`` (5, the
+    Google Patents set); pass e.g. 3 for the EPO (en/de/fr) corpus.
 
-    For the default ``questions_per_mode=10`` and ``len(ALL_LANGS)=5`` this
-    yields ``{RANDOM_ANY: 2, RANDOM_MISSING: 2, RANDOM_EXISTING: 1,
-    ALL: 5}`` (1 ALL document, 5 single-language documents -> 6 docs and
-    10 questions per mode).
+    For ``questions_per_mode=10`` and ``n_langs=5`` this yields
+    ``{RANDOM_ANY: 2, RANDOM_MISSING: 2, RANDOM_EXISTING: 1, ALL: 5}`` (1 ALL
+    document, 5 single-language documents -> 6 docs and 10 questions per mode).
     """
-    n_langs = len(ALL_LANGS)
+    n_langs = n_langs if n_langs is not None else len(ALL_LANGS)
     if questions_per_mode < n_langs + 3:
         raise ValueError(
             f"questions_per_mode must be at least {n_langs + 3} so each strategy "
