@@ -1,0 +1,43 @@
+\section{Deployment Decision}
+
+The evaluation is meant to support a practical model-selection decision: choose
+one multilingual embedding model for a shared chemistry retrieval index. If the
+team looked only at aggregate retrieval scores, the decision would be hard to
+audit because same-language hits and chemically plausible distractors are mixed
+into one number. Our benchmark changes the decision criterion from ``which model
+has the best average Recall@10?'' to ``which model remains usable when the
+evidence is cross-language and chemically confusable?''
+
+\paragraph{Capability vs.\ reading cost.}
+Figure~\ref{fig:cost-frontier-main} shows the resulting cost-vs-capability view.
+We use cross-language Recall@10 as the capability axis and XRC50, the median
+cross-lingual reading-cost multiplier, as the cost axis. The Pareto frontier has
+three models: \texttt{embeddinggemma}, \texttt{bge-m3}, and
+\texttt{granite-278m}. \texttt{embeddinggemma} is the unique maximum-CLIR corner
+(CLIR@10 $=0.5024$, XRC50 $=3.5$), so it is the recommended capability-first
+choice. If an operating threshold of CLIR@10 $\ge 0.40$ is acceptable,
+\texttt{bge-m3} becomes the cheaper-to-read admitted model (XRC50 $=2.0$). At a
+lower threshold, \texttt{granite-278m} enters as an even cheaper frontier point
+(XRC50 $=1.25$, CLIR@10 $=0.3285$). Thus the benchmark does not produce a
+context-free winner; it exposes the trade-off a deployment team must choose.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{cp_fig18_cost_frontier.png}
+    \caption{Deployment-oriented cost-vs-capability frontier. Cross-language
+    Recall@10 measures capability, while XRC50 measures how much deeper a user
+    must read to reach cross-language evidence. \texttt{embeddinggemma} is the
+    maximum-capability corner; \texttt{bge-m3} is the cheaper-to-read option at
+    a CLIR@10 threshold of 0.40.}
+    \label{fig:cost-frontier-main}
+\end{figure}
+
+\paragraph{Decision rule.}
+For a deployment that prioritizes maximum cross-language recall, we would select
+\texttt{embeddinggemma}. For a deployment with a stricter reading-cost budget and
+an acceptable CLIR@10 threshold around 0.40, \texttt{bge-m3} is the more
+efficient alternative. In both cases, the decision uses language-aware and
+chemistry-aware diagnostics rather than aggregate recall alone. This is the
+practical lesson: model selection for high-trust multilingual chemistry search
+should report capability, language robustness, and chemistry-confusability side
+by side before a retriever is shipped.
