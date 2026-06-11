@@ -43,6 +43,17 @@ retrieval evaluation \citep{clefip2013}. The pipeline generates and grades QAC
 records, validates automated grading against human annotation, and exports
 corpus, queries, qrels, and QAC tables for standard retrieval evaluation.
 
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{multilingual_chemistry_retrieval_pipeline_EDITABLE.png}
+    \caption{Overview of the multilingual chemistry retrieval benchmark
+    pipeline, from chemistry technical text through QAC generation, verification,
+    human validation, benchmark export, and retrieval evaluation.}
+    {\footnotesize\emph{Figure note:} Icons adapted from Font Awesome Free,
+    licensed under CC BY 4.0.\par}
+    \label{fig:qac-generation-flow}
+\end{figure*}
+
 The benchmark is designed to make hidden retrieval failures visible. It
 separates same-language and cross-language relevance, supports analysis by query
 and document language, and includes chemistry-aware hard negatives derived from

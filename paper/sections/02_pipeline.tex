@@ -1,3 +1,45 @@
 \section{QAC Generation Pipeline}
 
-TODO: Write this section from the paper plan.
+Our method turns multilingual chemistry technical text into auditable
+question-answer-context (QAC) records for retrieval evaluation. The design goal
+is not simply to generate fluent questions. Each generated item must identify
+the evidence document it came from, preserve language metadata, and carry quality
+signals that make the benchmark inspectable after export. Figure~\ref{fig:qac-generation-flow}
+summarizes the full pipeline.
+
+\paragraph{Corpus and context construction.}
+The input is a chemistry-relevant multilingual corpus. In this work, we use
+patent-derived text as the benchmark substrate because patents provide
+technical descriptions and multilingual publication variants at scale. For each
+document-language pair, the context builder assembles a compact evidence block
+from available fields such as title, abstract, and technical description or
+claim text. This step keeps the generation grounded in a specific document
+rather than asking the model to produce generic chemistry questions from memory.
+
+\paragraph{Candidate generation.}
+For each selected document, language, and generation mode, an LLM produces
+multiple QAC candidates. Each candidate contains a user-facing question, a short
+answer, the supporting context, and metadata linking the item back to the source
+document and language. We use both technical and semantic question modes so that
+the benchmark contains queries that reflect different retrieval intents: some
+ask for concrete technical details, while others ask for a higher-level
+description of what the document is about.
+
+\paragraph{Verification and filtering.}
+Generated candidates are then passed through an LLM-based verifier. The verifier
+scores whether the answer is faithful to the provided context, whether the
+question is answerable from that context, whether the language is appropriate,
+and whether the item is useful as a retrieval query. We retain the best-scored
+items together with their audit metadata rather than treating generation as a
+black box. This gives each QAC row a provenance trail: source document,
+language, generation mode, scores, and verifier feedback.
+
+\paragraph{Human validation and export.}
+Because the verifier is itself model-based, we validate its behavior against a
+human-annotated sample. This does not replace expert review for every item, but
+it checks whether the automatic grading is directionally reliable enough for
+benchmark construction. The filtered and validated QAC records are then exported
+with the retrieval artifacts used in later sections: a corpus table, query
+table, relevance judgments, and the full QAC table. These artifacts let us
+evaluate models with standard dense-retrieval tooling while still slicing
+results by query language, document language, and source provenance.
