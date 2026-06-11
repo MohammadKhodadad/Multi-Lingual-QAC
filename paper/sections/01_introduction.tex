@@ -44,15 +44,12 @@ Without this structure, an evaluation may reward the model that looks best on
 average while missing the model behavior that creates practical risk.
 
 We present a multilingual chemistry question-answer-context (QAC) benchmark and
-generation pipeline for cross-lingual retrieval evaluation. The broader task is
-multilingual chemistry retrieval; patents are the substrate we use to construct
-the benchmark because they provide multilingual technical variants and
-chemistry-rich descriptions at scale, building on the long history of patent
-retrieval evaluation \citep{clefip2013}. The benchmark is designed to make
-hidden retrieval failures visible: it separates same-language and cross-language
-relevance, supports analysis by query and document language, and includes
-chemistry-aware hard negatives derived from alias and ontology structure,
-including ChEBI \citep{chebi2016}.
+generation pipeline for cross-lingual retrieval evaluation. Our goal is to
+evaluate multilingual chemistry retrieval, not patent search alone. We use
+patents as the benchmark source because patent families often contain related
+technical documents in multiple languages and include chemistry-rich
+descriptions at scale, building on the long history of patent retrieval
+evaluation \citep{clefip2013}.
 
 This paper is therefore an evaluation-framework paper rather than a model
 leaderboard. Our contributions are: (1) to our knowledge, the first public
