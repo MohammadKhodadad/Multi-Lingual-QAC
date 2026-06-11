@@ -8,15 +8,16 @@ search team: choose one multilingual encoder for a shared index, then ask
 whether it retrieves the right evidence across languages.
 
 \paragraph{Models and protocol.}
-Following the full experimental setup, we evaluate nine multilingual or
-domain-relevant embedding models, including \texttt{bge-m3}
-\citep{bgem3_2024}, \texttt{LaBSE} \citep{labse2022}, and \texttt{SapBERT}
-\citep{sapbert2021}. All models retrieve against the same multilingual chemistry
-corpus, and all queries are evaluated with the same relevance judgments. We use
-standard Recall@k as the baseline retrieval metric because it is familiar and
-easy to compare, but we treat it as only the starting point: average recall does
-not say where the relevant document came from or which failure mode produced a
-miss.
+We evaluate nine multilingual or domain-relevant embedding models:
+\texttt{embeddinggemma}, \texttt{bge-m3} \citep{bgem3_2024},
+\texttt{granite-278m}, \texttt{nomic-v2-moe}, \texttt{qwen3-0.6B},
+\texttt{LaBSE} \citep{labse2022}, \texttt{SapBERT} \citep{sapbert2021},
+\texttt{e5-large-instruct}, and \texttt{gte-base}. All models retrieve against
+the same multilingual chemistry corpus, and all queries are evaluated with the
+same relevance judgments. We use standard Recall@k as the baseline retrieval
+metric because it is familiar and easy to compare, but we treat it as only the
+starting point: average recall does not say where the relevant document came
+from or which failure mode produced a miss.
 
 \paragraph{Language-aware views.}
 For each model, we split results by query language, document language, and

@@ -7,7 +7,30 @@ generated questions; \texttt{qrels} stores relevance judgments from queries to
 documents; and \texttt{qac} preserves the original question, answer, context,
 source document, generation metadata, and quality scores. This separation lets
 standard retrieval evaluators consume the data while keeping the provenance
-needed to audit failures by language and source.
+needed to audit failures by language and source. Table~\ref{tab:benchmark-stats}
+summarizes the statistics we rely on in this short paper.
+
+\begin{table}[t]
+  \centering
+  \small
+  \begin{tabular}{@{}p{0.43\linewidth}p{0.47\linewidth}@{}}
+    \toprule
+    Item & Value \\
+    \midrule
+    Chem-patents corpus rows & 1.11k documents \\
+    Chem-patents QAC / queries & 137 QAC rows / 137 queries \\
+    Chem-patents qrels & 322 total; 265 cross-language qrels \\
+    Languages & 5 (English, German, Spanish, French, Chinese) \\
+    Alias-graph questions & 132 questions over 24 ChEBI concepts \\
+    Alias-graph hard negatives & Chemically confusable ontology / alias neighbors \\
+    Human validation sample & 97 reviewed QACs \\
+    \bottomrule
+  \end{tabular}
+  \caption{Compact benchmark statistics used in this draft. Chem-patents counts
+  come from the released Hugging Face dataset card; alias-graph counts come from
+  the benchmark analysis used by the full draft.}
+  \label{tab:benchmark-stats}
+\end{table}
 
 \paragraph{Cross-language relevance.}
 For the multilingual chemistry retrieval benchmark, each query is tied to a
