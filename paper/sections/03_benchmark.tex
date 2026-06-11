@@ -12,23 +12,22 @@ summarizes the statistics we rely on in this short paper.
 
 \begin{table}[t]
   \centering
-  \small
-  \begin{tabular}{@{}p{0.43\linewidth}p{0.47\linewidth}@{}}
+  \footnotesize
+  \begin{tabular}{@{}ll@{}}
     \toprule
-    Item & Value \\
+    Statistic & Value \\
     \midrule
-    Chem-patents corpus rows & 1.11k documents \\
-    Chem-patents QAC / queries & 137 QAC rows / 137 queries \\
-    Chem-patents qrels & 322 total; 265 cross-language qrels \\
-    Languages & 5 (English, German, Spanish, French, Chinese) \\
-    Alias-graph questions & 132 questions over 24 ChEBI concepts \\
-    Alias-graph hard negatives & Chemically confusable ontology / alias neighbors \\
-    Human validation sample & 97 reviewed QACs \\
+    Corpus documents & 1.11k \\
+    QAC queries & 137 \\
+    Qrels & 322 total; 265 cross-lang. \\
+    Languages & en, de, es, fr, zh \\
+    Alias-graph questions & 132 \\
+    ChEBI concepts & 24 \\
+    Hard negatives & Ontology / alias neighbors \\
+    Human-reviewed QACs & 97 \\
     \bottomrule
   \end{tabular}
-  \caption{Compact benchmark statistics used in this draft. Chem-patents counts
-  come from the released Hugging Face dataset card; alias-graph counts come from
-  the benchmark analysis used by the full draft.}
+  \caption{Benchmark statistics used in this short paper.}
   \label{tab:benchmark-stats}
 \end{table}
 
