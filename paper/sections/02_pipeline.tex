@@ -7,6 +7,17 @@ the evidence document it came from, preserve language metadata, and carry qualit
 signals that make the benchmark inspectable after export. Figure~\ref{fig:qac-generation-flow}
 summarizes the full pipeline.
 
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{multilingual_chemistry_retrieval_pipeline_EDITABLE.png}
+    \caption{Overview of the multilingual chemistry retrieval benchmark
+    pipeline, from chemistry technical text through QAC generation, verification,
+    human validation, benchmark export, and retrieval evaluation.}
+    {\footnotesize\emph{Figure note:} Icons adapted from Font Awesome Free,
+    licensed under CC BY 4.0.\par}
+    \label{fig:qac-generation-flow}
+\end{figure*}
+
 \paragraph{Corpus and context construction.}
 The input is a chemistry-relevant multilingual corpus. In this work, we use
 patent-derived text as the benchmark substrate because patents provide

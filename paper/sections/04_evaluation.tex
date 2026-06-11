@@ -1,3 +1,65 @@
 \section{Evaluation Setup}
 
-TODO: Write this section from the paper plan.
+We evaluate multilingual embedding models as drop-in dense retrievers. Each
+model embeds the query and all corpus documents; documents are ranked by
+embedding similarity; and retrieval quality is computed from the benchmark
+\texttt{qrels}. This setup matches the practical decision faced by a technical
+search team: choose one multilingual encoder for a shared index, then ask
+whether it retrieves the right evidence across languages.
+
+\paragraph{Models and protocol.}
+Following the full experimental setup, we evaluate nine multilingual or
+domain-relevant embedding models, including \texttt{bge-m3}
+\citep{bgem3_2024}, \texttt{LaBSE} \citep{labse2022}, and \texttt{SapBERT}
+\citep{sapbert2021}. All models retrieve against the same multilingual chemistry
+corpus, and all queries are evaluated with the same relevance judgments. We use
+standard Recall@k as the baseline retrieval metric because it is familiar and
+easy to compare, but we treat it as only the starting point: average recall does
+not say where the relevant document came from or which failure mode produced a
+miss.
+
+\paragraph{Language-aware views.}
+For each model, we split results by query language, document language, and
+whether a retrieved relevant document is in the same language as the query or in
+another language. This gives two central views: same-language retrieval, where a
+model can often exploit lexical or embedding alignment advantages, and
+cross-language retrieval, where the model must bridge the language boundary. We
+also inspect language-pair behavior as a directed matrix, since retrieving a
+German document from an English query need not be as easy as retrieving an
+English document from a German query.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{cp_fig01_clir_leaderboard.png}
+    \caption{Evaluation separates aggregate Recall@10 from same-language
+    retrieval and cross-language retrieval. The split is the central diagnostic:
+    a model can look strong on average while still losing substantial ground
+    when the relevant evidence is in another language.}
+    \label{fig:clir-leaderboard}
+\end{figure}
+
+\paragraph{Failure analysis.}
+Beyond relevant-document recall, we measure the kinds of mistakes that matter
+for the workflow. First, we track same-language distractions: cases where a
+model retrieves a non-relevant document in the query language ahead of relevant
+cross-language evidence. Second, we use the alias-graph benchmark to measure
+chemistry confusion, where a document about a chemically related but incorrect
+concept outranks the intended evidence. These analyses turn retrieval output
+into diagnostic categories rather than a single score.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{ag_fig2_confusion_both_lenses.png}
+    \caption{The alias-graph stress test measures chemistry-confusability:
+    cases where a chemically plausible but incorrect document outranks all gold
+    evidence. This complements language-aware recall by testing whether models
+    distinguish the intended chemical concept from near neighbors.}
+    \label{fig:alias-confusion}
+\end{figure}
+
+\paragraph{Reporting principle.}
+The results therefore report standard retrieval metrics together with
+language-aware and chemistry-aware slices. A model is useful for this setting
+only if it performs well on the aggregate task and remains robust when the
+relevant evidence changes language or when chemically plausible negatives enter
+the ranking.

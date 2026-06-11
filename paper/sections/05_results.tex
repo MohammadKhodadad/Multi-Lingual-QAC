@@ -1,3 +1,40 @@
 \section{Results}
 
-TODO: Write this section from the paper plan.
+We organize the results around the three questions the benchmark is meant to
+answer: whether generated QACs are usable, whether cross-language retrieval is
+harder than same-language retrieval, and whether chemistry-aware hard negatives
+surface failures that ordinary relevance metrics hide.
+
+\paragraph{QAC quality is high enough for benchmark construction.}
+Human review of 97 generated QACs gives a mean score of 8.33/10, with 94 of 97
+items falling in the ``good'' bucket. Technical questions score slightly higher
+than semantic questions on average (8.72 vs.\ 7.91), but both modes remain usable
+for retrieval evaluation. Comparing normalized human and LLM-grader scores, the
+LLM grader is slightly stricter than the human annotator on average (79.0\% vs.\
+83.3\%), with a mean absolute difference of 8.22 percentage points. We read this
+as evidence that the automatic verifier is useful for filtering and auditing,
+while still requiring human validation for claims about benchmark quality.
+
+\paragraph{Average recall hides cross-language weakness.}
+The cross-lingual benchmark shows that standard Recall@10 is not enough to judge
+a multilingual retriever. In Figure~\ref{fig:clir-leaderboard}, same-language
+retrieval is consistently easier than cross-language retrieval: the best
+cross-language Recall@10 is 0.50, and the same-language home advantage reaches
++0.55 for the most biased model. This means a model can look acceptable under an
+aggregate score while failing on the deployment-relevant case where the evidence
+is available only in another language. The directed language-pair view further
+shows that the difficulty is not symmetric: query language and document language
+both matter.
+
+\paragraph{The errors are not only multilingual; they are chemical.}
+The alias-graph benchmark shows a second failure mode. Even when a retrieved
+document is topically close, it may be chemically wrong. Figure~\ref{fig:alias-confusion}
+measures how often a chemically confusable document outranks all gold evidence;
+on the publication lens, this happens on 14--78\% of queries depending on the
+model. These failures are especially important for chemistry search because a
+nearby compound, parent class, or sibling concept can look plausible while
+answering the wrong question.
+
+Together, the results support the central lesson of the benchmark: multilingual
+chemistry retrieval should be evaluated with language position and chemical
+confusability visible, not only with a single averaged retrieval score.

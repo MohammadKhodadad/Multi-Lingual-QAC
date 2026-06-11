@@ -1,3 +1,124 @@
 \section{Appendix}
 
-TODO: Optional appendix material from the paper plan.
+This appendix collects supporting analyses that are useful for interpretation
+but too detailed for the six-page body.
+
+\section{Additional Cross-Lingual Retrieval Diagnostics}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig02_home_advantage.png}
+  \caption{Same-language home advantage by model. The gap between
+  same-language and cross-language retrieval is the main reason aggregate recall
+  can overstate deployment readiness.}
+  \label{fig:app-home-advantage}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig03_directional_clir_matrix.png}
+  \caption{Directional query-language $\rightarrow$ document-language retrieval.
+  Cross-language retrieval is not symmetric: a model's behavior depends on both
+  the query language and the target document language.}
+  \label{fig:app-directional-clir}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig09_10_collapse.png}
+  \caption{Language-collapse diagnostics. Same-language documents are
+  over-represented in retrieved lists, and same-language distractors can bury
+  cross-language gold evidence.}
+  \label{fig:app-language-collapse}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig06_07_mate.png}
+  \caption{Foreign-twin retrieval diagnostics. The figure reports whether
+  multilingual publication variants are found and how deeply a model must search
+  before reaching the first cross-language twin.}
+  \label{fig:app-mate-retrieval}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig11_separability.png}
+  \caption{Embedding separability for same-language and cross-language gold
+  documents. Lower cross-language separability indicates that the retrieval
+  failure is partly representation-level, not only a top-$k$ ranking artifact.}
+  \label{fig:app-separability}
+\end{figure}
+
+\section{Additional Alias-Graph Diagnostics}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig1_cross_lingual_rbo.png}
+  \caption{Cross-lingual ranking consistency for the same chemical concept asked
+  in multiple languages. Low overlap means language variants of the same query
+  can return substantially different ranked lists.}
+  \label{fig:app-alias-rbo}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig12_joint_failure_modes.png}
+  \caption{Joint language and chemistry failure modes among confused cases. This
+  analysis links the paper's two central risks: same-language preference and
+  chemically plausible but wrong neighbors.}
+  \label{fig:app-joint-failures}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig6_question_type_effect.png}
+  \caption{Question-type effects in the alias-graph benchmark. Some query types
+  are substantially more vulnerable to chemistry-confusability than others.}
+  \label{fig:app-question-type}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig8_confusion_is_separability.png}
+  \caption{Confusion as separability collapse. Confused examples have weaker
+  embedding separation between gold and non-gold documents.}
+  \label{fig:app-confusion-separability}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig5_universal_attractors.png}
+  \caption{Universal attractors in the alias graph: chemically plausible
+  look-alikes that repeatedly steal top rank across models or languages.}
+  \label{fig:app-universal-attractors}
+\end{figure}
+
+\section{Deployment-Oriented Supporting Analyses}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig05_mt_penalty.png}
+  \caption{Human-written versus machine-translated queries. This supports the
+  paper's practical separation between generating query variants and relying on
+  human-translated source evidence.}
+  \label{fig:app-mt-penalty}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig18_cost_frontier.png}
+  \caption{Cost-vs-capability view of cross-lingual retrieval. This analysis is
+  useful for deployment decisions, but is secondary to the short paper's core
+  benchmark-construction story.}
+  \label{fig:app-cost-frontier}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{cp_fig19_rrc_budget.png}
+  \caption{Re-ranker recoverability curves. These curves show how much
+  cross-language evidence is recoverable at different candidate-pool depths and
+  why some failures must be fixed before re-ranking.}
+  \label{fig:app-rrc-budget}
+\end{figure}

@@ -1,3 +1,24 @@
 \section*{Limitations}
 
-TODO: Write this section from the paper plan.
+This benchmark is intentionally specialized. Chemistry patents provide a useful
+substrate for controlled multilingual technical evidence, but results may not
+transfer directly to other scientific domains, regulatory corpora, or general
+web retrieval. The design should be read as a reusable evaluation pattern rather
+than as proof that the same model ordering will hold everywhere.
+
+Patent publication variants are also an imperfect proxy for equivalent
+technical evidence. They give stronger content control than unrelated
+multilingual corpora, but they do not guarantee full claim-level equivalence
+across every language version. We therefore use them as controlled evidence for
+retrieval evaluation, not as a legal statement that all patent variants are
+interchangeable.
+
+The QAC pipeline relies on LLM generation and LLM-based verification. Human
+review supports the usefulness of the generated data, but the validation sample
+is limited and does not replace expert patent or chemistry review for every
+item. Future versions should expand expert annotation, especially for borderline
+chemical relevance and hard-negative severity.
+
+Finally, the current paper focuses on multilingual retrieval and alias-graph
+confusability. Code-switching and noisy-query infrastructure exist in the
+project, but we do not claim complete results for those settings here.
