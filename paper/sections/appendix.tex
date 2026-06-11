@@ -5,6 +5,12 @@ but too detailed for the six-page body.
 
 \section{Additional Cross-Lingual Retrieval Diagnostics}
 
+These diagnostics expand the paper's main cross-language retrieval result. They
+show that the same-language advantage is not a single-score artifact: it appears
+as model-level home advantage, directed language-pair asymmetry, delayed recovery
+of multilingual publication variants, and weaker embedding separability for
+cross-language gold evidence.
+
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{cp_fig02_home_advantage.png}
@@ -42,6 +48,12 @@ but too detailed for the six-page body.
 \end{figure}
 
 \section{Additional Alias-Graph Diagnostics}
+
+The alias-graph analyses isolate the chemistry side of the retrieval problem.
+They test whether multilingual queries for the same concept produce consistent
+rankings and whether chemically plausible neighbors become systematic
+distractors. Together, these figures explain why relevance in chemistry search
+cannot be reduced to topical similarity alone.
 
 \begin{figure}[t]
   \centering
@@ -86,6 +98,12 @@ but too detailed for the six-page body.
 \end{figure}
 
 \section{Deployment-Oriented Supporting Analyses}
+
+These figures support the deployment interpretation in the main paper. They are
+secondary to the main cost-vs-capability decision, but they show two practical
+constraints: query translation can change retrieval behavior, and re-rankers can
+only recover cross-language evidence that appears within a feasible candidate
+pool.
 
 \begin{figure}[t]
   \centering
