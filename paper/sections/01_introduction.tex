@@ -11,6 +11,15 @@ that can be semantically close while still being wrong for the user's question.
 For a retrieval system used in a high-trust technical workflow, returning a
 plausible but chemically different document is not a harmless ranking error.
 
+This matters in multinational industrial settings, where technical documents may
+be stored in several languages but downstream users and systems need the relevant
+evidence regardless of the query language or document language. The same
+retrieval requirement appears in RAG systems, agentic workflows, and other
+decision-support pipelines that depend on finding the right evidence before
+reasoning over it. Translating every query or document can help in some cases,
+but it becomes less attractive as language coverage grows because translation
+adds latency, cost, and another source of technical-term errors.
+
 Dense retrieval with neural sentence and passage embeddings
 \citep{reimers2019sentencebert,karpukhin2020dpr} is attractive for this setting
 because multilingual embedding models promise a single retrieval index over many

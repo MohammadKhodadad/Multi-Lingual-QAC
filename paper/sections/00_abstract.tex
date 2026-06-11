@@ -5,18 +5,14 @@ document is written in another. Retrieval systems should therefore be tested on
 whether they find that cross-language evidence, not only on whether they retrieve
 an easier same-language match. Yet multilingual chemistry retrieval has little
 clean public evaluation data, so models are often judged by a single aggregate
-recall score that can hide poor cross-language retrieval. We address this gap with a
-multilingual chemistry QAC benchmark and generation pipeline for cross-lingual
-retrieval evaluation. Patents provide the benchmark substrate in this work
-because multilingual publication variants and chemistry ontologies make it
-possible to construct controlled relevance judgments and chemically plausible
-hard negatives. The pipeline extracts chemistry-relevant technical text,
-generates multiple question-answer-context candidates with an LLM, grades them
-for faithfulness and retrieval quality, and validates the automated grading
-against human annotation. We export the resulting data in retrieval-ready form
-with corpus, queries, qrels, and QAC records, enabling evaluation by query
-language, document language, same-language versus cross-language relevance, and
-chemically confusable hard negatives. Aggregate Recall@10 overstates deployment
+recall score that can hide poor cross-language retrieval. We address this gap
+with a public multilingual chemistry QAC benchmark and generation pipeline for
+cross-lingual retrieval evaluation. Patents provide controlled multilingual
+technical evidence, while chemistry ontologies enable chemically plausible hard
+negatives. We export the benchmark in retrieval-ready form with corpus, queries,
+qrels, QAC records, and language metadata, enabling evaluation by query language,
+document language, same-language versus cross-language relevance, and chemical
+confusability. Aggregate Recall@10 overstates deployment
 readiness: the best cross-language Recall@10 is 0.50, same-language advantage
 reaches +0.55, and chemically confusable documents outrank gold evidence on
 14--78\% of publication-lens queries. The benchmark and pipeline provide a
