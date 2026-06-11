@@ -10,6 +10,19 @@ plausible hard negatives. Our benchmark follows this line of work while adding
 domain structure needed to audit multilingual retrieval in technical chemistry
 search.
 
+Chemistry-specific benchmarks have recently expanded evaluation beyond generic
+NLP tasks. ChemTEB evaluates chemical text embeddings across retrieval,
+classification, clustering, bitext mining, and pair-classification tasks
+\citep{chemteb2024}; ChemLit-QA provides expert-validated QAC data for chemistry
+RAG \citep{chemlitqa2024}; and ChemComp and ChemKGMultiHopQA test
+retrieval-dependent multi-hop scientific reasoning
+\citep{khodadad2026chemcomp,astaraki2026iterativerag}. Recent chemical
+literature embedding work such as ChEmbed further shows the value of
+domain-adapted retrieval models and chemistry-specific retrieval evaluation
+\citep{chembed2025}. Our work is complementary: it focuses on multilingual
+retrieval robustness, controlled language variants, and chemistry-confusable
+hard negatives rather than single-language chemistry QA or embedding evaluation.
+
 Recent work on cross-lingual retrieval and multilingual RAG shows that model
 rankings can depend strongly on language, alignment, and same-language
 preference \citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
