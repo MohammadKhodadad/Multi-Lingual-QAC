@@ -49,8 +49,9 @@ import csv
 import os
 import random
 import sys
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
 from tqdm import tqdm
@@ -108,6 +109,40 @@ STRATEGIES = [
     STRATEGY_RANDOM_EXISTING,
     STRATEGY_ALL,
 ]
+
+# Default number of retry attempts (after the first) for a failed API call.
+DEFAULT_RETRIES = 3
+
+
+def _call_with_retries(
+    fn: Callable[..., Any],
+    *args: Any,
+    retries: int = DEFAULT_RETRIES,
+    label: str = "",
+    **kwargs: Any,
+) -> Any:
+    """Call ``fn(*args, **kwargs)``, retrying on ANY exception up to ``retries``
+    additional times (so ``retries + 1`` attempts total) with exponential
+    backoff + jitter. Re-raises the last exception if every attempt fails.
+
+    Covers transient provider errors (HTTP 429 rate limits, 5xx, timeouts) and
+    malformed/truncated JSON responses, which a re-ask typically fixes.
+    """
+    last_exc: Optional[BaseException] = None
+    for attempt in range(retries + 1):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:  # noqa: BLE001 - retry on any transient failure
+            last_exc = exc
+            if attempt < retries:
+                delay = min(30.0, 2.0 * (2 ** attempt)) + random.uniform(0.0, 1.0)
+                tqdm.write(
+                    f"    retry {attempt + 1}/{retries} {label} after error: {exc} "
+                    f"(sleep {delay:.1f}s)"
+                )
+                time.sleep(delay)
+    assert last_exc is not None
+    raise last_exc
 
 
 # ---------------------------------------------------------------------------
@@ -278,11 +313,15 @@ def _generate_for_target_langs(
     generation_model: str,
     verifier_client: OpenAI,
     verifier_model: str,
+    retries: int = DEFAULT_RETRIES,
 ) -> List[Dict[str, Any]]:
     """Generation orchestration with split clients/models: question generation
     runs against ``generation_client`` (default OpenAI gpt-5-mini), while
     faithfulness and quality verification run against ``verifier_client``
-    (default OpenRouter Claude Sonnet 4.6 with thinking)."""
+    (default OpenRouter Claude Sonnet 4.6 with thinking).
+
+    Each API call is retried up to ``retries`` times on transient failure; if a
+    call still fails after all retries, that target language is skipped."""
     all_passages = _build_all_passages_text(rows)
     context_languages = _serialize_context_languages(rows)
     results: List[Dict[str, Any]] = []
@@ -294,11 +333,15 @@ def _generate_for_target_langs(
             continue
 
         try:
-            qa_pairs = generate_qa_batch(
-                generation_client, all_passages, target_lang, mode, model=generation_model,
+            qa_pairs = _call_with_retries(
+                generate_qa_batch,
+                generation_client, all_passages, target_lang, mode,
+                model=generation_model,
+                retries=retries,
+                label=f"{pub_num}[{target_lang}] gen",
             )
         except Exception as exc:
-            tqdm.write(f"  {pub_num} [{target_lang}]: generation error: {exc}")
+            tqdm.write(f"  {pub_num} [{target_lang}]: generation error after retries: {exc}")
             continue
 
         if len(qa_pairs) < 3:
@@ -308,19 +351,25 @@ def _generate_for_target_langs(
             continue
 
         try:
-            faith_grades = _verify_faithfulness(
+            faith_grades = _call_with_retries(
+                _verify_faithfulness,
                 verifier_client, verifier_model, all_passages, qa_pairs,
+                retries=retries,
+                label=f"{pub_num}[{target_lang}] faith",
             )
         except Exception as exc:
-            tqdm.write(f"  {pub_num} [{target_lang}]: faithfulness grading error: {exc}")
+            tqdm.write(f"  {pub_num} [{target_lang}]: faithfulness grading error after retries: {exc}")
             continue
 
         try:
-            qual_grades = _verify_quality(
+            qual_grades = _call_with_retries(
+                _verify_quality,
                 verifier_client, verifier_model, all_passages, qa_pairs, mode,
+                retries=retries,
+                label=f"{pub_num}[{target_lang}] qual",
             )
         except Exception as exc:
-            tqdm.write(f"  {pub_num} [{target_lang}]: quality grading error: {exc}")
+            tqdm.write(f"  {pub_num} [{target_lang}]: quality grading error after retries: {exc}")
             continue
 
         doc_rows: List[Dict[str, Any]] = []

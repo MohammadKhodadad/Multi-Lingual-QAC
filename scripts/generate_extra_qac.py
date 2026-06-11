@@ -59,8 +59,10 @@ import argparse
 import csv
 import random
 import sys
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 from tqdm import tqdm
@@ -99,6 +101,7 @@ from multi_lingual_qac.qac_generation.balanced_multilingual_qa import (  # noqa:
 # Importing the module is side-effect free (its load_dotenv() runs inside main()).
 from generate_zh_extra_qac import (  # noqa: E402
     DEFAULT_GENERATION_MODEL,
+    DEFAULT_RETRIES,
     DEFAULT_VERIFIER_MODEL,
     _allocate_phase_b_quotas,
     _check_appendable,
@@ -129,6 +132,49 @@ def _doc_languages(rows: List[Dict[str, Any]]) -> set[str]:
     return {r.get("language", "") for r in rows}
 
 
+def count_done_beyond_baseline(
+    best_path: Path,
+    baseline_pubs: set[str],
+    groups: Dict[str, List[Dict[str, Any]]],
+) -> Tuple[Dict[Tuple[str, str], int], Dict[str, int], Dict[str, int]]:
+    """Inspect an existing best-only file and tally what has ALREADY been added
+    beyond the baseline publication set (i.e., earlier partial runs of this
+    effort), so a completion run only generates the remaining deficit.
+
+    Returns:
+        done_docs : {(mode, strategy_name): #distinct docs already generated}
+        done_zh   : {mode: #of those new docs that have a zh corpus version}
+        done_es   : {mode: #of those new docs that have an es corpus version}
+    """
+    done_docs: Dict[Tuple[str, str], int] = defaultdict(int)
+    new_pubs_by_mode: Dict[str, set[str]] = defaultdict(set)
+    seen: set[Tuple[str, str, str]] = set()
+    with Path(best_path).open(encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            pub = r.get("publication_number", "")
+            if not pub or pub in baseline_pubs:
+                continue
+            mode = r.get("mode", "")
+            strat = r.get("strategy_name", "")
+            key = (pub, mode, strat)
+            if key in seen:
+                continue
+            seen.add(key)
+            done_docs[(mode, strat)] += 1
+            new_pubs_by_mode[mode].add(pub)
+
+    done_zh: Dict[str, int] = defaultdict(int)
+    done_es: Dict[str, int] = defaultdict(int)
+    for mode, pubs in new_pubs_by_mode.items():
+        for p in pubs:
+            langs = _doc_languages(groups.get(p, []))
+            if "zh" in langs:
+                done_zh[mode] += 1
+            if "es" in langs:
+                done_es[mode] += 1
+    return dict(done_docs), dict(done_zh), dict(done_es)
+
+
 def build_plan(
     groups: Dict[str, List[Dict[str, Any]]],
     excluded: set[str],
@@ -137,27 +183,59 @@ def build_plan(
     zh_per_mode: int,
     es_per_mode: int,
     seed: int,
+    done_docs: Optional[Dict[Tuple[str, str], int]] = None,
+    done_zh: Optional[Dict[str, int]] = None,
+    done_es: Optional[Dict[str, int]] = None,
 ) -> List[Dict[str, Any]]:
     """Build the per-document generation plan.
+
+    Targets a balanced ``questions_per_mode`` questions per mode, split equally
+    across the four strategies, with a per-mode quota of ``zh_per_mode``
+    zh-available + ``es_per_mode`` es-available source docs (rest random).
+
+    When ``done_docs`` / ``done_zh`` / ``done_es`` are supplied (completion
+    mode), the per-(mode, strategy) document counts and the per-mode zh/es
+    targets are reduced by what already exists, so the FINAL total (existing +
+    newly generated) lands on the balanced target.
 
     Returns a flat list of plan items, each:
         {publication_number, mode, strategy, strategy_name, doc_class,
          target_langs, expected_question_count}
     """
+    done_docs = dict(done_docs or {})
+    done_zh = dict(done_zh or {})
+    done_es = dict(done_es or {})
+
     n_langs = len(ALL_LANGS)
     quotas = _allocate_phase_b_quotas(questions_per_mode)
-    docs_per_mode = (
-        quotas[STRATEGY_RANDOM_ANY]
-        + quotas[STRATEGY_RANDOM_MISSING]
-        + quotas[STRATEGY_RANDOM_EXISTING]
-        + (quotas[STRATEGY_ALL] // n_langs)
-    )
-    random_per_mode = docs_per_mode - zh_per_mode - es_per_mode
-    if random_per_mode < 0:
+
+    def full_doc_target(strategy: int) -> int:
+        return quotas[strategy] if strategy != STRATEGY_ALL else quotas[STRATEGY_ALL] // n_langs
+
+    if zh_per_mode + es_per_mode > sum(full_doc_target(s) for s in STRATEGIES):
         raise ValueError(
-            f"zh_per_mode ({zh_per_mode}) + es_per_mode ({es_per_mode}) exceeds "
-            f"docs_per_mode ({docs_per_mode}); reduce the enforced quotas."
+            f"zh_per_mode ({zh_per_mode}) + es_per_mode ({es_per_mode}) exceeds the "
+            f"documents available per mode; reduce the enforced quotas."
         )
+
+    # Remaining document deficit per (mode, strategy) after subtracting what is
+    # already done, and the per-mode zh/es top-up still required.
+    deficit: Dict[Tuple[str, int], int] = {}
+    docs_per_mode: Dict[str, int] = {}
+    zh_tgt: Dict[str, int] = {}
+    es_tgt: Dict[str, int] = {}
+    rand_tgt: Dict[str, int] = {}
+    for mode in MODES:
+        for strategy in STRATEGIES:
+            already = done_docs.get((mode, STRATEGY_NAMES[strategy]), 0)
+            deficit[(mode, strategy)] = max(0, full_doc_target(strategy) - already)
+        dpm = sum(deficit[(mode, s)] for s in STRATEGIES)
+        docs_per_mode[mode] = dpm
+        z = min(max(0, zh_per_mode - done_zh.get(mode, 0)), dpm)
+        e = min(max(0, es_per_mode - done_es.get(mode, 0)), dpm - z)
+        zh_tgt[mode] = z
+        es_tgt[mode] = e
+        rand_tgt[mode] = dpm - z - e
 
     # Eligible (uncovered, has content) publications, plus zh/es sub-pools.
     uncovered = sorted(
@@ -174,9 +252,9 @@ def build_plan(
     rng = random.Random(seed)
     random.seed(seed)
 
-    need_zh = zh_per_mode * len(MODES)
-    need_es = es_per_mode * len(MODES)
-    need_rand = random_per_mode * len(MODES)
+    need_zh = sum(zh_tgt.values())
+    need_es = sum(es_tgt.values())
+    need_rand = sum(rand_tgt.values())
 
     if need_zh > len(zh_pool):
         raise ValueError(
@@ -211,13 +289,19 @@ def build_plan(
     for p in rand_pick:
         doc_class[p] = "random"
 
-    # Split each sub-pool evenly across the modes, then build each mode's doc list.
+    # Build each mode's doc list from per-mode slices of the sub-pools (sizes may
+    # differ between modes in completion mode), then shuffle within the mode.
     mode_docs: Dict[str, List[str]] = {}
-    for i, mode in enumerate(MODES):
-        zh_slice = zh_pick[i * zh_per_mode : (i + 1) * zh_per_mode]
-        es_slice = es_pick[i * es_per_mode : (i + 1) * es_per_mode]
-        rand_slice = rand_pick[i * random_per_mode : (i + 1) * random_per_mode]
-        docs = zh_slice + es_slice + rand_slice
+    zc = ec = rc = 0
+    for mode in MODES:
+        docs = (
+            zh_pick[zc : zc + zh_tgt[mode]]
+            + es_pick[ec : ec + es_tgt[mode]]
+            + rand_pick[rc : rc + rand_tgt[mode]]
+        )
+        zc += zh_tgt[mode]
+        ec += es_tgt[mode]
+        rc += rand_tgt[mode]
         rng.shuffle(docs)
         mode_docs[mode] = docs
 
@@ -226,11 +310,8 @@ def build_plan(
         docs = mode_docs[mode]
         cursor = 0
         for strategy in STRATEGIES:
-            doc_count = (
-                quotas[strategy] if strategy != STRATEGY_ALL else quotas[STRATEGY_ALL] // n_langs
-            )
             expected = 1 if strategy != STRATEGY_ALL else n_langs
-            for _ in range(doc_count):
+            for _ in range(deficit[(mode, strategy)]):
                 pub = docs[cursor]
                 cursor += 1
                 available_langs = [r["language"] for r in groups[pub]]
@@ -290,10 +371,31 @@ def run(
     generation_model: str,
     verifier_model: str,
     seed: int,
+    workers: int,
+    retries: int,
+    complete: bool,
+    baseline_best: Optional[Path],
     dry_run: bool,
 ) -> None:
     groups = load_multilingual_corpus(corpus_path)
     excluded = _load_excluded_pubs(exclude_from)
+
+    done_docs: Dict[Tuple[str, str], int] = {}
+    done_zh: Dict[str, int] = {}
+    done_es: Dict[str, int] = {}
+    if complete:
+        if baseline_best is None:
+            raise ValueError("--complete requires --baseline-best (the original pre-effort best file).")
+        baseline_pubs = _load_excluded_pubs(baseline_best)
+        done_docs, done_zh, done_es = count_done_beyond_baseline(
+            Path(best_path), baseline_pubs, groups
+        )
+        already = sum(done_docs.values())
+        print(
+            f"Completion mode: baseline has {len(baseline_pubs)} pubs; "
+            f"{already} docs already added beyond baseline -> {dict(done_docs)}"
+        )
+        print(f"  already-added zh docs/mode: {dict(done_zh)} | es docs/mode: {dict(done_es)}")
 
     plan = build_plan(
         groups,
@@ -302,12 +404,16 @@ def run(
         zh_per_mode=zh_per_mode,
         es_per_mode=es_per_mode,
         seed=seed,
+        done_docs=done_docs,
+        done_zh=done_zh,
+        done_es=done_es,
     )
 
     total_questions = sum(item["expected_question_count"] for item in plan)
+    goal = "completing toward" if complete else "targeting"
     print(
-        f"Planned {len(plan)} documents -> {total_questions} questions "
-        f"({questions_per_mode} per mode x {len(MODES)} modes), excluding "
+        f"Planned {len(plan)} documents -> {total_questions} questions ({goal} "
+        f"{questions_per_mode} per mode x {len(MODES)} modes), excluding "
         f"{len(excluded)} covered publications."
     )
     for mode in MODES:
@@ -339,33 +445,39 @@ def run(
     verifier_client = _get_openrouter_client()
     print(f"Generator:        {generation_model} (OpenAI)")
     print(f"Verifier:         {verifier_model} (OpenRouter, thinking)")
+    print(f"Workers:          {workers}")
+    print(f"Retries/call:     {retries}")
     print(f"Append target:    {all_generated_path}")
     print(f"Best-only target: {best_path}")
 
+    def _generate(item: Dict[str, Any]) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Run generation + grading for one plan item (thread-safe: shares the
+        API clients, touches no shared file/state)."""
+        results = _generate_for_target_langs(
+            item["publication_number"],
+            groups[item["publication_number"]],
+            item["target_langs"],
+            mode=item["mode"],
+            generation_client=generation_client,
+            generation_model=generation_model,
+            verifier_client=verifier_client,
+            verifier_model=verifier_model,
+            retries=retries,
+        )
+        return item, results
+
     best_count = 0
     all_count = 0
-    progress = tqdm(plan, desc="Generate extra Q&A", unit="doc")
-    # Open for append; header is assumed present (validated above).
+    # Open for append; header is assumed present (validated above). Only the main
+    # thread writes to these files, so appends stay ordered and corruption-free.
     with best_path.open("a", encoding="utf-8", newline="") as best_f, all_generated_path.open(
         "a", encoding="utf-8", newline=""
     ) as all_f:
         best_writer = csv.DictWriter(best_f, fieldnames=fieldnames)
         all_writer = csv.DictWriter(all_f, fieldnames=fieldnames)
 
-        for item in progress:
-            pub_num = item["publication_number"]
-            rows = groups[pub_num]
-            results = _generate_for_target_langs(
-                pub_num,
-                rows,
-                item["target_langs"],
-                mode=item["mode"],
-                generation_client=generation_client,
-                generation_model=generation_model,
-                verifier_client=verifier_client,
-                verifier_model=verifier_model,
-            )
-
+        def _persist(item: Dict[str, Any], results: List[Dict[str, Any]]) -> None:
+            nonlocal best_count, all_count
             stamped: List[Dict[str, Any]] = []
             for row in results:
                 row["mode"] = item["mode"]
@@ -387,9 +499,21 @@ def run(
 
             if len(best_rows) != item["expected_question_count"]:
                 tqdm.write(
-                    f"  {pub_num} [{item['mode']}/{item['strategy_name']}]: "
+                    f"  {item['publication_number']} [{item['mode']}/{item['strategy_name']}]: "
                     f"expected {item['expected_question_count']} questions, got {len(best_rows)}"
                 )
+
+        if workers > 1:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = [executor.submit(_generate, item) for item in plan]
+                for future in tqdm(
+                    as_completed(futures), total=len(futures), desc="Generate extra Q&A", unit="doc"
+                ):
+                    item, results = future.result()
+                    _persist(item, results)
+        else:
+            for item in tqdm(plan, desc="Generate extra Q&A", unit="doc"):
+                _persist(*_generate(item))
 
     print(f"\nAppended {all_count} all-generated rows -> {all_generated_path}")
     print(f"Appended {best_count} best-only rows    -> {best_path}")
@@ -486,6 +610,46 @@ def main() -> None:
         help="Random seed (default: 42).",
     )
     parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help=(
+            "Number of concurrent worker threads for generation+grading "
+            "(default: 1 = serial). API calls run in parallel; file writes stay "
+            "single-threaded. 4-8 is a reasonable range; higher risks provider "
+            "rate limits."
+        ),
+    )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=DEFAULT_RETRIES,
+        help=(
+            "Retry attempts per failed API call (generation/faithfulness/quality), "
+            f"with exponential backoff (default: {DEFAULT_RETRIES}). A call that still "
+            "fails after all retries skips only its target language."
+        ),
+    )
+    parser.add_argument(
+        "--complete",
+        action="store_true",
+        help=(
+            "Completion mode: only generate the per-(mode, strategy) deficit so the "
+            "TOTAL added beyond the baseline reaches the balanced target. Accounts for "
+            "questions appended by earlier partial runs. Requires --baseline-best."
+        ),
+    )
+    parser.add_argument(
+        "--baseline-best",
+        type=Path,
+        default=Path("balanced_100_qac_regraded.csv"),
+        help=(
+            "Original best-only file from before this +400 effort, used in --complete "
+            "mode to identify which rows in --best were added by earlier partial runs "
+            "(default: the repo-root frozen snapshot balanced_100_qac_regraded.csv)."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Write only the manifest and skip API calls.",
@@ -504,6 +668,10 @@ def main() -> None:
         generation_model=args.generation_model,
         verifier_model=args.verifier_model,
         seed=args.seed,
+        workers=args.workers,
+        retries=args.retries,
+        complete=args.complete,
+        baseline_best=args.baseline_best,
         dry_run=args.dry_run,
     )
 
