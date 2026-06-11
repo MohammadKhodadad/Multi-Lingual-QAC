@@ -1,0 +1,9 @@
+short,reading_cost_tax,confusability_tax,sibling_win_rate,clir_at_10,DEG
+embeddinggemma,2.333,0.0682,0.0606,0.4526,False
+nomic-v2-moe,14.0,0.1061,0.0909,0.354,False
+bge-m3,2.0,0.1288,0.1212,0.3978,False
+qwen3-0.6B,3.571,0.1288,0.1061,0.3856,False
+granite-278m,1.37,0.1818,0.1439,0.2859,False
+LaBSE,3.133,0.25,0.2197,0.219,False
+e5-large-instruct,67.571,0.2803,0.2197,0.0657,True
+SapBERT,3.171,0.2955,0.2348,0.1606,False

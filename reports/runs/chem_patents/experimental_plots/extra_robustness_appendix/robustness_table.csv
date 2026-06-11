@@ -1,7 +1,7 @@
 scalar,point,ci_lo,ci_hi,stability_metric,stability_value,n,note
-"A1: separability Pearson r(auc_cross, CLIR@10), n=7 non-degenerate",0.9802,0.9276,0.9968,sign-stability P(r>0),1.0,7,r(n9)=0.9149; 32 degenerate draws skipped
-A6: XRC50 (embeddinggemma),5.0,2.0,6.0,censored-draw fraction,0.0,524 cross / 261 same,ref XRC50=5.0; CI=finite
-A6: XRC50 (bge-m3),3.5,1.6667,5.5,censored-draw fraction,0.0,524 cross / 261 same,ref XRC50=3.5; CI=finite
-A6: XRC50 (granite-278m),3.2,0.7619,6.6667,censored-draw fraction,0.0,524 cross / 261 same,ref XRC50=3.2; CI=finite
-A5: ARI@100 gap (qwen3 - embeddinggemma),0.0203,-0.072,0.1118,order-prob P(ARI_egemma < ARI_qwen3),0.6731,524,"egemma=0.3248, qwen3=0.3451; gap CI INCLUDES 0"
-"W2: partial r(auc_cross, CLIR@10 | Recall@10), n=7",0.5528,,,two-sided p,0.2553,7,zero-order r=0.9802; WEAK/N.S. once Recall@10 partialled out -> descriptive only
+"A1: separability Pearson r(auc_cross, CLIR@10), n=7 non-degenerate",0.9522,0.7136,0.9985,sign-stability P(r>0),0.9968,7,r(n9)=0.9592; 32 degenerate draws skipped
+A6: XRC50 (embeddinggemma),2.3333,0.6364,12.0,censored-draw fraction,0.0,137 cross / 57 same,ref XRC50=2.333; CI=finite
+A6: XRC50 (bge-m3),2.0,0.4375,9.25,censored-draw fraction,0.0,137 cross / 57 same,ref XRC50=2.0; CI=finite
+A6: XRC50 (granite-278m),1.3704,0.2073,12.4,censored-draw fraction,0.0,137 cross / 57 same,ref XRC50=1.37; CI=finite
+A5: ARI@100 gap (qwen3 - embeddinggemma),-0.0311,-0.2122,0.1415,order-prob P(ARI_egemma < ARI_qwen3),0.3642,137,"egemma=0.3077, qwen3=0.2766; gap CI INCLUDES 0"
+"W2: partial r(auc_cross, CLIR@10 | Recall@10), n=7",0.0229,,,two-sided p,0.9656,7,zero-order r=0.9522; WEAK/N.S. once Recall@10 partialled out -> descriptive only

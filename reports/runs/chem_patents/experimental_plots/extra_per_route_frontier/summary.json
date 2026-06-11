@@ -9,18 +9,18 @@
   ],
   "deg_cutoff": 0.1,
   "n_cross_by_route": {
-    "en": 119,
-    "de": 112,
-    "es": 103,
-    "fr": 98,
-    "zh": 92
+    "en": 27,
+    "de": 27,
+    "es": 34,
+    "fr": 27,
+    "zh": 22
   },
   "n_same_by_route": {
-    "en": 119,
-    "de": 13,
-    "es": 27,
-    "fr": 80,
-    "zh": 22
+    "en": 21,
+    "de": 7,
+    "es": 0,
+    "fr": 27,
+    "zh": 2
   },
   "xrc_axis_status": {
     "es": "undefined (n_same=0)",
@@ -31,25 +31,25 @@
   },
   "frontier_members_by_route": {
     "en": "embeddinggemma;LaBSE",
-    "de": "embeddinggemma;qwen3-0.6B;gte-base",
-    "es": "embeddinggemma;bge-m3",
-    "fr": "embeddinggemma;granite-278m",
-    "zh": "embeddinggemma;LaBSE;SapBERT"
+    "de": "embeddinggemma;qwen3-0.6B;LaBSE",
+    "es": "embeddinggemma",
+    "fr": "bge-m3;nomic-v2-moe;granite-278m",
+    "zh": "embeddinggemma"
   },
   "max_clir_corner_by_route": {
     "en": "embeddinggemma",
     "de": "embeddinggemma",
     "es": "embeddinggemma",
-    "fr": "embeddinggemma",
+    "fr": "nomic-v2-moe",
     "zh": "embeddinggemma"
   },
-  "capability_corner_moves_across_routes": false,
-  "n_distinct_max_clir_corners": 1,
+  "capability_corner_moves_across_routes": true,
+  "n_distinct_max_clir_corners": 2,
   "decision_flip_by_route": {
     "en": false,
     "de": false,
     "es": false,
-    "fr": false,
+    "fr": true,
     "zh": false
   },
   "decision_flip_detail": {
@@ -70,8 +70,8 @@
     },
     "fr": {
       "recall_pick": "embeddinggemma",
-      "frontier_pick": "embeddinggemma",
-      "flipped": false
+      "frontier_pick": "nomic-v2-moe",
+      "flipped": true
     },
     "zh": {
       "recall_pick": "embeddinggemma",
@@ -79,14 +79,13 @@
       "flipped": false
     }
   },
-  "n_routes_flipped": 0,
+  "n_routes_flipped": 1,
   "global_pareto_set_reference": [
-    "LaBSE",
     "bge-m3",
     "embeddinggemma",
     "granite-278m"
   ],
-  "verify_egemma_global_clir_0.5024": 0.5413,
+  "verify_egemma_global_clir_0.5024": 0.4526,
   "checks_passed": true,
   "check_failures": []
 }

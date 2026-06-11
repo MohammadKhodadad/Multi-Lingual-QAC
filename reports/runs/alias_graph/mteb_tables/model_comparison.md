@@ -5,7 +5,7 @@
 ### Overview
 
 - Dataset: `MehdiAstaraki/multi-lingual-qac-alias-graph`
-- Models compared: `9`
+- Models compared: `8`
 - Best model by `recall_at_10`: `google/embeddinggemma-300m` (0.0807)
 
 ### Ranking
@@ -20,7 +20,6 @@
 | 6 | `BAAI/bge-m3` | 0.0541 | 0.0541 | 0.1133 | 0.1855 | 0.0632 | 0.0645 | 0.3114 | 0.1792 | 0.3057 | 607.8 |
 | 7 | `cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR` | 0.0496 | 0.0496 | 0.1020 | 0.1146 | 0.0583 | 0.0591 | 0.1961 | 0.1425 | 0.3725 | 179.1 |
 | 8 | `intfloat/multilingual-e5-large-instruct` | 0.0292 | 0.0292 | 0.0732 | 0.0957 | 0.0360 | 0.0351 | 0.1788 | 0.1139 | 0.9027 | 195.2 |
-| 9 | `Alibaba-NLP/gte-multilingual-base` | 0.0062 | 0.0062 | 0.0147 | 0.0161 | 0.0051 | 0.0050 | 0.0389 | 0.0236 | 0.7502 | 91.2 |
 
 ### Metric Winners
 

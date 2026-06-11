@@ -14,25 +14,26 @@ documents in a *different* language; **MoLIR@k** = recall over the *same*-langua
 
 | model | Recall@10 | CLIR@10 | MoLIR@10 | home adv |
 | --- | ---: | :---: | ---: | ---: |
-| `embeddinggemma` | 0.574 | 0.541 [0.50,0.58] | 0.725 | +0.167 |
-| `bge-m3` | 0.509 | 0.464 [0.43,0.50] | 0.667 | +0.224 |
-| `qwen3-0.6B` | 0.496 | 0.451 [0.41,0.49] | 0.659 | +0.222 |
-| `nomic-v2-moe` | 0.467 | 0.410 [0.37,0.45] | 0.690 | +0.295 |
-| `granite-278m` | 0.415 | 0.390 [0.35,0.43] | 0.541 | +0.124 |
-| `LaBSE` | 0.301 | 0.271 [0.24,0.31] | 0.427 | +0.148 |
-| `SapBERT` | 0.238 | 0.197 [0.17,0.23] | 0.373 | +0.189 |
-| `e5-large-instruct` | 0.218 | 0.094 [0.07,0.12] | 0.706 | +0.604 |
-| `gte-base` | 0.005 | 0.000 [0.00,0.00] | 0.024 | +0.024 |
+| `embeddinggemma` | 0.499 | 0.453 [0.37,0.53] | 0.632 | +0.254 |
+| `bge-m3` | 0.438 | 0.398 [0.32,0.47] | 0.561 | +0.237 |
+| `qwen3-0.6B` | 0.427 | 0.386 [0.31,0.46] | 0.544 | +0.237 |
+| `nomic-v2-moe` | 0.416 | 0.354 [0.28,0.43] | 0.632 | +0.342 |
+| `granite-278m` | 0.321 | 0.286 [0.22,0.36] | 0.439 | +0.202 |
+| `LaBSE` | 0.260 | 0.219 [0.16,0.28] | 0.386 | +0.228 |
+| `SapBERT` | 0.195 | 0.161 [0.11,0.22] | 0.298 | +0.184 |
+| `e5-large-instruct` | 0.162 | 0.066 [0.03,0.11] | 0.596 | +0.518 |
 
 **What we learned.**
-- The best cross-lingual model is **embeddinggemma** at CLIR@10 = **0.541**
-  [0.50, 0.58]. Every model scores strictly lower on CLIR@10 than
+- The best cross-lingual model is **embeddinggemma** at CLIR@10 = **0.453**
+  [0.37, 0.53]. Every model scores strictly lower on CLIR@10 than
   on overall recall — the easy points come from same-language matches.
 - **Home advantage is universal and large.** When a same-language copy exists, models retrieve it far
-  more reliably than any foreign version; the gap reaches **+0.604** for
+  more reliably than any foreign version; the gap reaches **+0.518** for
   `e5-large-instruct`. The benchmark's 80 synthetic queries have *no* such crutch.
-- Two models are effectively broken on this corpus and should be read with care: `gte-base`
-  (≈0.004 — a degenerate/config failure) and `e5-large-instruct` (instruction model, very weak here).
+- `e5-large-instruct` is the genuine low performer here (instruction model, strong within-language
+  but almost no cross-lingual transfer — a real property, not a defect). `gte-multilingual-base` was
+  **excluded** from this analysis: its ≈0.004 score was a model-loading artifact (degenerate
+  embeddings; it failed even trivial same-language self-retrieval), not real performance.
 
 **Next questions.**
 1. CLIR is an average over many language directions. *Which* query→document directions actually
@@ -49,18 +50,18 @@ actually collapse, and is the difficulty symmetric (is en→zh as hard as zh→e
 
 **What we learned.**
 - **The matrix is strongly anisotropic.** Pooled over reliable models, the hardest direction is
-  **en→de** (Recall@10 = 0.16)
-  and the easiest cross-lingual direction is **en→es**
-  (0.42).
+  **fr→zh** (Recall@10 = 0.00)
+  and the easiest cross-lingual direction is **es→de**
+  (0.43).
 - **Direction matters, not just the pair.** The most asymmetric language pair is
-  **de↔en**
-  with a gap of +0.19
+  **en↔zh**
+  with a gap of -0.37
   in Recall@10 between its two directions — retrieval is not a symmetric similarity.
 - **English is the easiest target** (mean Recall@10 into English documents
-  = 0.40): models lean on English as a hub language.
+  = 0.36): models lean on English as a hub language.
 - **Spanish is the canary.** As a pure query-side language with *no* same-language gold, Spanish
-  CLIR@10 = 0.35; the weakest query language overall is
-  **fr** (0.34).
+  CLIR@10 = 0.34; the weakest query language overall is
+  **fr** (0.21).
 
 **Next questions.**
 1. Synthetic (machine-translated) queries dominate the weak directions. Is the penalty the
@@ -77,20 +78,20 @@ foreign versions? We score every query on a *fixed* target set — the patent's 
 documents (`foreign_reach@10`) — so the home-document confound is removed and only the query differs.
 
 **Numbers (pooled over reliable models).**
-- Human-original queries: foreign_reach@10 = **0.351**
-- Machine-translated queries: foreign_reach@10 = **0.349**
-- Gap = **+0.002**; paired over shared patents the mean difference is
-  **-0.045**
-  (p=0.015, n=272 patent×model).
+- Human-original queries: foreign_reach@10 = **0.236**
+- Machine-translated queries: foreign_reach@10 = **0.318**
+- Gap = **-0.082**; paired over shared patents the mean difference is
+  **-0.057**
+  (p=0.036, n=120 patent×model).
 
 **What we learned.**
 - The MT penalty on *cross-lingual* reach is **statistically significant**. Controlling for the patent (same foreign
   targets), human and machine-translated questions retrieve the foreign patent comparably — the
-  paired difference is only -0.045.
+  paired difference is only -0.057.
   This supports the project's "MT-is-fine-for-the-question" stance: the cross-lingual difficulty lives
   in the embedding model, not in the question's provenance.
 - In the naive population view synthetic queries even look slightly *stronger*
-  (0.349 vs 0.351);
+  (0.318 vs 0.236);
   that is a **patent-selection artefact**, which is exactly why the paired test is the one to trust.
 - The hardest MT *target* language is **en** — translating the
   question into that language costs the most reach.
@@ -110,11 +111,11 @@ at all, and how deep do you have to scan? Foreign mates = the same patent in oth
 mate-hit@k = any foreign twin in the top-k; mate-MRR = 1 / rank of the first foreign twin.
 
 **What we learned.**
-- The best twin-finder is **embeddinggemma** (mate-MRR = 0.361, mate-hit@10
-  = 0.595); when it does surface a twin, the median first-foreign rank is
-  **4**.
-- Pooled over reliable models, only **41%** of queries surface a foreign twin in the
-  top-10, and **17%** of (query, model) pairs never surface one even in the **top-1000**
+- The best twin-finder is **embeddinggemma** (mate-MRR = 0.323, mate-hit@10
+  = 0.518); when it does surface a twin, the median first-foreign rank is
+  **5**.
+- Pooled over reliable models, only **35%** of queries surface a foreign twin in the
+  top-10, and **18%** of (query, model) pairs never surface one even in the **top-1000**
   — those patents are effectively unreachable across the language barrier.
 - The widening gap between mate-hit@10 and mate-hit@100 (Fig 1) shows the twin is often *present but
   buried*: a re-ranking or deeper cutoff recovers a meaningful share.
@@ -131,18 +132,18 @@ mate-hit@k = any foreign twin in the top-k; mate-MRR = 1 / rank of the first for
 
 **Question.** When the *same* patent's question is asked in several languages, a language-agnostic
 retriever should return the same ranked patents. How consistent are the top-100 lists across
-languages? (RBO_ext, p=0.9; 35 multilingual patents,
-259 cross-lingual query pairs per model.)
+languages? (RBO_ext, p=0.9; 16 multilingual patents,
+69 cross-lingual query pairs per model.)
 
 **What we learned.**
-- Consistency is **low even at the ceiling**: the most consistent model is **embeddinggemma**
-  at RBO = **0.18** (1.0 = identical) — the *same question* in two languages
+- Consistency is **low even at the ceiling**: the most consistent model is **granite-278m**
+  at RBO = **0.17** (1.0 = identical) — the *same question* in two languages
   produces largely *different* top-100 patent lists. The floor is **e5-large-instruct**
-  (RBO = 0.01).
-- Inconsistency tracks bias: Pearson r(home-advantage, RBO) = **-0.89**
+  (RBO = 0.00).
+- Inconsistency tracks bias: Pearson r(home-advantage, RBO) = **-0.82**
   — models that lean hardest on the same-language copy are also the most language-sensitive in their
   rankings.
-- The most divergent language pair is **fr↔zh**.
+- The most divergent language pair is **de↔zh**.
 
 **Next questions.**
 1. If rankings differ this much by language, the lists must be filling with *language-specific* docs.
@@ -159,14 +160,14 @@ haystack); the ratio is a **same-language over-representation** factor (>1 = col
 
 **What we learned.**
 - **Collapse is severe for low-resource languages.** The most over-represented query language is
-  **zh** at **17.4×**
+  **zh** at **17.5×**
   its corpus base rate — Chinese and Spanish queries pull back their own language far beyond chance,
   even though (for es) no Spanish document is ever relevant.
 - **Collapse predicts CLIR failure.** Across models, Pearson r(over-representation, CLIR@10) =
   **-0.58**: the more a model anchors on the query language, the worse
   its cross-lingual recall. This is the mechanism behind the home advantage in Round 1 and the low
   RBO in Round 5.
-- The best model still devotes only ~58% of its top-10 to foreign
+- The best model still devotes only ~57% of its top-10 to foreign
   languages on average.
 
 **Next questions.**
@@ -187,14 +188,14 @@ foreign distractors?
 **What we learned.**
 - **Same-language noise is the dominant blocker for high-resource query languages.** Pooled over
   reliable models, a same-language non-gold out-ranks the first gold on
-  **58%** of queries, and
+  **64%** of queries, and
   **44%** of all above-gold blockers share the query's
   language — far above their corpus base rate.
 - It is **language-specific**: the most self-confused query language is
   **fr**
-  (66% same-language blockers), the least
+  (65% same-language blockers), the least
   is **zh**
-  (30%). Spanish, with no same-language
+  (29%). Spanish, with no same-language
   gold, is mostly blocked by *foreign* distractors — a different failure mode.
 - Confusion here is a direct consequence of the Round-6 collapse: the same-language documents the
   model over-fetches are exactly what bury the foreign twin.
@@ -215,13 +216,13 @@ AUC(gold > non-gold) per query and split it by direction (same- vs cross-languag
 **What we learned.**
 - **Foreign twins are systematically less separable.** Even the best model separates same-language
   gold from the crowd far better than foreign gold; pooled, the separability home advantage
-  (AUC_same − AUC_cross) is **+0.08**. The model assigns lower
+  (AUC_same − AUC_cross) is **+0.09**. The model assigns lower
   similarity to the correct patent simply because it is written in another language.
 - **Separability explains recall.** Across models, Pearson r(AUC_cross, CLIR@10) =
-  **+0.98** — cross-lingual recall is, mechanically, a
+  **+0.96** — cross-lingual recall is, mechanically, a
   cross-lingual *separability* problem, not just a cutoff problem. The best separator is
   **embeddinggemma** (AUC_cross = 0.91).
-- The least separable query language is **de**.
+- The least separable query language is **en**.
 - Implication: a monolingual re-ranker won't fix this — the foreign gold is under-scored at the
   embedding level. Better *alignment* (or fusing complementary models) is required.
 
@@ -237,21 +238,21 @@ AUC(gold > non-gold) per query and split it by direction (same- vs cross-languag
 
 **Question.** Models fail along different languages. Do they fail on the *same* queries, or are their
 errors complementary enough to combine? Baseline = best single model
-(embeddinggemma, CLIR@10 = 0.54).
+(embeddinggemma, CLIR@10 = 0.45).
 
 **What we learned.**
 - **Untuned fusion does *not* beat a dominant model.** RRF over the top-4
-  (embeddinggemma, bge-m3, qwen3-0.6B, nomic-v2-moe) lands at CLIR@10 = **0.51**
-  (-0.04 vs the best single model), and fusing *all* reliable models is worse
-  still (0.47, -0.07). `embeddinggemma` is strong enough
+  (embeddinggemma, bge-m3, qwen3-0.6B, nomic-v2-moe) lands at CLIR@10 = **0.45**
+  (-0.01 vs the best single model), and fusing *all* reliable models is worse
+  still (0.41, -0.04). `embeddinggemma` is strong enough
   that rank-averaging with weaker models only injects noise — a caution against reflexive ensembling.
 - **Yet complementarity is real.** The oracle (any reliable model finds the foreign twin in top-10)
-  reaches **0.66** — a headroom of **+0.12** over the best
+  reaches **0.55** — a headroom of **+0.10** over the best
   single model. The twins *are* findable; no single model finds all of them, so a *score-aware* or
   *learned* combiner (not plain RRF) is where the gains live.
 - **Routing helps, slightly.** The best model differs across query languages
-  (1 distinct winners over 5 languages); an oracle per-language router
-  edges past the best single model (CLIR@10 = 0.54). The remaining headroom is
+  (3 distinct winners over 5 languages); an oracle per-language router
+  edges past the best single model (CLIR@10 = 0.46). The remaining headroom is
   concentrated in the lower-resource / homeless languages, where no current model is strong.
 
 **Next questions.**
@@ -272,20 +273,19 @@ even, but never lets an evenly-mediocre model out-rank a genuinely capable one.
 
 | rank | model | CLIR-MRS | capability | robustness |
 | ---: | --- | :---: | :---: | :---: |
-| 1 | `embeddinggemma` | 0.91 [0.83,0.90] | 1.00 | 0.82 |
-| 2 | `bge-m3` | 0.81 [0.73,0.85] | 0.89 | 0.81 |
-| 3 | `nomic-v2-moe` | 0.73 [0.66,0.78] | 0.83 | 0.77 |
-| 4 | `qwen3-0.6B` | 0.72 [0.66,0.76] | 0.88 | 0.62 |
-| 5 | `granite-278m` | 0.60 [0.53,0.64] | 0.79 | 0.53 |
-| 6 | `SapBERT` | 0.41 [0.35,0.44] | 0.49 | 0.66 |
-| 7 | `LaBSE` | 0.40 [0.37,0.43] | 0.61 | 0.33 |
-| 8 | `e5-large-instruct` | 0.25 [0.20,0.28] | 0.36 | 0.39 |
-| 9 | `gte-base` | 0.00 [0.00,0.00] | 0.00 | 0.67 |
+| 1 | `embeddinggemma` | 0.75 [0.68,0.83] | 1.00 | 0.50 |
+| 2 | `bge-m3` | 0.73 [0.59,0.82] | 0.83 | 0.76 |
+| 3 | `nomic-v2-moe` | 0.66 [0.55,0.79] | 0.77 | 0.70 |
+| 4 | `granite-278m` | 0.59 [0.45,0.68] | 0.60 | 0.97 |
+| 5 | `qwen3-0.6B` | 0.55 [0.49,0.66] | 0.79 | 0.39 |
+| 6 | `LaBSE` | 0.27 [0.18,0.39] | 0.40 | 0.36 |
+| 7 | `SapBERT` | 0.22 [0.10,0.34] | 0.26 | 0.76 |
+| 8 | `e5-large-instruct` | 0.00 [0.00,0.02] | 0.00 | 0.66 |
 
 **What we learned.**
-- The most robust multilingual retriever is **embeddinggemma** (CLIR-MRS = 0.91
-  [0.83, 0.90]; capability 1.00, robustness
-  0.82). It leads on the capability axes (accuracy, CLIR, separability) and stays
+- The most robust multilingual retriever is **embeddinggemma** (CLIR-MRS = 0.75
+  [0.68, 0.83]; capability 1.00, robustness
+  0.50). It leads on the capability axes (accuracy, CLIR, separability) and stays
   competitive on evenness; its weakest axis is **mt_robust**.
 - Single-number recall is **misleading**: monolingual/instruction models (e.g. `e5-large-instruct`)
   with respectable same-language matches collapse on the cross-lingual axes and fall to the bottom —

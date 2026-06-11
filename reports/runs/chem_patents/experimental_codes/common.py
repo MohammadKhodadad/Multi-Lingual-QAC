@@ -84,7 +84,11 @@ MODELS: Dict[str, str] = {
     "sentence-transformers/LaBSE": "LaBSE",
     "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR": "SapBERT",
     "intfloat/multilingual-e5-large-instruct": "e5-large-instruct",
-    "Alibaba-NLP/gte-multilingual-base": "gte-base",
+    # Alibaba-NLP/gte-multilingual-base EXCLUDED 2026-06-11: its results are a model-loading
+    # artifact, not real performance — it fails trivial same-language self-retrieval and shows
+    # degenerate, near-equidistant embeddings (collapses identically on alias_graph and these
+    # patents, recall@10 ~0.005 on both). Dropped from the registry AND the rankings() loader so
+    # no analysis or plot counts it. Raw parts/predictions are kept on disk as the eval record.
 }
 MODEL_ORDER = list(MODELS)
 SHORT = MODELS
@@ -139,6 +143,7 @@ def rankings() -> pd.DataFrame:
         if p.is_file():
             frames.append(pd.read_parquet(p))
     df = pd.concat(frames, ignore_index=True)
+    df = df[df["model"].isin(MODELS)].reset_index(drop=True)  # drop excluded models (e.g. gte)
     df["query_language"] = df["query_language"].str.lower()
     df["corpus_language"] = df["corpus_language"].str.lower()
     return df

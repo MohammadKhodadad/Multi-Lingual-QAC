@@ -16,10 +16,10 @@ rankings); two language variants of the *same* question share fewer than 4 of th
 The embedding space is far from language-agnostic, and Chinese is the consistent odd-one-out (Fig 1, 4).
 
 **2. "How often does a confusable wrong compound beat the right one?" → Often, and more in some
-languages.** A chemically-similar look-alike out-ranks every gold patent on **14%–78%**
+languages.** A chemically-similar look-alike out-ranks every gold patent on **14%–48%**
 of queries (publication lens) depending on the model; it is worst for German/Chinese and driven almost
 entirely by **sibling** compounds, not broader parent classes (Fig 2). The repeat offenders are a small
-set of universal attractors — **polypeptide**, **methyl**, **ethene**, **hydroxide**, **dioxygen** (Fig 5).
+set of universal attractors — **polypeptide**, **methyl**, **ethene**, **hydroxide**, **biphenyl** (Fig 5).
 
 ## What's really going on (mechanism)
 
@@ -27,7 +27,7 @@ set of universal attractors — **polypeptide**, **methyl**, **ethene**, **hydro
   far better (0.63–0.82) than foreign-language gold (0.35–0.47). Because en/fr source patents dominate,
   42% of an English query's gold is reachable in-English vs only 8–10% for de/es/zh — so English's
   apparent lead is mostly *where the gold lives*, not encoder skill. Retriever language bias is what
-  drives the cross-lingual inconsistency (Pearson r = **-0.87** between
+  drives the cross-lingual inconsistency (Pearson r = **-0.80** between
   same-language share and RBO).
 - **The confuser is chemistry, whether you fall in is language.** The most-threatening look-alike is the
   same compound across all 5 languages (a shared chemical attractor), but *whether* it actually beats
@@ -36,7 +36,7 @@ set of universal attractors — **polypeptide**, **methyl**, **ethene**, **hydro
   `role` questions (0.60, 25%) — structure descriptions are exactly what siblings share (Fig 6). A
   language-independent **formula token** (H2S, CO2) measurably helps (p < 0.01), even in Chinese.
 - **Confusion is a separability failure (Fig 8).** Behind every confusion, the cosine score barely
-  separates gold from sibling: AUC(gold>look-alike) = **0.55** for
+  separates gold from sibling: AUC(gold>look-alike) = **0.56** for
   confused queries vs **0.70** otherwise.
 
 ## What to do about it
@@ -55,15 +55,14 @@ set of universal attractors — **polypeptide**, **methyl**, **ethene**, **hydro
 
 | model | pub_recall10 | cross_lingual_rbo | confusion_publication | separability_auc | MRS | MRS_ci | accuracy_rank | MRS_rank |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| embeddinggemma | 0.67 | 0.387 | 0.144 | 0.695 | 0.991 | [0.86,1.00] | 1 | 1 |
-| qwen3-0.6B | 0.641 | 0.349 | 0.227 | 0.669 | 0.902 | [0.77,0.96] | 2 | 2 |
-| bge-m3 | 0.604 | 0.288 | 0.237 | 0.657 | 0.813 | [0.69,0.88] | 3 | 3 |
-| LaBSE | 0.511 | 0.314 | 0.295 | 0.655 | 0.779 | [0.63,0.85] | 6 | 4 |
-| granite-278m | 0.529 | 0.289 | 0.318 | 0.655 | 0.757 | [0.61,0.84] | 5 | 5 |
-| nomic-v2-moe | 0.58 | 0.239 | 0.215 | 0.649 | 0.727 | [0.60,0.83] | 4 | 6 |
-| SapBERT | 0.352 | 0.142 | 0.424 | 0.617 | 0.494 | [0.32,0.60] | 7 | 7 |
-| e5-large-instruct | 0.237 | 0.021 | 0.481 | 0.61 | 0.239 | [0.17,0.36] | 8 | 8 |
-| gte-base | 0.047 | 0.003 | 0.782 | 0.564 | 0.0 | [0.00,0.13] | 9 | 9 |
+| embeddinggemma | 0.67 | 0.387 | 0.144 | 0.695 | 0.991 | [0.83,1.00] | 1 | 1 |
+| qwen3-0.6B | 0.641 | 0.349 | 0.227 | 0.669 | 0.852 | [0.68,0.94] | 2 | 2 |
+| bge-m3 | 0.604 | 0.288 | 0.237 | 0.657 | 0.743 | [0.59,0.84] | 3 | 3 |
+| LaBSE | 0.511 | 0.314 | 0.295 | 0.655 | 0.679 | [0.49,0.79] | 6 | 4 |
+| granite-278m | 0.529 | 0.289 | 0.318 | 0.655 | 0.652 | [0.46,0.79] | 5 | 5 |
+| nomic-v2-moe | 0.58 | 0.239 | 0.215 | 0.649 | 0.651 | [0.49,0.79] | 4 | 6 |
+| SapBERT | 0.352 | 0.142 | 0.424 | 0.617 | 0.298 | [0.12,0.44] | 7 | 7 |
+| e5-large-instruct | 0.237 | 0.021 | 0.481 | 0.61 | 0.0 | [0.00,0.17] | 8 | 8 |
 
 *pub_recall10 = per-publication Recall@10; cross_lingual_rbo from Round 1; confusion = publication-lens
 rate; separability = AUC(gold>look-alike); MRS = min-max-normalised mean of the five axes with 95%

@@ -5,7 +5,7 @@
 ### Overview
 
 - Dataset: `MehdiAstaraki/multi-lingual-qac-epo`
-- Models compared: `9`
+- Models compared: `8`
 - Best model by `recall_at_10`: `google/embeddinggemma-300m` (0.5791)
 
 ### Ranking
@@ -20,7 +20,6 @@
 | 6 | `intfloat/multilingual-e5-large-instruct` | 0.2963 | 0.2963 | 0.4512 | 0.2281 | 0.2390 | 0.2409 | 0.3067 | 0.3523 | 0.9597 | 171.2 |
 | 7 | `sentence-transformers/LaBSE` | 0.2727 | 0.2727 | 0.5252 | 0.1860 | 0.2036 | 0.2056 | 0.2382 | 0.3103 | **0.3307** | 74.0 |
 | 8 | `cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR` | 0.2205 | 0.2205 | 0.4125 | 0.1505 | 0.1629 | 0.1651 | 0.1969 | 0.2512 | 0.4948 | 119.7 |
-| 9 | `Alibaba-NLP/gte-multilingual-base` | 0.0050 | 0.0050 | 0.0253 | 0.0012 | 0.0026 | 0.0029 | 0.0029 | 0.0092 | 0.8056 | 54.4 |
 
 ### Metric Winners
 

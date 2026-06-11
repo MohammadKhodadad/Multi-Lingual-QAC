@@ -151,7 +151,10 @@ def main():
     print(">> loading qrels + corpus + queries (source_publication) ...")
     gold, pub_lookup, src_pub = load_gold_and_pubs()
     models = _discover_models(PRED_DIR, None)
-    print(f">> {len(models)} model(s) with predictions")
+    # Drop gte-multilingual-base: its predictions are a model-loading artifact (degenerate
+    # embeddings; fails trivial same-language self-retrieval), not real performance.
+    models = [(label, slug) for label, slug in models if "gte" not in slug.lower()]
+    print(f">> {len(models)} model(s) with predictions (gte excluded)")
 
     concept_rows, pp_rows = [], []
     c_units = c_gold = p_units = p_gold = 0

@@ -4,29 +4,29 @@
   "same_lang_population": "57 originals (only queries with a same-language gold)",
   "cross_lang_population": "137 queries with a cross-language gold",
   "embeddinggemma": {
-    "D50_same": 1.0,
-    "D50_cross": 5.0,
-    "XRC50": 5.0,
-    "D75_same": 16.0,
-    "D75_cross": 70.0,
-    "XRC75": 4.375,
-    "D90_same": 245.0,
-    "D90_cross": 567.0,
-    "XRC90": 2.314,
+    "D50_same": 3.0,
+    "D50_cross": 7.0,
+    "XRC50": 2.333,
+    "D75_same": 45.0,
+    "D75_cross": 123.0,
+    "XRC75": 2.733,
+    "D90_same": 340.0,
+    "D90_cross": 709.0,
+    "XRC90": 2.085,
     "XRC90_censored": false,
-    "cross_censored_frac": 0.0725,
-    "RRC_at_100": 0.7767,
-    "RRC_at_1000": 0.9275,
-    "lost_at_1000": 0.0725
+    "cross_censored_frac": 0.0876,
+    "RRC_at_100": 0.7153,
+    "RRC_at_1000": 0.9124,
+    "lost_at_1000": 0.0876
   },
   "consistency_checks": {
-    "pooled_lost_share_top1000_8model_pool": 0.1675,
+    "pooled_lost_share_top1000_8model_pool": 0.1834,
     "expected_round04_pooled_lost_share_8model": 0.1542,
-    "pooled_lost_share_top1000_all9": 0.2542,
-    "egemma_lost_share_expected_0.0584": 0.0725,
-    "egemma_RRC1000_expected_0.9416": 0.9275
+    "pooled_lost_share_top1000_all9": 0.1834,
+    "egemma_lost_share_expected_0.0584": 0.0876,
+    "egemma_RRC1000_expected_0.9416": 0.9124
   },
-  "best_xrc50_model": "LaBSE",
-  "n_models_xrc50_censored": 1,
-  "n_models_xrc95_censored": 9
+  "best_xrc50_model": "granite-278m",
+  "n_models_xrc50_censored": 0,
+  "n_models_xrc95_censored": 8
 }

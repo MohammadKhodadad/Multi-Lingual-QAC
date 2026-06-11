@@ -15,4 +15,3 @@ Gold = the query's OWN source publication's language variants -- the single pate
 | 6 | `sentence-transformers-labse` | 0.5114 | 0.7008 | 0.1265 | 0.4653 | 0.5299 | 0.4176 |
 | 7 | `cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr` | 0.3523 | 0.5391 | 0.0856 | 0.3112 | 0.3807 | 0.2692 |
 | 8 | `intfloat-multilingual-e5-large-instruct` | 0.2374 | 0.4419 | 0.0583 | 0.2308 | 0.3702 | 0.1836 |
-| 9 | `alibaba-nlp-gte-multilingual-base` | 0.0467 | 0.0758 | 0.0129 | 0.0413 | 0.0753 | 0.0263 |

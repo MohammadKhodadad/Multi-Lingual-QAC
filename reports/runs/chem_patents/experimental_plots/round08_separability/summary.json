@@ -1,72 +1,65 @@
 {
   "best_separability_model": "embeddinggemma",
-  "best_auc_cross": 0.9115,
-  "mean_sep_home_adv": 0.0845,
-  "pearson_auccross_clir": 0.98,
-  "weakest_language": "de",
+  "best_auc_cross": 0.9129,
+  "mean_sep_home_adv": 0.091,
+  "pearson_auccross_clir": 0.959,
+  "weakest_language": "en",
   "per_model": [
     {
       "short": "embeddinggemma",
-      "auc_all": 0.9143,
-      "auc_same": 0.9587,
-      "auc_cross": 0.9115,
-      "sep_home_adv": 0.0472
+      "auc_all": 0.9171,
+      "auc_same": 0.9508,
+      "auc_cross": 0.9129,
+      "sep_home_adv": 0.0379
     },
     {
       "short": "bge-m3",
-      "auc_all": 0.8915,
-      "auc_same": 0.9364,
-      "auc_cross": 0.8847,
-      "sep_home_adv": 0.0518
+      "auc_all": 0.8848,
+      "auc_same": 0.9546,
+      "auc_cross": 0.8701,
+      "sep_home_adv": 0.0845
     },
     {
       "short": "qwen3-0.6B",
-      "auc_all": 0.9037,
-      "auc_same": 0.957,
-      "auc_cross": 0.8911,
-      "sep_home_adv": 0.0659
+      "auc_all": 0.8801,
+      "auc_same": 0.9448,
+      "auc_cross": 0.8643,
+      "sep_home_adv": 0.0805
     },
     {
       "short": "nomic-v2-moe",
-      "auc_all": 0.8926,
-      "auc_same": 0.9546,
-      "auc_cross": 0.8754,
-      "sep_home_adv": 0.0792
+      "auc_all": 0.8864,
+      "auc_same": 0.9527,
+      "auc_cross": 0.8751,
+      "sep_home_adv": 0.0775
     },
     {
       "short": "granite-278m",
-      "auc_all": 0.8753,
-      "auc_same": 0.9207,
-      "auc_cross": 0.8773,
-      "sep_home_adv": 0.0434
+      "auc_all": 0.8488,
+      "auc_same": 0.8939,
+      "auc_cross": 0.8605,
+      "sep_home_adv": 0.0334
     },
     {
       "short": "LaBSE",
-      "auc_all": 0.8298,
-      "auc_same": 0.893,
-      "auc_cross": 0.8244,
-      "sep_home_adv": 0.0686
+      "auc_all": 0.8177,
+      "auc_same": 0.8869,
+      "auc_cross": 0.8096,
+      "sep_home_adv": 0.0773
     },
     {
       "short": "SapBERT",
-      "auc_all": 0.7903,
-      "auc_same": 0.8566,
-      "auc_cross": 0.7819,
-      "sep_home_adv": 0.0747
+      "auc_all": 0.8023,
+      "auc_same": 0.8645,
+      "auc_cross": 0.791,
+      "sep_home_adv": 0.0735
     },
     {
       "short": "e5-large-instruct",
-      "auc_all": 0.7894,
-      "auc_same": 0.9574,
-      "auc_cross": 0.7124,
-      "sep_home_adv": 0.2449
-    },
-    {
-      "short": "gte-base",
-      "auc_all": 0.6196,
-      "auc_same": 0.6665,
-      "auc_cross": 0.4799,
-      "sep_home_adv": 0.1865
+      "auc_all": 0.7873,
+      "auc_same": 0.9647,
+      "auc_cross": 0.7015,
+      "sep_home_adv": 0.2632
     }
   ]
 }

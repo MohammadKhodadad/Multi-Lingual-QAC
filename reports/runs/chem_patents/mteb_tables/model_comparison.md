@@ -5,7 +5,7 @@
 ### Overview
 
 - Dataset: `MehdiAstaraki/multi-lingual-qac-chem-patents`
-- Models compared: `9`
+- Models compared: `8`
 - Best model by `recall_at_10`: `google/embeddinggemma-300m` (0.5739)
 
 ### Ranking
@@ -20,7 +20,6 @@
 | 6 | `sentence-transformers/LaBSE` | 0.3010 | 0.3010 | 0.4787 | 0.1981 | 0.2092 | 0.2109 | 0.2505 | 0.2977 | **0.2429** | 140.5 |
 | 7 | `cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR` | 0.2377 | 0.2377 | 0.4113 | 0.1628 | 0.1727 | 0.1741 | 0.1994 | 0.2446 | 0.3381 | 196.0 |
 | 8 | `intfloat/multilingual-e5-large-instruct` | 0.2183 | 0.2183 | 0.3772 | 0.1547 | 0.1636 | 0.1658 | 0.2065 | 0.2473 | 0.9734 | 189.9 |
-| 9 | `Alibaba-NLP/gte-multilingual-base` | 0.0048 | 0.0048 | 0.0224 | 0.0014 | 0.0019 | 0.0021 | 0.0028 | 0.0073 | 0.6766 | 73.2 |
 
 ### Metric Winners
 

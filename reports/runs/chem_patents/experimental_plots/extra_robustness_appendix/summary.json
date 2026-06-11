@@ -1,81 +1,81 @@
 {
   "method": "percentile bootstrap (common.bootstrap_ci family); headline = sign/order stability, not CI width. NO BCa (no helper exists; troubleshooter option a). N_BOOT=10000, seed=20260610, alpha=0.05.",
   "A1_separability_r": {
-    "point_r_n7": 0.9802,
-    "r_n9": 0.9149,
+    "point_r_n7": 0.9522,
+    "r_n9": 0.9592,
     "ci95": [
-      0.9276,
-      0.9968
+      0.7136,
+      0.9985
     ],
-    "sign_stability_P_r_gt_0": 1.0,
+    "sign_stability_P_r_gt_0": 0.9968,
     "n_degenerate_bootstrap_draws": 32,
     "n": 7,
     "headline": "sign-stability (P(r>0)) is the load-bearing read, not the CI width",
-    "gate_r_point_approx_0.958": false
+    "gate_r_point_approx_0.958": true
   },
   "A6_XRC50_depth_bootstrap": {
     "embeddinggemma": {
-      "point_XRC50": 5.0,
-      "ref_XRC50": 5.0,
+      "point_XRC50": 2.3333,
+      "ref_XRC50": 2.333,
       "ci95": [
-        2.0,
-        6.0
+        0.6364,
+        12.0
       ],
       "censored_draw_frac": 0.0,
       "ci_is_lower_bound": false,
-      "n_cross": 524,
-      "n_same": 261,
+      "n_cross": 137,
+      "n_same": 57,
       "gate_matches_ref": true
     },
     "bge-m3": {
-      "point_XRC50": 3.5,
-      "ref_XRC50": 3.5,
+      "point_XRC50": 2.0,
+      "ref_XRC50": 2.0,
       "ci95": [
-        1.6667,
-        5.5
+        0.4375,
+        9.25
       ],
       "censored_draw_frac": 0.0,
       "ci_is_lower_bound": false,
-      "n_cross": 524,
-      "n_same": 261,
+      "n_cross": 137,
+      "n_same": 57,
       "gate_matches_ref": true
     },
     "granite-278m": {
-      "point_XRC50": 3.2,
-      "ref_XRC50": 3.2,
+      "point_XRC50": 1.3704,
+      "ref_XRC50": 1.37,
       "ci95": [
-        0.7619,
-        6.6667
+        0.2073,
+        12.4
       ],
       "censored_draw_frac": 0.0,
       "ci_is_lower_bound": false,
-      "n_cross": 524,
-      "n_same": 261,
+      "n_cross": 137,
+      "n_same": 57,
       "gate_matches_ref": true
     }
   },
   "A5_ARI100_gap_egemma_vs_qwen3": {
-    "ari100_egemma": 0.3248,
-    "ari100_qwen3": 0.3451,
-    "gap_qwen3_minus_egemma": 0.0203,
+    "ari100_egemma": 0.3077,
+    "ari100_qwen3": 0.2766,
+    "gap_qwen3_minus_egemma": -0.0311,
     "gap_ci95": [
-      -0.072,
-      0.1118
+      -0.2122,
+      0.1415
     ],
     "gap_ci_includes_zero": true,
-    "order_prob_P_egemma_lower": 0.6731,
-    "n_cross_queries": 524,
+    "order_prob_P_egemma_lower": 0.3642,
+    "n_cross_queries": 137,
     "gate_egemma_0.2286": false,
     "gate_qwen3_0.2326": false,
     "honest_read": "the 0.004 ARI@100 gap is NOT a reliable ordering: the paired-bootstrap CI on the gap straddles 0 and the order-probability is near a coin-flip; report the two ARI@100 values as effectively tied, not as a strict egemma<qwen3 win"
   },
   "W2_separability_partial_r_controlling_recall10": {
-    "partial_r": 0.5528,
-    "p_two_sided": 0.2553,
-    "zero_order_r": 0.9802,
+    "partial_r": 0.0229,
+    "p_two_sided": 0.9656,
+    "zero_order_r": 0.9522,
     "n": 7,
     "n_controls": 1,
-    "honest_guidance": "Cross-language AUC and overall Recall@10 are strongly collinear across the 7 non-degenerate models; at this n the separability->CLIR link cannot be statistically disentangled from general capability (partial r=+0.553, n.s.). Frame the separability->floor link as DESCRIPTIVE, not as an effect net of capability. Do NOT claim 'not a capability artifact'."
+    "honest_guidance": "Cross-language AUC and overall Recall@10 are strongly collinear across the 7 non-degenerate models; at this n the separability->CLIR link cannot be statistically disentangled from general capability (partial r=+0.023, n.s.). Frame the separability->floor link as DESCRIPTIVE, not as an effect net of capability. Do NOT claim 'not a capability artifact'."
   },
   "gates_all_pass": false
 }

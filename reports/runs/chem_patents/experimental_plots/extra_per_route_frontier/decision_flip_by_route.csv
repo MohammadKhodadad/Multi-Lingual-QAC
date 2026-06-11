@@ -2,5 +2,5 @@ route,recall_only_pick,frontier_pick,flipped
 en,embeddinggemma,embeddinggemma,False
 de,embeddinggemma,embeddinggemma,False
 es,embeddinggemma,embeddinggemma,False
-fr,embeddinggemma,embeddinggemma,False
+fr,embeddinggemma,nomic-v2-moe,True
 zh,embeddinggemma,embeddinggemma,False
