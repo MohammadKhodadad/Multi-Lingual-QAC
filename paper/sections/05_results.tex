@@ -1,18 +1,40 @@
 \section{Results}
 
-We organize the results around the three questions the benchmark suite is meant to
-answer: whether generated QACs are usable, whether cross-language retrieval is
-harder than same-language retrieval, and whether chemistry-aware hard negatives
-surface failures that ordinary relevance metrics hide.
+We organize the results around the questions the benchmark suite is meant to
+answer: how models perform across releases and languages, where aggregate recall
+hides cross-language weakness, whether generated QACs are usable, and whether
+chemistry-aware hard negatives surface failures that ordinary relevance metrics
+hide.
 
-\paragraph{QAC quality is high enough for benchmark construction.}
-The 97-item human-audited sample from the EPO-derived QAC generation data gives
-a mean score of 8.33/10, with 94 items falling in the ``good'' bucket. Technical
-questions score slightly higher than semantic questions on average (8.72 vs.\
-7.91), but both modes remain usable for retrieval evaluation. The LLM verifier
-is slightly stricter than the human annotator (79.0\% vs.\ 83.3\%), supporting
-its use for filtering while still requiring human audit for benchmark-quality
-claims.
+\begin{figure*}[t]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{cp_fig03_directional_clir_matrix.png}
+        \centerline{\small Google Patents}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{claimC_C4_epo_heatmap.png}
+        \centerline{\small EPO}
+    \end{minipage}
+    \caption{Recall@10 by model and query language for the two benchmark
+    releases. The balanced-mean column summarizes broad model quality, while the
+    language columns show that model rankings and absolute recall vary by query
+    language and source.}
+    \label{fig:release-language-heatmaps}
+\end{figure*}
+
+\paragraph{Model performance varies by release and language.}
+Figure~\ref{fig:release-language-heatmaps} gives the first-order retrieval
+picture across all evaluated models and query languages. The strongest models
+are stable across the two releases: \texttt{embeddinggemma} has the highest
+balanced Recall@10 on both Google Patents (0.57) and EPO (0.58), while
+\texttt{bge-m3} is close behind, especially on EPO (0.55). The heatmaps also
+show why a single leaderboard number is incomplete: weaker models degrade
+unevenly across German, Spanish, French, and Chinese queries, and the EPO release
+has a different language mix from Google Patents.
 
 \begin{figure*}[t]
     \centering
@@ -43,6 +65,14 @@ language.
     relevant to multilingual chemistry search.}
     \label{fig:language-collapse}
 \end{figure}
+
+\paragraph{QAC quality is high enough for benchmark construction.}
+The 97-item human-audited sample from the EPO-derived QAC generation data gives
+a mean score of 8.33/10, with 94 items falling in the ``good'' bucket. Technical
+questions score slightly higher than semantic questions on average (8.72 vs.\
+7.91), but both modes remain usable for retrieval evaluation. The LLM scorer is
+slightly stricter than the human annotator (79.0\% vs.\ 83.3\%), supporting its
+use for filtering while still requiring human audit for benchmark-quality claims.
 
 \paragraph{The errors are not only multilingual; they are chemical.}
 The auxiliary alias-graph stress test shows a second failure mode. Even when a retrieved
