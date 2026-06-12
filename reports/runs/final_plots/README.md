@@ -56,7 +56,7 @@ Every figure's exact numbers are in `data/<name>.csv`; candidates render to `can
 | `figD3_cross_lingual_rbo` | D | cross-lingual RBO ≈ 0.39: same concept, 5 languages → mostly different docs |
 | `figD4_score_collapse` | D | confused queries: gold-vs-look-alike separability AUC collapses to ≈0.52 |
 | `figE4_rrc_budget_curves` | E | RRC@K re-ranker recoverability curves with knee K* and floor |
-| `figE5_ari_decomposition` | E | ARI stacked decomposition (cheap / deep / alignment-only floor) |
+| `figE5_ari_decomposition` | E | re-ranker budget decomposition: re-rankable in top-10 / needs top-100 pool / alignment floor beyond top-100 |
 
 ## What changed numerically vs the stale (135-query) version
 

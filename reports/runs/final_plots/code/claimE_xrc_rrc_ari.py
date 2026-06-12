@@ -39,6 +39,8 @@ def _load():
     curve = pd.read_csv(fp.DATA / "E_rrc_curve.csv")
     m = cf.merge(ari[["short", "RRC_at_100", "deep_100_to_1000", "L_inf", "ARI_at_100"]],
                  on="short", how="left")
+    rrc10 = curve[curve["K"] == 10][["short", "RRC"]].rename(columns={"RRC": "RRC_at_10"})
+    m = m.merge(rrc10, on="short", how="left")
     order = [fp.short(x) for x in fp.MODEL_ORDER if fp.short(x) in set(m["short"])]
     m["short"] = pd.Categorical(m["short"], categories=order, ordered=True)
     m = m.sort_values("short").reset_index(drop=True)
@@ -47,6 +49,16 @@ def _load():
 
 def _model_color(s):
     return fp.MODEL_COLOR[[mm for mm in fp.MODEL_ORDER if fp.short(mm) == s][0]]
+
+
+def _plain_log(ax, axis="x", ticks=None):
+    """Show a log axis with plain integer ticks (1, 2, 10, 100 …) instead of 10^0 / 2×10^0 notation."""
+    from matplotlib.ticker import FuncFormatter, NullFormatter
+    a = ax.xaxis if axis == "x" else ax.yaxis
+    if ticks is not None:
+        (ax.set_xticks if axis == "x" else ax.set_yticks)(ticks)
+    a.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    a.set_minor_formatter(NullFormatter())
 
 
 # --------------------------------------------------------------------------- E1
@@ -84,6 +96,7 @@ def e1_scatter():
     ax.text(0.105, ax.get_ylim()[1], "degeneracy gate", color="#c44e52", fontsize=8.5,
             va="top", rotation=90)
     ax.set_yscale("log")
+    _plain_log(ax, "y", ticks=[1, 2, 5, 10, 100])
     ax.set_xlim(0.03, float(m["clir_at_10"].max()) * 1.12)
     ax.set_xlabel("CLIR@10  (cross-lingual recall, higher = better)")
     ax.set_ylabel("XRC50  reading-cost multiplier  (log, lower = better)")
@@ -106,7 +119,9 @@ def _panel_xrc(ax, m):
     ax.set_yticks(ys); ax.set_yticklabels(good["short"])
     ax.axvline(1.0, color="#888", ls="--", lw=1.1)
     ax.set_xscale("log")
-    ax.set_xlabel("XRC50 (log)")
+    ax.set_xlim(1, 7.5)
+    _plain_log(ax, "x", ticks=[1, 2, 3, 4, 5, 6, 7])
+    ax.set_xlabel("XRC50  (× deeper to read, log)")
     ax.set_title("(a) reading cost")
 
 
@@ -120,6 +135,7 @@ def _panel_rrc(ax, m, curve, knee):
             ax.scatter([kk], [rr], color=_model_color(s), s=28, zorder=5,
                        edgecolor="k", linewidth=0.5)
     ax.set_xscale("log")
+    _plain_log(ax, "x", ticks=[1, 10, 100, 1000])
     ax.set_xlabel("re-rank depth K")
     ax.set_ylabel("RRC@K  (first foreign twin within top-K)")
     ax.set_title("(b) re-ranker recoverability (• = knee K*)")
@@ -127,16 +143,20 @@ def _panel_rrc(ax, m, curve, knee):
 
 
 def _panel_ari(ax, m):
-    good = m[~m["degenerate_clir"]].sort_values("ARI_at_100")
+    # decomposition split at K=10 and K=100: re-rankable in a top-10 rerank, recoverable only with a
+    # deeper top-100 pool, and the alignment-only floor that lives beyond top-100.
+    good = m[~m["degenerate_clir"]].copy()
+    good["floor"] = 1.0 - good["RRC_at_100"]
+    good = good.sort_values("floor")
     ys = np.arange(len(good))[::-1]
-    cheap = good["RRC_at_100"].to_numpy()
-    deep = good["deep_100_to_1000"].to_numpy()
-    floor = good["L_inf"].to_numpy()
-    ax.barh(ys, cheap, color="#2a924a", label="re-rankable in top-100")
-    ax.barh(ys, deep, left=cheap, color="#9bd49b", label="needs deeper pool")
-    ax.barh(ys, floor, left=cheap + deep, color="#c44e52", label="alignment-only floor")
-    for y, r in zip(ys, good.itertuples()):
-        ax.text(1.01, y, f"ARI {r.ARI_at_100:.2f}", va="center", fontsize=8)
+    cheap = good["RRC_at_10"].to_numpy()
+    deep = (good["RRC_at_100"] - good["RRC_at_10"]).to_numpy()
+    floor = good["floor"].to_numpy()
+    ax.barh(ys, cheap, color="#2a924a", label="re-rankable in top-10")
+    ax.barh(ys, deep, left=cheap, color="#9bd49b", label="needs deeper pool (top-100)")
+    ax.barh(ys, floor, left=cheap + deep, color="#c44e52", label="alignment-only floor (beyond top-100)")
+    for y, fl in zip(ys, floor):
+        ax.text(1.01, y, f"floor {fl:.2f}", va="center", fontsize=8)
     ax.set_yticks(ys); ax.set_yticklabels(good["short"])
     ax.set_xlim(0, 1.18)
     ax.set_xlabel("share of the cross-lingual shortfall")
@@ -177,6 +197,7 @@ def e3_scatter_inset():
         ax.annotate(f"{r['short']} (degenerate)", (r["clir_at_10"], r["XRC50"]),
                     textcoords="offset points", xytext=(10, -2), fontsize=8.5, color="#777")
     ax.set_yscale("log")
+    _plain_log(ax, "y", ticks=[1, 2, 5, 10, 100])
     ax.set_xlim(0.03, float(m["clir_at_10"].max()) * 1.12)
     ax.set_ylim(1.1, 220)  # headroom so the inset clears every data point
     ax.set_xlabel("CLIR@10  (higher = better)")
@@ -189,7 +210,8 @@ def e3_scatter_inset():
     for s in top3:
         c = curve[curve["short"] == s].sort_values("K")
         axin.plot(c["K"], c["RRC"], color=_model_color(s), lw=1.6, label=s)
-    axin.set_xscale("log"); axin.set_title("RRC@K (top-3)", fontsize=8)
+    axin.set_xscale("log"); _plain_log(axin, "x", ticks=[1, 10, 100, 1000])
+    axin.set_title("RRC@K (top-3)", fontsize=8)
     axin.tick_params(labelsize=6.5); axin.set_xlabel("K", fontsize=7)
     axin.legend(fontsize=6, loc="lower right")
     fp.save(fig, "claimE_E3_scatter_inset")
@@ -212,6 +234,7 @@ def e4_rrc_curves():
     ax.axvline(100, color="#888", ls="--", lw=1.0)
     ax.text(105, 0.05, "top-100 re-rank", fontsize=8, color="#666")
     ax.set_xscale("log")
+    _plain_log(ax, "x", ticks=[1, 10, 100, 1000])
     ax.set_xlabel("re-rank depth K")
     ax.set_ylabel("RRC@K  (cumulative first-foreign-twin hit rate)")
     ax.set_title("Re-ranker recoverability curves (• = knee K*; 1 − RRC@1000 = un-rerankable floor)")
@@ -223,26 +246,30 @@ def e4_rrc_curves():
 # --------------------------------------------------------------------------- E5 (appendix)
 def e5_ari_stack():
     m, _, _ = _load()
-    good = m[~m["degenerate_clir"]].sort_values("ARI_at_100", ascending=True)
+    good = m[~m["degenerate_clir"]].copy()
+    good["cheap10"] = good["RRC_at_10"]
+    good["deep10_100"] = good["RRC_at_100"] - good["RRC_at_10"]
+    good["floor100"] = 1.0 - good["RRC_at_100"]
+    good = good.sort_values("floor100", ascending=True)
     fig, ax = plt.subplots(figsize=(9.0, 5.2))
     ys = np.arange(len(good))[::-1]
-    cheap = good["RRC_at_100"].to_numpy()
-    deep = good["deep_100_to_1000"].to_numpy()
-    floor = good["L_inf"].to_numpy()
-    ax.barh(ys, cheap, color="#2a924a", label="recoverable cheaply (top-100 re-rank)")
-    ax.barh(ys, deep, left=cheap, color="#9bd49b", label="recoverable deeply (needs top-1000 pool)")
-    ax.barh(ys, floor, left=cheap + deep, color="#c44e52", label="alignment-only floor (un-rerankable)")
-    for y, r in zip(ys, good.itertuples()):
-        ax.text(cheap[list(ys).index(y)] / 2, y, f"{getattr(r, 'RRC_at_100'):.0%}", va="center",
-                ha="center", fontsize=7.5, color="white")
-        ax.text(1.005, y, f"ARI@100 = {r.ARI_at_100:.2f}", va="center", fontsize=8.5)
+    cheap = good["cheap10"].to_numpy()
+    deep = good["deep10_100"].to_numpy()
+    floor = good["floor100"].to_numpy()
+    ax.barh(ys, cheap, color="#2a924a", label="re-rankable in top-10")
+    ax.barh(ys, deep, left=cheap, color="#9bd49b", label="needs deeper pool (top-100)")
+    ax.barh(ys, floor, left=cheap + deep, color="#c44e52", label="alignment-only floor (beyond top-100)")
+    for i, y in enumerate(ys):
+        ax.text(cheap[i] / 2, y, f"{cheap[i]:.0%}", va="center", ha="center", fontsize=7.5, color="white")
+        ax.text(1.005, y, f"floor = {floor[i]:.2f}", va="center", fontsize=8.5)
     ax.set_yticks(ys); ax.set_yticklabels(good["short"])
     ax.set_xlim(0, 1.28)
-    ax.set_xlabel("share of the cross-lingual shortfall (cheap + deep + floor = 1)")
-    ax.set_title("ARI decomposition: most of the cross-lingual gap is re-rankable, a hard floor is not")
+    ax.set_xlabel("share of the cross-lingual shortfall (top-10 + top-100 + floor = 1)")
+    ax.set_title("Re-ranker budget: most of the cross-lingual gap is reachable in a top-100 pool, "
+                 "a floor beyond it is not")
     ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=3)
     fp.save(fig, "claimE_E5_ari_stack")
-    fp.dump_data(good[["short", "RRC_at_100", "deep_100_to_1000", "L_inf", "ARI_at_100"]],
+    fp.dump_data(good[["short", "RRC_at_10", "RRC_at_100", "cheap10", "deep10_100", "floor100"]],
                  "claimE_E5_ari_stack")
 
 
