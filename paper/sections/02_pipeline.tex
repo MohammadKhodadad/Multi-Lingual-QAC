@@ -12,7 +12,7 @@ summarizes the full pipeline.
     \includegraphics[width=0.8\textwidth]{multilingual_chemistry_retrieval_pipeline_EDITABLE.png}
     \caption{Overview of the multilingual chemistry retrieval benchmark
     pipeline, from chemistry technical text through QAC generation, verification,
-    human validation, benchmark export, and retrieval evaluation.}
+    human audit, benchmark export, and retrieval evaluation.}
     {\footnotesize\emph{Figure note:} Icons adapted from Font Awesome Free,
     licensed under CC BY 4.0.\par}
     \label{fig:qac-generation-flow}
@@ -20,12 +20,15 @@ summarizes the full pipeline.
 
 \paragraph{Corpus and context construction.}
 The input is a chemistry-relevant multilingual corpus. In this work, we use
-patent-derived text as the benchmark substrate because patents provide
-technical descriptions and multilingual publication variants at scale. For each
-document-language pair, the context builder assembles a compact evidence block
-from available fields such as title, abstract, and technical description or
-claim text. This step keeps the generation grounded in a specific document
-rather than asking the model to produce generic chemistry questions from memory.
+two patent-derived sources, Google Patents and EPO, because patents provide
+technical descriptions and multilingual publication variants at scale. Both
+sources are normalized into the same document-language representation before QAC
+generation. For each document-language pair, the context builder assembles a
+compact evidence block from the title and abstract, adding first-claim text when
+available; longer description fields are source-dependent and are not assumed to
+be present for every document. This step keeps the generation grounded in a
+specific document rather than asking the model to produce generic chemistry
+questions from memory.
 
 \paragraph{Candidate generation.}
 For each selected document, language, and generation mode, an LLM produces
@@ -45,12 +48,13 @@ items together with their audit metadata rather than treating generation as a
 black box. This gives each QAC row a provenance trail: source document,
 language, generation mode, scores, and verifier feedback.
 
-\paragraph{Human validation and export.}
-Because the verifier is itself model-based, we validate its behavior against a
-human-annotated sample. This does not replace expert review for every item, but
-it checks whether the automatic grading is directionally reliable enough for
-benchmark construction. The filtered and validated QAC records are then exported
-with the retrieval artifacts used in later sections: a corpus table, query
-table, relevance judgments, and the full QAC table. These artifacts let us
-evaluate models with standard dense-retrieval tooling while still slicing
-results by query language, document language, and source provenance.
+\paragraph{Human audit and export.}
+Because the verifier is itself model-based, we audit its behavior after
+generation against a human-annotated sample. This does not make human validation
+an automatic step for every item, but it checks whether the automatic grading is
+directionally reliable enough for benchmark construction. The filtered QAC
+records are then exported with the retrieval artifacts used in later sections: a
+corpus table, query table, relevance judgments, and the full QAC table. These
+artifacts let us evaluate models with standard dense-retrieval tooling while
+still slicing results by query language, document language, and source
+provenance.
