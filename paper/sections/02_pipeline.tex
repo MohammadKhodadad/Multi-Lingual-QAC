@@ -5,14 +5,17 @@ question-answer-context (QAC) records for retrieval evaluation. The design goal
 is not simply to generate fluent questions. Each generated item must identify
 the evidence document it came from, preserve language metadata, and carry quality
 signals that make the benchmark suite inspectable after export. Figure~\ref{fig:qac-generation-flow}
-summarizes the full pipeline.
+summarizes the automated generation and retrieval-evaluation flow.
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=0.8\textwidth]{multilingual_chemistry_retrieval_pipeline_EDITABLE.png}
     \caption{Overview of the multilingual chemistry retrieval benchmark
-    pipeline, from chemistry technical text through QAC generation, verification,
-    human audit, benchmark export, and retrieval evaluation.}
+    pipeline. The generation stage samples a source document, builds a grounded
+    title/abstract context, generates candidate queries, scores them, and exports
+    the best-scored items as a retrieval dataset. The evaluation stage embeds
+    queries and documents, ranks results, and reports language-aware,
+    chemistry-confusability, and deployment-oriented diagnostics.}
     {\footnotesize\emph{Figure note:} Icons adapted from Font Awesome Free,
     licensed under CC BY 4.0.\par}
     \label{fig:qac-generation-flow}
@@ -39,22 +42,23 @@ the benchmark suite contains queries that reflect different retrieval intents: s
 ask for concrete technical details, while others ask for a higher-level
 description of what the document is about.
 
-\paragraph{Verification and filtering.}
-Generated candidates are then passed through an LLM-based verifier. The verifier
+\paragraph{Scoring and filtering.}
+Generated candidates are then passed through an LLM-based scorer. The scorer
 scores whether the answer is faithful to the provided context, whether the
 question is answerable from that context, whether the language is appropriate,
 and whether the item is useful as a retrieval query. We retain the best-scored
 items together with their audit metadata rather than treating generation as a
 black box. This gives each QAC row a provenance trail: source document,
-language, generation mode, scores, and verifier feedback.
+language, generation mode, scores, and scorer feedback.
 
-\paragraph{Human audit and export.}
-Because the verifier is itself model-based, we audit its behavior after
+\paragraph{Human-audited validation sample and export.}
+Because the scorer is itself model-based, we audit its behavior after
 generation against a 97-item human-annotated sample from the EPO-derived QAC
-generation data. This does not make human auditing an automatic step for every
-item, but it checks whether the automatic grading is directionally reliable
-enough for benchmark construction. The filtered QAC records are then exported
-with the retrieval artifacts used in later sections: a corpus table, query table,
-relevance judgments, and the full QAC table. These artifacts let us evaluate
-models with standard dense-retrieval tooling while still slicing results by
-query language, document language, and source provenance.
+generation data. This audit is not an automatic stage for every item in
+Figure~\ref{fig:qac-generation-flow}; instead, it checks whether the automatic
+grading is directionally reliable enough for benchmark construction. The
+filtered QAC records are then exported with the retrieval artifacts used in later
+sections: a corpus table, query table, relevance judgments, and the full QAC
+table. These artifacts let us evaluate models with standard dense-retrieval
+tooling while still slicing results by query language, document language, and
+source provenance.
