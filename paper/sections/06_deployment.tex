@@ -9,16 +9,32 @@ has the best average Recall@10?'' to ``which model remains usable when the
 evidence is cross-language and chemically confusable?''
 
 \paragraph{Capability vs.\ reading cost.}
-Figure~\ref{fig:cost-frontier-main} shows the resulting cost-vs-capability view.
-We use cross-language Recall@10 as the capability axis and XRC50, the median
-cross-lingual reading-cost multiplier, as the cost axis. The Pareto frontier has
-three models: \texttt{embeddinggemma}, \texttt{bge-m3}, and
-\texttt{granite-278m}. \texttt{embeddinggemma} is the unique maximum-CLIR corner
-(CLIR@10 $=0.5024$, XRC50 $=3.5$), so it is the recommended capability-first
-choice. If an operating threshold of CLIR@10 $\ge 0.40$ is acceptable,
-\texttt{bge-m3} becomes the cheaper-to-read admitted model (XRC50 $=2.0$). At a
-lower threshold, \texttt{granite-278m} enters as an even cheaper frontier point
-(XRC50 $=1.25$, CLIR@10 $=0.3285$). Thus the benchmark does not produce a
+Figure~\ref{fig:deployment-cost-triptych} decomposes the deployment cost of
+cross-lingual retrieval: how deeply a user must read, how much a re-ranker can
+recover from a candidate pool, and which failures remain beyond re-ranking.
+This turns model selection from an average-recall ranking into an operational
+question about capability, reading depth, and recoverability.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{claimE_E2_triptych.png}
+    \caption{Deployment cost of cross-lingual retrieval. The panels separate
+    how deep a user must read, how much a re-ranker can recover from a candidate
+    pool, and which part of the cross-lingual shortfall remains an
+    alignment-only failure for the first-stage retriever.}
+    \label{fig:deployment-cost-triptych}
+\end{figure*}
+
+Figure~\ref{fig:cost-frontier-main} then shows the resulting cost-vs-capability
+frontier. We use cross-language Recall@10 as the capability axis and XRC50, the
+median cross-lingual reading-cost multiplier, as the cost axis. The Pareto
+frontier has three models: \texttt{embeddinggemma}, \texttt{bge-m3}, and
+\texttt{granite-278m}. \texttt{embeddinggemma} is the maximum-CLIR corner (about
+CLIR@10 $=0.55$, XRC50 $=5.0$), so it is the capability-first choice. If an
+operating threshold around CLIR@10 $=0.45$ is acceptable, \texttt{bge-m3}
+becomes the cheaper-to-read admitted model (XRC50 about 3.5). At a lower
+threshold, \texttt{granite-278m} enters as an even cheaper frontier point (XRC50
+about 3.0, CLIR@10 about 0.39). Thus the benchmark does not produce a
 context-free winner; it exposes the trade-off a deployment team must choose.
 
 \begin{figure}[t]
@@ -26,17 +42,21 @@ context-free winner; it exposes the trade-off a deployment team must choose.
     \includegraphics[width=\linewidth]{cp_fig18_cost_frontier.png}
     \caption{Deployment-oriented cost-vs-capability frontier. Cross-language
     Recall@10 measures capability, while XRC50 measures how much deeper a user
-    must read to reach cross-language evidence. \texttt{embeddinggemma} is the
-    maximum-capability corner; \texttt{bge-m3} is the cheaper-to-read option at
-    a CLIR@10 threshold of 0.40.}
+    must read to reach cross-language evidence. The frontier makes the
+    capability/cost trade-off explicit rather than choosing a model from
+    aggregate recall alone.}
     \label{fig:cost-frontier-main}
 \end{figure}
 
 \paragraph{Decision rule.}
 For a deployment that prioritizes maximum cross-language recall, we would select
 \texttt{embeddinggemma}. For a deployment with a stricter reading-cost budget and
-an acceptable CLIR@10 threshold around 0.40, \texttt{bge-m3} is the more
-efficient alternative. In both cases, the decision uses language-aware and
+an acceptable CLIR@10 threshold around 0.45, \texttt{bge-m3} is the more
+efficient alternative. If a lower recall threshold is acceptable,
+\texttt{granite-278m} is cheaper still. Figure~\ref{fig:deployment-cost-triptych}
+adds the workflow view: some misses are recoverable with a deeper candidate pool
+or re-ranker, while the residual floor requires a better first-stage retriever.
+In all cases, the decision uses language-aware and
 chemistry-aware diagnostics rather than aggregate recall alone. This is the
 practical lesson: model selection for high-trust multilingual chemistry search
 should report capability, language robustness, and chemistry-confusability side

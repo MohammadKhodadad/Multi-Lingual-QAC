@@ -29,16 +29,6 @@ also inspect language-pair behavior as a directed matrix, since retrieving a
 German document from an English query need not be as easy as retrieving an
 English document from a German query.
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\linewidth]{cp_fig01_clir_leaderboard.png}
-    \caption{Evaluation separates aggregate Recall@10 from same-language
-    retrieval and cross-language retrieval. The split is the central diagnostic:
-    a model can look strong on average while still losing substantial ground
-    when the relevant evidence is in another language.}
-    \label{fig:clir-leaderboard}
-\end{figure}
-
 \paragraph{Failure analysis.}
 Beyond relevant-document recall, we measure the kinds of mistakes that matter
 for the workflow. First, we track same-language distractions: cases where a
@@ -47,14 +37,4 @@ cross-language evidence. Second, we use the alias-graph benchmark to measure
 chemistry confusion, where a document about a chemically related but incorrect
 concept outranks the intended evidence. These analyses turn retrieval output
 into diagnostic categories rather than a single score.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\linewidth]{ag_fig2_confusion_both_lenses.png}
-    \caption{The alias-graph stress test measures chemistry-confusability:
-    cases where a chemically plausible but incorrect document outranks all gold
-    evidence. This complements language-aware recall by testing whether models
-    distinguish the intended chemical concept from near neighbors.}
-    \label{fig:alias-confusion}
-\end{figure}
 

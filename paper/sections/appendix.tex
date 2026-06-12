@@ -7,43 +7,51 @@ but too detailed for the six-page body.
 
 These diagnostics expand the paper's main cross-language retrieval result. They
 show that the same-language advantage is not a single-score artifact: it appears
-as model-level home advantage, directed language-pair asymmetry, delayed recovery
-of multilingual publication variants, and weaker embedding separability for
-cross-language gold evidence.
+as query-language variation, same-language gold advantage, transfer across
+patent offices, and weaker score separability when gold evidence competes with
+look-alike documents.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{cp_fig02_home_advantage.png}
-  \caption{Same-language home advantage by model. The gap between
-  same-language and cross-language retrieval is the main reason aggregate recall
-  can overstate deployment readiness.}
+  \caption{Same-language and cross-language gold retrieval by query language.
+  The persistent gap explains why aggregate recall can overstate deployment
+  readiness.}
   \label{fig:app-home-advantage}
 \end{figure}
 
 \begin{figure}[t]
   \centering
+  \includegraphics[width=\linewidth]{cp_fig01_clir_leaderboard.png}
+  \caption{Recall@10 by query language, pooled across models with per-model
+  points. This supporting view shows that aggregate retrieval quality varies by
+  query language before separating same-language and cross-language relevance.}
+  \label{fig:app-query-language-recall}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
   \includegraphics[width=\linewidth]{cp_fig03_directional_clir_matrix.png}
-  \caption{Directional query-language $\rightarrow$ document-language retrieval.
-  Cross-language retrieval is not symmetric: a model's behavior depends on both
-  the query language and the target document language.}
+  \caption{Google Patents Recall@10 by model and query language. The balanced
+  mean column separates broad model quality from language-specific variation.}
   \label{fig:app-directional-clir}
 \end{figure}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{cp_fig06_07_mate.png}
-  \caption{Foreign-twin retrieval diagnostics. The figure reports whether
-  multilingual publication variants are found and how deeply a model must search
-  before reaching the first cross-language twin.}
+  \caption{Model standing transfers across patent offices. Google Patents and
+  EPO scores are strongly correlated, suggesting that the benchmark signal is
+  not tied to only one source.}
   \label{fig:app-mate-retrieval}
 \end{figure}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{cp_fig11_separability.png}
-  \caption{Embedding separability for same-language and cross-language gold
-  documents. Lower cross-language separability indicates that the retrieval
-  failure is partly representation-level, not only a top-$k$ ranking artifact.}
+  \caption{Score separability collapses when the model confuses gold evidence
+  with a chemical look-alike. Confused cases approach a coin-flip separation
+  between the right and wrong document.}
   \label{fig:app-separability}
 \end{figure}
 
@@ -67,17 +75,16 @@ cannot be reduced to topical similarity alone.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{ag_fig12_joint_failure_modes.png}
-  \caption{Joint language and chemistry failure modes among confused cases. This
-  analysis links the paper's two central risks: same-language preference and
-  chemically plausible but wrong neighbors.}
+  \caption{Confusion rate by model and query language. The figure shows how
+  often a chemically plausible look-alike outranks every gold document.}
   \label{fig:app-joint-failures}
 \end{figure}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{ag_fig6_question_type_effect.png}
-  \caption{Question-type effects in the alias-graph benchmark. Some query types
-  are substantially more vulnerable to chemistry-confusability than others.}
+  \caption{Structure-style questions are the hardest alias-graph cases: they
+  combine low recall with high chemistry-confusion.}
   \label{fig:app-question-type}
 \end{figure}
 
@@ -85,7 +92,7 @@ cannot be reduced to topical similarity alone.
   \centering
   \includegraphics[width=\linewidth]{ag_fig8_confusion_is_separability.png}
   \caption{Confusion as separability collapse. Confused examples have weaker
-  embedding separation between gold and non-gold documents.}
+  score separation between gold and look-alike documents.}
   \label{fig:app-confusion-separability}
 \end{figure}
 
@@ -95,6 +102,15 @@ cannot be reduced to topical similarity alone.
   \caption{Universal attractors in the alias graph: chemically plausible
   look-alikes that repeatedly steal top rank across models or languages.}
   \label{fig:app-universal-attractors}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{ag_fig2_confusion_both_lenses.png}
+  \caption{Chemistry-confusability with attractor detail. The left panel shows
+  how often a plausible but wrong document outranks all gold evidence; the right
+  panel identifies which look-alike concepts most often cause the failure.}
+  \label{fig:app-confusion-attractors}
 \end{figure}
 
 \section{Deployment-Oriented Supporting Analyses}
@@ -108,17 +124,149 @@ pool.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{cp_fig05_mt_penalty.png}
-  \caption{Human-written versus machine-translated queries. This supports the
-  paper's practical separation between generating query variants and relying on
-  human-translated source evidence.}
+  \caption{Human-original versus machine-translated questions on Google
+  Patents. The comparison checks whether the retrieval signal is dominated by
+  translation artifacts.}
   \label{fig:app-mt-penalty}
 \end{figure}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{cp_fig19_rrc_budget.png}
-  \caption{Re-ranker recoverability curves. These curves show how much
+  \caption{Re-ranker recoverability curves. The curves show how much
   cross-language evidence is recoverable at different candidate-pool depths and
-  why some failures must be fixed before re-ranking.}
+  mark the knee point for each model.}
   \label{fig:app-rrc-budget}
 \end{figure}
+
+\section{Question-Type and Metric Robustness}
+
+The main text reports that technical and semantic questions are both usable, but
+the new diagnostics show that they are not equally easy retrieval tasks.
+Technical questions are consistently harder, and that penalty appears across
+patent sources, models, languages, and retrieval metrics. This matters because a
+benchmark made only from broad semantic questions would overstate readiness for
+technical chemistry search.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimA_A1_dumbbell.png}
+  \caption{Technical questions retrieve worse than semantic questions across
+  models and patent offices. The gap is visible for both Google Patents and EPO,
+  so the question-mode distinction is not a single-source artifact.}
+  \label{fig:app-claim-a1-dumbbell}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimA_A2_distribution.png}
+  \caption{The technical-question penalty is a distribution shift, not only a
+  few outlier queries. Semantic questions place more mass at higher Recall@10,
+  and the per-model view shows the same ordering across both sources.}
+  \label{fig:app-claim-a2-distribution}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimA_A3_gap_heatmap.png}
+  \caption{Semantic-minus-technical Recall@10 gaps by model and language. Most
+  cells are positive, showing that technical questions are harder across many
+  language and model combinations.}
+  \label{fig:app-claim-a3-gap}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimA_A4_metric_robustness.png}
+  \caption{The technical-question penalty remains under MRR@10 and Hit@10.
+  This checks that the result is not an artifact of choosing Recall@10 as the
+  main retrieval metric.}
+  \label{fig:app-claim-a4-metrics}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimA_A6_question_type.png}
+  \caption{Within technical questions, parameter/condition and method questions
+  are hardest, while outcome questions are easier. The result helps explain why
+  technical retrieval cannot be summarized by a single question category.}
+  \label{fig:app-claim-a6-question-type}
+\end{figure*}
+
+\section{Cross-Source and Language-Denominator Checks}
+
+The paper now uses both Google Patents and EPO releases. These additional
+figures check whether the main model ordering and difficulty patterns transfer
+across the two sources, and they document the denominators behind
+language-balanced reporting.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{claimB_B2_slope.png}
+  \caption{Few rank crossings occur between Google Patents and EPO. The strongest
+  models remain near the top across both patent offices, while weaker models
+  remain lower.}
+  \label{fig:app-claim-b2-slope}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{claimB_B3_gap_transfer.png}
+  \caption{The semantic-over-technical retrieval gap transfers across patent
+  offices. Most models fall in the positive-positive quadrant, meaning semantic
+  questions are easier on both sources.}
+  \label{fig:app-claim-b3-gap-transfer}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{claimC_C4_epo_heatmap.png}
+  \caption{EPO Recall@10 by model and query language. This complements the
+  Google Patents heatmap and shows the same need for language-balanced reporting
+  on the second release.}
+  \label{fig:app-claim-c4-epo}
+\end{figure}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimC_C5_denominators.png}
+  \caption{Per-language denominators for queries, gold qrels, and haystack
+  documents are unequal. Language-balanced metrics prevent high-resource
+  languages from dominating the summary score.}
+  \label{fig:app-claim-c5-denominators}
+\end{figure*}
+
+\section{Additional Deployment-Budget Diagnostics}
+
+These deployment views unpack the cost-vs-capability frontier in the main paper.
+They separate reading cost, re-ranker recoverability, and the residual
+alignment-only failure floor, giving practitioners a more concrete way to decide
+whether a retriever failure can be fixed downstream.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimE_E2_triptych.png}
+  \caption{Deployment cost decomposed into reading cost, re-ranker
+  recoverability, and residual alignment-only failure. The triptych shows which
+  failures are reachable with a deeper candidate pool and which require a better
+  first-stage retriever.}
+  \label{fig:app-claim-e2-triptych}
+\end{figure*}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{claimE_E3_scatter_inset.png}
+  \caption{Cost-vs-capability frontier with an inset re-ranker budget curve.
+  This combines model choice and downstream recoverability in a single
+  deployment-oriented view.}
+  \label{fig:app-claim-e3-scatter-inset}
+\end{figure}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{claimE_E5_ari_stack.png}
+  \caption{Re-ranker budget decomposition. Green regions show failures
+  recoverable in top-10 or top-100 pools, while the red region is an
+  alignment-only floor beyond the re-ranker budget.}
+  \label{fig:app-claim-e5-ari-stack}
+\end{figure*}

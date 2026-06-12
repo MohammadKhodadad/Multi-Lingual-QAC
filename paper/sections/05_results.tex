@@ -13,34 +13,53 @@ retrieval evaluation. The LLM verifier is slightly stricter than the human
 annotator (79.0\% vs.\ 83.3\%), supporting its use for filtering and auditing
 while still requiring human validation for benchmark-quality claims.
 
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{claimA_A3_gap_heatmap.png}
+    \caption{Semantic-minus-technical Recall@10 gap by model and language.
+    Nearly every cell is positive, showing that technical chemistry questions
+    are harder to retrieve than semantic questions across both patent sources.}
+    \label{fig:technical-semantic-gap}
+\end{figure*}
+
 \paragraph{Average recall hides cross-language weakness.}
-Figure~\ref{fig:clir-leaderboard} shows that same-language retrieval is
-consistently easier than cross-language retrieval: the best cross-language
-Recall@10 is 0.50, and same-language advantage reaches +0.55. A model can
-therefore look acceptable under an aggregate score while failing on the
-deployment-relevant case where the evidence is available only in another
-language. The directed language-pair view further shows that this difficulty is
-not symmetric: query language and document language both matter.
+Figures~\ref{fig:technical-semantic-gap} and~\ref{fig:language-collapse} show
+that recall depends on question type, language, and relevance position.
+Technical questions are harder than semantic questions, and same-language gold
+evidence is retrieved more easily than cross-language gold evidence in every
+query language; in the updated Google Patents results, the same-vs-cross gap is
+roughly 0.21--0.28 Recall@10.
+A model can therefore look acceptable under an aggregate score while failing on
+the deployment-relevant case where the evidence is available only in another
+language.
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\linewidth]{cp_fig09_10_collapse.png}
-    \caption{Language-collapse diagnostics for the cross-lingual benchmark.
-    Same-language documents are over-represented in retrieved lists, and
-    same-language distractors can bury cross-language gold evidence. This
-    explains why average recall can hide the failure most relevant to
-    multilingual chemistry search.}
+    \includegraphics[width=\linewidth]{claimC_C3_home_advantage.png}
+    \caption{Recall@10 separates into same-language gold retrieval and
+    cross-language gold retrieval. Same-language evidence is consistently easier
+    to retrieve, which explains why average recall can hide the failure most
+    relevant to multilingual chemistry search.}
     \label{fig:language-collapse}
 \end{figure}
 
 \paragraph{The errors are not only multilingual; they are chemical.}
 The alias-graph benchmark shows a second failure mode. Even when a retrieved
-document is topically close, it may be chemically wrong. Figure~\ref{fig:alias-confusion}
+document is topically close, it may be chemically wrong. Figure~\ref{fig:confusion-heatmap}
 measures how often a chemically confusable document outranks all gold evidence;
-on the publication lens, this occurs on 14--78\% of queries depending on the
+in the updated alias-graph results, this occurs on 14--48\% of queries depending on the
 model. These failures are especially important for chemistry search because a
 nearby compound, parent class, or sibling concept can look plausible while
 answering the wrong question.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{claimD_D1_confusion_heatmap.png}
+    \caption{Confusion rate by model and query language: how often a chemically
+    plausible but wrong look-alike outranks every gold document. Lower rates are
+    better, and the spread shows why chemistry-aware hard negatives are needed.}
+    \label{fig:confusion-heatmap}
+\end{figure}
 
 Together, the results support the central lesson of the benchmark: multilingual
 chemistry retrieval should be evaluated with language position and chemical
