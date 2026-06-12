@@ -110,47 +110,154 @@ def _qlm(run_dir: Path) -> pd.DataFrame:
 
 
 def epo_per_query() -> pd.DataFrame:
-    """EPO per-query metrics; `mode` is already populated (technical/semantic)."""
+    """EPO per-query metrics (198 queries; this summary is current, not stale). `mode` is populated;
+    `question_type` is joined in from qac_epo_best.csv for the technical sub-type analysis."""
     df = _qlm(EPO_RUN)
     assert df["mode"].isin(["technical", "semantic"]).all(), "EPO mode column unexpectedly empty"
+    best = pd.read_csv(REPO_ROOT / "data" / "EPO" / "qac" / "qac_epo_best.csv")
+    best["query_id"] = best["corpus_id"] + "_q_" + best["question_language"]
+    qt = best.dropna(subset=["question_type"]).drop_duplicates("query_id").set_index("query_id")["question_type"]
+    df["question_type"] = df["query_id"].map(qt)
     return df
 
 
+# ----- Google-Patents: full 524-query rebuild from rankings + _best.csv + reconstructed gold -----
+# The shipped question_level_metrics.csv is a stale 135-query summary (old 137-query release) and the
+# cached HF qrels are stale too (Spanish gold = 0). The actual eval covers all 524 queries: their
+# top-1000 rankings are in parts/<model>/retrieval_results/scored_rankings.parquet (gold flagged), and
+# the authoritative question set with modes is data/google_patents/qac/qac_chempatents_best.csv.
+# We rebuild per-query metrics from those, reconstructing each query's gold as every language version
+# of its source patent present in the haystack (validated: pooled Recall@10 = 0.5725 vs MTEB 0.5739).
+import functools as _functools
+import re as _re
+from collections import defaultdict as _defaultdict
+
+_GP_BEST = REPO_ROOT / "data" / "google_patents" / "qac" / "qac_chempatents_best.csv"
+_LANG_SUFFIX = _re.compile(r"_(de|en|es|fr|zh)$")
+
+
+def _patent_of(corpus_id: str) -> str:
+    return _LANG_SUFFIX.sub("", str(corpus_id))
+
+
+@_functools.lru_cache(maxsize=1)
+def _gp_corpus_family():
+    """(corpus_id -> language, publication -> {corpus_ids in haystack}) for gold reconstruction."""
+    import sys
+    sys.path.insert(0, str(CP_RUN / "experimental_codes"))
+    import common as cpc
+    clang = {str(k): str(v).lower() for k, v in cpc.corpus_lang().items()}
+    fam = _defaultdict(set)
+    for cid in clang:
+        fam[_patent_of(cid)].add(cid)
+    return clang, dict(fam)
+
+
+@_functools.lru_cache(maxsize=1)
+def gp_rankings() -> pd.DataFrame:
+    """All 8 models' top-1000 GP rankings (model, query_id, rank, corpus_id, corpus_language)."""
+    frames = []
+    for part in sorted((CP_RUN / "parts").iterdir()):
+        p = part / "retrieval_results" / "scored_rankings.parquet"
+        if p.is_file():
+            frames.append(pd.read_parquet(
+                p, columns=["model", "query_id", "rank", "corpus_id", "corpus_language"]))
+    df = pd.concat(frames, ignore_index=True)
+    df = df[df["model"].isin(MODELS)].copy()
+    df["corpus_language"] = df["corpus_language"].str.lower()
+    return df
+
+
+@_functools.lru_cache(maxsize=1)
+def gp_query_table() -> pd.DataFrame:
+    """One row per benchmark query (524): query_id, languages, mode, question_type, is_synthetic, and
+    the reconstructed gold set. Maps _best.csv rows to the parquet's query_ids, including the eval's
+    collision disambiguation (duplicate (corpus_id,qlang) -> `<qid>_<rowidx>`; two zh-source rows ->
+    `q_<rowidx>_zh`)."""
+    clang, fam = _gp_corpus_family()
+    best = pd.read_csv(_GP_BEST).reset_index().rename(columns={"index": "row"})
+    pqids = set(gp_rankings()["query_id"].unique())
+    rows, used = [], set()
+    for r in best.itertuples():
+        nat = f"{r.corpus_id}_q_{r.question_language}"
+        cands = [nat, f"{nat}_{r.row}", f"q_{r.row}_{r.question_language}"]
+        qid = next((c for c in cands if c in pqids and c not in used), nat)
+        used.add(qid)
+        src = (_LANG_SUFFIX.search(str(r.corpus_id)) or [None])
+        src_lang = src.group(1) if hasattr(src, "group") else None
+        gold = fam.get(_patent_of(r.corpus_id), set())
+        rows.append({
+            "query_id": qid, "query_language": r.question_language, "src_language": src_lang,
+            "mode": r.mode, "question_type": r.question_type,
+            "is_synthetic": (r.question_language != src_lang),
+            "corpus_id": r.corpus_id,
+            "gold": frozenset(gold),
+            "gold_same": frozenset(d for d in gold if clang.get(d) == r.question_language),
+            "gold_cross": frozenset(d for d in gold if clang.get(d) != r.question_language),
+        })
+    tab = pd.DataFrame(rows)
+    assert tab["query_id"].nunique() == len(tab) == 524, f"GP query table not 524 unique: {len(tab)}"
+    return tab
+
+
+@_functools.lru_cache(maxsize=1)
 def cp_per_query() -> pd.DataFrame:
-    """Google-Patents per-query metrics with `mode` recovered from the QAC source.
+    """Google-Patents per-(model, query) metrics over all 524 queries, gold-correct.
 
-    The eval-time question_level_metrics.csv has an empty `mode`; we recover it by parsing the
-    query id (`<corpus_id>_q_<qlang>[_mt]`) and joining (corpus_id, question_language) against
-    data/google_patents/qac/qac_chempatents.csv. Of 135 unique queries, 132 join to the QAC source;
-    1 of those maps to a key carrying both modes (ambiguous) and is set to NaN, leaving 131 with an
-    unambiguous mode. The 3 unmatched + 1 ambiguous query get mode=NaN and are dropped by
-    mode-stratified figures.
+    Columns: model, short, query_id, query_language, mode, question_type, is_synthetic,
+    recall_at_10, rr_at_10, hit_at_10, clir_at_10 (cross-language gold), molir_at_10 (same-language
+    gold), n_gold, n_gold_same, n_gold_cross. Recall uses the full reconstructed gold as denominator.
     """
-    df = _qlm(CP_RUN)
-    parsed = df["query_id"].str.extract(r"^(?P<corpus_id>.+)_q_(?P<qlang>[a-z]{2})$")
-    df["corpus_id"] = parsed["corpus_id"]
-    df["qlang"] = parsed["qlang"]
-    # `is_synthetic_translation` is the authoritative human-vs-MT marker (the 80 synthetic queries
-    # are MT-translated *questions* over a human-translated corpus, which the benchmark allows; only
-    # they give es/zh cross-lingual coverage). Main figures keep all queries; the human-vs-MT split
-    # is reported as an appendix robustness check.
-    df["is_synthetic"] = df["is_synthetic_translation"].astype(bool)
+    tab = gp_query_table().set_index("query_id")
+    rk = gp_rankings()
+    top = rk[rk["rank"] <= 10].sort_values("rank")
+    top_lists = top.groupby(["model", "query_id"])["corpus_id"].apply(list).to_dict()
+    gold = tab["gold"].to_dict()
+    gold_same = tab["gold_same"].to_dict()
+    gold_cross = tab["gold_cross"].to_dict()
 
-    qac = pd.read_csv(REPO_ROOT / "data" / "google_patents" / "qac" / "qac_chempatents.csv")
-    key = (qac.groupby(["corpus_id", "question_language"])["mode"]
-              .agg(n_modes="nunique", mode_val=lambda s: s.iloc[0]).reset_index())
-    key["mode_resolved"] = np.where(key["n_modes"] == 1, key["mode_val"], np.nan)
-    df = df.merge(
-        key[["corpus_id", "question_language", "mode_resolved"]],
-        left_on=["corpus_id", "qlang"], right_on=["corpus_id", "question_language"], how="left",
-    )
-    df["mode"] = df["mode_resolved"]
+    def _recall(t, g):
+        return float(len(set(t) & g) / len(g)) if g else float("nan")
 
-    # integrity check (per-query, model-independent): 131 unambiguous modes recovered out of 135
-    nq = df.drop_duplicates("query_id")
-    resolved = int(nq["mode"].notna().sum())
-    assert resolved == 131, f"chem_patents mode-join changed: {resolved}/135 unique queries resolved (expected 131)"
-    return df.drop(columns=["mode_resolved", "question_language"])
+    def _mrr(t, g):
+        for i, d in enumerate(t, 1):
+            if d in g:
+                return 1.0 / i
+        return 0.0
+
+    out = []
+    for model in MODEL_ORDER:
+        for qid, meta in tab.iterrows():
+            t = top_lists.get((model, qid), [])
+            g = gold[qid]
+            if not g:
+                continue
+            ts = set(t)
+            out.append({
+                "model": model, "short": short(model), "query_id": qid,
+                "query_language": meta["query_language"], "mode": meta["mode"],
+                "question_type": meta["question_type"], "is_synthetic": meta["is_synthetic"],
+                "recall_at_10": _recall(t, g), "rr_at_10": _mrr(t, g),
+                "hit_at_10": 1.0 if ts & g else 0.0,
+                "clir_at_10": _recall(t, gold_cross[qid]) if gold_cross[qid] else float("nan"),
+                "molir_at_10": _recall(t, gold_same[qid]) if gold_same[qid] else float("nan"),
+                "n_gold": len(g), "n_gold_same": len(gold_same[qid]), "n_gold_cross": len(gold_cross[qid]),
+            })
+    return pd.DataFrame(out)
+
+
+def gp_denominators() -> pd.DataFrame:
+    """Per-language query / gold-qrel / haystack-document counts (the real 524-query benchmark)."""
+    clang, _ = _gp_corpus_family()
+    tab = gp_query_table()
+    n_q = tab["query_language"].value_counts().reindex(CP_LANGS).fillna(0).astype(int)
+    golddocs = set().union(*tab["gold"]) if len(tab) else set()
+    n_gold = pd.Series(_defaultdict(int)) if False else None
+    from collections import Counter
+    n_gold = pd.Series(Counter(clang.get(d) for d in golddocs)).reindex(CP_LANGS).fillna(0).astype(int)
+    n_doc = pd.Series(Counter(clang.values())).reindex(CP_LANGS).fillna(0).astype(int)
+    return pd.DataFrame({"query_language": CP_LANGS, "n_queries": n_q.to_numpy(),
+                         "n_gold_qrels": n_gold.to_numpy(), "n_haystack_docs": n_doc.to_numpy()})
 
 
 def model_comparison(run: str) -> pd.DataFrame:
@@ -241,10 +348,16 @@ if __name__ == "__main__":
     print("chem_patents per-query rows:", len(cp), "| unique queries:", cp["query_id"].nunique())
     print("  mode (unique queries):",
           cp.drop_duplicates("query_id")["mode"].value_counts(dropna=False).to_dict())
-    print("epo per-query rows:", len(epo), "| unique queries:", epo["query_id"].nunique())
-    print("  mode:", epo.drop_duplicates("query_id")["mode"].value_counts().to_dict())
-    # anchor: EPO embeddinggemma technical vs semantic recall@10
-    g = epo[epo["short"] == "embeddinggemma"]
-    print("  EPO gemma R@10 technical:", round(g[g["mode"] == "technical"]["recall_at_10"].mean(), 3),
-          "| semantic:", round(g[g["mode"] == "semantic"]["recall_at_10"].mean(), 3))
+    print("  query_language:", cp.drop_duplicates("query_id")["query_language"].value_counts().to_dict())
+    # validate reconstructed pooled Recall@10 against the official MTEB table
+    mc = model_comparison("chem_patents").set_index("short")["recall_at_10"]
+    print("  Recall@10 reconstructed vs MTEB (should match within ~0.005):")
+    for m in MODEL_ORDER:
+        r = cp[cp["model"] == m]["recall_at_10"].mean()
+        print(f"    {short(m):18s} mine={r:.4f}  mteb={mc.get(short(m), float('nan')):.4f}")
+    den = gp_denominators()
+    print("  per-language denominators (524-query):")
+    print(den.to_string(index=False))
+    print("epo per-query unique queries:", epo["query_id"].nunique(),
+          "| mode:", epo.drop_duplicates("query_id")["mode"].value_counts().to_dict())
     print("models:", [short(m) for m in MODEL_ORDER])

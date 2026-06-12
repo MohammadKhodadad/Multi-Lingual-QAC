@@ -21,6 +21,7 @@ MAIN = {
 }
 
 APPENDIX = {
+    "claimA_A6_question_type":   "figA6_technical_subtype",
     "claimA_A2_distribution":    "figA2_per_query_distribution",
     "claimA_A3_gap_heatmap":     "figA3_gap_by_language",
     "claimA_A5_mt_robustness":   "figA5_mt_robustness",

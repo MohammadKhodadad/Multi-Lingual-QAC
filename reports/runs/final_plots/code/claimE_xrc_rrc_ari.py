@@ -26,15 +26,17 @@ import numpy as np
 import pandas as pd
 
 import fp_common as fp
-
-EX = fp.CP_EXTRA
+import claimE_metrics
 
 
 def _load():
-    cf = pd.read_csv(EX / "extra_cost_frontier" / "cost_frontier.csv")
-    ari = pd.read_csv(EX / "extra_ari_decomposition" / "ari_decomposition.csv")
-    knee = pd.read_csv(EX / "extra_rrc_budget_frontier" / "rrc_knee.csv")
-    curve = pd.read_csv(EX / "extra_rrc_budget_frontier" / "rrc_curve.csv")
+    # XRC/RRC/ARI recomputed on the full 524-query gold (the shipped extra_*.csv are stale 137-query).
+    if not (fp.DATA / "E_cost_frontier.csv").exists():
+        claimE_metrics.compute()
+    cf = pd.read_csv(fp.DATA / "E_cost_frontier.csv")
+    ari = pd.read_csv(fp.DATA / "E_ari_decomposition.csv")
+    knee = pd.read_csv(fp.DATA / "E_rrc_knee.csv")
+    curve = pd.read_csv(fp.DATA / "E_rrc_curve.csv")
     m = cf.merge(ari[["short", "RRC_at_100", "deep_100_to_1000", "L_inf", "ARI_at_100"]],
                  on="short", how="left")
     order = [fp.short(x) for x in fp.MODEL_ORDER if fp.short(x) in set(m["short"])]
@@ -64,10 +66,14 @@ def e1_scatter():
             label="Pareto frontier (max CLIR@10, min XRC50)")
     sc = ax.scatter(good["clir_at_10"], good["XRC50"], c=good["ARI_at_100"], cmap=cmap, norm=norm,
                     s=230, edgecolor="k", linewidth=1.0, zorder=3)
+    # explicit per-model label offsets to declutter the mid-cluster (dx, dy, ha)
+    lab = {"embeddinggemma": (-9, 10, "right"), "bge-m3": (9, -12, "left"),
+           "granite-278m": (-9, -12, "right"), "qwen3-0.6B": (-9, 9, "right"),
+           "nomic-v2-moe": (9, 6, "left"), "LaBSE": (9, -3, "left"), "SapBERT": (9, 4, "left")}
     for _, r in good.iterrows():
-        right = r["clir_at_10"] > 0.42  # keep the rightmost labels inside the axes
+        dx, dy, ha = lab.get(r["short"], (9, 5, "left"))
         ax.annotate(r["short"], (r["clir_at_10"], r["XRC50"]), textcoords="offset points",
-                    xytext=(-9, 8) if right else (9, 5), ha="right" if right else "left", fontsize=9)
+                    xytext=(dx, dy), ha=ha, fontsize=9)
     # degenerate model(s): hollow, annotated
     for _, r in bad.iterrows():
         ax.scatter(r["clir_at_10"], r["XRC50"], facecolor="none", edgecolor="#999",
@@ -78,7 +84,7 @@ def e1_scatter():
     ax.text(0.105, ax.get_ylim()[1], "degeneracy gate", color="#c44e52", fontsize=8.5,
             va="top", rotation=90)
     ax.set_yscale("log")
-    ax.set_xlim(0.03, 0.50)
+    ax.set_xlim(0.03, float(m["clir_at_10"].max()) * 1.12)
     ax.set_xlabel("CLIR@10  (cross-lingual recall, higher = better)")
     ax.set_ylabel("XRC50  reading-cost multiplier  (log, lower = better)")
     ax.set_title("Cost vs capability: cheap-to-read and accurate models sit bottom-right")
@@ -171,8 +177,8 @@ def e3_scatter_inset():
         ax.annotate(f"{r['short']} (degenerate)", (r["clir_at_10"], r["XRC50"]),
                     textcoords="offset points", xytext=(10, -2), fontsize=8.5, color="#777")
     ax.set_yscale("log")
-    ax.set_xlim(0.03, 0.50)
-    ax.set_ylim(1.1, 110)  # headroom so the inset clears every data point
+    ax.set_xlim(0.03, float(m["clir_at_10"].max()) * 1.12)
+    ax.set_ylim(1.1, 220)  # headroom so the inset clears every data point
     ax.set_xlabel("CLIR@10  (higher = better)")
     ax.set_ylabel("XRC50 reading-cost multiplier (log, lower = better)")
     ax.set_title("Cost-vs-capability frontier, with the re-ranker budget curve inset")

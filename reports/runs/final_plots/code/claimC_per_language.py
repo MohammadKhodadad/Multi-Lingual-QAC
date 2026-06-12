@@ -31,13 +31,6 @@ def _gp():
     return fp.cp_per_query()
 
 
-def _cp_common():
-    """Lazy import of the chem_patents analysis module (loads cached HF datasets)."""
-    sys.path.insert(0, str(fp.CP_RUN / "experimental_codes"))
-    import common as cpc  # noqa: E402
-    return cpc
-
-
 # --------------------------------------------------------------------------- C1
 def c1_heatmap():
     df = _gp()
@@ -99,8 +92,7 @@ def c2_bars():
 
 # --------------------------------------------------------------------------- C3
 def c3_home_advantage():
-    cpc = _cp_common()
-    cpq = cpc.core_per_query()  # has clir_at_10 (cross-lang gold) & molir_at_10 (same-lang gold)
+    cpq = fp.cp_per_query()  # has clir_at_10 (cross-lang gold) & molir_at_10 (same-lang gold), 524 queries
     # language-balanced over models: per (query_language) average the per-query metric across all models
     rows = []
     for lang in fp.CP_LANGS:
@@ -110,7 +102,7 @@ def c3_home_advantage():
         rows.append({"query_language": lang,
                      "molir": float(molir.mean()) if len(molir) else np.nan,
                      "clir": float(clir.mean()) if len(clir) else np.nan,
-                     "n_same_gold_q": int(molir.shape[0]), "n_cross_gold_q": int(clir.shape[0])})
+                     "n_same_gold_q": int(molir.shape[0]) // 8, "n_cross_gold_q": int(clir.shape[0]) // 8})
     d = pd.DataFrame(rows)
 
     fig, ax = plt.subplots(figsize=(8.6, 5.0))
@@ -162,24 +154,10 @@ def c4_epo_heatmap():
 
 # --------------------------------------------------------------------------- C5 (appendix)
 def c5_denominators():
-    cpc = _cp_common()
-    qm = cpc.query_meta()  # all queries (the population the per-language figures use)
-    n_q = qm["query_language"].value_counts().reindex(fp.CP_LANGS).fillna(0).astype(int)
-
-    # gold qrels by gold-document language
-    gold = cpc.gold_publication()
-    gl = {l: 0 for l in fp.CP_LANGS}
-    for qid, docs in gold.items():
-        for d in docs:
-            dl = cpc.doc_lang(d)
-            if dl in gl:
-                gl[dl] += 1
-    n_gold = pd.Series(gl).reindex(fp.CP_LANGS).fillna(0).astype(int)
-
-    # haystack share by document language
-    clang = pd.Series(cpc.corpus_lang())
-    hay = clang.value_counts()
-    n_doc = hay.reindex(fp.CP_LANGS).fillna(0).astype(int)
+    den = fp.gp_denominators().set_index("query_language").reindex(fp.CP_LANGS)
+    n_q = den["n_queries"]
+    n_gold = den["n_gold_qrels"]
+    n_doc = den["n_haystack_docs"]
 
     panels = [("queries (by query language)", n_q), ("gold qrels (by doc language)", n_gold),
               ("haystack documents", n_doc)]

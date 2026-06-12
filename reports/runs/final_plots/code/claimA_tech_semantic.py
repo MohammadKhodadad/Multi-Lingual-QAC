@@ -221,6 +221,47 @@ def a5_mt_robustness():
     fp.dump_data(pd.DataFrame(rows), "claimA_A5_mt_robustness")
 
 
+# --------------------------------------------------------------------------- A6 (new finding)
+def a6_question_type():
+    """The technical penalty is not uniform: among technical questions, parameter/condition and
+    method questions are hardest; outcome and structure questions are easier. Semantic shown as a
+    reference band. Both offices. (Enabled by the 524-query rebuild, which carries question_type.)"""
+    order = ["parameter_or_condition", "method", "material", "structure", "outcome"]
+    nice = {"parameter_or_condition": "parameter /\ncondition", "method": "method",
+            "material": "material", "structure": "structure", "outcome": "outcome"}
+    fig, axes = plt.subplots(1, 2, figsize=(11.4, 4.8), sharey=True)
+    out = []
+    for ax, (df, title) in zip(axes, [(_gp(), "Google Patents"), (_epo(), "EPO")]):
+        tech = df[df["mode"] == "technical"]
+        sem_mean = df[df["mode"] == "semantic"]["recall_at_10"].mean()
+        rows = []
+        for qt in order:
+            sub = tech[tech["question_type"] == qt]
+            if sub.empty:
+                continue
+            pt, lo, hi = fp.bootstrap_ci(sub["recall_at_10"].dropna().to_numpy())
+            rows.append({"question_type": qt, "value": pt, "lo": lo, "hi": hi, "n": len(sub)})
+        d = pd.DataFrame(rows)
+        xs = np.arange(len(d))
+        ax.bar(xs, d["value"], color="#c44e52", width=0.66,
+               yerr=[d["value"] - d["lo"], d["hi"] - d["value"]], capsize=3, ecolor="#444")
+        ax.axhline(sem_mean, color="#4c72b0", ls="--", lw=1.6)
+        ax.text(-0.45, sem_mean + 0.012, f"semantic mean {sem_mean:.2f}",
+                ha="left", va="bottom", fontsize=8.5, color="#4c72b0")
+        ax.set_xticks(xs); ax.set_xticklabels([nice[q] for q in d["question_type"]], fontsize=8.5)
+        ax.set_title(title)
+        for x, r in zip(xs, d.itertuples()):
+            ax.text(x, r.hi + 0.012, f"{r.value:.2f}\nn={r.n}", ha="center", va="bottom", fontsize=7.5)
+        d["source"] = title
+        out.append(d)
+    axes[0].set_ylabel("Recall@10")
+    axes[0].set_ylim(0, 0.86)  # shared; headroom for EPO's small-n 'outcome' bar + CIs
+    fig.suptitle("Within technical questions, parameter/condition and method are the hardest",
+                 fontsize=12.5, fontweight="bold", y=1.02)
+    fp.save(fig, "claimA_A6_question_type")
+    fp.dump_data(pd.concat(out, ignore_index=True), "claimA_A6_question_type")
+
+
 def main():
     fp.set_style()
     a1_dumbbell()
@@ -228,7 +269,8 @@ def main():
     a3_gap_heatmap()
     a4_metric_robustness()
     a5_mt_robustness()
-    print("claim A: A1-A5 written to candidates/")
+    a6_question_type()
+    print("claim A: A1-A6 written to candidates/")
 
 
 if __name__ == "__main__":
