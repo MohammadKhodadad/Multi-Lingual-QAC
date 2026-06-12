@@ -17,6 +17,7 @@ import claimC_per_language as C
 import claimD_alias_graph as D
 import claimE_metrics
 import claimE_xrc_rrc_ari as E
+import table_main
 
 
 def main():
@@ -26,6 +27,7 @@ def main():
     claimE_metrics.compute()  # recompute XRC/RRC/ARI on the 524-query gold before claim E plots
     for mod in (A, B, C, D, E):
         mod.main()
+    table_main.main()  # main results table (both benchmarks) -> tables/main_table.tex + data CSV
     print("\nAll candidates regenerated in", fp.CAND)
 
 

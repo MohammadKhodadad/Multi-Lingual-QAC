@@ -28,8 +28,11 @@ Conventions
 """
 from __future__ import annotations
 
+import functools as _functools
 import math
 import re
+import re as _re
+from collections import defaultdict as _defaultdict
 from pathlib import Path
 from typing import Callable, Dict, List, Sequence, Tuple
 
@@ -119,6 +122,94 @@ def epo_per_query() -> pd.DataFrame:
     qt = best.dropna(subset=["question_type"]).drop_duplicates("query_id").set_index("query_id")["question_type"]
     df["question_type"] = df["query_id"].map(qt)
     return df
+
+
+@_functools.lru_cache(maxsize=1)
+def _epo_corpus_family():
+    """(corpus_id -> language, publication -> {corpus_ids}) for EPO gold reconstruction."""
+    from datasets import load_dataset
+    corp = pd.DataFrame(load_dataset("MehdiAstaraki/multi-lingual-qac-epo", "corpus", split="train"))
+    corp["corpus_language"] = corp["corpus_language"].str.lower()
+    clang = dict(zip(corp["corpus_id"], corp["corpus_language"]))
+    fam = _defaultdict(set)
+    for cid, pub in zip(corp["corpus_id"], corp["publication_number"]):
+        fam[str(pub)].add(cid)
+    pub_of = {cid: str(pub) for cid, pub in zip(corp["corpus_id"], corp["publication_number"])}
+    return clang, dict(fam), pub_of
+
+
+@_functools.lru_cache(maxsize=1)
+def epo_rankings() -> pd.DataFrame:
+    """All 8 models' top-1000 EPO rankings (model, query_id, query_language, rank, corpus_id, corpus_language)."""
+    frames = []
+    for part in sorted((EPO_RUN / "parts").iterdir()):
+        p = part / "retrieval_results" / "scored_rankings.parquet"
+        if p.is_file():
+            frames.append(pd.read_parquet(
+                p, columns=["model", "query_id", "query_language", "rank", "corpus_id", "corpus_language"]))
+    df = pd.concat(frames, ignore_index=True)
+    return df[df["model"].isin(MODELS)].copy()
+
+
+@_functools.lru_cache(maxsize=1)
+def epo_gold() -> dict:
+    """query_id -> (same-language gold set, cross-language gold set) for EPO."""
+    clang, fam, pub_of = _epo_corpus_family()
+    df = epo_rankings()
+    meta = df.drop_duplicates("query_id")[["query_id", "query_language"]].copy()
+    meta["pub"] = meta["query_id"].str.replace(r"_q_[a-z]{2}$", "", regex=True).map(lambda c: pub_of.get(c))
+    out = {}
+    for r in meta.itertuples():
+        gold = fam.get(str(r.pub), set())
+        same = frozenset(d for d in gold if clang.get(d) == r.query_language)
+        out[r.query_id] = (same, frozenset(gold) - same)
+    return out
+
+
+@_functools.lru_cache(maxsize=1)
+def epo_per_query_clir() -> pd.DataFrame:
+    """EPO per-(model, query) recall/clir/molir over reconstructed gold (gold = the source patent's
+    language versions in the EPO haystack). Validated: pooled Recall@10 matches MTEB exactly."""
+    gold = epo_gold()
+    df = epo_rankings()
+    top = df[df["rank"] <= 10].groupby(["model", "query_id"])["corpus_id"].apply(set).to_dict()
+    meta = df.drop_duplicates("query_id")[["query_id", "query_language"]]
+    out = []
+    for r in meta.itertuples():
+        same, cross = gold[r.query_id]
+        full = same | cross
+        for m in MODEL_ORDER:
+            t = top.get((m, r.query_id), set())
+            out.append({
+                "model": m, "short": short(m), "query_id": r.query_id, "query_language": r.query_language,
+                "recall_at_10": len(t & full) / len(full) if full else float("nan"),
+                "molir_at_10": len(t & same) / len(same) if same else float("nan"),
+                "clir_at_10": len(t & cross) / len(cross) if cross else float("nan"),
+            })
+    return pd.DataFrame(out)
+
+
+def _first_rank(rank_of: dict, docs) -> float:
+    r = [rank_of[d] for d in docs if d in rank_of]
+    return min(r) if r else float("inf")
+
+
+def epo_first_ranks() -> pd.DataFrame:
+    """Per-(model, query) first same-language-gold and first cross-language-gold rank (inf if the gold
+    is never retrieved in top-1000), plus the gold counts. Mirrors the GP first-rank frame."""
+    gold = epo_gold()
+    df = epo_rankings()
+    rows = []
+    for (m, qid), grp in df.groupby(["model", "query_id"]):
+        same, cross = gold[qid]
+        rank_of = dict(zip(grp["corpus_id"], grp["rank"]))
+        rows.append({
+            "model": m, "query_id": qid,
+            "first_same_rank": _first_rank(rank_of, same) if same else float("nan"),
+            "first_cross_rank": _first_rank(rank_of, cross) if cross else float("nan"),
+            "n_gold_same": len(same), "n_gold_cross": len(cross),
+        })
+    return pd.DataFrame(rows)
 
 
 # ----- Google-Patents: full 524-query rebuild from rankings + _best.csv + reconstructed gold -----

@@ -1,0 +1,21 @@
+\begin{table*}[t]\centering\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l cccc cccc cc}
+\toprule
+& \multicolumn{4}{c}{\textbf{Google Patents} (524q, en/de/es/fr/zh)} & \multicolumn{4}{c}{\textbf{EPO} (198q, en/de/fr)} & \multicolumn{2}{c}{\textbf{Bilingual} (both)} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-11}
+Model & nDCG & R@10 & CLIR & LT\% & nDCG & R@10 & CLIR & LT\% & JBC@100 & $k^\star_{80}$ \\
+\midrule
+\texttt{embeddinggemma} & \textbf{0.50} & \textbf{0.57} & \textbf{0.54} & 73 & \textbf{0.53} & \textbf{0.58} & \textbf{0.52} & 74 & \textbf{0.78} & \textbf{147} \\
+\texttt{bge-m3} & 0.45 & 0.51 & 0.47 & \textbf{74} & 0.50 & 0.55 & 0.47 & 66 & 0.70 & 304 \\
+\texttt{qwen3-0.6B} & 0.43 & 0.49 & 0.45 & 72 & 0.43 & 0.47 & 0.39 & 61 & 0.68 & 425 \\
+\texttt{nomic-v2-moe} & 0.42 & 0.46 & 0.41 & 63 & 0.48 & 0.51 & 0.43 & 63 & 0.67 & 367 \\
+\texttt{granite-278m} & 0.36 & 0.41 & 0.39 & 72 & 0.35 & 0.39 & 0.36 & 84 & 0.60 & $>$1000 \\
+\texttt{LaBSE} & 0.25 & 0.30 & 0.27 & 59 & 0.24 & 0.27 & 0.25 & \textbf{85} & 0.49 & $>$1000 \\
+\texttt{e5-large-instruct$^\dagger$} & 0.21 & 0.21 & 0.09 & 12 & 0.31 & 0.29 & 0.12 & 19 & 0.32 & $>$1000 \\
+\texttt{SapBERT} & 0.20 & 0.24 & 0.20 & 49 & 0.20 & 0.22 & 0.17 & 54 & 0.37 & $>$1000 \\
+\bottomrule
+\end{tabular}
+\caption{Retrieval performance on both patent benchmarks. \textbf{nDCG}@10 and \textbf{R}@10 (Recall@10) measure IR power; \textbf{CLIR}@10 is Recall@10 over cross-language gold and \textbf{LT}\% $=$ CLIR@10$/$MoLIR@10 is the share of same-language recall retained cross-lingually (cross-linguality). R@10/CLIR/LT are language-balanced (mean of per-language means). The two \textbf{Bilingual} columns treat language as a retrieval facet (subtopic recall, \citealp{zhai2003subtopic}) and require a relevant document in \emph{both} the query language and another language, over the GP+EPO queries that have both gold types ($n{=}459$): \textbf{JBC@100} (higher better) is the fraction of queries whose top-100 holds both a same-language and a cross-language gold, and $\boldsymbol{k^\star_{80}}$ (lower better) is the smallest depth at which both are present for $\geq$80\% of queries ($>$1000 $=$ never reaches 80\% within the retrieved list). The degenerate \texttt{gte-multilingual-base} (a loading artifact) is excluded; $^\dagger$\texttt{e5-large-instruct} fails the CLIR@10$<$0.10 cross-lingual degeneracy gate. Best per column in bold.}
+\label{tab:main}
+\end{table*}
