@@ -28,6 +28,7 @@ APPENDIX = {
     "claimB_B3_gap_transfer":    "figB3_penalty_transfer",
     "claimC_C4_epo_heatmap":     "figC4_epo_per_language",
     "claimC_C5_denominators":    "figC5_denominators",
+    "claimC_C6_query_doc_grid":  "figC6_query_doc_recall_grid",
     "claimD_D3_rbo":             "figD3_cross_lingual_rbo",
     "claimD_D4_score_collapse":  "figD4_score_collapse",
     "claimE_E4_rrc_curves":      "figE4_rrc_budget_curves",
