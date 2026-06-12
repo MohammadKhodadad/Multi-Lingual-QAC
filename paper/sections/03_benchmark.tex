@@ -1,35 +1,17 @@
 \section{Benchmark Construction}
 
 The filtered QAC records are exported as retrieval benchmarks rather than as a
-single flat table. Each release contains four linked views: \texttt{corpus}
-stores the searchable documents and their languages; \texttt{queries} stores the
-generated questions; \texttt{qrels} stores relevance judgments from queries to
-documents; and \texttt{qac} preserves the original question, answer, context,
-source document, generation metadata, and quality scores. This separation lets
-standard retrieval evaluators consume the data while keeping the provenance
-needed to audit failures by language and source. Table~\ref{tab:benchmark-stats}
-summarizes the statistics we rely on in this short paper.
+single flat table. We release two patent-derived benchmark sources: one based on
+Google Patents and one based on EPO data. Each release contains four linked
+views: \texttt{corpus} stores the searchable documents and their languages;
+\texttt{queries} stores the generated questions; \texttt{qrels} stores relevance
+judgments from queries to documents; and \texttt{qac} preserves the original
+question, answer, context, source document, generation metadata, and quality
+scores. This separation lets standard retrieval evaluators consume the data while
+keeping the provenance needed to audit failures by language and source.
+Table~\ref{tab:benchmark-stats} summarizes the released dataset statistics.
 
-\begin{table}[t]
-  \centering
-  \footnotesize
-  \begin{tabular}{@{}ll@{}}
-    \toprule
-    Statistic & Value \\
-    \midrule
-    Corpus documents & 1.11k \\
-    QAC queries & 137 \\
-    Qrels & 322 total; 265 cross-lang. \\
-    Languages & en, de, es, fr, zh \\
-    Alias-graph questions & 132 \\
-    ChEBI concepts & 24 \\
-    Hard negatives & Ontology / alias neighbors \\
-    Human-reviewed QACs & 97 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Benchmark statistics used in this short paper.}
-  \label{tab:benchmark-stats}
-\end{table}
+\input{sections/generated_dataset_stats_table}
 
 \paragraph{Cross-language relevance.}
 For the multilingual chemistry retrieval benchmark, each query is tied to a

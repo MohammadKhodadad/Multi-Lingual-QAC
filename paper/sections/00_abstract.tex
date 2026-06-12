@@ -6,19 +6,20 @@ whether they find that cross-language evidence, not only on whether they retriev
 an easier same-language match. Yet multilingual chemistry retrieval has little
 clean public evaluation data, so models are often judged by a single aggregate
 recall score that can hide poor cross-language retrieval. We address this gap
-with a public multilingual chemistry QAC benchmark and generation pipeline for
-cross-lingual retrieval evaluation. Patents provide controlled multilingual
-technical evidence, while chemistry ontologies enable chemically plausible hard
-negatives. We export the benchmark in retrieval-ready form with corpus, queries,
-qrels, QAC records, and language metadata, enabling evaluation by query language,
-document language, same-language versus cross-language relevance, and chemical
-confusability. Aggregate Recall@10 overstates deployment
+with public multilingual chemistry QAC benchmarks and a generation pipeline for
+cross-lingual retrieval evaluation. Google Patents and EPO releases provide
+controlled multilingual technical evidence, while chemistry ontologies enable
+chemically plausible hard negatives. We export the benchmarks in retrieval-ready
+form with corpus, queries, qrels, QAC records, and language metadata, enabling
+evaluation by query language, document language, same-language versus
+cross-language relevance, and chemical confusability. Aggregate Recall@10 overstates deployment
 readiness: the best cross-language Recall@10 is 0.50, same-language advantage
 reaches +0.55, and chemically confusable documents outrank gold evidence on
 14--78\% of publication-lens queries. The benchmark and pipeline provide a
 practical framework for building and auditing specialized multilingual retrieval
 evaluations in high-trust technical domains. Data and code are available on
-\href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-chem-patents}{Hugging Face}
+\href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-chem-patents}{Hugging Face (Google Patents)},
+\href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-epo}{Hugging Face (EPO)},
 and
 \href{https://github.com/MohammadKhodadad/Multi-Lingual-QAC}{GitHub}.
 \end{abstract}
