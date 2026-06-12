@@ -4,7 +4,7 @@ The evaluation is meant to support a practical model-selection decision: choose
 one multilingual embedding model for a shared chemistry retrieval index. If the
 team looked only at aggregate retrieval scores, the decision would be hard to
 audit because same-language hits and chemically plausible distractors are mixed
-into one number. Our benchmark changes the decision criterion from ``which model
+into one number. Our benchmark suite changes the decision criterion from ``which model
 has the best average Recall@10?'' to ``which model remains usable when the
 evidence is cross-language and chemically confusable?''
 
@@ -26,15 +26,16 @@ question about capability, reading depth, and recoverability.
 \end{figure*}
 
 Figure~\ref{fig:cost-frontier-main} then shows the resulting cost-vs-capability
-frontier. We use cross-language Recall@10 as the capability axis and XRC50, the
-median cross-lingual reading-cost multiplier, as the cost axis. The Pareto
-frontier has three models: \texttt{embeddinggemma}, \texttt{bge-m3}, and
-\texttt{granite-278m}. \texttt{embeddinggemma} is the maximum-CLIR corner (about
-CLIR@10 $=0.55$, XRC50 $=5.0$), so it is the capability-first choice. If an
-operating threshold around CLIR@10 $=0.45$ is acceptable, \texttt{bge-m3}
+frontier. We use CLIR@10, our cross-language Recall@10 metric, as the capability
+axis. We use XRC50, the median multiplier in reading depth needed to reach
+cross-language evidence compared with same-language evidence, as the cost axis.
+The Pareto frontier has three models: \texttt{embeddinggemma}, \texttt{bge-m3},
+and \texttt{granite-278m}. \texttt{embeddinggemma} is the maximum-CLIR corner
+(about CLIR@10 $=0.55$, XRC50 $=5.0$), so it is the capability-first choice. If
+an operating threshold around CLIR@10 $=0.45$ is acceptable, \texttt{bge-m3}
 becomes the cheaper-to-read admitted model (XRC50 about 3.5). At a lower
 threshold, \texttt{granite-278m} enters as an even cheaper frontier point (XRC50
-about 3.0, CLIR@10 about 0.39). Thus the benchmark does not produce a
+about 3.0, CLIR@10 about 0.39). Thus the benchmark suite does not produce a
 context-free winner; it exposes the trade-off a deployment team must choose.
 
 \begin{figure}[t]

@@ -1,17 +1,18 @@
 \section{Results}
 
-We organize the results around the three questions the benchmark is meant to
+We organize the results around the three questions the benchmark suite is meant to
 answer: whether generated QACs are usable, whether cross-language retrieval is
 harder than same-language retrieval, and whether chemistry-aware hard negatives
 surface failures that ordinary relevance metrics hide.
 
 \paragraph{QAC quality is high enough for benchmark construction.}
-Human review of 97 generated QACs gives a mean score of 8.33/10, with 94 items
-falling in the ``good'' bucket. Technical questions score slightly higher than
-semantic questions on average (8.72 vs.\ 7.91), but both modes remain usable for
-retrieval evaluation. The LLM verifier is slightly stricter than the human
-annotator (79.0\% vs.\ 83.3\%), supporting its use for filtering and auditing
-while still requiring human validation for benchmark-quality claims.
+The 97-item human-audited sample from the EPO-derived QAC generation data gives
+a mean score of 8.33/10, with 94 items falling in the ``good'' bucket. Technical
+questions score slightly higher than semantic questions on average (8.72 vs.\
+7.91), but both modes remain usable for retrieval evaluation. The LLM verifier
+is slightly stricter than the human annotator (79.0\% vs.\ 83.3\%), supporting
+its use for filtering while still requiring human audit for benchmark-quality
+claims.
 
 \begin{figure*}[t]
     \centering
@@ -44,7 +45,7 @@ language.
 \end{figure}
 
 \paragraph{The errors are not only multilingual; they are chemical.}
-The alias-graph benchmark shows a second failure mode. Even when a retrieved
+The auxiliary alias-graph stress test shows a second failure mode. Even when a retrieved
 document is topically close, it may be chemically wrong. Figure~\ref{fig:confusion-heatmap}
 measures how often a chemically confusable document outranks all gold evidence;
 in the updated alias-graph results, this occurs on 14--48\% of queries depending on the
@@ -61,6 +62,6 @@ answering the wrong question.
     \label{fig:confusion-heatmap}
 \end{figure}
 
-Together, the results support the central lesson of the benchmark: multilingual
+Together, the results support the central lesson of the benchmark suite: multilingual
 chemistry retrieval should be evaluated with language position and chemical
 confusability visible, not only with a single averaged retrieval score.

@@ -1,8 +1,9 @@
 \section{Benchmark Construction}
 
 The filtered QAC records are exported as retrieval benchmarks rather than as a
-single flat table. We release two patent-derived benchmark sources: one based on
-Google Patents and one based on EPO data. Each release contains four linked
+single flat table. We release two patent-derived benchmark releases: one based
+on Google Patents and one based on EPO patent data. Together, these releases
+form the benchmark suite used for the main retrieval evaluation. Each release contains four linked
 views: \texttt{corpus} stores the searchable documents and their languages;
 \texttt{queries} stores the generated questions; \texttt{qrels} stores relevance
 judgments from queries to documents; and \texttt{qac} preserves the original
@@ -14,29 +15,29 @@ Table~\ref{tab:benchmark-stats} summarizes the released dataset statistics.
 \input{sections/generated_dataset_stats_table}
 
 \paragraph{Cross-language relevance.}
-For the multilingual chemistry retrieval benchmark, each query is tied to a
+For the multilingual chemistry retrieval benchmark suite, each query is tied to a
 source technical document. Relevant documents include the source document and
 its available multilingual variants, so a query can be evaluated against both
 same-language and cross-language evidence. We keep query language, document
 language, and source identifiers as explicit metadata. This makes it possible to
 separate an easy same-language hit from a harder cross-language hit, and to
 construct ``no-home'' cases in which the query language has no same-language
-gold document. These cases are central to the benchmark because they remove the
+gold document. These cases are central to the benchmark suite because they remove the
 shortcut that often inflates aggregate recall.
 
 \paragraph{Chemistry-aware hard negatives.}
 Language is only one source of retrieval error in chemistry. A model may also
 rank a document about a related compound, synonym, parent class, or neighboring
-concept above the intended evidence. To test this failure mode, we build an
-alias-graph stress test from chemistry ontology and alias structure. ChEBI
-concepts and multilingual aliases define target chemical concepts; documents
-associated with the target concept form the gold set; and taxonomic or
-alias-graph neighbors provide chemically plausible hard negatives. These
-negatives are deliberately more informative than random non-relevant documents:
-they ask whether the retriever can distinguish the right chemical evidence from
-evidence that is close enough to be tempting.
+concept above the intended evidence. In addition to the two QAC benchmark
+releases, we report an auxiliary alias-graph stress test built from chemistry
+ontology and alias structure. ChEBI concepts and multilingual aliases define
+target chemical concepts; documents associated with the target concept form the
+gold set; and taxonomic or alias-graph neighbors provide chemically plausible
+hard negatives. These negatives are deliberately more informative than random
+non-relevant documents: they ask whether the retriever can distinguish the right
+chemical evidence from evidence that is close enough to be tempting.
 
-The resulting benchmark labels each retrieved document by its role in the
+The resulting evaluation labels each retrieved document by its role in the
 workflow: same-language relevant evidence, cross-language relevant evidence,
 unrelated distraction, or chemically confusable hard negative. The next section
 uses these labels to evaluate multilingual embedding models beyond aggregate

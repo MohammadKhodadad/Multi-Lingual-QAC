@@ -3,7 +3,7 @@
 We evaluate multilingual embedding models as drop-in dense retrievers. Each
 model embeds the query and all corpus documents; documents are ranked by
 embedding similarity; and retrieval quality is computed from the benchmark
-\texttt{qrels}. This setup matches the practical decision faced by a technical
+suite's \texttt{qrels}. This setup matches the practical decision faced by a technical
 search team: choose one multilingual encoder for a shared index, then ask
 whether it retrieves the right evidence across languages.
 
@@ -33,8 +33,8 @@ English document from a German query.
 Beyond relevant-document recall, we measure the kinds of mistakes that matter
 for the workflow. First, we track same-language distractions: cases where a
 model retrieves a non-relevant document in the query language ahead of relevant
-cross-language evidence. Second, we use the alias-graph benchmark to measure
-chemistry confusion, where a document about a chemically related but incorrect
-concept outranks the intended evidence. These analyses turn retrieval output
-into diagnostic categories rather than a single score.
+cross-language evidence. Second, we use the auxiliary alias-graph stress test to
+measure chemistry confusion, where a document about a chemically related but
+incorrect concept outranks the intended evidence. These analyses turn retrieval
+output into diagnostic categories rather than a single score.
 

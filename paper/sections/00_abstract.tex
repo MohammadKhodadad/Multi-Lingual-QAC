@@ -6,18 +6,19 @@ whether they find that cross-language evidence, not only on whether they retriev
 an easier same-language match. Yet multilingual chemistry retrieval has little
 clean public evaluation data, so models are often judged by a single aggregate
 recall score that can hide poor cross-language retrieval. We address this gap
-with two public multilingual chemistry QAC retrieval benchmarks, one derived
-from Google Patents and one from EPO releases, together with a generation
-pipeline for cross-lingual retrieval evaluation. Google Patents and EPO releases provide
-controlled multilingual technical evidence, while chemistry ontologies enable
-chemically plausible hard negatives. We export the benchmarks in retrieval-ready
-form with corpus, queries, qrels, QAC records, and language metadata, enabling
+with a benchmark suite containing two public multilingual chemistry QAC retrieval
+releases, one derived from Google Patents and one from EPO patent data, together
+with a generation pipeline for cross-lingual retrieval evaluation. These two
+patent-derived releases provide controlled multilingual technical evidence, while
+chemistry ontologies enable an auxiliary chemically plausible hard-negative
+diagnostic. We export the benchmark suite in retrieval-ready form with corpus,
+queries, qrels, QAC records, and language metadata, enabling
 evaluation by query language, document language, same-language versus
 cross-language relevance, and chemical confusability. Aggregate Recall@10
 overstates deployment readiness: the best cross-language Recall@10 is about
 0.55, same-language advantage remains visible in every query language, and
 chemically confusable documents outrank gold evidence on 14--48\% of
-publication-lens queries. The benchmark and pipeline provide a
+publication-lens queries. The benchmark suite and pipeline provide a
 practical framework for building and auditing specialized multilingual retrieval
 evaluations in high-trust technical domains. Data and code are available on
 \href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-chem-patents}{Hugging Face (Google Patents)},

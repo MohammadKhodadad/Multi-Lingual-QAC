@@ -43,21 +43,21 @@ contexts, and hard negatives are chemically plausible rather than arbitrary.
 Without this structure, an evaluation may reward the model that looks best on
 average while missing the model behavior that creates practical risk.
 
-We present a multilingual chemistry question-answer-context (QAC) benchmark and
-generation pipeline for cross-lingual retrieval evaluation. Our goal is to
-evaluate multilingual chemistry retrieval, not patent search alone. We use
-patents as the benchmark source because patent families often contain related
-technical documents in multiple languages and include chemistry-rich
-descriptions at scale, building on the long history of patent retrieval
-evaluation \citep{clefip2013}.
+We present a multilingual chemistry question-answer-context (QAC) benchmark
+suite and generation pipeline for cross-lingual retrieval evaluation. Our goal
+is to evaluate multilingual chemistry retrieval, not patent search alone. We use
+patents as the benchmark substrate because patent families often contain related
+technical documents in multiple languages and include chemistry-rich descriptions
+at scale, building on the long history of patent retrieval evaluation
+\citep{clefip2013}.
 
 This paper is therefore an evaluation-framework paper rather than a model
 leaderboard. Our contributions are: (1) two public multilingual
-chemistry-patent retrieval benchmarks, derived from Google Patents and EPO
-releases, with query/document language metadata and retrieval-ready corpus,
-queries, and qrels; (2) a reproducible LLM-assisted QAC generation and
-validation pipeline; (3) a language-aware retrieval evaluation that separates
-same-language and cross-language evidence; (4) a chemistry-confusability stress
-test based on alias and ontology neighbors; and (5) a deployment-oriented
-model-selection analysis showing why aggregate recall is not a sufficient
-deployment dashboard.
+chemistry-patent retrieval benchmark releases, derived from Google Patents and
+EPO patent data, with query/document language metadata and retrieval-ready
+corpus, queries, and qrels; (2) a reproducible LLM-assisted QAC generation and
+human-audit pipeline; (3) a language-aware retrieval evaluation that separates
+same-language and cross-language evidence; (4) an auxiliary
+chemistry-confusability stress test based on alias and ontology neighbors; and
+(5) a deployment-oriented model-selection analysis showing why aggregate recall
+is not a sufficient deployment dashboard.

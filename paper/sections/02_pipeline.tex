@@ -4,7 +4,7 @@ Our method turns multilingual chemistry technical text into auditable
 question-answer-context (QAC) records for retrieval evaluation. The design goal
 is not simply to generate fluent questions. Each generated item must identify
 the evidence document it came from, preserve language metadata, and carry quality
-signals that make the benchmark inspectable after export. Figure~\ref{fig:qac-generation-flow}
+signals that make the benchmark suite inspectable after export. Figure~\ref{fig:qac-generation-flow}
 summarizes the full pipeline.
 
 \begin{figure*}[t]
@@ -20,10 +20,10 @@ summarizes the full pipeline.
 
 \paragraph{Corpus and context construction.}
 The input is a chemistry-relevant multilingual corpus. In this work, we use
-two patent-derived sources, Google Patents and EPO, because patents provide
-technical descriptions and multilingual publication variants at scale. Both
-sources are normalized into the same document-language representation before QAC
-generation. For each document-language pair, the context builder assembles a
+two patent-derived sources, Google Patents and EPO patent data, because patents
+provide technical descriptions and multilingual publication variants at scale.
+Both sources are normalized into the same document-language representation before
+QAC generation. For each document-language pair, the context builder assembles a
 compact evidence block from the title and abstract, adding first-claim text when
 available; longer description fields are source-dependent and are not assumed to
 be present for every document. This step keeps the generation grounded in a
@@ -35,7 +35,7 @@ For each selected document, language, and generation mode, an LLM produces
 multiple QAC candidates. Each candidate contains a user-facing question, a short
 answer, the supporting context, and metadata linking the item back to the source
 document and language. We use both technical and semantic question modes so that
-the benchmark contains queries that reflect different retrieval intents: some
+the benchmark suite contains queries that reflect different retrieval intents: some
 ask for concrete technical details, while others ask for a higher-level
 description of what the document is about.
 
@@ -50,11 +50,11 @@ language, generation mode, scores, and verifier feedback.
 
 \paragraph{Human audit and export.}
 Because the verifier is itself model-based, we audit its behavior after
-generation against a human-annotated sample. This does not make human validation
-an automatic step for every item, but it checks whether the automatic grading is
-directionally reliable enough for benchmark construction. The filtered QAC
-records are then exported with the retrieval artifacts used in later sections: a
-corpus table, query table, relevance judgments, and the full QAC table. These
-artifacts let us evaluate models with standard dense-retrieval tooling while
-still slicing results by query language, document language, and source
-provenance.
+generation against a 97-item human-annotated sample from the EPO-derived QAC
+generation data. This does not make human auditing an automatic step for every
+item, but it checks whether the automatic grading is directionally reliable
+enough for benchmark construction. The filtered QAC records are then exported
+with the retrieval artifacts used in later sections: a corpus table, query table,
+relevance judgments, and the full QAC table. These artifacts let us evaluate
+models with standard dense-retrieval tooling while still slicing results by
+query language, document language, and source provenance.

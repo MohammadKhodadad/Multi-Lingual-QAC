@@ -2,12 +2,13 @@
 
 Multilingual chemistry retrieval needs evaluation data that makes the right
 failure modes visible. In this paper, we presented a QAC generation and
-validation pipeline for building such data, released it in retrieval-ready form,
-and used it to evaluate dense multilingual retrievers beyond aggregate recall.
+human-audit pipeline for building such data, released two patent-derived
+benchmark releases in retrieval-ready form, and used the resulting benchmark
+suite to evaluate dense multilingual retrievers beyond aggregate recall.
 Language metadata separates same-language from cross-language relevance; QAC
-provenance makes generated queries auditable; human validation checks the
-LLM-based verifier; and alias-graph hard negatives expose chemistry-specific
-confusions.
+provenance makes generated queries auditable; the human-audited sample checks
+the LLM-based verifier; and the auxiliary alias-graph stress test exposes
+chemistry-specific confusions.
 
 The central lesson is simple: a model that looks effective on average may still
 prefer same-language shortcuts or chemically plausible but wrong documents over

@@ -26,27 +26,16 @@ is recommended.
   - best cross-language Recall@10 about `0.55`;
   - same-language advantage visible in every query language;
   - chemistry-confusability failures `14--48%`.
+- Completed the terminology/scope pass:
+  - distinguish the two patent-derived benchmark releases from the benchmark
+    suite;
+  - use `human audit` for the 97-item EPO-derived reviewed sample;
+  - define `CLIR@10` and `XRC50` in Deployment;
+  - describe the alias-graph stress test as an auxiliary diagnostic.
 
 ## P0: Final Light Polish
 
-1. Run a terminology and scope consistency pass.
-   - Locations: abstract, contribution list, pipeline, benchmark, Results,
-     Deployment, captions, and appendix.
-   - Specific fixes from the latest review:
-     - Use `two patent-derived benchmark releases` when naming Google Patents
-       and EPO separately.
-     - Use `benchmark suite` when referring to both releases collectively.
-     - Prefer `human audit` or `human-audited validation sample` over broad
-       `human validation` when referring to the 97 reviewed QACs.
-     - Define once: `CLIR@10, our cross-language Recall@10 metric, ...`
-     - Clarify whether the 97 reviewed QACs are drawn from Google Patents only
-       or from both releases.
-     - State that the alias-graph stress test is an auxiliary diagnostic, not
-       one of the two released QAC benchmark sources, if that is accurate.
-     - Replace vague `EPO releases` wording with `EPO patent data` or
-       `EPO-derived benchmark release`.
-
-2. Add a compact main findings table if page budget allows.
+1. Add a compact main findings table if page budget allows.
    - Location: `sections/05_results.tex`, likely near the start or end of
      Results.
    - Purpose: Give reviewers a fast summary of the core empirical claims.
@@ -58,7 +47,7 @@ is recommended.
      - Deployment frontier: `embeddinggemma`, `bge-m3`, `granite-278m`.
    - If space is tight, skip this rather than weakening the narrative.
 
-3. Add a short related-work sentence on LLM-assisted benchmark construction.
+2. Add a short related-work sentence on LLM-assisted benchmark construction.
    - Location: `sections/02_related_work.tex`.
    - Suggested wording:
      `LLM-assisted benchmark construction has become a practical way to create
@@ -68,13 +57,7 @@ is recommended.
      traceable to a source document, language, verifier scores, and retrieval
      relevance judgments.`
 
-4. Define `XRC50` more explicitly.
-   - Location: `sections/06_deployment.tex`, before or at first use.
-   - Suggested wording:
-     `XRC50 measures the median multiplier in reading depth needed to reach
-     cross-language evidence compared with same-language evidence.`
-
-5. Replace generic abstract ending with more concrete deployment language.
+3. Replace generic abstract ending with more concrete deployment language.
    - Location: `sections/00_abstract.tex`.
    - Current concern: `practical framework` is acceptable but generic.
    - Suggested wording:
@@ -83,7 +66,7 @@ is recommended.
 
 ## P1: Consistency and Submission Checks
 
-6. Check all updated numbers across release surfaces.
+4. Check all updated numbers across release surfaces.
    - Locations: abstract, Results, captions, appendix, dataset cards, GitHub
      README, and any report text.
    - Current paper numbers to verify:
@@ -95,17 +78,17 @@ is recommended.
      - EPO: corpus `11,315`, queries `198`, qrels `594`,
        cross-language qrels `396`.
 
-7. Recheck the page budget after any final polish.
+5. Recheck the page budget after any final polish.
    - Compile `short_main.tex`.
    - If the body becomes too crowded, first remove or move the optional compact
      findings table rather than cutting the four-priority-figure story.
 
-8. Verify data/code availability.
+6. Verify data/code availability.
    - Check that both Hugging Face links and the GitHub link are live.
    - Confirm anonymization expectations for the target venue.
    - Confirm dataset cards describe the two releases clearly.
 
-9. Add practical model attributes only if verified.
+7. Add practical model attributes only if verified.
    - Do not invent cost, latency, license, model size, or serving constraints.
    - Keep deployment cost framed through retrieval-depth / reading-cost behavior
      unless external model-card facts are explicitly checked.
@@ -131,9 +114,8 @@ is recommended.
 
 ## Current Recommendation
 
-Submit after one final polish pass. The highest-impact edits are adding the
-terminology/scope consistency pass, adding the LLM-assisted
-benchmark-construction sentence, defining `XRC50` cleanly, replacing the generic
+Submit after one final polish pass. The highest-impact remaining edits are
+adding the LLM-assisted benchmark-construction sentence, replacing the generic
 abstract ending, and checking number consistency across the paper and release
 pages. The compact findings table is useful, but optional if it hurts page
 budget.

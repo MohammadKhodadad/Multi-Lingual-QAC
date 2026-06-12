@@ -1,6 +1,6 @@
 \section*{Limitations}
 
-This benchmark is intentionally specialized. Chemistry patents provide a useful
+This benchmark suite is intentionally specialized. Chemistry patents provide a useful
 substrate for controlled multilingual technical evidence, but results may not
 transfer directly to other scientific domains, regulatory corpora, or general
 web retrieval. Patent publication variants also give stronger content control
@@ -9,12 +9,13 @@ equivalence across every language version. The design should therefore be read
 as a reusable evaluation pattern, not as proof that the same model ordering will
 hold everywhere or that all patent variants are legally interchangeable.
 
-The QAC pipeline relies on LLM generation and LLM-based verification. Human
-review supports the usefulness of the generated data, but the validation sample
-is limited and does not replace expert patent or chemistry review for every
+The QAC pipeline relies on LLM generation and LLM-based verification. The
+97-item human-audited sample supports the usefulness of the generated data, but
+it is limited and does not replace expert patent or chemistry review for every
 item. Future versions should expand expert annotation, especially for borderline
 chemical relevance and hard-negative severity.
 
-Finally, the current paper focuses on multilingual retrieval and alias-graph
-confusability. Code-switching and noisy-query infrastructure exist in the
-project, but we do not claim complete results for those settings here.
+Finally, the current paper focuses on multilingual retrieval in the two QAC
+benchmark releases and on auxiliary alias-graph confusability diagnostics.
+Code-switching and noisy-query infrastructure exist in the project, but we do
+not claim complete results for those settings here.
