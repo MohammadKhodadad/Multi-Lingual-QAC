@@ -10,6 +10,9 @@ Candidates
   C4  (appendix) EPO 3-language mirror of C1.
   C5  (appendix) denominator transparency: queries / gold qrels / haystack share per language —
       the justification for language-balancing rather than pooling.
+  C6  directional matrix: 8-panel grid, one query-language x document-language Recall@10 heatmap per
+      model (diagonal = same-language, off-diagonal = cross-lingual).
+  C7  the same data as a single routes x models heatmap (all four dimensions in one panel).
 
 Normalization
   * within-language means first, then language-balanced macro mean for any single headline number.
@@ -179,6 +182,111 @@ def c5_denominators():
     fp.dump_data(out, "claimC_C5_denominators")
 
 
+# --------------------------------------------------------------------------- C6/C7 data
+def _query_doc_recall() -> pd.DataFrame:
+    """Tidy frame: (model, query_language, doc_language) -> mean Recall@10 over the gold docs that
+    live in doc_language, for queries asked in query_language. Diagonal = same-language gold."""
+    from collections import defaultdict
+    clang, _ = fp._gp_corpus_family()
+    tab = fp.gp_query_table()
+    rk = fp.gp_rankings()
+    top = rk[rk["rank"] <= 10].groupby(["model", "query_id"])["corpus_id"].apply(set).to_dict()
+    rows = []
+    for model in fp.MODEL_ORDER:
+        for q in tab.itertuples():
+            t = top.get((model, q.query_id), set())
+            by_lang = defaultdict(set)
+            for d in q.gold:
+                by_lang[clang.get(d)].add(d)
+            for dl, gset in by_lang.items():
+                if dl in fp.CP_LANGS:
+                    rows.append({"model": model, "short": fp.short(model),
+                                 "query_language": q.query_language, "doc_language": dl,
+                                 "recall": len(t & gset) / len(gset)})
+    return pd.DataFrame(rows)
+
+
+def _cell(ax, mat, langs, title, annotate=True, vmax=0.8):
+    arr = np.ma.masked_invalid(mat.to_numpy())
+    cmap = plt.cm.viridis.copy(); cmap.set_bad("#dddddd")
+    im = ax.imshow(arr, cmap=cmap, vmin=0, vmax=vmax, aspect="auto")
+    ax.set_xticks(range(len(langs))); ax.set_yticks(range(len(langs)))
+    ax.set_xticklabels([l.upper() for l in langs], fontsize=8)
+    ax.set_yticklabels([l.upper() for l in langs], fontsize=8)
+    for i in range(len(langs)):  # outline the same-language diagonal
+        ax.add_patch(plt.Rectangle((i - 0.5, i - 0.5), 1, 1, fill=False, edgecolor="white", lw=1.6))
+        if annotate:
+            for j in range(len(langs)):
+                v = mat.to_numpy()[i, j]
+                if not np.isnan(v):
+                    ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=7,
+                            color="white" if v < 0.45 else "black")
+    ax.set_title(title, fontsize=10)
+    return im
+
+
+# --------------------------------------------------------------------------- C6
+def c6_query_doc_grid():
+    df = _query_doc_recall()
+    fp.dump_data(df, "claimC_C6_query_doc_grid")
+    langs = fp.CP_LANGS
+    fig, axes = plt.subplots(2, 4, figsize=(14.0, 7.2))
+    im = None
+    for ax, model in zip(axes.ravel(), fp.MODEL_ORDER):
+        sub = df[df["model"] == model]
+        mat = (sub.groupby(["query_language", "doc_language"])["recall"].mean()
+                  .unstack("doc_language").reindex(index=langs, columns=langs))
+        im = _cell(ax, mat, langs, fp.short(model))
+    for ax in axes[1, :]:
+        ax.set_xlabel("document language", fontsize=9)
+    for ax in axes[:, 0]:
+        ax.set_ylabel("query language", fontsize=9)
+    fig.colorbar(im, ax=axes, fraction=0.025, pad=0.02, label="Recall@10")
+    fig.suptitle("Recall@10 by query language × document language, per model "
+                 "(white box = same-language; off-diagonal = cross-lingual)",
+                 fontsize=12.5, fontweight="bold", y=1.0)
+    fp.save(fig, "claimC_C6_query_doc_grid")
+
+
+# --------------------------------------------------------------------------- C7
+def c7_route_model_matrix():
+    df = _query_doc_recall()
+    langs = fp.CP_LANGS
+    # rows = routes (query→doc), same-language routes first then cross, grouped by query language
+    routes = [(q, d) for q in langs for d in langs]
+    routes = sorted(routes, key=lambda qd: (qd[0] != qd[1], langs.index(qd[0]), langs.index(qd[1])))
+    rl = {r: i for i, r in enumerate(routes)}
+    mat = np.full((len(routes), len(fp.MODEL_ORDER)), np.nan)
+    g = df.groupby(["query_language", "doc_language", "model"])["recall"].mean()
+    for (q, d, model), v in g.items():
+        if (q, d) in rl and model in fp.MODEL_ORDER:
+            mat[rl[(q, d)], fp.MODEL_ORDER.index(model)] = v
+    n_same = sum(1 for q, d in routes if q == d)
+
+    fig, ax = plt.subplots(figsize=(9.0, 9.5))
+    arr = np.ma.masked_invalid(mat)
+    cmap = plt.cm.viridis.copy(); cmap.set_bad("#dddddd")
+    im = ax.imshow(arr, cmap=cmap, vmin=0, vmax=0.8, aspect="auto")
+    ax.set_xticks(range(len(fp.MODEL_ORDER)))
+    ax.set_xticklabels([fp.short(m) for m in fp.MODEL_ORDER], rotation=40, ha="right", fontsize=9)
+    ax.set_yticks(range(len(routes)))
+    ax.set_yticklabels([f"{q.upper()}→{d.upper()}" + ("  (same)" if q == d else "") for q, d in routes],
+                       fontsize=8)
+    ax.axhline(n_same - 0.5, color="#c44e52", lw=2)  # separate same-language routes from cross
+    for i in range(len(routes)):
+        for j in range(len(fp.MODEL_ORDER)):
+            v = mat[i, j]
+            if not np.isnan(v):
+                ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=6.5,
+                        color="white" if v < 0.45 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02, label="Recall@10")
+    ax.set_title("Recall@10 for every query→document language route × model\n"
+                 "(red line splits same-language routes from cross-lingual)",
+                 fontsize=11, fontweight="bold")
+    fp.save(fig, "claimC_C7_route_model_matrix")
+    fp.dump_data(df, "claimC_C7_route_model_matrix")
+
+
 def main():
     fp.set_style()
     np.random.seed(0)
@@ -187,7 +295,9 @@ def main():
     c3_home_advantage()
     c4_epo_heatmap()
     c5_denominators()
-    print("claim C: C1-C5 written to candidates/")
+    c6_query_doc_grid()
+    c7_route_model_matrix()
+    print("claim C: C1-C7 written to candidates/")
 
 
 if __name__ == "__main__":
