@@ -14,30 +14,30 @@
       "n_admitted": 5,
       "admitted_set": "bge-m3;embeddinggemma;granite-278m;nomic-v2-moe;qwen3-0.6B",
       "cheapest_admitted": "granite-278m",
-      "cheapest_XRC50": 1.25,
+      "cheapest_XRC50": 3.2,
       "max_clir_corner": "embeddinggemma"
     },
     {
       "tau": 0.35,
-      "n_admitted": 4,
-      "admitted_set": "bge-m3;embeddinggemma;nomic-v2-moe;qwen3-0.6B",
-      "cheapest_admitted": "bge-m3",
-      "cheapest_XRC50": 2.0,
+      "n_admitted": 5,
+      "admitted_set": "bge-m3;embeddinggemma;granite-278m;nomic-v2-moe;qwen3-0.6B",
+      "cheapest_admitted": "granite-278m",
+      "cheapest_XRC50": 3.2,
       "max_clir_corner": "embeddinggemma"
     },
     {
       "tau": 0.4,
-      "n_admitted": 3,
-      "admitted_set": "bge-m3;embeddinggemma;qwen3-0.6B",
+      "n_admitted": 4,
+      "admitted_set": "bge-m3;embeddinggemma;nomic-v2-moe;qwen3-0.6B",
       "cheapest_admitted": "bge-m3",
-      "cheapest_XRC50": 2.0,
+      "cheapest_XRC50": 3.5,
       "max_clir_corner": "embeddinggemma"
     },
     {
       "tau": 0.45,
-      "n_admitted": 1,
-      "admitted_set": "embeddinggemma",
-      "cheapest_admitted": "embeddinggemma",
+      "n_admitted": 3,
+      "admitted_set": "bge-m3;embeddinggemma;qwen3-0.6B",
+      "cheapest_admitted": "bge-m3",
       "cheapest_XRC50": 3.5,
       "max_clir_corner": "embeddinggemma"
     },
@@ -46,26 +46,24 @@
       "n_admitted": 1,
       "admitted_set": "embeddinggemma",
       "cheapest_admitted": "embeddinggemma",
-      "cheapest_XRC50": 3.5,
+      "cheapest_XRC50": 5.0,
       "max_clir_corner": "embeddinggemma"
     }
   ],
   "verify_tau040_admitted_set": [
     "bge-m3",
     "embeddinggemma",
+    "nomic-v2-moe",
     "qwen3-0.6B"
   ],
-  "verify_tau040_admitted_set_matches_cost_frontier": true,
+  "verify_tau040_admitted_set_matches_cost_frontier": false,
   "verify_tau040_cheapest_is_bge_m3": true,
-  "tau_admitted_stable_range": "[0.385, 0.430]",
-  "tau_admitted_stable_range_raw": [
-    0.385,
-    0.43
-  ],
-  "tau_cheapest_bge_range": "[0.330, 0.435]",
+  "tau_admitted_stable_range": "none containing 0.40",
+  "tau_admitted_stable_range_raw": null,
+  "tau_cheapest_bge_range": "[0.390, 0.460]",
   "tau_cheapest_bge_range_raw": [
-    0.33,
-    0.435
+    0.39,
+    0.46
   ],
   "egemma_corner_tau_invariant": true,
   "unique_max_clir_corner": "embeddinggemma",

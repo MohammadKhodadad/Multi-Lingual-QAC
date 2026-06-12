@@ -1,14 +1,14 @@
 {
   "run_id": "chem_patents",
-  "created_at": "2026-06-09T23:51:48.376580+00:00",
+  "created_at": "2026-06-11T02:57:21.369023+00:00",
   "dataset_repo": "MehdiAstaraki/multi-lingual-qac-chem-patents",
   "corpus_repo": "MehdiAstaraki/multilingual_GP",
   "dataset_variant": "multilingual",
   "dataset_revision": "main",
   "dataset_sizes": {
-    "queries": 137,
-    "corpus": 1110,
-    "qrels": 322
+    "queries": 524,
+    "corpus": 23787,
+    "qrels": 1284
   },
   "models": [
     "Alibaba-NLP/gte-multilingual-base",
@@ -22,82 +22,82 @@
     "sentence-transformers/LaBSE"
   ],
   "batch_size": 64,
-  "git_commit": "1ced5dc",
+  "git_commit": "0928218",
   "git_dirty": true,
   "hostname": "login1",
   "slurm_job_id": null,
   "scores": {
     "Alibaba-NLP/gte-multilingual-base": {
-      "main_score": 0.00365,
-      "recall_at_10": 0.00365,
-      "recall_at_100": 0.01825,
-      "ndcg_at_10": 0.00282,
-      "map_at_10": 0.00182,
-      "mrr_at_10": 0.0036496350364963502
+      "main_score": 0.00477,
+      "recall_at_10": 0.00477,
+      "recall_at_100": 0.02242,
+      "ndcg_at_10": 0.00279,
+      "map_at_10": 0.00135,
+      "mrr_at_10": 0.003188234581364352
     },
     "BAAI/bge-m3": {
-      "main_score": 0.47567,
-      "recall_at_10": 0.47567,
-      "recall_at_100": 0.66058,
-      "ndcg_at_10": 0.39063,
-      "map_at_10": 0.32946,
-      "mrr_at_10": 0.4090198123044838
+      "main_score": 0.50906,
+      "recall_at_10": 0.50906,
+      "recall_at_100": 0.68686,
+      "ndcg_at_10": 0.44557,
+      "map_at_10": 0.38609,
+      "mrr_at_10": 0.4864905185992973
     },
     "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR": {
-      "main_score": 0.21168,
-      "recall_at_10": 0.21168,
-      "recall_at_100": 0.42457,
-      "ndcg_at_10": 0.17585,
-      "map_at_10": 0.14211,
-      "mrr_at_10": 0.19987834549878347
+      "main_score": 0.23775,
+      "recall_at_10": 0.23775,
+      "recall_at_100": 0.41126,
+      "ndcg_at_10": 0.19938,
+      "map_at_10": 0.16281,
+      "mrr_at_10": 0.22734308736217143
     },
     "google/embeddinggemma-300m": {
-      "main_score": 0.5438,
-      "recall_at_10": 0.5438,
-      "recall_at_100": 0.72384,
-      "ndcg_at_10": 0.46136,
-      "map_at_10": 0.40197,
-      "mrr_at_10": 0.4786293592862937
+      "main_score": 0.57395,
+      "recall_at_10": 0.57395,
+      "recall_at_100": 0.75843,
+      "ndcg_at_10": 0.50316,
+      "map_at_10": 0.44447,
+      "mrr_at_10": 0.531125802738398
     },
     "ibm-granite/granite-embedding-278m-multilingual": {
-      "main_score": 0.35888,
-      "recall_at_10": 0.35888,
-      "recall_at_100": 0.60097,
-      "ndcg_at_10": 0.31662,
-      "map_at_10": 0.27265,
-      "mrr_at_10": 0.3579162321863052
+      "main_score": 0.41539,
+      "recall_at_10": 0.41539,
+      "recall_at_100": 0.62118,
+      "ndcg_at_10": 0.36327,
+      "map_at_10": 0.31602,
+      "mrr_at_10": 0.39143190355022417
     },
     "intfloat/multilingual-e5-large-instruct": {
-      "main_score": 0.17762,
-      "recall_at_10": 0.17762,
-      "recall_at_100": 0.34307,
-      "ndcg_at_10": 0.15187,
-      "map_at_10": 0.1122,
-      "mrr_at_10": 0.20663885992353143
+      "main_score": 0.21835,
+      "recall_at_10": 0.21835,
+      "recall_at_100": 0.37723,
+      "ndcg_at_10": 0.20648,
+      "map_at_10": 0.15474,
+      "mrr_at_10": 0.30572367623894336
     },
     "nomic-ai/nomic-embed-text-v2-moe": {
-      "main_score": 0.44282,
-      "recall_at_10": 0.44282,
-      "recall_at_100": 0.66423,
-      "ndcg_at_10": 0.3907,
-      "map_at_10": 0.33538,
-      "mrr_at_10": 0.4378432394855753
+      "main_score": 0.46692,
+      "recall_at_10": 0.46692,
+      "recall_at_100": 0.66683,
+      "ndcg_at_10": 0.41719,
+      "map_at_10": 0.36123,
+      "mrr_at_10": 0.46887722646310437
     },
     "Qwen/Qwen3-Embedding-0.6B": {
-      "main_score": 0.46837,
-      "recall_at_10": 0.46837,
-      "recall_at_100": 0.6837,
-      "ndcg_at_10": 0.39037,
-      "map_at_10": 0.33307,
-      "mrr_at_10": 0.41326613370409004
+      "main_score": 0.49587,
+      "recall_at_10": 0.49587,
+      "recall_at_100": 0.71501,
+      "ndcg_at_10": 0.43241,
+      "map_at_10": 0.37579,
+      "mrr_at_10": 0.468580364715861
     },
     "sentence-transformers/LaBSE": {
-      "main_score": 0.27737,
-      "recall_at_10": 0.27737,
-      "recall_at_100": 0.46715,
-      "ndcg_at_10": 0.22808,
-      "map_at_10": 0.18176,
-      "mrr_at_10": 0.26364268335071256
+      "main_score": 0.30105,
+      "recall_at_10": 0.30105,
+      "recall_at_100": 0.47869,
+      "ndcg_at_10": 0.25053,
+      "map_at_10": 0.19812,
+      "mrr_at_10": 0.29380301102629347
     }
   }
 }

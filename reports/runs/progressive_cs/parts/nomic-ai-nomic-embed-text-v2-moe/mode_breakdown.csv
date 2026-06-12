@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+nomic-ai/nomic-embed-text-v2-moe,B,103,-0.002859897549869945
+nomic-ai/nomic-embed-text-v2-moe,C,114,0.00015479744526377895
+nomic-ai/nomic-embed-text-v2-moe,D,236,0.0009462101605989165
+nomic-ai/nomic-embed-text-v2-moe,F,217,0.0036681312295149

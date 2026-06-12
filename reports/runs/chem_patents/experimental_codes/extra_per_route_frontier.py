@@ -57,8 +57,8 @@ SLUG = "extra_per_route_frontier"
 SEED = 20260610
 ROUTES = ["en", "de", "es", "fr", "zh"]  # query languages = routes
 DEG_CLIR_CUTOFF = 0.10  # DEG gate (same as global frontier): clir_at_10 < this == degenerate
-EXPECTED_N_CROSS = {"de": 27, "en": 27, "es": 34, "fr": 27, "zh": 22}
-EXPECTED_N_SAME = {"en": 21, "fr": 27, "de": 7, "zh": 2, "es": 0}
+# (per-route cross/same-gold census is derived from the data and checked for consistency below;
+#  the old 137-query release hardcoded EXPECTED_N_CROSS/EXPECTED_N_SAME, now stale on 524 queries.)
 
 
 def main() -> None:
@@ -121,7 +121,7 @@ def main() -> None:
                     xrc50 = d50_cross / d50_same
                     xrc_censored = bool(c50c or c50s)
 
-            thin = (0 < n_same <= 7)  # zh (2), de (7) are fragile denominators
+            thin = (0 < n_same <= 10)  # flag fragile (small) same-language denominators
             rows.append({
                 "route": lang, "model": m, "short": s,
                 "clir_at_10": round(clir10, 4),
@@ -214,18 +214,20 @@ def main() -> None:
         pooled_clir = float(cpq[(cpq.model == m) & (cpq.n_gold_cross > 0)]["clir_at_10"].mean())
         if abs(pooled_clir - gmap[s]) > 1e-3:
             check_fails.append(f"{s}: pooled CLIR@10 {pooled_clir:.4f} != global {gmap[s]:.4f}")
-    # (b) per-route cross-gold counts (model-invariant) match the expected census
+    # (b) per-route cross/same-gold counts are model-invariant (constant across models for a route)
     for lang in ROUTES:
-        nc = int(rt_df[(rt_df.route == lang)]["n_cross"].iloc[0])
-        if nc != EXPECTED_N_CROSS[lang]:
-            check_fails.append(f"route {lang}: n_cross {nc} != expected {EXPECTED_N_CROSS[lang]}")
-        ns = int(rt_df[(rt_df.route == lang)]["n_same"].iloc[0])
-        if ns != EXPECTED_N_SAME[lang]:
-            check_fails.append(f"route {lang}: n_same {ns} != expected {EXPECTED_N_SAME[lang]}")
-    # (c) es XRC50 must be NaN for every model, never a number
-    es_xrc = rt_df[rt_df.route == "es"]["XRC50"]
-    if not es_xrc.isna().all():
-        check_fails.append("es route has a non-NaN XRC50 (should be undefined for all models)")
+        sub = rt_df[rt_df.route == lang]
+        if sub.empty:
+            continue
+        if sub["n_cross"].nunique() > 1 or sub["n_same"].nunique() > 1:
+            check_fails.append(f"route {lang}: per-model n_cross/n_same not constant")
+    # (c) a route's XRC50 is defined only when it has same-language gold (n_same > 0)
+    for lang in ROUTES:
+        sub = rt_df[rt_df.route == lang]
+        if sub.empty:
+            continue
+        if int(sub["n_same"].iloc[0]) == 0 and not sub["XRC50"].isna().all():
+            check_fails.append(f"route {lang}: XRC50 should be NaN when n_same==0")
 
     # ---- does the max-CLIR (capability) corner move across routes? (the novelty hook) ----
     corner_by_route = {lang: memb_df[memb_df.route == lang]["max_clir_corner"].iloc[0] for lang in ROUTES}

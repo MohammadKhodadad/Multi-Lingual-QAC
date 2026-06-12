@@ -1,83 +1,75 @@
 {
-  "pooled_original_foreign_reach10": 0.2763,
-  "pooled_synthetic_foreign_reach10": 0.3539,
-  "pooled_gap": -0.0776,
-  "paired_mean_diff": -0.0444,
-  "paired_p_value": 0.1306674368272422,
+  "pooled_original_foreign_reach10": 0.2357,
+  "pooled_synthetic_foreign_reach10": 0.318,
+  "pooled_gap": -0.0822,
+  "paired_mean_diff": -0.0569,
+  "paired_p_value": 0.036014289852682305,
   "paired_n_patent_model": 120,
   "worst_target_language": "en",
   "per_model_gap": [
     {
       "short": "embeddinggemma",
-      "orig": 0.4474,
-      "syn": 0.5688,
-      "gap": -0.1214,
-      "paired_diff": -0.0444,
-      "paired_p": 0.7302
+      "orig": 0.3772,
+      "syn": 0.5125,
+      "gap": -0.1353,
+      "paired_diff": -0.1,
+      "paired_p": 0.334
     },
     {
       "short": "bge-m3",
-      "orig": 0.3684,
-      "syn": 0.4688,
-      "gap": -0.1003,
-      "paired_diff": -0.0222,
-      "paired_p": 0.7551
+      "orig": 0.3246,
+      "syn": 0.4125,
+      "gap": -0.0879,
+      "paired_diff": -0.0333,
+      "paired_p": 0.7389
     },
     {
       "short": "qwen3-0.6B",
-      "orig": 0.3684,
-      "syn": 0.5062,
-      "gap": -0.1378,
-      "paired_diff": -0.0667,
-      "paired_p": 0.5716
+      "orig": 0.307,
+      "syn": 0.45,
+      "gap": -0.143,
+      "paired_diff": -0.0778,
+      "paired_p": 0.3663
     },
     {
       "short": "nomic-v2-moe",
-      "orig": 0.3246,
-      "syn": 0.3875,
-      "gap": -0.0629,
-      "paired_diff": -0.1111,
-      "paired_p": 0.1245
+      "orig": 0.2895,
+      "syn": 0.3562,
+      "gap": -0.0668,
+      "paired_diff": -0.1,
+      "paired_p": 0.1797
     },
     {
       "short": "granite-278m",
-      "orig": 0.2895,
-      "syn": 0.3188,
-      "gap": -0.0293,
+      "orig": 0.2368,
+      "syn": 0.275,
+      "gap": -0.0382,
       "paired_diff": -0.0222,
-      "paired_p": 0.7981
+      "paired_p": 0.8907
     },
     {
       "short": "LaBSE",
-      "orig": 0.193,
-      "syn": 0.3438,
-      "gap": -0.1508,
-      "paired_diff": -0.1,
-      "paired_p": 0.1875
+      "orig": 0.1579,
+      "syn": 0.3312,
+      "gap": -0.1734,
+      "paired_diff": -0.1333,
+      "paired_p": 0.0455
     },
     {
       "short": "SapBERT",
-      "orig": 0.1404,
-      "syn": 0.1875,
-      "gap": -0.0471,
+      "orig": 0.114,
+      "syn": 0.1688,
+      "gap": -0.0547,
       "paired_diff": 0.0,
       "paired_p": 1.0
     },
     {
       "short": "e5-large-instruct",
       "orig": 0.0789,
-      "syn": 0.05,
-      "gap": 0.0289,
+      "syn": 0.0375,
+      "gap": 0.0414,
       "paired_diff": 0.0111,
       "paired_p": 0.3173
-    },
-    {
-      "short": "gte-base",
-      "orig": 0.0,
-      "syn": 0.0,
-      "gap": 0.0,
-      "paired_diff": 0.0,
-      "paired_p": 1.0
     }
   ]
 }

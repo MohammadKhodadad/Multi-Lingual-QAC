@@ -30,23 +30,23 @@
     "fr": "credible (n_same=27)"
   },
   "frontier_members_by_route": {
-    "en": "qwen3-0.6B;granite-278m;LaBSE",
-    "de": "embeddinggemma;bge-m3;qwen3-0.6B;granite-278m;LaBSE",
+    "en": "embeddinggemma;LaBSE",
+    "de": "embeddinggemma;qwen3-0.6B;LaBSE",
     "es": "embeddinggemma",
     "fr": "bge-m3;nomic-v2-moe;granite-278m",
     "zh": "embeddinggemma"
   },
   "max_clir_corner_by_route": {
-    "en": "qwen3-0.6B",
+    "en": "embeddinggemma",
     "de": "embeddinggemma",
     "es": "embeddinggemma",
     "fr": "nomic-v2-moe",
     "zh": "embeddinggemma"
   },
   "capability_corner_moves_across_routes": true,
-  "n_distinct_max_clir_corners": 3,
+  "n_distinct_max_clir_corners": 2,
   "decision_flip_by_route": {
-    "en": true,
+    "en": false,
     "de": false,
     "es": false,
     "fr": true,
@@ -55,8 +55,8 @@
   "decision_flip_detail": {
     "en": {
       "recall_pick": "embeddinggemma",
-      "frontier_pick": "qwen3-0.6B",
-      "flipped": true
+      "frontier_pick": "embeddinggemma",
+      "flipped": false
     },
     "de": {
       "recall_pick": "embeddinggemma",
@@ -79,13 +79,13 @@
       "flipped": false
     }
   },
-  "n_routes_flipped": 2,
+  "n_routes_flipped": 1,
   "global_pareto_set_reference": [
     "bge-m3",
     "embeddinggemma",
     "granite-278m"
   ],
-  "verify_egemma_global_clir_0.5024": 0.5024,
+  "verify_egemma_global_clir_0.5024": 0.4526,
   "checks_passed": true,
   "check_failures": []
 }

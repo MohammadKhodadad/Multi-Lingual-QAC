@@ -68,9 +68,10 @@ HAYSTACK_REPO = "MehdiAstaraki/multilingual_GP"
 
 
 # --------------------------------------------------------------------------- registry
-# all five appear as query languages; only en/de/fr/zh ever appear as gold-doc languages (es=0).
+# all five appear as query languages; with the 524-query dataset all five ALSO appear as gold-doc
+# languages (Spanish now has gold docs — the earlier 137-query release had es=0 gold).
 QUERY_LANGS = ["en", "de", "es", "fr", "zh"]
-DOC_LANGS = ["en", "de", "fr", "zh"]
+DOC_LANGS = ["en", "de", "es", "fr", "zh"]
 LANG_NAME = {"en": "English", "de": "German", "fr": "French", "es": "Spanish", "zh": "Chinese"}
 
 # canonical full model name -> short label, in accuracy (recall@10) order
@@ -83,7 +84,11 @@ MODELS: Dict[str, str] = {
     "sentence-transformers/LaBSE": "LaBSE",
     "cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR": "SapBERT",
     "intfloat/multilingual-e5-large-instruct": "e5-large-instruct",
-    "Alibaba-NLP/gte-multilingual-base": "gte-base",
+    # Alibaba-NLP/gte-multilingual-base EXCLUDED 2026-06-11: its results are a model-loading
+    # artifact, not real performance — it fails trivial same-language self-retrieval and shows
+    # degenerate, near-equidistant embeddings (collapses identically on alias_graph and these
+    # patents, recall@10 ~0.005 on both). Dropped from the registry AND the rankings() loader so
+    # no analysis or plot counts it. Raw parts/predictions are kept on disk as the eval record.
 }
 MODEL_ORDER = list(MODELS)
 SHORT = MODELS
@@ -138,6 +143,7 @@ def rankings() -> pd.DataFrame:
         if p.is_file():
             frames.append(pd.read_parquet(p))
     df = pd.concat(frames, ignore_index=True)
+    df = df[df["model"].isin(MODELS)].reset_index(drop=True)  # drop excluded models (e.g. gte)
     df["query_language"] = df["query_language"].str.lower()
     df["corpus_language"] = df["corpus_language"].str.lower()
     return df

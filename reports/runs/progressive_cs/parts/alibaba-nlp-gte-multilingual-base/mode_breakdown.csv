@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+Alibaba-NLP/gte-multilingual-base,B,103,0.001377396213198171
+Alibaba-NLP/gte-multilingual-base,C,114,0.0007991450920439603
+Alibaba-NLP/gte-multilingual-base,D,236,0.0001237420207363064
+Alibaba-NLP/gte-multilingual-base,F,217,-0.0005583241238572081

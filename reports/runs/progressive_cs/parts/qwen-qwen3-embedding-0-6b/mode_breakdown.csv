@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+Qwen/Qwen3-Embedding-0.6B,B,103,-0.001007044633615364
+Qwen/Qwen3-Embedding-0.6B,C,114,-0.0002917605533934476
+Qwen/Qwen3-Embedding-0.6B,D,236,0.0021561184045621904
+Qwen/Qwen3-Embedding-0.6B,F,217,0.0029764384855323124

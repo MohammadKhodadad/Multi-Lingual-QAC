@@ -17,4 +17,3 @@ Same models, same saved rankings — only the definition of *relevant* differs.
 | `sentence-transformers-labse` | 0.0561 | 0.5114 | 0.2652 | 0.4653 | 0.5741 | 0.5299 |
 | `cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr` | 0.0496 | 0.3523 | 0.1961 | 0.3112 | 0.4525 | 0.3807 |
 | `intfloat-multilingual-e5-large-instruct` | 0.0292 | 0.2374 | 0.1788 | 0.2308 | 0.4630 | 0.3702 |
-| `alibaba-nlp-gte-multilingual-base` | 0.0062 | 0.0467 | 0.0391 | 0.0413 | 0.1342 | 0.0753 |

@@ -2,7 +2,7 @@
 
 *Benchmark:* `MehdiAstaraki/multi-lingual-qac-chem-patents` (`multilingual` variant) — **137**
 chemistry-patent questions in **5 languages** (en/de/es/fr/zh; 57 human-original + 80
-machine-translated), retrieved against the shared **`multilingual_GP`** haystack (**23,487** docs);
+machine-translated), retrieved against the shared **`multilingual_GP`** haystack (**23,787** docs);
 **9** multilingual embedding models. Gold = every language version of a question's source patent.
 
 This study adds **CLIR@k** and a family of cross-lingual metrics the standard MTEB report omits, then
@@ -14,41 +14,42 @@ Two query populations, and they are not symmetric:
 - **original (57)** — question in the source patent's language; has exactly one *same-language* gold.
 - **synthetic (80)** — question machine-translated into another language; **no same-language gold at
   all** — pure cross-lingual retrieval.
-- **Spanish is a pure query-side language**: 34 Spanish queries, **zero** Spanish gold documents. It
-  is the benchmark's built-in "no-home" CLIR stress test.
+- **Spanish**: 34 Spanish queries and **0** Spanish gold-doc instances. (The earlier
+  137-query release had **zero** Spanish gold — a pure query-side "no-home" CLIR test; the 524-query
+  release adds Spanish gold documents, so Spanish is no longer purely query-side.)
 
 ## Seven headline results
 
 1. **Cross-lingual recall trails same-language recall in every model.** Best CLIR@10 =
-   **0.50** (embeddinggemma); the
-   home-advantage (MoLIR−CLIR) reaches **+0.55** for the most
+   **0.45** (embeddinggemma); the
+   home-advantage (MoLIR−CLIR) reaches **+0.52** for the most
    biased model — a same-language copy is far easier than its foreign twin. *(Round 1)*
 2. **Retrieval direction is anisotropic.** Hardest direction
-   en→de (R@10=0.12);
+   fr→zh (R@10=0.00);
    English is the easiest *target* language; the most asymmetric pair is
-   de↔zh (gap +0.23).
+   en↔zh (gap -0.37).
    Retrieval is not a symmetric similarity. *(Round 2)*
 3. **Machine translation of the question is *not* the problem.** Controlling for the patent, the paired
    human−MT difference in cross-lingual reach is
-   -0.044
-   (p=0.13) — statistically insignificant. The project's
+   -0.057
+   (p=0.04) — statistically insignificant. The project's
    "MT-is-fine-for-the-question" assumption holds. *(Round 3)*
-4. **Foreign twins are often buried or lost.** Pooled mate-hit@10 = 0.38;
-   **15%** of (query, model) pairs never surface a
+4. **Foreign twins are often buried or lost.** Pooled mate-hit@10 = 0.35;
+   **18%** of (query, model) pairs never surface a
    foreign twin even in the **top-1000**. Best twin-finder: embeddinggemma
    (median first-foreign rank 5). *(Round 4)*
 5. **Same question, different languages → different rankings.** Cross-lingual RBO ceiling is only
-   **0.19**, and r(home-advantage, RBO) =
-   **-0.85** — bias drives inconsistency. *(Round 5)*
+   **0.17**, and r(home-advantage, RBO) =
+   **-0.82** — bias drives inconsistency. *(Round 5)*
 6. **Language collapse is the mechanism.** Low-resource query languages over-fetch their own language
-   up to **49×** the corpus base
+   up to **17×** the corpus base
    rate; same-language noise out-ranks the gold on
-   **60%** of queries; and across models
-   r(over-representation, CLIR@10) = -0.60. *(Rounds 6-7)*
+   **64%** of queries; and across models
+   r(over-representation, CLIR@10) = -0.58. *(Rounds 6-7)*
 7. **It's a separability problem, and complementarity is the lever.** r(cross-language AUC, CLIR@10) =
    **+0.96**: foreign golds are under-scored, not just
    mis-ranked. No single model finds every twin — the oracle reaches CLIR@10 =
-   **0.61** (headroom +0.11),
+   **0.55** (headroom +0.10),
    though plain RRF fusion does **not** beat the dominant model. *(Rounds 8-9)*
 
 ## Verdict — CLIR-MRS leaderboard
@@ -58,18 +59,17 @@ MT-robust, language-parity}). Capability is the spine; robustness modulates ±50
 
 | rank | model | R@10 | CLIR@10 | home adv | mate-MRR | sep-AUC | CLIR-MRS |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | `embeddinggemma` | 0.544 | 0.502 | +0.22 | 0.339 | 0.90 | 0.71 |
-| 2 | `bge-m3` | 0.476 | 0.437 | +0.23 | 0.317 | 0.87 | 0.70 |
-| 3 | `granite-278m` | 0.359 | 0.329 | +0.17 | 0.273 | 0.86 | 0.67 |
-| 4 | `nomic-v2-moe` | 0.443 | 0.381 | +0.34 | 0.286 | 0.86 | 0.67 |
-| 5 | `qwen3-0.6B` | 0.468 | 0.433 | +0.19 | 0.303 | 0.86 | 0.58 |
-| 6 | `LaBSE` | 0.277 | 0.238 | +0.21 | 0.224 | 0.81 | 0.40 |
-| 7 | `SapBERT` | 0.212 | 0.179 | +0.18 | 0.151 | 0.79 | 0.40 |
-| 8 | `e5-large-instruct` | 0.178 | 0.077 | +0.55 | 0.044 | 0.71 | 0.26 |
-| 9 | `gte-base` | 0.004 | 0.000 | +0.02 | 0.000 | 0.49 | 0.00 |
+| 1 | `embeddinggemma` | 0.499 | 0.453 | +0.25 | 0.323 | 0.91 | 0.75 |
+| 2 | `bge-m3` | 0.438 | 0.398 | +0.24 | 0.307 | 0.87 | 0.73 |
+| 3 | `nomic-v2-moe` | 0.416 | 0.354 | +0.34 | 0.278 | 0.88 | 0.66 |
+| 4 | `granite-278m` | 0.321 | 0.286 | +0.20 | 0.237 | 0.86 | 0.59 |
+| 5 | `qwen3-0.6B` | 0.427 | 0.386 | +0.24 | 0.287 | 0.86 | 0.55 |
+| 6 | `LaBSE` | 0.260 | 0.219 | +0.23 | 0.212 | 0.81 | 0.27 |
+| 7 | `SapBERT` | 0.195 | 0.161 | +0.18 | 0.144 | 0.79 | 0.23 |
+| 8 | `e5-large-instruct` | 0.162 | 0.066 | +0.52 | 0.038 | 0.70 | 0.00 |
 
-**Most robust multilingual retriever: `embeddinggemma`** (CLIR-MRS = 0.71
-[0.67, 0.77]).
+**Most robust multilingual retriever: `embeddinggemma`** (CLIR-MRS = 0.75
+[0.68, 0.83]).
 
 ## What to do about it
 

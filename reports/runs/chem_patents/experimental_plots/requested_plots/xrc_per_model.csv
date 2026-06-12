@@ -1,0 +1,9 @@
+model,short,n_cross,n_same,cross_censored_frac,same_censored_frac,Dmean_same,Dmean_cross,XRC_mean,XRC_mean_censored,clir_at_10
+google/embeddinggemma-300m,embeddinggemma,135,61,0.0741,0.0328,84.95,139.17,1.638,True,0.5037
+BAAI/bge-m3,bge-m3,135,61,0.1111,0.1148,155.59,197.6,1.27,True,0.458
+Qwen/Qwen3-Embedding-0.6B,qwen3-0.6B,135,61,0.0815,0.0656,118.15,186.1,1.575,True,0.4148
+nomic-ai/nomic-embed-text-v2-moe,nomic-v2-moe,135,61,0.1037,0.0656,109.23,199.78,1.829,True,0.3963
+ibm-granite/granite-embedding-278m-multilingual,granite-278m,135,61,0.1852,0.2131,306.36,271.38,0.886,True,0.3198
+sentence-transformers/LaBSE,LaBSE,135,61,0.1704,0.2131,314.8,298.08,0.947,True,0.2259
+cambridgeltl/SapBERT-UMLS-2020AB-all-lang-from-XLMR,SapBERT,135,61,0.2444,0.1803,290.97,364.79,1.254,True,0.1741
+intfloat/multilingual-e5-large-instruct,e5-large-instruct,135,61,0.3704,0.0164,69.62,521.27,7.487,True,0.0765

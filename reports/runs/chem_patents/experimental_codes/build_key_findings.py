@@ -87,11 +87,21 @@ def main() -> None:
         f"{r['home_adv']:+.2f} | {r['mate_mrr']:.3f} | {r['separability_auc']:.2f} | {r['MRS']:.2f} |"
         for _, r in h.iterrows())
 
+    # data-derived population counts (dataset grew 137 -> 524 queries; Spanish gained gold docs)
+    qm = C.query_meta()
+    n_q = len(qm)
+    n_orig = int((qm["origin"] == "original").sum())
+    n_syn = n_q - n_orig
+    n_es = int((qm["query_language"] == "es").sum())
+    n_docs = len(C._ds(C.HAYSTACK_REPO, "corpus"))
+    _gp = C.gold_publication()
+    n_es_gold = sum(1 for g in _gp.values() for d in g if C.doc_lang(d) == "es")
+
     summary_md = f"""# Chem-patents multilingual retrieval — key findings (CLIR deep-dive)
 
-*Benchmark:* `MehdiAstaraki/multi-lingual-qac-chem-patents` (`multilingual` variant) — **137**
-chemistry-patent questions in **5 languages** (en/de/es/fr/zh; 57 human-original + 80
-machine-translated), retrieved against the shared **`multilingual_GP`** haystack (**23,487** docs);
+*Benchmark:* `MehdiAstaraki/multi-lingual-qac-chem-patents` (`multilingual` variant) — **{n_q}**
+chemistry-patent questions in **5 languages** (en/de/es/fr/zh; {n_orig} human-original + {n_syn}
+machine-translated), retrieved against the shared **`multilingual_GP`** haystack (**{n_docs:,}** docs);
 **9** multilingual embedding models. Gold = every language version of a question's source patent.
 
 This study adds **CLIR@k** and a family of cross-lingual metrics the standard MTEB report omits, then
@@ -100,11 +110,12 @@ iterates over 10 rounds to explain *why* cross-lingual retrieval fails here and 
 ## The benchmark's defining property
 
 Two query populations, and they are not symmetric:
-- **original (57)** — question in the source patent's language; has exactly one *same-language* gold.
-- **synthetic (80)** — question machine-translated into another language; **no same-language gold at
+- **original ({n_orig})** — question in the source patent's language; has exactly one *same-language* gold.
+- **synthetic ({n_syn})** — question machine-translated into another language; **no same-language gold at
   all** — pure cross-lingual retrieval.
-- **Spanish is a pure query-side language**: 34 Spanish queries, **zero** Spanish gold documents. It
-  is the benchmark's built-in "no-home" CLIR stress test.
+- **Spanish**: {n_es} Spanish queries and **{n_es_gold}** Spanish gold-doc instances. (The earlier
+  137-query release had **zero** Spanish gold — a pure query-side "no-home" CLIR test; the 524-query
+  release adds Spanish gold documents, so Spanish is no longer purely query-side.)
 
 ## Seven headline results
 

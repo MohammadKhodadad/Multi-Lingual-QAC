@@ -1,0 +1,5 @@
+mode,direction,recall_at_10_mean,sem_over_languages,n_languages
+technical,cross,,0.0,0
+technical,same,,0.0,0
+semantic,cross,,0.0,0
+semantic,same,,0.0,0

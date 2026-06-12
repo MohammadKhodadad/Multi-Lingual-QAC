@@ -1,5 +1,5 @@
 target_lang,mean_incoming_recall_incl_diag,mean_incoming_recall_cross_only,corpus_share
-fr,0.375,0.3437,0.3749
-en,0.3673,0.3267,0.461
-zh,0.35,0.25,0.0043
+fr,0.367,0.3338,0.3749
+en,0.3598,0.3173,0.461
 de,0.3091,0.2257,0.0682
+zh,0.0077,0.0096,0.0043

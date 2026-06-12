@@ -145,30 +145,37 @@ def load_multilingual_corpus(
 def pick_target_languages(
     strategy: int,
     available_langs: list[str],
+    langs: Optional[list[str]] = None,
 ) -> list[str]:
     """
     Given the set of languages a document exists in and a strategy number,
     return the list of target language(s) to generate questions in.
+
+    ``langs`` is the language universe to draw from (defaults to ``ALL_LANGS``,
+    the 5-language Google Patents set). Pass a different list — e.g.
+    ``["en", "de", "fr"]`` for EPO — to restrict generation to a corpus's
+    actual languages.
     """
-    available_set = set(available_langs) & set(ALL_LANGS)
-    missing = [l for l in ALL_LANGS if l not in available_set]
+    langs = langs if langs is not None else ALL_LANGS
+    available_set = set(available_langs) & set(langs)
+    missing = [l for l in langs if l not in available_set]
 
     if strategy == STRATEGY_RANDOM_ANY:
-        return [random.choice(ALL_LANGS)]
+        return [random.choice(langs)]
 
     if strategy == STRATEGY_RANDOM_MISSING:
         if not missing:
-            return [random.choice(ALL_LANGS)]
+            return [random.choice(langs)]
         return [random.choice(missing)]
 
     if strategy == STRATEGY_RANDOM_EXISTING:
-        existing = [l for l in ALL_LANGS if l in available_set]
+        existing = [l for l in langs if l in available_set]
         if not existing:
-            return [random.choice(ALL_LANGS)]
+            return [random.choice(langs)]
         return [random.choice(existing)]
 
     if strategy == STRATEGY_ALL:
-        return list(ALL_LANGS)
+        return list(langs)
 
     raise ValueError(f"Unknown strategy: {strategy}")
 

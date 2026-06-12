@@ -92,17 +92,6 @@
         "recip_rank": 0.37021,
         "map": 0.18356
       }
-    },
-    {
-      "model_name": "alibaba-nlp-gte-multilingual-base",
-      "metrics": {
-        "recall_10": 0.04672,
-        "recall_100": 0.07576,
-        "P_10": 0.01288,
-        "ndcg_cut_10": 0.04125,
-        "recip_rank": 0.07533,
-        "map": 0.0263
-      }
     }
   ]
 }

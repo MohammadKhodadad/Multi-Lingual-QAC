@@ -1,80 +1,73 @@
 {
   "corpus_base_share": {
-    "en": 0.461,
-    "fr": 0.3749,
-    "es": 0.0917,
-    "de": 0.0682,
-    "zh": 0.0043
+    "en": 0.4552,
+    "fr": 0.3702,
+    "es": 0.0906,
+    "de": 0.0673,
+    "zh": 0.0168
   },
   "most_collapsed_language": {
     "lang": "zh",
-    "overrep": 48.71
+    "overrep": 17.47
   },
-  "mean_foreign_share_best": 0.5861,
-  "pearson_overrep_clir": -0.6,
+  "mean_foreign_share_best": 0.5659,
+  "pearson_overrep_clir": -0.577,
   "per_model": [
     {
       "short": "embeddinggemma",
-      "mean_overrep": 6.3624,
-      "mean_foreign_share": 0.5861,
-      "mean_entropy": 1.2909,
-      "clir_at_10": 0.5024
+      "mean_overrep": 3.9479,
+      "mean_foreign_share": 0.5659,
+      "mean_entropy": 1.2774,
+      "clir_at_10": 0.4593
     },
     {
       "short": "bge-m3",
-      "mean_overrep": 6.1887,
-      "mean_foreign_share": 0.6642,
-      "mean_entropy": 1.154,
-      "clir_at_10": 0.4367
+      "mean_overrep": 3.5055,
+      "mean_foreign_share": 0.6444,
+      "mean_entropy": 1.1483,
+      "clir_at_10": 0.4037
     },
     {
       "short": "qwen3-0.6B",
-      "mean_overrep": 3.6914,
-      "mean_foreign_share": 0.635,
-      "mean_entropy": 1.2448,
-      "clir_at_10": 0.4331
+      "mean_overrep": 2.8979,
+      "mean_foreign_share": 0.62,
+      "mean_entropy": 1.2301,
+      "clir_at_10": 0.3914
     },
     {
       "short": "nomic-v2-moe",
-      "mean_overrep": 10.9107,
-      "mean_foreign_share": 0.5511,
-      "mean_entropy": 1.1924,
-      "clir_at_10": 0.3808
+      "mean_overrep": 5.96,
+      "mean_foreign_share": 0.5193,
+      "mean_entropy": 1.1576,
+      "clir_at_10": 0.3593
     },
     {
       "short": "granite-278m",
-      "mean_overrep": 7.4494,
-      "mean_foreign_share": 0.719,
-      "mean_entropy": 1.4825,
-      "clir_at_10": 0.3285
+      "mean_overrep": 4.3086,
+      "mean_foreign_share": 0.7007,
+      "mean_entropy": 1.5198,
+      "clir_at_10": 0.2901
     },
     {
       "short": "LaBSE",
-      "mean_overrep": 2.3313,
-      "mean_foreign_share": 0.7445,
-      "mean_entropy": 1.1628,
-      "clir_at_10": 0.2384
+      "mean_overrep": 2.0074,
+      "mean_foreign_share": 0.7378,
+      "mean_entropy": 1.1605,
+      "clir_at_10": 0.2222
     },
     {
       "short": "SapBERT",
-      "mean_overrep": 3.4827,
-      "mean_foreign_share": 0.6401,
-      "mean_entropy": 1.223,
-      "clir_at_10": 0.1788
+      "mean_overrep": 2.9611,
+      "mean_foreign_share": 0.6281,
+      "mean_entropy": 1.2338,
+      "clir_at_10": 0.163
     },
     {
       "short": "e5-large-instruct",
-      "mean_overrep": 41.5834,
-      "mean_foreign_share": 0.0241,
-      "mean_entropy": 0.1005,
-      "clir_at_10": 0.0766
-    },
-    {
-      "short": "gte-base",
-      "mean_overrep": 19.996,
-      "mean_foreign_share": 0.2898,
-      "mean_entropy": 0.3874,
-      "clir_at_10": 0.0
+      "mean_overrep": 15.1191,
+      "mean_foreign_share": 0.0185,
+      "mean_entropy": 0.08,
+      "clir_at_10": 0.0667
     }
   ]
 }

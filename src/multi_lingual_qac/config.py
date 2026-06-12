@@ -22,6 +22,7 @@ class PipelinePaths:
     alias_graph_dir: Path
     wiki_quality_dir: Path
     code_switched_dir: Path
+    progressive_cs_dir: Path
 
     @classmethod
     def from_project_root(cls, project_root: Path) -> "PipelinePaths":
@@ -41,6 +42,7 @@ class PipelinePaths:
             alias_graph_dir=project_root / "data" / "alias_graph",
             wiki_quality_dir=project_root / "reports" / "wiki_name_quality",
             code_switched_dir=project_root / "data" / "code_switched",
+            progressive_cs_dir=project_root / "data" / "progressive_cs",
         )
 
 
@@ -105,6 +107,29 @@ class PipelineConfig:
     cs_qa_seed: int = 42
     cs_qa_limit: Optional[int] = None
     cs_qa_workers: int = 1
+    # Data-creation command (build corpus + queries + push to HF):
+    create_progressive_data: bool = False
+    # Evaluation command (run embedding models against the published dataset):
+    eval_progressive_cs: bool = False
+    pcs_hf_repo: str = "MehdiAstaraki/progressive-code-switch"
+    pcs_steps: int = 5
+    pcs_modes: str = "B,C,D,F"
+    pcs_seed: int = 42
+    pcs_limit: Optional[int] = None
+    pcs_output_dir: Optional[str] = None
+    pcs_qa_model: str = "gpt-5-mini"
+    pcs_grader_model: str = "anthropic/claude-sonnet-4.5"
+    pcs_qa_strategy: int = 4  # query-language strategy; 4 = "all" (one query per language)
+    pcs_qa_seed: int = 42
+    pcs_qa_limit: Optional[int] = None
+    pcs_qa_workers: int = 1
+    pcs_eval_models: tuple[str, ...] = ()
+    pcs_eval_limit: Optional[int] = None
+    pcs_eval_batch_size: int = 32
+    # Granular sub-steps (optional; --create-progressive-data runs all three):
+    build_progressive_cs: bool = False
+    progressive_cs_qa: bool = False
+    push_progressive_cs: bool = False
     push_alias_graph_hf: bool = False
     alias_hf_repo: str = "MehdiAstaraki/multi-lingual-qac-alias-graph"
     hf_dry_run: bool = False

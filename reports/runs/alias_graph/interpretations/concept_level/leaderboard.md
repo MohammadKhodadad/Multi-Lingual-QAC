@@ -15,4 +15,3 @@ Gold = every document of every publication attesting the query's concept ("find 
 | 6 | `baai-bge-m3` | 0.0542 | 0.1133 | 0.2265 | 0.3114 | 0.7100 | 0.0645 |
 | 7 | `cambridgeltl-sapbert-umls-2020ab-all-lang-from-xlmr` | 0.0496 | 0.1020 | 0.1432 | 0.1961 | 0.4525 | 0.0591 |
 | 8 | `intfloat-multilingual-e5-large-instruct` | 0.0292 | 0.0732 | 0.1371 | 0.1788 | 0.4630 | 0.0351 |
-| 9 | `alibaba-nlp-gte-multilingual-base` | 0.0062 | 0.0147 | 0.0295 | 0.0391 | 0.1342 | 0.0050 |

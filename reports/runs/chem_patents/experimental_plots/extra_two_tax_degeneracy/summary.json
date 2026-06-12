@@ -1,32 +1,27 @@
 {
   "deg_gate": {
-    "DEG_strict_clir<0.10_AND_rrc1000<0.10": [
-      "gte-base"
-    ],
+    "DEG_strict_clir<0.10_AND_rrc1000<0.10": [],
     "DEG_clir_only_clir<0.10": [
-      "e5-large-instruct",
-      "gte-base"
+      "e5-large-instruct"
     ],
     "DEG_paper_strict_OR_clir<0.10": [
-      "e5-large-instruct",
-      "gte-base"
+      "e5-large-instruct"
     ],
     "RECOMMENDED": "DEG = clir_at_10 < 0.10",
     "recommended_members": [
-      "e5-large-instruct",
-      "gte-base"
+      "e5-large-instruct"
     ],
-    "matches_paper_exclusions_{gte,e5}": true,
+    "matches_paper_exclusions_{gte,e5}": false,
     "note": "AND-gate flags ONLY gte (e5 RRC@1000=0.6277 >= 0.10); the clean single criterion clir_at_10<0.10 flags exactly {gte, e5} matching the paper."
   },
   "two_tax": {
     "reading_cost_tax": "XRC50 (chem-patents)",
     "confusability_tax": "confusion_rate (alias-graph)",
-    "spearman_rho_all9_finite": -0.1557,
-    "spearman_p_all9": 0.7128,
+    "spearman_rho_all9_finite": 0.1916,
+    "spearman_p_all9": 0.6494,
     "n_all9_finite": 8,
-    "spearman_rho_n7_nondeg": -0.5946,
-    "spearman_p_n7": 0.1591,
+    "spearman_rho_n7_nondeg": -0.1081,
+    "spearman_p_n7": 0.8175,
     "n7_models": [
       "embeddinggemma",
       "nomic-v2-moe",
@@ -39,11 +34,11 @@
     "nonredundant_supported_abs_rho_lt_0.6": true,
     "prose_guidance": "n=7 rho weak (|rho|<0.6) => two taxes NON-REDUNDANT, both benchmarks necessary",
     "join_sanity_egemma_XRC50_3.5_conf_0.068": [
-      3.5,
+      2.333,
       0.0682
     ],
     "join_sanity_granite_XRC50_1.25_conf_0.182": [
-      1.25,
+      1.37,
       0.1818
     ]
   }

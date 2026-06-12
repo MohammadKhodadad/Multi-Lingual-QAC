@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+google/embeddinggemma-300m,B,103,0.0020195914124979558
+google/embeddinggemma-300m,C,114,0.0007026153698302151
+google/embeddinggemma-300m,D,236,0.0015418394389799086
+google/embeddinggemma-300m,F,217,0.001226942522734541

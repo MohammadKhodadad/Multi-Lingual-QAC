@@ -73,7 +73,10 @@ def main() -> None:
 
     # ---- DEG gate (join clir + rrc on short) ----
     deg = xrc[["short", "clir_at_10"]].merge(rrc[["short", "RRC_at_1000"]], on="short", how="inner")
-    assert len(deg) == 9, f"expected 9 models after clir/rrc join, got {len(deg)}"
+    assert len(deg) == len(C.MODEL_ORDER), (
+        f"expected {len(C.MODEL_ORDER)} models after clir/rrc join, got {len(deg)} "
+        "(gte-multilingual-base is excluded as a loading artifact)"
+    )
     deg["DEG_strict"] = (deg["clir_at_10"] < DEG_CLIR_CUTOFF) & (deg["RRC_at_1000"] < DEG_RRC_CUTOFF)
     deg["DEG_clir_only"] = deg["clir_at_10"] < DEG_CLIR_CUTOFF
     deg["DEG_paper"] = deg["DEG_strict"] | (deg["clir_at_10"] < DEG_CLIR_CUTOFF)
@@ -88,7 +91,10 @@ def main() -> None:
     # ---- two-tax table: join XRC50 (reading-cost tax) with confusion_rate (confusability tax) ----
     tt = (xrc[["short", "XRC50f", "clir_at_10"]]
           .merge(alias[["short", "confusion_rate", "sibling_win_rate"]], on="short", how="inner"))
-    assert len(tt) == 9, f"expected 9 models after chem/alias join on short, got {len(tt)}"
+    assert len(tt) == len(C.MODEL_ORDER), (
+        f"expected {len(C.MODEL_ORDER)} models after chem/alias join on short, got {len(tt)} "
+        "(gte-multilingual-base is excluded as a loading artifact)"
+    )
     tt = tt.rename(columns={"XRC50f": "reading_cost_tax", "confusion_rate": "confusability_tax"})
     tt["DEG"] = tt["short"].isin(deg_set)
     tt = tt.sort_values("confusability_tax").reset_index(drop=True)

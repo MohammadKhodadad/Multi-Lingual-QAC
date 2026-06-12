@@ -1,177 +1,159 @@
 {
   "winner": "embeddinggemma",
-  "winner_mrs": 0.7143,
+  "winner_mrs": 0.7483,
   "winner_mrs_ci": [
-    0.6651,
-    0.7692
+    0.6794,
+    0.8317
   ],
   "winner_capability": 1.0,
-  "winner_robustness": 0.4286,
+  "winner_robustness": 0.4966,
   "winner_weakest_axis": "mt_robust",
   "leaderboard": [
     {
       "short": "embeddinggemma",
-      "MRS": 0.7143,
-      "mrs_lo": 0.6651,
-      "mrs_hi": 0.7692,
+      "MRS": 0.7483,
+      "mrs_lo": 0.6794,
+      "mrs_hi": 0.8317,
       "capability": 1.0,
-      "robustness": 0.4286,
+      "robustness": 0.4966,
       "rank": 1
     },
     {
       "short": "bge-m3",
-      "MRS": 0.704,
-      "mrs_lo": 0.6103,
-      "mrs_hi": 0.7595,
-      "capability": 0.8893,
-      "robustness": 0.5833,
+      "MRS": 0.7254,
+      "mrs_lo": 0.5865,
+      "mrs_hi": 0.8227,
+      "capability": 0.8251,
+      "robustness": 0.7585,
       "rank": 2
     },
     {
-      "short": "granite-278m",
-      "MRS": 0.6726,
-      "mrs_lo": 0.5721,
-      "mrs_hi": 0.7272,
-      "capability": 0.7411,
-      "robustness": 0.8151,
+      "short": "nomic-v2-moe",
+      "MRS": 0.6586,
+      "mrs_lo": 0.5535,
+      "mrs_hi": 0.7925,
+      "capability": 0.7737,
+      "robustness": 0.7026,
       "rank": 3
     },
     {
-      "short": "nomic-v2-moe",
-      "MRS": 0.6681,
-      "mrs_lo": 0.5876,
-      "mrs_hi": 0.7433,
-      "capability": 0.826,
-      "robustness": 0.6177,
+      "short": "granite-278m",
+      "MRS": 0.5902,
+      "mrs_lo": 0.4511,
+      "mrs_hi": 0.6784,
+      "capability": 0.598,
+      "robustness": 0.974,
       "rank": 4
     },
     {
       "short": "qwen3-0.6B",
-      "MRS": 0.5834,
-      "mrs_lo": 0.5389,
-      "mrs_hi": 0.6585,
-      "capability": 0.8784,
-      "robustness": 0.3283,
+      "MRS": 0.5535,
+      "mrs_lo": 0.4879,
+      "mrs_hi": 0.6624,
+      "capability": 0.7946,
+      "robustness": 0.3931,
       "rank": 5
     },
     {
       "short": "LaBSE",
-      "MRS": 0.4,
-      "mrs_lo": 0.3347,
-      "mrs_hi": 0.4784,
-      "capability": 0.5903,
-      "robustness": 0.3552,
+      "MRS": 0.2724,
+      "mrs_lo": 0.1754,
+      "mrs_hi": 0.3851,
+      "capability": 0.3999,
+      "robustness": 0.3621,
       "rank": 6
     },
     {
       "short": "SapBERT",
-      "MRS": 0.3966,
-      "mrs_lo": 0.3196,
-      "mrs_hi": 0.461,
-      "capability": 0.4894,
-      "robustness": 0.6208,
+      "MRS": 0.225,
+      "mrs_lo": 0.1035,
+      "mrs_hi": 0.3388,
+      "capability": 0.2554,
+      "robustness": 0.7619,
       "rank": 7
     },
     {
       "short": "e5-large-instruct",
-      "MRS": 0.2557,
-      "mrs_lo": 0.1769,
-      "mrs_hi": 0.3082,
-      "capability": 0.3391,
-      "robustness": 0.508,
-      "rank": 8
-    },
-    {
-      "short": "gte-base",
       "MRS": 0.0,
       "mrs_lo": 0.0,
-      "mrs_hi": 0.0,
+      "mrs_hi": 0.0175,
       "capability": 0.0,
-      "robustness": 0.6713,
-      "rank": 9
+      "robustness": 0.6586,
+      "rank": 8
     }
   ],
   "raw_axes": [
     {
       "short": "embeddinggemma",
-      "accuracy": 0.5438,
-      "clir": 0.5024,
-      "separability": 0.8983,
-      "consistency": 0.154,
-      "mt_robust": 0.8786,
-      "lang_parity": 0.7346
+      "accuracy": 0.4988,
+      "clir": 0.4526,
+      "separability": 0.9129,
+      "consistency": 0.139,
+      "mt_robust": 0.8647,
+      "lang_parity": 0.7716
     },
     {
       "short": "bge-m3",
-      "accuracy": 0.4757,
-      "clir": 0.4367,
-      "separability": 0.8675,
-      "consistency": 0.1786,
-      "mt_robust": 0.8997,
-      "lang_parity": 0.8088
+      "accuracy": 0.438,
+      "clir": 0.3978,
+      "separability": 0.8701,
+      "consistency": 0.1686,
+      "mt_robust": 0.9121,
+      "lang_parity": 0.8295
     },
     {
       "short": "qwen3-0.6B",
-      "accuracy": 0.4684,
-      "clir": 0.4331,
-      "separability": 0.8626,
-      "consistency": 0.174,
-      "mt_robust": 0.8622,
-      "lang_parity": 0.6235
+      "accuracy": 0.427,
+      "clir": 0.3856,
+      "separability": 0.8643,
+      "consistency": 0.1668,
+      "mt_robust": 0.857,
+      "lang_parity": 0.6814
     },
     {
       "short": "nomic-v2-moe",
-      "accuracy": 0.4428,
-      "clir": 0.3808,
-      "separability": 0.8603,
-      "consistency": 0.178,
-      "mt_robust": 0.9371,
-      "lang_parity": 0.7554
+      "accuracy": 0.4161,
+      "clir": 0.354,
+      "separability": 0.8751,
+      "consistency": 0.1704,
+      "mt_robust": 0.9332,
+      "lang_parity": 0.7565
     },
     {
       "short": "granite-278m",
-      "accuracy": 0.3589,
-      "clir": 0.3285,
-      "separability": 0.8622,
-      "consistency": 0.1934,
-      "mt_robust": 0.9707,
-      "lang_parity": 0.8642
+      "accuracy": 0.3212,
+      "clir": 0.2859,
+      "separability": 0.8605,
+      "consistency": 0.1747,
+      "mt_robust": 0.9618,
+      "lang_parity": 0.8827
     },
     {
       "short": "LaBSE",
-      "accuracy": 0.2774,
-      "clir": 0.2384,
-      "separability": 0.8121,
-      "consistency": 0.1503,
-      "mt_robust": 0.8492,
-      "lang_parity": 0.7323
+      "accuracy": 0.2603,
+      "clir": 0.219,
+      "separability": 0.8096,
+      "consistency": 0.1457,
+      "mt_robust": 0.8266,
+      "lang_parity": 0.7365
     },
     {
       "short": "SapBERT",
-      "accuracy": 0.2117,
-      "clir": 0.1788,
-      "separability": 0.7866,
-      "consistency": 0.1386,
-      "mt_robust": 0.9529,
-      "lang_parity": 0.7963
+      "accuracy": 0.1946,
+      "clir": 0.1606,
+      "separability": 0.791,
+      "consistency": 0.1295,
+      "mt_robust": 0.9453,
+      "lang_parity": 0.8272
     },
     {
       "short": "e5-large-instruct",
-      "accuracy": 0.1776,
-      "clir": 0.0766,
-      "separability": 0.711,
+      "accuracy": 0.1618,
+      "clir": 0.0657,
+      "separability": 0.7015,
       "consistency": 0.0004,
-      "mt_robust": 0.9711,
-      "lang_parity": 0.893
-    },
-    {
-      "short": "gte-base",
-      "accuracy": 0.0036,
-      "clir": 0.0,
-      "separability": 0.4887,
-      "consistency": 0.0031,
-      "mt_robust": 1.0,
-      "lang_parity": 1.0
+      "mt_robust": 0.9586,
+      "lang_parity": 0.8998
     }
   ]
 }

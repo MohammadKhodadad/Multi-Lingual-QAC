@@ -1,31 +1,31 @@
 {
-  "run_id": "20260609-222424",
-  "created_at": "2026-06-09T22:24:24.949633+00:00",
+  "run_id": "20260611-023854",
+  "created_at": "2026-06-11T02:38:54.249869+00:00",
   "dataset_repo": "MehdiAstaraki/multi-lingual-qac-chem-patents",
   "corpus_repo": "MehdiAstaraki/multilingual_GP",
   "dataset_variant": "multilingual",
   "dataset_revision": "main",
   "dataset_sizes": {
-    "queries": 137,
-    "corpus": 1110,
-    "qrels": 322
+    "queries": 524,
+    "corpus": 23787,
+    "qrels": 1284
   },
   "models": [
     "Qwen/Qwen3-Embedding-0.6B"
   ],
   "batch_size": 64,
-  "git_commit": "d88c53e",
+  "git_commit": "0928218",
   "git_dirty": true,
-  "hostname": "fc10906",
-  "slurm_job_id": "43674858",
+  "hostname": "fc11018",
+  "slurm_job_id": "43882086",
   "scores": {
     "Qwen/Qwen3-Embedding-0.6B": {
-      "main_score": 0.46837,
-      "recall_at_10": 0.46837,
-      "recall_at_100": 0.6837,
-      "ndcg_at_10": 0.39037,
-      "map_at_10": 0.33307,
-      "mrr_at_10": 0.41326613370409004
+      "main_score": 0.49587,
+      "recall_at_10": 0.49587,
+      "recall_at_100": 0.71501,
+      "ndcg_at_10": 0.43241,
+      "map_at_10": 0.37579,
+      "mrr_at_10": 0.468580364715861
     }
   }
 }

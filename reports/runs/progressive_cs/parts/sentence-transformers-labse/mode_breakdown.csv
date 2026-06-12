@@ -1,0 +1,5 @@
+model,mode_added,n,mean_cos_drop
+sentence-transformers/LaBSE,B,103,-0.00017245244053961005
+sentence-transformers/LaBSE,C,114,0.0013080824885452003
+sentence-transformers/LaBSE,D,236,0.0016310398103827138
+sentence-transformers/LaBSE,F,217,0.0025447222494309947

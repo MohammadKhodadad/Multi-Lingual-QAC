@@ -160,8 +160,10 @@ documents in a *different* language; **MoLIR@k** = recall over the *same*-langua
 - **Home advantage is universal and large.** When a same-language copy exists, models retrieve it far
   more reliably than any foreign version; the gap reaches **{worst_hai['home_adv']:+.3f}** for
   `{worst_hai['short']}`. The benchmark's 80 synthetic queries have *no* such crutch.
-- Two models are effectively broken on this corpus and should be read with care: `gte-base`
-  (≈0.004 — a degenerate/config failure) and `e5-large-instruct` (instruction model, very weak here).
+- `e5-large-instruct` is the genuine low performer here (instruction model, strong within-language
+  but almost no cross-lingual transfer — a real property, not a defect). `gte-multilingual-base` was
+  **excluded** from this analysis: its ≈0.004 score was a model-loading artifact (degenerate
+  embeddings; it failed even trivial same-language self-retrieval), not real performance.
 
 **Next questions.**
 1. CLIR is an average over many language directions. *Which* query→document directions actually
