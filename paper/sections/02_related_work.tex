@@ -1,10 +1,11 @@
 \section{Related Work}
 
-Multilingual retrieval benchmarks such as MIRACL, NeuCLIR, MTEB, MMTEB, and
-CLIRMatrix have made cross-lingual retrieval evaluation easier to compare across
-models and languages
+General embedding benchmarks such as MTEB and MMTEB, and multilingual or
+cross-lingual retrieval resources such as MIRACL, NeuCLIR, and CLIRMatrix, have
+made retrieval and embedding evaluation easier to compare across models and
+languages
 \citep{miracl2023,neuclir2023,muennighoff2023mteb,mmteb2025,clirmatrix2020}.
-They are closest to our evaluation setting, but they are not designed around
+They frame our evaluation setting, but they are not designed around
 chemistry-specific relevance, controlled language variants, or chemically
 plausible hard negatives. Our benchmark follows this line of work while adding
 domain structure needed to audit multilingual retrieval in technical chemistry
@@ -15,16 +16,16 @@ NLP tasks. ChemTEB evaluates chemical text embeddings across retrieval,
 classification, clustering, bitext mining, and pair-classification tasks
 \citep{chemteb2024}; ChemLit-QA provides expert-validated QAC data for chemistry
 RAG \citep{chemlitqa2024}; and ChemComp and ChemKGMultiHopQA test
-retrieval-dependent multi-hop scientific reasoning
+chemistry-focused multi-hop scientific reasoning in retrieval-aware settings
 \citep{khodadad2026chemcomp,astaraki2026iterativerag}. Recent chemical
 literature embedding work such as ChEmbed further shows the value of
 domain-adapted retrieval models and chemistry-specific retrieval evaluation
 \citep{chembed2025}. Our work is complementary: it focuses on multilingual
 retrieval robustness, controlled language variants, and chemistry-confusable
-hard negatives rather than single-language chemistry QA or embedding evaluation.
+hard negatives rather than chemistry QA, reasoning, or embedding evaluation alone.
 
 Recent work on cross-lingual retrieval and multilingual RAG shows that model
-rankings can depend strongly on language, alignment, and same-language
+performance and behavior can depend strongly on language, alignment, and same-language
 preference \citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
 These findings motivate our focus on separating same-language from
 cross-language relevance instead of relying only on aggregate recall. In contrast
