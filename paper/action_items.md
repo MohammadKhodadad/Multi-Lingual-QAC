@@ -1,107 +1,97 @@
 # Action Items for the Short Paper
 
 Priority goal: finish the light polishing needed for a credible EMNLP Industry
-Track submission. The revised draft is now around `8.0/10`; the remaining work is
-mostly writing-level clarity rather than conceptual restructuring.
+Track submission. The latest review rates the draft around `8.3/10`, with
+potential to reach about `8.5/10` after targeted polish. No major restructuring
+is recommended.
 
 ## Completed
 
 - Added a dedicated `Deployment Decision` section after Results.
-- Added the cost-vs-capability figure to the body.
-- Added a compact benchmark statistics table.
-- Added a compact main results table.
-- Made the abstract more result-driven with concrete findings:
-  - best cross-language Recall@10 `0.50`
-  - same-language advantage up to `+0.55`
-  - chemistry-confusability failures `14--78%`
-- Tightened redundant Evaluation, Results, Limitations, and Conclusion prose.
-- Made the conclusion more practitioner-oriented.
+- Refreshed the main-body figures with the updated two-source results.
+- Reordered the main-body figure story around the four key claims:
+  1. technical questions are harder than semantic ones;
+  2. same-language gold is easier than cross-language gold;
+  3. chemically confusable wrong documents can outrank gold evidence;
+  4. deployment cost decomposes into reading depth, re-ranker recovery, and residual first-stage failure.
+- Moved supporting query-language and attractor-detail plots to the appendix.
+- Added additional appendix diagnostics for question-type robustness,
+  cross-source transfer, language denominators, and deployment budget.
+- Added a compact benchmark statistics table for both Google Patents and EPO.
+- Updated the abstract to say the release contains two public multilingual
+  chemistry QAC retrieval benchmarks: Google Patents and EPO.
+- Updated the contribution list to avoid the broad `first public benchmark`
+  claim and instead name the two chemistry-patent retrieval benchmarks.
+- Updated the main empirical numbers to the current result set:
+  - best cross-language Recall@10 about `0.55`;
+  - same-language advantage visible in every query language;
+  - chemistry-confusability failures `14--48%`.
 
-## P0: Final Writing Polish
+## P0: Final Light Polish
 
-1. Strengthen the Results prose without expanding much.
-   - Location: `sections/05_results.tex`.
-   - Purpose: Table 2 is strong, but key numbers should also appear in prose.
-   - Add back the following numbers in the relevant paragraphs:
-     - `97` human-reviewed QACs
-     - mean human score `8.33/10`
-     - `94/97` good QACs
-     - LLM vs human scores `79.0%` vs `83.3%`
-     - best cross-language Recall@10 `0.50`
-     - home advantage up to `+0.55`
-     - chemistry confusion `14--78%`
-   - Keep this concise; do not undo the recent page-budget cuts.
+1. Add a compact main findings table if page budget allows.
+   - Location: `sections/05_results.tex`, likely near the start or end of
+     Results.
+   - Purpose: Give reviewers a fast summary of the core empirical claims.
+   - Suggested rows:
+     - QAC quality: `8.33/10`, `94/97` good.
+     - Cross-language retrieval: best Recall@10 about `0.55`.
+     - Same-language gap: about `0.21--0.28` Recall@10.
+     - Chemistry confusion: `14--48%`.
+     - Deployment frontier: `embeddinggemma`, `bge-m3`, `granite-278m`.
+   - If space is tight, skip this rather than weakening the narrative.
 
-2. Define `XRC50` more clearly.
-   - Location: `sections/06_deployment.tex`.
-   - Add one short sentence before the frontier discussion:
-     `XRC50 measures how much deeper a user must inspect the ranked list,
-     relative to same-language retrieval, before reaching cross-language
-     evidence.`
-
-3. Make the deployment recommendation explicitly conditional.
-   - Location: `sections/06_deployment.tex`.
-   - Soften benchmark-specific wording:
-     - Use `Under a capability-first criterion in this benchmark,
-       embeddinggemma is the recommended choice.`
-     - Add that `bge-m3` becomes preferable under a stricter reading-cost budget
-       if the CLIR@10 threshold is acceptable.
-     - Keep `granite-278m` framed as a lower-capability, cheaper frontier point.
-
-4. Add one practical user-workflow sentence.
-   - Best location: `sections/01_introduction.tex`, first paragraph or just
-     after it.
+2. Add a short related-work sentence on LLM-assisted benchmark construction.
+   - Location: `sections/02_related_work.tex`.
    - Suggested wording:
-     `In the target workflow, a chemist or technical analyst issues a query in
-     one working language and expects the retrieval system to surface the
-     strongest patent evidence, even when that evidence appears in another
-     language or near chemically similar documents.`
+     `LLM-assisted benchmark construction has become a practical way to create
+     domain-specific evaluation data, but generated items require provenance,
+     filtering, and human audit before they can support reliable conclusions.
+     Our pipeline follows this direction while making each generated QAC
+     traceable to a source document, language, verifier scores, and retrieval
+     relevance judgments.`
 
-## P1: Optional If Page Budget Allows
+3. Define `XRC50` more explicitly.
+   - Location: `sections/06_deployment.tex`, before or at first use.
+   - Suggested wording:
+     `XRC50 measures the median multiplier in reading depth needed to reach
+     cross-language evidence compared with same-language evidence.`
 
-5. Strengthen the "why patents?" explanation.
-   - Location: `sections/01_introduction.tex` or `sections/03_benchmark.tex`.
-   - Clarify that patents are not the only target application; they are the
-     benchmark substrate because they combine multilingual publication variants,
-     controlled source identity, chemistry-rich language, and realistic
-     technical retrieval difficulty.
+4. Replace generic abstract ending with more concrete deployment language.
+   - Location: `sections/00_abstract.tex`.
+   - Current concern: `practical framework` is acceptable but generic.
+   - Suggested wording:
+     `The benchmark turns cross-language and chemistry-confusability failures
+     into measurable model-selection criteria for high-trust technical retrieval.`
 
-6. Sharpen the contribution list.
-   - Location: `sections/01_introduction.tex`.
-   - Make the contributions more explicit:
-     1. multilingual chemistry-patent QAC benchmark with query/document language metadata;
-     2. LLM-assisted QAC generation and verification with human validation;
-     3. language-aware retrieval evaluation separating same-language and cross-language evidence;
-     4. chemistry-confusability stress test using alias / ontology neighbors;
-     5. deployment-oriented model-selection analysis showing why aggregate recall is insufficient.
+## P1: Consistency and Submission Checks
 
-7. Clarify QAC pipeline details.
-   - Location: `sections/02_pipeline.tex`.
-   - Add only concise details that are already supported:
-     - multiple candidates per document/language/mode;
-     - technical and semantic question modes;
-     - verifier grades faithfulness, answerability, language quality, and
-       retrieval usefulness;
-     - human validation sample size: `97` reviewed QACs.
+5. Check all updated numbers across release surfaces.
+   - Locations: abstract, Results, captions, appendix, dataset cards, GitHub
+     README, and any report text.
+   - Current paper numbers to verify:
+     - best cross-language Recall@10 about `0.55`;
+     - same-vs-cross gap about `0.21--0.28` Recall@10;
+     - chemistry confusion `14--48%`;
+     - Google Patents: corpus `23,787`, queries `524`, qrels `1,284`,
+       cross-language qrels `1,023`;
+     - EPO: corpus `11,315`, queries `198`, qrels `594`,
+       cross-language qrels `396`.
 
-## P2: Submission Checks
+6. Recheck the page budget after any final polish.
+   - Compile `short_main.tex`.
+   - If the body becomes too crowded, first remove or move the optional compact
+     findings table rather than cutting the four-priority-figure story.
 
-8. Verify data/code availability.
-   - Check that the Hugging Face and GitHub links are live.
+7. Verify data/code availability.
+   - Check that both Hugging Face links and the GitHub link are live.
    - Confirm anonymization expectations for the target venue.
-   - Confirm the dataset card is clear.
-   - Confirm paper numbers match released artifacts.
+   - Confirm dataset cards describe the two releases clearly.
 
-9. Add practical model attributes only if verified.
-   - Do not invent cost, latency, license, or model-size values.
-   - If verified model-card data is not available, keep deployment cost framed
-     through retrieval-depth / reading-cost behavior rather than serving latency
-     or licensing.
-
-10. Recheck page budget after final polish.
-    - Compile `short_main.tex`.
-    - If still too long, move `cp_fig09_10_collapse.png` from Results back to the
-      appendix; this remains the cleanest large space-saving option.
+8. Add practical model attributes only if verified.
+   - Do not invent cost, latency, license, model size, or serving constraints.
+   - Keep deployment cost framed through retrieval-depth / reading-cost behavior
+     unless external model-card facts are explicitly checked.
 
 ## Evidence Already Available
 
@@ -110,20 +100,22 @@ mostly writing-level clarity rather than conceptual restructuring.
   - human mean `8.33/10`
   - `94/97` good items
   - LLM mean `79.0%`, human mean `83.3%`
-- Released chem-patents dataset card:
-  - corpus `1.11k` rows
-  - qac / queries `137`
-  - qrels `322`
-  - cross-language qrels `265`
-- Existing full-paper / reports-backed results:
-  - best cross-language Recall@10 `0.50`
-  - home advantage up to `+0.55`
-  - alias-graph confusion `14--78%`
-  - cost-vs-capability figure available: `cp_fig18_cost_frontier.png`
-  - reranker recoverability figure available: `cp_fig19_rrc_budget.png`
+- Released benchmark statistics:
+  - Google Patents: corpus `23,787`, queries `524`, qrels `1,284`,
+    cross-language qrels `1,023`
+  - EPO: corpus `11,315`, queries `198`, qrels `594`,
+    cross-language qrels `396`
+- Current result figures:
+  - `claimA_A3_gap_heatmap.png`
+  - `claimC_C3_home_advantage.png`
+  - `claimD_D1_confusion_heatmap.png`
+  - `claimE_E2_triptych.png`
+  - `cp_fig18_cost_frontier.png`
 
 ## Current Recommendation
 
-Do one final light revision bundle: strengthen Results prose, define `XRC50`,
-make the deployment choice explicitly conditional, and add one user-workflow
-sentence. Then compile and check page budget before submission.
+Submit after one final polish pass. The highest-impact edits are adding the
+LLM-assisted benchmark-construction sentence, defining `XRC50` cleanly, replacing
+the generic abstract ending, and checking number consistency across the paper and
+release pages. The compact findings table is useful, but optional if it hurts
+page budget.

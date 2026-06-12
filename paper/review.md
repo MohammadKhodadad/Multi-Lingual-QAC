@@ -1,260 +1,331 @@
-# Updated Objective Review of the Revised Paper
+# Updated Review of the Latest Paper Draft
 
 **Paper reviewed:** *Measuring Cross-Lingual Robustness for Chemistry-Patent Retrieval: Patent-Grounded Multilingual Benchmarks, New Metrics, and a Deployment Decision*
 
 ## Overall Assessment
 
-This revised version is significantly stronger than the previous draft. The main weakness in the earlier version was that the title promised a **deployment decision**, but the body did not clearly deliver one. This version now includes a dedicated **Deployment Decision** section, a clearer cost-vs-capability analysis, and a stronger empirical summary table.
+This round is a major upgrade. The paper now feels much more like a complete EMNLP Industry Track submission rather than a short benchmark draft. The narrative is clearer, the industrial motivation is stronger, the literature review is more complete, and the benchmark scale is more convincing.
 
-The paper now reads less like a generic benchmark-construction paper and more like an Industry Track paper about using benchmark design to make a real model-selection decision in a high-trust technical retrieval setting.
+The paper now has a strong end-to-end story:
+
+> Multilingual chemistry retrieval can look good under aggregate recall while still failing in deployment-relevant cases. The paper builds public patent-grounded benchmarks to expose those failures, evaluates multilingual embedding models with language-aware and chemistry-aware diagnostics, and uses the results to support a practical deployment decision.
+
+This is now a credible Industry Track paper.
 
 ## Updated Score
 
-**Overall score: 8.0 / 10**
+**Overall score: 8.3 / 10**
 
-**EMNLP Industry Track fit: 7.8–8.2 / 10**
+**EMNLP Industry Track fit: 8.2–8.5 / 10**
 
-With light revision, this is now a credible EMNLP Industry Track submission.
+**Recommendation: submit after polishing, not major restructuring.**
 
 ---
 
-## What Improved
+## Score Comparison
 
-### 1. The abstract is much stronger
+| Dimension | Previous Revised Draft | Latest Draft | Change | Reason |
+|---|---:|---:|---:|---|
+| Overall paper quality | 8.0/10 | 8.3/10 | +0.3 | Stronger scale, clearer framing, and better supporting analyses. |
+| EMNLP Industry Track fit | 7.8–8.2/10 | 8.2–8.5/10 | +0.4 | Stronger industrial motivation and clearer deployment relevance. |
+| Literature review | 7.3/10 | 8.3/10 | +1.0 | The paper now covers chemistry-specific benchmarks and better positions the contribution. |
+| Results presentation | 7.8/10 | 8.2/10 | +0.4 | Results are more diagnostic and better supported by figures. |
+| Deployment framing | 8.2/10 | 8.5/10 | +0.3 | The deployment decision now includes reading cost, re-ranker recoverability, and frontier trade-offs. |
+| Reviewer confidence | 7.5/10 | 8.1/10 | +0.6 | Larger datasets, two patent sources, and additional appendix checks make the work more trustworthy. |
 
-The abstract now includes concrete empirical findings:
+---
 
-- Best cross-language Recall@10: **0.50**
-- Same-language advantage: **up to +0.55**
-- Chemistry-confusability failures: **14–78%** of publication-lens queries
+## What Improved Most
 
-This makes the contribution immediately clearer. Reviewers can now see the empirical motivation without waiting until the Results section.
+### 1. The abstract is clearer and more industry-oriented
 
-### 2. The deployment story is now visible
+The abstract now starts from a practical user problem: a user may ask a technical question in one language while the strongest supporting document is written in another.
 
-The new **Deployment Decision** section is the biggest improvement. The paper now explains that the benchmark supports a practical model-selection decision: choosing one multilingual embedding model for a shared chemistry retrieval index.
+This is a stronger opening than the earlier more academic framing. It makes the deployment need easier to understand immediately.
 
-This directly fixes the earlier issue where the title promised a deployment decision but the body did not fully explain it.
+The abstract also clearly states the updated empirical findings:
 
-### 3. The cost-vs-capability trade-off is useful
+- best cross-language Recall@10 is about **0.55**,
+- same-language advantage remains visible in every query language,
+- chemically confusable documents outrank gold evidence on **14–48%** of publication-lens queries.
 
-The new section comparing **cross-language Recall@10** and **XRC50** makes the paper feel more practical and industry-relevant.
+This makes the paper feel more concrete and evidence-driven.
 
-The paper now shows that the benchmark does not produce one universal winner. Instead, it exposes a trade-off:
+### 2. The industrial motivation is stronger
 
-- **embeddinggemma**: best capability-first choice
-- **bge-m3**: cheaper-to-read option if CLIR@10 ≥ 0.40 is acceptable
-- **granite-278m**: cheaper frontier point at a lower capability threshold
+The introduction now includes a useful paragraph about multinational industrial settings, RAG systems, agentic workflows, latency, cost, and technical-term translation errors.
 
-This is exactly the kind of decision framing that fits the EMNLP Industry Track.
+This helps the paper fit EMNLP Industry Track much better because it connects the benchmark to real deployment constraints, not only academic evaluation.
 
-### 4. Table 2 is a strong addition
+### 3. The contribution list is much sharper
 
-The new empirical findings table improves readability a lot. It gives reviewers a compact summary of the paper’s main evidence:
+The revised contribution list is clear and well-scoped:
 
-| Finding | Metric | Takeaway |
-|---|---:|---|
-| QAC quality | 8.33/10 mean human score | Generated items are usable for benchmark construction. |
-| Human validation | 94/97 good QACs | Most reviewed items pass the quality bar. |
-| LLM grading | 79.0% LLM vs. 83.3% human | The verifier is slightly stricter than humans. |
-| Cross-language ceiling | Best Recall@10 = 0.50 | Cross-language evidence remains hard to retrieve. |
-| Home advantage | Up to +0.55 | Same-language shortcuts can inflate aggregate scores. |
-| Chemistry confusion | 14–78% | Plausible wrong chemistry can outrank gold evidence. |
+1. a public multilingual chemistry retrieval benchmark with query/document language metadata and retrieval-ready corpus, queries, and qrels;
+2. a reproducible LLM-assisted QAC generation and validation pipeline;
+3. a language-aware retrieval evaluation separating same-language and cross-language evidence;
+4. a chemistry-confusability stress test using alias and ontology neighbors;
+5. a deployment-oriented model-selection analysis showing why aggregate recall is not sufficient.
 
-This table makes the results easier to understand and helps the paper feel more polished.
+This is much stronger than the earlier broader wording.
 
-### 5. The conclusion is stronger
+### 4. The literature review is much stronger
 
-The revised conclusion now ends with a clearer practitioner lesson:
+The related work section is now significantly improved. It covers:
 
-> For high-trust multilingual retrieval, the question is not only whether the system retrieves something relevant on average, but whether it finds the intended evidence when language and chemical similarity create tempting shortcuts.
+- general multilingual retrieval benchmarks,
+- chemistry-specific benchmarks,
+- cross-lingual retrieval and multilingual RAG bias,
+- patent retrieval,
+- chemical ontology and alias-based hard negatives.
 
-This is a strong closing idea and fits the paper well.
+The new chemistry-specific paragraph is especially important. By citing ChemTEB, ChemLit-QA, ChemComp, ChemKGMultiHopQA, ChEmbed, and related work, the paper now shows that the authors understand the chemistry NLP benchmark landscape.
+
+The gap is now clearer:
+
+> Existing chemistry benchmarks cover chemistry QA, reasoning, embedding evaluation, or literature retrieval, but this paper focuses on multilingual retrieval robustness, controlled language variants, and chemistry-confusable hard negatives.
+
+This is a strong positioning.
+
+### 5. The benchmark scale is more convincing
+
+The latest draft now releases two patent-derived benchmark sources:
+
+| Source | Corpus | Queries | Qrels | Cross-language qrels |
+|---|---:|---:|---:|---:|
+| Google Patents | 23,787 | 524 | 1,284 | 1,023 |
+| EPO | 11,315 | 198 | 594 | 396 |
+
+This is a major improvement over the earlier smaller benchmark. The paper now feels more serious and more likely to convince reviewers.
+
+### 6. The results are more diagnostic
+
+The Results section now has a clearer diagnostic structure:
+
+1. QAC quality is high enough for benchmark construction.
+2. Average recall hides cross-language weakness.
+3. Errors are not only multilingual; they are chemical.
+4. Deployment should consider capability, reading cost, and recoverability.
+
+The addition of technical-vs-semantic question difficulty also improves the paper. It shows that not all generated queries are equally easy and that technical chemistry questions are a harder, more realistic retrieval test.
+
+### 7. The deployment decision is stronger
+
+The deployment section now goes beyond simply choosing a model. It explains:
+
+- cross-language Recall@10 as a capability axis,
+- XRC50 as a reading-cost multiplier,
+- re-ranker recoverability,
+- residual first-stage retriever failures,
+- a Pareto frontier among embeddinggemma, bge-m3, and granite-278m.
+
+This is strong Industry Track material because it frames model choice as a practical operational trade-off, not just a leaderboard.
+
+---
+
+## Current Strengths
+
+### Strong problem framing
+
+The paper identifies a real deployment failure mode: multilingual embedding models may retrieve easy same-language evidence while failing to retrieve the intended cross-language evidence.
+
+### Good domain specificity
+
+The paper correctly argues that chemistry retrieval is not only a translation problem. Chemical aliases, abbreviations, compound families, formulas, and near-neighbor concepts make retrieval errors more dangerous.
+
+### Clear benchmark contribution
+
+The release format with corpus, queries, qrels, QAC records, and language metadata is practical and reusable.
+
+### Good use of patents
+
+The paper now explains patents as a source of controlled multilingual technical evidence, not as the only intended application. This avoids making the work feel too narrow.
+
+### Stronger validation story
+
+The QAC validation result is still useful:
+
+- 97 generated QACs reviewed,
+- mean human score of 8.33/10,
+- 94 items in the good bucket,
+- technical questions score 8.72 vs. semantic questions 7.91,
+- LLM verifier is slightly stricter than human annotation.
+
+### Better appendix
+
+The appendix is now much more useful. It includes additional cross-lingual diagnostics, alias-graph diagnostics, question-type robustness, cross-source checks, language-denominator checks, and deployment-budget diagnostics.
+
+This supports reviewer confidence.
 
 ---
 
 ## Remaining Issues
 
-### 1. The Results section is now slightly too compressed
+### 1. Add back a compact main findings table
 
-The Results section became cleaner, but it may now be too short. Some important numbers are only in Table 2, not in the prose.
+The paper has many figures, but a compact table would help reviewers quickly absorb the main claims.
 
-For example, the QAC quality paragraph says:
+Suggested table:
 
-> Human review shows that the generated QACs are usable for benchmark construction, with most items falling in the “good” bucket.
+| Finding | Main result | Interpretation |
+|---|---:|---|
+| QAC quality | 8.33/10; 94/97 good | Generated QACs are usable for benchmark construction. |
+| Cross-language retrieval | best Recall@10 ≈ 0.55 | Cross-language evidence remains difficult despite multilingual models. |
+| Same-language gap | 0.21–0.28 Recall@10 | Aggregate recall hides shortcut behavior. |
+| Chemistry confusion | 14–48% | Plausible wrong chemistry often outranks gold evidence. |
+| Deployment frontier | embeddinggemma / bge-m3 / granite-278m | Model choice depends on capability vs. reading cost. |
 
-This should be more specific.
+This table could replace or supplement one figure if space is tight.
 
-Suggested revision:
+### 2. Make the “first public benchmark” claim more precise
 
-> Human review of 97 generated QACs gives a mean score of 8.33/10, with 94 of 97 items falling in the “good” bucket. Technical questions score slightly higher than semantic questions on average (8.72 vs. 7.91), but both modes remain usable for retrieval evaluation.
+The contribution currently says:
 
-This gives reviewers the key evidence directly in the paragraph.
+> the first public multilingual chemistry retrieval benchmark
 
-### 2. Chemistry-confusability results should include the number in prose
+This might be challenged because the paper cites several chemistry benchmarks. A safer version would be:
 
-The chemistry failure paragraph says that Figure 3 measures how often chemically confusable documents outrank gold evidence, but it does not repeat the key number.
+> to our knowledge, the first public multilingual chemistry-patent retrieval benchmark with query/document language metadata, qrels, and chemistry-confusability labels.
 
-Suggested revision:
+This is more precise and harder to dispute.
 
-> Chemically confusable documents outrank all gold evidence on 14–78% of publication-lens queries, depending on the model. These failures are especially important for chemistry search because a nearby compound, parent class, or sibling concept can look plausible while answering the wrong question.
+### 3. Add 1–2 sentences on LLM-assisted benchmark construction
 
-This makes the result more memorable.
+The literature review is much better, but it still does not directly position the LLM-assisted QAC generation and verification approach.
 
-### 3. XRC50 needs a clearer definition
+Since the method relies on LLM-generated QACs and LLM-based verification, it would help to add a short related-work sentence or paragraph about synthetic evaluation data, LLM-assisted benchmark construction, or LLM-as-verifier approaches.
 
-The Deployment Decision section introduces **XRC50** as the median cross-lingual reading-cost multiplier. This is useful, but it may be too abrupt for reviewers.
+Suggested addition:
 
-Add one short definition before discussing the frontier:
+> LLM-assisted benchmark construction has become a practical way to create domain-specific evaluation data, but generated items require provenance, filtering, and human audit before they can support reliable conclusions. Our pipeline follows this direction while making each generated QAC traceable to a source document, language, verifier scores, and retrieval relevance judgments.
 
-> XRC50 measures how much deeper a user must inspect the ranked list, relative to same-language retrieval, before reaching cross-language evidence.
+### 4. Check consistency of all updated numbers
 
-This will make the metric easier to understand.
+The previous version used:
 
-### 4. The model recommendation should be slightly softened
+- best cross-language Recall@10 = 0.50,
+- chemistry confusion = 14–78%.
 
-The paper currently says:
+The current version uses:
 
-> embeddinggemma is the recommended capability-first choice.
+- best cross-language Recall@10 ≈ 0.55,
+- chemistry confusion = 14–48%.
 
-This is mostly fine, but to avoid overclaiming, it would be safer to write:
+This is fine if the dataset and evaluation changed, but make sure every number is consistent across:
 
-> Under a capability-first criterion in this benchmark, embeddinggemma is the recommended choice.
+- abstract,
+- results,
+- figures,
+- captions,
+- appendix,
+- dataset card,
+- GitHub README.
 
-This makes it clear that the recommendation is benchmark-specific, not universal.
+### 5. Define XRC50 very clearly
 
-### 5. The deployment decision should explicitly say it is conditional
+The paper now uses XRC50 as a cross-lingual reading-cost multiplier. This is useful, but it should be defined in one clean sentence before being used in the deployment section.
 
-The current decision section is good, but it should more clearly state that the “best” model depends on deployment priorities.
+Suggested wording:
 
-Suggested sentence:
+> XRC50 measures the median multiplier in reading depth needed to reach cross-language evidence compared with same-language evidence.
 
-> The deployment choice is therefore conditional: embeddinggemma is preferred when maximizing cross-language retrieval is the priority, while bge-m3 becomes preferable when reading-cost efficiency is prioritized under an acceptable CLIR@10 threshold.
+This makes the deployment metric easier to understand for reviewers.
 
-This makes the decision logic very clear.
+### 6. Slightly reduce generic framework language
+
+The abstract says:
+
+> The benchmark and pipeline provide a practical framework...
+
+This is acceptable, but a stronger version would be more concrete:
+
+> The benchmark turns cross-language and chemistry-confusability failures into measurable model-selection criteria for high-trust technical retrieval.
+
+This better matches the deployment-oriented story.
+
+---
+
+## Updated Review of the Literature Review
+
+The literature review is now much stronger than before.
+
+### Current lit review score: 8.3 / 10
+
+### Why it improved
+
+The new related work section no longer looks like a short checklist. It now has a clear structure:
+
+1. General multilingual retrieval benchmarks
+2. Chemistry-specific benchmarks
+3. Cross-lingual retrieval and multilingual RAG bias
+4. Patent retrieval and chemical ontology structure
+
+This is a strong structure.
+
+### Best part
+
+The chemistry benchmark paragraph is the strongest addition. It helps clarify that the work is not ignoring existing chemistry NLP benchmarks but is instead addressing a different gap: multilingual retrieval robustness and chemistry-confusable hard negatives.
+
+### Remaining gap
+
+The only missing related-work angle is LLM-assisted benchmark construction and LLM-based verification. Because the paper uses an LLM to generate and verify QAC candidates, this should be acknowledged briefly.
+
+### Suggested final gap sentence for Related Work
+
+> Taken together, prior work provides general multilingual retrieval benchmarks, chemistry-specific NLP benchmarks, and patent retrieval evaluations, but does not jointly provide controlled multilingual chemistry-patent evidence, QAC-style retrieval queries, language-aware qrels, and chemically confusable hard negatives for deployment-oriented model selection.
+
+This would make the end of the related work section very strong.
 
 ---
 
 ## Updated EMNLP Industry Track Fit
 
-This paper is now much closer to a strong Industry Track submission.
+The latest draft is now a good fit for EMNLP Industry Track.
 
-### Why it fits now
+### Why it fits
 
-The revised paper includes:
+The paper now clearly includes:
 
-- a real deployment-style model-selection problem,
-- practical trade-offs between capability and reading cost,
-- benchmark construction grounded in a high-trust technical domain,
-- human validation of LLM-generated evaluation data,
-- clear robustness diagnostics beyond aggregate metrics,
-- a practical lesson for teams deploying multilingual retrieval systems.
+- a real-world technical retrieval problem,
+- multilingual evidence retrieval across patent sources,
+- practical deployment constraints,
+- retrieval diagnostics beyond aggregate metrics,
+- human-audited LLM-generated evaluation data,
+- model-selection trade-offs,
+- a reusable evaluation pattern for high-trust technical domains.
 
-### What still needs light improvement
+### Why it is stronger than before
 
-To fully maximize Industry Track fit, the paper should make the practical setting even more concrete.
+The paper is no longer only saying:
 
-It would help to add one or two sentences explaining the user workflow:
+> We built a benchmark.
 
-> In the target workflow, a chemist or technical analyst issues a query in one working language and expects the retrieval system to surface the strongest patent evidence, even when that evidence appears in another language or near chemically similar documents.
+It now says:
 
-This would make the “industry” story easier to understand.
+> We built a benchmark to expose deployment-relevant failures that aggregate recall hides, and we used it to support a concrete model-selection decision.
 
----
-
-## Suggested Final Edits Before Submission
-
-### Priority 1: Strengthen the Results prose
-
-Add the key numbers back into the Results paragraphs, not only the table.
-
-Important numbers to repeat:
-
-- 97 human-reviewed QACs
-- 8.33/10 mean human score
-- 94/97 good QACs
-- best cross-language Recall@10 = 0.50
-- same-language advantage up to +0.55
-- chemistry confusion = 14–78%
-
-### Priority 2: Define XRC50 earlier
-
-Add a simple explanation of XRC50 before using it in the deployment decision.
-
-### Priority 3: Clarify the conditional model choice
-
-Make it explicit that:
-
-- embeddinggemma is best under a capability-first criterion,
-- bge-m3 is better under a stricter reading-cost budget,
-- granite-278m is relevant only under a lower capability threshold.
-
-### Priority 4: Add one user-workflow sentence
-
-Add a practical example of who uses this retrieval system and why cross-language failure matters.
-
-### Priority 5: Check data/code availability
-
-The abstract says data and code are available on Hugging Face and GitHub. Before submission, make sure:
-
-- the links are live,
-- the repository is anonymized if required,
-- the dataset card is clear,
-- the paper’s numbers match the released artifacts.
-
----
-
-## Suggested Revised Paragraphs
-
-### Revised Results paragraph for QAC quality
-
-> Human review of 97 generated QACs gives a mean score of 8.33/10, with 94 of 97 items falling in the “good” bucket. Technical questions score slightly higher than semantic questions on average (8.72 vs. 7.91), but both modes remain usable for retrieval evaluation. The LLM verifier is slightly stricter than the human annotator, with normalized scores of 79.0% versus 83.3%, supporting its use for filtering and auditing while still requiring human validation for benchmark-quality claims.
-
-### Revised Results paragraph for cross-language weakness
-
-> Figure 2 shows that same-language retrieval is consistently easier than cross-language retrieval. The best cross-language Recall@10 reaches only 0.50, and the same-language home advantage reaches +0.55 for the most biased model. A model can therefore look acceptable under an aggregate score while failing on the deployment-relevant case where the strongest evidence is available only in another language.
-
-### Revised Results paragraph for chemistry-confusability
-
-> The alias-graph benchmark shows a second failure mode: even when a retrieved document is topically close, it may be chemically wrong. Chemically confusable documents outrank all gold evidence on 14–78% of publication-lens queries, depending on the model. These failures are especially important for chemistry search because a nearby compound, parent class, or sibling concept can look plausible while answering the wrong question.
-
-### Revised Deployment Decision wording
-
-> XRC50 measures how much deeper a user must inspect the ranked list, relative to same-language retrieval, before reaching cross-language evidence. We use cross-language Recall@10 as the capability axis and XRC50 as the reading-cost axis. Under a capability-first criterion in this benchmark, embeddinggemma is the recommended choice. If an operating threshold of CLIR@10 ≥ 0.40 is acceptable, bge-m3 becomes the more efficient alternative. At a lower threshold, granite-278m enters as an even cheaper frontier point. The deployment choice is therefore conditional: the benchmark does not produce a context-free winner, but exposes the trade-off a deployment team must choose.
+That is much better for Industry Track.
 
 ---
 
 ## Final Recommendation
 
-**Recommendation: Submit after light revision.**
+**Recommendation: submit after light polish.**
 
-This revised version is much stronger than the previous draft. The paper now has a clearer deployment decision, better empirical framing, and a stronger Industry Track narrative.
+This version does not need major restructuring. The paper has a strong story, a clear contribution, and a credible deployment angle.
 
-The main remaining work is not conceptual. It is mostly writing-level polishing:
+The remaining changes are mostly polishing and risk reduction:
 
-1. Make the Results section more concrete.
-2. Define XRC50 more clearly.
-3. Soften benchmark-specific model recommendations.
-4. Add one practical user-workflow sentence.
-5. Verify data/code release details.
+1. Add a compact main findings table.
+2. Make the “first public benchmark” claim more precise.
+3. Add 1–2 sentences on LLM-assisted benchmark construction in Related Work.
+4. Define XRC50 clearly.
+5. Check all updated numbers for consistency.
+6. Replace generic “practical framework” wording with more concrete deployment language.
 
 ## Final Score
 
-**Current revised draft:** 8.0 / 10  
-**Potential after light edits:** 8.3 / 10  
-**EMNLP Industry Track readiness:** Good to strong  
+**Current latest draft:** 8.3 / 10  
+**Potential after light edits:** 8.5 / 10  
+**EMNLP Industry Track readiness:** Strong  
 **Submission recommendation:** Submit after polishing
-
-
-## Score Comparison: Previous Draft vs. Revised Draft
-
-| Dimension | Previous Draft Score | Revised Draft Score | Change | Reason |
-|---|---:|---:|---:|---|
-| Overall paper quality | 7.2/10 | 8.0/10 | +0.8 | The revised version has a clearer empirical story and stronger structure. |
-| EMNLP Industry Track fit | 6.8–7.3/10 | 7.8–8.2/10 | ~+1.0 | The new Deployment Decision section makes the paper much more industry-relevant. |
-| Narrative / story quality | 7.0/10 | 8.0/10 | +1.0 | The paper now better connects the benchmark to a real model-selection problem. |
-| Results presentation | 6.8/10 | 7.8/10 | +1.0 | Table 2 and the abstract’s concrete numbers make the findings easier to understand. |
-| Deployment framing | 6.0/10 | 8.2/10 | +2.2 | The paper now explains the capability-vs-reading-cost trade-off and conditional model choice. |
-| Reviewer confidence | 6.5/10 | 7.5/10 | +1.0 | The added summary table and deployment analysis make the evidence easier to trust. |
-
-**Summary:** The revised draft is meaningfully stronger. The biggest improvement is the new deployment framing: the paper now supports a concrete model-selection decision instead of only presenting a benchmark.
