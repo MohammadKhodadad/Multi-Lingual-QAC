@@ -136,6 +136,44 @@ def d3_rbo():
     fp.dump_data(agm, "claimD_D3_rbo")
 
 
+# --------------------------------------------------------------------------- D6 (RBO + publication-lens confusion)
+def d6_rbo_publication():
+    """fig2's publication-lens confusion panel, with the concept-lens panel replaced by the
+    cross-lingual RBO bars (D3): the two alias-graph failure modes side by side — inconsistent ranked
+    lists across languages (left) and latching onto chemically-similar look-alikes (right)."""
+    agm = (pd.read_csv(AG / "experimental_plots" / "round01_ranking_agreement" / "per_model_agreement.csv")
+             .set_index("short").reindex(SHORT_ORDER).reset_index())
+    conf = _conf_pub()
+    langs = ["en", "de", "fr", "es", "zh"]
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(13.2, 5.2), gridspec_kw={"width_ratios": [1.0, 1.05]})
+
+    # (a) cross-lingual RBO bars — embeddinggemma at top, aligned with the heatmap rows
+    ys = np.arange(len(agm))
+    for y, (_, r) in zip(ys, agm.iterrows()):
+        model = [m for m in fp.MODEL_ORDER if fp.short(m) == r["short"]][0]
+        axL.barh(y, r["rbo"], color=fp.MODEL_COLOR[model], alpha=0.85)
+        axL.plot([r["rbo_lo"], r["rbo_hi"]], [y, y], color="k", lw=1.4)
+    axL.set_ylim(-0.5, len(agm) - 0.5); axL.invert_yaxis()
+    axL.set_yticks(ys); axL.set_yticklabels(agm["short"])
+    axL.axvline(1.0, color="#2ca02c", ls="--", lw=1.4)
+    axL.text(0.99, -0.45, "language-agnostic\nideal = 1.0", ha="right", va="top", fontsize=8.5, color="#2ca02c")
+    axL.axvline(float(agm["rbo"].max()), color="#888", ls=":", lw=1.2)
+    axL.set_xlim(0, 1.02)
+    axL.set_xlabel("cross-lingual RBO  (same concept, 5 languages → same ranked docs?)")
+    axL.set_title("(a) Cross-lingual consistency (RBO ≈ 0.39 even at best)")
+
+    # (b) publication-lens confusion heatmap — y-labels suppressed (shared with panel a, same order)
+    im = _heatmap(axR, conf, langs, "(b) Publication-lens confusion: look-alike out-ranks all gold")
+    axR.set_yticklabels([])
+    fig.colorbar(im, ax=axR, fraction=0.046, pad=0.03, label="confusion rate")
+
+    fig.suptitle("Alias-graph failure modes: rankings disagree across languages (a) and latch onto "
+                 "chemical look-alikes (b)", fontsize=12.5, fontweight="bold", y=1.02)
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    fp.save(fig, "claimD_D6_rbo_publication")
+    fp.dump_data(agm, "claimD_D6_rbo_publication")
+
+
 # --------------------------------------------------------------------------- D4
 def d4_score_collapse():
     sep = pd.read_csv(AG / "experimental_plots" / "round09_score_separability" / "separability_per_query.csv")
@@ -199,7 +237,8 @@ def main():
     d3_rbo()
     d4_score_collapse()
     d5_structure_trap()
-    print("claim D: D1, D2, D2H, D3, D4, D5 written to candidates/")
+    d6_rbo_publication()
+    print("claim D: D1, D2, D2H, D3, D4, D5, D6 written to candidates/")
 
 
 if __name__ == "__main__":
