@@ -19,27 +19,38 @@ classification, clustering, bitext mining, and pair-classification tasks
 \citep{chemteb2024}; ChemLit-QA provides expert-validated QAC data for chemistry
 RAG \citep{chemlitqa2024}; and ChemComp and ChemKGMultiHopQA test
 chemistry-focused multi-hop scientific reasoning in retrieval-aware settings
-\citep{khodadad2026chemcomp,astaraki2026iterativerag}. Recent chemical
-literature embedding work such as ChEmbed further shows the value of
-domain-adapted retrieval models and chemistry-specific retrieval evaluation
-\citep{chembed2025}. Our work is complementary: it focuses on multilingual
-retrieval robustness, controlled language variants, and chemistry-confusable
-hard negatives rather than chemistry QA, reasoning, or embedding evaluation alone.
+\citep{khodadad2026chemcomp,astaraki2026iterativerag}. Recent work on chemical
+literature embeddings, such as ChEmbed, further demonstrates the value of
+domain-adapted retrieval models and chemistry-specific evaluation
+\citep{chembed2025}. Together, these resources establish the need for
+domain-specific chemistry evaluation, but they do not provide a multilingual
+chemistry retrieval benchmark that combines controlled patent variants, explicit
+same-language and cross-language relevance judgments, and chemically plausible
+hard negatives. Our work complements these efforts by focusing on multilingual
+retrieval robustness rather than chemistry QA, multi-hop reasoning, or embedding
+evaluation alone.
 
-Recent work on cross-lingual retrieval and multilingual RAG shows that model
-performance and behavior can depend strongly on language, alignment, and same-language
-preference \citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
-These findings motivate our focus on separating same-language from
-cross-language relevance instead of relying only on aggregate recall. In contrast
-to settings where content and language are difficult to disentangle, patent
-publication variants give us a practical way to compare multilingual technical
-evidence under tighter content control.
+Recent work on cross-lingual retrieval and multilingual RAG shows that retrieval
+behavior can depend strongly on language alignment, translation effects, and
+same-language preference
+\citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
+Consequently, a model can perform well under aggregate recall while its score is
+supported disproportionately by easier same-language matches. We therefore
+evaluate same-language and cross-language relevance separately, including
+``no-home'' cases in which no same-language gold document is available. Patent
+publication variants make this comparison practical by providing multilingual
+technical evidence under tighter content control than independently collected
+documents across languages.
 
 Patent retrieval has a long evaluation history, including NTCIR and CLEF-IP
-\citep{prime2002,clefip2013}, and recent work has revisited patent embeddings
-\citep{paecter2024,patentembeddings2026}. Our goal is complementary: we do not
-propose a new encoder, but a chemistry-grounded evaluation framework. We use
-chemical ontology and alias structure, including ChEBI \citep{chebi2016}, to
-define hard negatives that are plausible for chemistry search but wrong for the
-intended evidence, complementing ontology-grounded extraction work such as CEAR
-\citep{cear2024}.
+\citep{prime2002,clefip2013}, and recent work has revisited patent representation
+learning and embedding evaluation \citep{paecter2024,patentembeddings2026}. We
+build on this history but use patents as a source of controlled multilingual
+technical evidence rather than treating prior-art search as the sole target task.
+To make the evaluation chemistry-aware, we use chemical ontology and alias
+structure, including ChEBI \citep{chebi2016}, to construct hard negatives that
+are plausible in chemistry search but wrong for the intended evidence need. This
+auxiliary alias-graph stress test is complementary to ontology-grounded
+extraction work such as CEAR \citep{cear2024}: rather than extracting chemical
+entities and roles, it tests whether a retriever can distinguish the intended
+evidence from chemically related but incorrect documents.
