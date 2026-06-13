@@ -43,14 +43,21 @@ def _joint_bilingual() -> dict:
                                "n_gold_same", "n_gold_cross"]]
     dom = pd.concat([gp, epo], ignore_index=True)
     dom = dom[(dom["n_gold_same"] > 0) & (dom["n_gold_cross"] > 0)]
+    def _pct(arr) -> int:
+        a = np.sort(np.asarray(arr, float))
+        v = a[min(int(np.ceil(TAU * len(a))) - 1, len(a) - 1)]
+        return MAXRANK + 1 if not np.isfinite(v) else int(v)  # MAXRANK+1 sentinel = ">1000"
+
     out = {}
     for model in fp.MODEL_ORDER:
         g = dom[dom["model"] == model]
         joint = np.maximum(g["first_same_rank"], g["first_cross_rank"]).to_numpy(float)
-        jbc100 = float(np.mean(joint <= 100))
-        js = np.sort(joint)
-        k = js[min(int(np.ceil(TAU * len(js))) - 1, len(js) - 1)]
-        out[fp.short(model)] = (jbc100, MAXRANK + 1 if not np.isfinite(k) else int(k))
+        out[fp.short(model)] = {
+            "jbc100": float(np.mean(joint <= 100)),
+            "kjoint": _pct(joint),                       # depth for BOTH (max of the two)
+            "ksame": _pct(g["first_same_rank"]),         # depth for the same-language gold
+            "kcross": _pct(g["first_cross_rank"]),       # depth for the cross-language gold (foreign twin)
+        }
     return out
 
 
@@ -73,15 +80,17 @@ def compute() -> pd.DataFrame:
     rows = []
     for m in fp.MODEL_ORDER:
         s = fp.short(m)
-        jbc100, k80 = jb[s]
+        b = jb[s]
         rows.append({
             "model": s,
             "gp_ndcg": gp_ndcg[s], "gp_recall": gp_b["recall_at_10"][s], "gp_clir": gp_b["clir_at_10"][s],
             "gp_lt": 100 * gp_b["clir_at_10"][s] / gp_b["molir_at_10"][s],
             "epo_ndcg": epo_ndcg[s], "epo_recall": epo_b["recall_at_10"][s], "epo_clir": epo_b["clir_at_10"][s],
             "epo_lt": 100 * epo_b["clir_at_10"][s] / epo_b["molir_at_10"][s],
-            "jbc100": jbc100,   # joint bilingual gold coverage @100 (higher better), combined GP+EPO
-            "kstar80": k80,     # joint bilingual coverage depth @ tau=0.80 (lower better), combined GP+EPO
+            "jbc100": b["jbc100"],     # joint bilingual gold coverage @100 (higher better), combined GP+EPO
+            "kstar80": b["kjoint"],    # joint bilingual coverage depth @ tau=0.80 (both golds; lower better)
+            "k_same": b["ksame"],      # same-language gold coverage depth @ tau=0.80 (lower better)
+            "k_cross": b["kcross"],    # cross-language gold coverage depth @ tau=0.80 (lower better)
             "degenerate": gp_b["clir_at_10"][s] < DEG_CLIR,
         })
     df = pd.DataFrame(rows).sort_values("gp_ndcg", ascending=False).reset_index(drop=True)
@@ -105,25 +114,30 @@ def _fmt(v: float, col: str, best: bool) -> str:
 
 def to_latex(df: pd.DataFrame) -> str:
     best = {c: df[c].max() for c in _COLS}
-    best_jbc = df["jbc100"].max()    # higher better
-    best_k = df["kstar80"].min()     # lower better
+    best_jbc = df["jbc100"].max()       # higher better
+    best_kj = df["kstar80"].min()       # lower better
+    best_ks = df["k_same"].min()
+    best_kc = df["k_cross"].min()
     lines = [
         r"\begin{table*}[t]\centering\small",
-        r"\setlength{\tabcolsep}{5pt}",
-        r"\begin{tabular}{l cccc cccc cc}",
+        r"\setlength{\tabcolsep}{4.5pt}",
+        r"\begin{tabular}{l cccc cccc cccc}",
         r"\toprule",
         r"& \multicolumn{4}{c}{\textbf{Google Patents} (524q, en/de/es/fr/zh)}"
         r" & \multicolumn{4}{c}{\textbf{EPO} (198q, en/de/fr)}"
-        r" & \multicolumn{2}{c}{\textbf{Bilingual} (both)} \\",
-        r"\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-11}",
-        r"Model & nDCG & R@10 & CLIR & LT\% & nDCG & R@10 & CLIR & LT\% & JBC@100 & $k^\star_{80}$ \\",
+        r" & \multicolumn{4}{c}{\textbf{Bilingual coverage} (both, $n{=}459$)} \\",
+        r"\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}",
+        r"Model & nDCG & R@10 & CLIR & LT\% & nDCG & R@10 & CLIR & LT\%"
+        r" & JBC@100 & $k^\star_{80}$ & $k_{\mathrm{same}}$ & $k_{\mathrm{cross}}$ \\",
         r"\midrule",
     ]
     for r in df.itertuples():
         name = r.model + (r"$^\dagger$" if r.degenerate else "")
         cells = [_fmt(getattr(r, c), c, abs(getattr(r, c) - best[c]) < 1e-9) for c in _COLS]
         cells.append(_fmt(r.jbc100, "jbc", abs(r.jbc100 - best_jbc) < 1e-9))
-        cells.append(_fmt_kstar(r.kstar80, r.kstar80 == best_k))
+        cells.append(_fmt_kstar(r.kstar80, r.kstar80 == best_kj))
+        cells.append(_fmt_kstar(r.k_same, r.k_same == best_ks))
+        cells.append(_fmt_kstar(r.k_cross, r.k_cross == best_kc))
         lines.append(f"\\texttt{{{name}}} & " + " & ".join(cells) + r" \\")
     lines += [
         r"\bottomrule",
@@ -138,7 +152,11 @@ def to_latex(df: pd.DataFrame) -> str:
         r"($n{=}459$): \textbf{JBC@100} (higher better) is the fraction of queries whose top-100 holds "
         r"both a same-language and a cross-language gold, and $\boldsymbol{k^\star_{80}}$ (lower better) "
         r"is the smallest depth at which both are present for $\geq$80\% of queries ($>$1000 $=$ never "
-        r"reaches 80\% within the retrieved list). The degenerate \texttt{gte-multilingual-base} "
+        r"reaches 80\% within the retrieved list). $k_{\mathrm{same}}$ and $k_{\mathrm{cross}}$ are the "
+        r"same decomposed into the same-language and cross-language halves (the 80\%-coverage depth of "
+        r"each gold alone): a small $k_{\mathrm{same}}$ with a censored $k_{\mathrm{cross}}$ marks "
+        r"language-siloing (the model finds the home copy fast but never the foreign twin), whereas both "
+        r"large marks a generally weak retriever. The degenerate \texttt{gte-multilingual-base} "
         r"(a loading artifact) is excluded; $^\dagger$\texttt{e5-large-instruct} fails the "
         r"CLIR@10$<$0.10 cross-lingual degeneracy gate. Best per column in bold.}",
         r"\label{tab:main}",
@@ -158,7 +176,8 @@ def main():
     show = df.copy()
     for c in ("gp_lt", "epo_lt"):
         show[c] = show[c].round(0)
-    show["kstar80"] = show["kstar80"].map(lambda v: ">1000" if v > MAXRANK else str(int(v)))
+    for c in ("kstar80", "k_same", "k_cross"):
+        show[c] = show[c].map(lambda v: ">1000" if v > MAXRANK else str(int(v)))
     print(show.round(3).to_string(index=False))
     rho = df["gp_ndcg"].corr(df["epo_ndcg"], method="spearman")
     print(f"\nSpearman(nDCG@10) GP vs EPO = {rho:.3f}")

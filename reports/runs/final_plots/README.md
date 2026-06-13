@@ -106,16 +106,16 @@ transfer; cross-linguality). R@10/CLIR/LT are language-balanced. Both benchmarks
 the source patent's language versions and validate to MTEB Recall@10 to 4 dp. gte excluded; e5 daggered
 (fails the CLIR@10<0.10 gate). Rows ordered by GP nDCG@10.
 
-| Model | GP nDCG | GP R@10 | GP CLIR | GP LT% | EPO nDCG | EPO R@10 | EPO CLIR | EPO LT% | JBC@100 | k\*₈₀ |
-|---|---|---|---|---|---|---|---|---|---|---|
-| embeddinggemma | **0.50** | **0.57** | **0.54** | 73 | **0.53** | **0.58** | **0.52** | 74 | **0.78** | **147** |
-| bge-m3 | 0.45 | 0.51 | 0.47 | **74** | 0.50 | 0.55 | 0.47 | 66 | 0.70 | 304 |
-| qwen3-0.6B | 0.43 | 0.49 | 0.45 | 72 | 0.43 | 0.47 | 0.39 | 61 | 0.68 | 425 |
-| nomic-v2-moe | 0.42 | 0.46 | 0.41 | 63 | 0.48 | 0.51 | 0.43 | 63 | 0.67 | 367 |
-| granite-278m | 0.36 | 0.41 | 0.39 | 72 | 0.35 | 0.39 | 0.36 | 84 | 0.60 | >1000 |
-| LaBSE | 0.25 | 0.30 | 0.27 | 59 | 0.24 | 0.27 | 0.25 | **85** | 0.49 | >1000 |
-| e5-large-instruct† | 0.21 | 0.21 | 0.09 | 12 | 0.31 | 0.29 | 0.12 | 19 | 0.32 | >1000 |
-| SapBERT | 0.20 | 0.24 | 0.20 | 49 | 0.20 | 0.22 | 0.17 | 54 | 0.37 | >1000 |
+| Model | GP nDCG | GP R@10 | GP CLIR | GP LT% | EPO nDCG | EPO R@10 | EPO CLIR | EPO LT% | JBC@100 | k\*₈₀ | k_same | k_cross |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| embeddinggemma | **0.50** | **0.57** | **0.54** | 73 | **0.53** | **0.58** | **0.52** | 74 | **0.78** | **147** | **36** | **121** |
+| bge-m3 | 0.45 | 0.51 | 0.47 | **74** | 0.50 | 0.55 | 0.47 | 66 | 0.70 | 304 | 66 | 215 |
+| qwen3-0.6B | 0.43 | 0.49 | 0.45 | 72 | 0.43 | 0.47 | 0.39 | 61 | 0.68 | 425 | 63 | 310 |
+| nomic-v2-moe | 0.42 | 0.46 | 0.41 | 63 | 0.48 | 0.51 | 0.43 | 63 | 0.67 | 367 | 55 | 321 |
+| granite-278m | 0.36 | 0.41 | 0.39 | 72 | 0.35 | 0.39 | 0.36 | 84 | 0.60 | >1000 | 641 | 569 |
+| LaBSE | 0.25 | 0.30 | 0.27 | 59 | 0.24 | 0.27 | 0.25 | **85** | 0.49 | >1000 | 761 | >1000 |
+| e5-large-instruct† | 0.21 | 0.21 | 0.09 | 12 | 0.31 | 0.29 | 0.12 | 19 | 0.32 | >1000 | 47 | >1000 |
+| SapBERT | 0.20 | 0.24 | 0.20 | 49 | 0.20 | 0.22 | 0.17 | 54 | 0.37 | >1000 | 807 | >1000 |
 
 Cross-corpus rank agreement Spearman ρ(nDCG@10) = 0.95; mean cross-lingual tax (1−LT) ≈ 41% GP / 37% EPO.
 
@@ -124,10 +124,15 @@ recall, Zhai et al. SIGIR 2003): a query is "covered" only when the top-k holds 
 *both* its own language and another language. Over the GP+EPO queries that have both gold types (n=459):
 **JBC@100** (higher better) = fraction of queries whose top-100 contains both a same-language and a
 cross-language gold; **k\*₈₀** (lower better) = the smallest depth at which both are present for ≥80% of
-queries (>1000 = never reaches 80% within the retrieved top-1000). Both rank the four weak models last —
-only the four genuinely cross-lingual models reach 80% bilingual gold coverage (embeddinggemma 147,
-bge-m3 304, nomic 367, qwen3 425); granite/LaBSE/SapBERT/e5 never do. Bib entry needed for the caption
-cite: `zhai2003subtopic` (Zhai, Cohen & Lafferty, *Beyond Independent Relevance*, SIGIR 2003).
+queries (>1000 = never reaches 80% within the retrieved top-1000). **k_same** and **k_cross** decompose
+k\*₈₀ into its two halves — the 80%-coverage depth of the same-language gold and of the cross-language
+gold *separately*. This decomposition separates two distinct failure modes: a small k_same with a
+censored k_cross is **language-siloing** (e5: k_same 47, k_cross >1000 — finds the home copy as fast as
+the best models but never the foreign twin), whereas both large is a **generally weak retriever** (LaBSE
+761/>1000, SapBERT 807/>1000, granite 641/569). For the four cross-lingual models k_cross is the binding
+half (121–321 vs k_same 36–66), confirming the joint depth is paid almost entirely on the cross-lingual
+side. Bib entry needed for the caption cite: `zhai2003subtopic` (Zhai, Cohen & Lafferty, *Beyond
+Independent Relevance*, SIGIR 2003).
 
 **Foreign-above-home-gold (ranking-interference diagnostic; not in the table).** Fraction of queries
 where a foreign item outranks the same-language gold — two readings:
