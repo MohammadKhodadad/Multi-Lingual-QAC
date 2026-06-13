@@ -1,63 +1,39 @@
 \section{Related Work}
 
-General embedding benchmarks such as MTEB and MMTEB, together with multilingual
-and cross-lingual retrieval resources such as MIRACL, NeuCLIR, and CLIRMatrix,
-have enabled systematic comparison of retrieval and embedding models across
-languages
+General embedding and multilingual retrieval benchmarks, including MTEB, MMTEB,
+MIRACL, NeuCLIR, and CLIRMatrix, enable systematic comparison of retrieval and
+embedding models across languages
 \citep{miracl2023,neuclir2023,muennighoff2023mteb,mmteb2025,clirmatrix2020}.
-These resources establish the broader evaluation setting, but they do not provide
-retrieval data designed specifically for multilingual chemistry search. In
-particular, they do not combine chemistry-specific relevance, controlled
-multilingual patent variants, explicit query- and document-language metadata, and
-chemically plausible hard negatives. Our benchmark suite builds on this line of
-work while adding the domain structure needed to audit multilingual retrieval in
-technical chemistry settings.
-
-Chemistry-specific benchmarks have recently expanded evaluation beyond generic
-NLP tasks. ChemTEB evaluates chemical text embeddings across retrieval,
-classification, clustering, bitext mining, and pair-classification tasks
-\citep{chemteb2024}; ChemLit-QA provides expert-validated QAC data for chemistry
-RAG \citep{chemlitqa2024}; and ChemComp and ChemKGMultiHopQA test
-chemistry-focused multi-hop scientific reasoning in retrieval-aware settings
-\citep{khodadad2026chemcomp,astaraki2026iterativerag}. Recent work on chemical
-literature embeddings, such as ChEmbed, further demonstrates the value of
-domain-adapted retrieval models and chemistry-specific evaluation
-\citep{chembed2025}. Together, these resources establish the need for
-domain-specific chemistry evaluation, but they do not provide a multilingual
-chemistry retrieval benchmark that combines controlled multilingual patent
-variants, explicit same-language and cross-language relevance judgments, and
-chemically plausible hard negatives. Our work complements these efforts by
-focusing on multilingual retrieval robustness rather than broad chemistry QA,
-multi-hop reasoning, or general-purpose chemical embedding evaluation.
-
-LLM-assisted benchmark construction can reduce the cost of producing
-domain-specific evaluation data, but generated items require grounding,
-provenance, automated filtering, and human audit before they can support reliable
-conclusions. Our pipeline applies this idea to retrieval benchmark construction
-by preserving source-document and language metadata and exporting each selected
-QAC with scorer outputs and relevance artifacts.
+Chemistry-specific resources such as ChemTEB, ChemLit-QA, ChemComp,
+ChemKGMultiHopQA, and ChEmbed extend evaluation to chemical embeddings, RAG, and
+scientific reasoning
+\citep{chemteb2024,chemlitqa2024,khodadad2026chemcomp,astaraki2026iterativerag,chembed2025}.
+However, these lines of work do not jointly provide multilingual chemistry
+retrieval data with controlled technical variants, explicit same-language and
+cross-language relevance judgments, and chemically plausible hard negatives. This
+missing combination motivates the benchmark suite introduced in this paper.
 
 Recent work on cross-lingual retrieval and multilingual RAG shows that retrieval
 behavior can depend strongly on language alignment, translation effects, and
 same-language preference
 \citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
-Consequently, a model can perform well under aggregate recall while its score is
-supported disproportionately by easier same-language matches. We therefore
-evaluate same-language and cross-language relevance separately, including
-``no-home'' cases in which no same-language gold document is available. Patent
-publication variants make this comparison practical by providing multilingual
-technical evidence under tighter content control than independently collected
-documents across languages.
+These findings expose a gap for multilingual chemistry retrieval: aggregate
+recall alone does not show whether a model retrieves the right evidence across
+languages or mainly benefits from easier same-language matches. Patent
+publication variants are useful for studying this gap because they provide
+comparable multilingual technical evidence under tighter content control than
+independently collected documents across languages.
 
 Patent retrieval has a long evaluation history, including NTCIR and CLEF-IP
-\citep{prime2002,clefip2013}, and recent work has revisited patent representation
-learning and embedding evaluation \citep{paecter2024,patentembeddings2026}. We
-build on this history but use patents as a source of controlled multilingual
-technical evidence rather than treating prior-art search as the sole target task.
+\citep{prime2002,clefip2013}, while recent work has revisited patent
+representation learning and embedding evaluation
+\citep{paecter2024,patentembeddings2026}. We use patents as controlled
+multilingual technical evidence rather than treating prior-art search as the sole
+target task.
 To make the evaluation chemistry-aware, we use chemical ontology and alias
 structure, including ChEBI \citep{chebi2016}, to construct hard negatives that
-are plausible in chemistry search but wrong for the intended evidence need. This
-auxiliary alias-graph stress test is complementary to ontology-grounded
-extraction work such as CEAR \citep{cear2024}: rather than extracting chemical
-entities and roles, it tests whether a retriever can distinguish the intended
-evidence from chemically related but incorrect documents.
+are plausible in chemistry search but incorrect for the target query. This
+auxiliary alias-graph stress test complements ontology-grounded extraction work
+such as CEAR \citep{cear2024}: CEAR extracts chemical entities and roles, whereas
+our evaluation tests whether retrievers distinguish the intended evidence from
+chemically related but incorrect documents.
