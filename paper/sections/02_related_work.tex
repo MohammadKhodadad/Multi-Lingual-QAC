@@ -1,15 +1,17 @@
 \section{Related Work}
 
-General embedding benchmarks such as MTEB and MMTEB, and multilingual or
-cross-lingual retrieval resources such as MIRACL, NeuCLIR, and CLIRMatrix, have
-made retrieval and embedding evaluation easier to compare across models and
+General embedding benchmarks such as MTEB and MMTEB, together with multilingual
+and cross-lingual retrieval resources such as MIRACL, NeuCLIR, and CLIRMatrix,
+have made retrieval and embedding evaluation easier to compare across models and
 languages
 \citep{miracl2023,neuclir2023,muennighoff2023mteb,mmteb2025,clirmatrix2020}.
-They frame our evaluation setting, but they are not designed around
-chemistry-specific relevance, controlled language variants, or chemically
-plausible hard negatives. Our benchmark suite follows this line of work while
-adding domain structure needed to audit multilingual retrieval in technical
-chemistry search.
+These resources establish the broader evaluation setting, but they do not provide
+retrieval data designed specifically for multilingual chemistry search. In
+particular, they do not combine chemistry-specific relevance, controlled
+multilingual technical variants, explicit query- and document-language metadata,
+and chemically plausible hard negatives. Our benchmark suite builds on this line
+of work while adding the domain structure needed to audit multilingual retrieval
+in technical chemistry settings.
 
 Chemistry-specific benchmarks have recently expanded evaluation beyond generic
 NLP tasks. ChemTEB evaluates chemical text embeddings across retrieval,
