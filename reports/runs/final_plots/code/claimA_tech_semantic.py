@@ -193,6 +193,63 @@ def a4_metric_robustness():
     fp.dump_data(pd.concat(out, ignore_index=True), "claimA_A4_metric_robustness")
 
 
+# --------------------------------------------------------------------------- A7 (MRR @ gold-language split)
+def _lang_split_mrr(source: str) -> pd.DataFrame:
+    """Per (model, query): MRR@10 computed separately over same-language gold and cross-language gold,
+    with mode/query_language. rr@10 = 1/first-gold-rank if that gold is in the top-10 else 0; NaN when
+    the query has no gold of that language (so it drops out of that row's domain, like C3's MoLIR/CLIR)."""
+    import claimE_metrics as cem
+    if source == "GP":
+        fr = cem._first_ranks()[["model", "query_id", "first_same_rank", "first_cross_rank",
+                                 "n_gold_same", "n_gold_cross", "query_language"]].copy()
+        mode = fp.gp_query_table().set_index("query_id")["mode"]
+    else:
+        fr = fp.epo_first_ranks().copy()
+        meta = fp.epo_per_query().drop_duplicates("query_id").set_index("query_id")
+        fr["query_language"] = fr["query_id"].map(meta["query_language"])
+        mode = meta["mode"]
+    fr["mode"] = fr["query_id"].map(mode)
+    fr["short"] = fr["model"].map(fp.SHORT)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        for half, rank_col, n_col in [("rr_same", "first_same_rank", "n_gold_same"),
+                                      ("rr_cross", "first_cross_rank", "n_gold_cross")]:
+            rr = np.where(fr[rank_col] <= 10, 1.0 / fr[rank_col], 0.0)
+            fr[half] = np.where(fr[n_col] > 0, rr, np.nan)
+    return fr
+
+
+def a7_mrr_same_cross():
+    rows_def = [("rr_same", "same-language (MoLIR)"), ("rr_cross", "cross-language (CLIR)")]
+    fig, axes = plt.subplots(2, 2, figsize=(11.0, 8.2), sharex=True)
+    out = []
+    for col, (source, src) in enumerate([("GP", "Google Patents"), ("EPO", "EPO")]):
+        d = _lang_split_mrr(source)
+        for row, (val, half_label) in enumerate(rows_def):
+            ax = axes[row, col]
+            sub = d.dropna(subset=[val])
+            agg = _per_model_mode(sub, val)
+            agg["source"] = src; agg["gold"] = half_label
+            out.append(agg)
+            piv = agg.pivot(index="short", columns="mode", values="value").sort_values("semantic")
+            ys = np.arange(len(piv))
+            for y, (_, r) in zip(ys, piv.iterrows()):
+                ax.plot([r["technical"], r["semantic"]], [y, y], color="#bbbbbb", lw=2.2, zorder=1)
+            ax.scatter(piv["technical"], ys, s=55, color=fp.MODE_COLOR["technical"], zorder=3,
+                       edgecolor="white", linewidth=0.7, label="technical")
+            ax.scatter(piv["semantic"], ys, s=55, color=fp.MODE_COLOR["semantic"], zorder=3,
+                       edgecolor="white", linewidth=0.7, label="semantic")
+            ax.set_yticks(ys); ax.set_yticklabels(piv.index)
+            ax.set_title(f"{src} — MRR@10, {half_label} gold")
+            if row == 1:
+                ax.set_xlabel("MRR@10  (language-balanced)")
+    axes[0, 0].legend(loc="lower right")
+    fig.suptitle("The technical penalty holds under MRR@10 for both same-language and cross-language gold",
+                 fontsize=12.5, fontweight="bold", y=1.005)
+    fig.tight_layout(rect=(0, 0, 1, 0.985))
+    fp.save(fig, "claimA_A7_mrr_same_cross")
+    fp.dump_data(pd.concat(out, ignore_index=True), "claimA_A7_mrr_same_cross")
+
+
 # --------------------------------------------------------------------------- A5 (appendix)
 def a5_mt_robustness():
     """Human-original vs MT-translated questions retrieve about equally — the technical penalty is
@@ -270,7 +327,8 @@ def main():
     a4_metric_robustness()
     a5_mt_robustness()
     a6_question_type()
-    print("claim A: A1-A6 written to candidates/")
+    a7_mrr_same_cross()
+    print("claim A: A1-A7 written to candidates/")
 
 
 if __name__ == "__main__":
