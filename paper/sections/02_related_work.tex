@@ -27,13 +27,13 @@ independently collected documents across languages.
 Patent retrieval has a long evaluation history, including NTCIR and CLEF-IP
 \citep{prime2002,clefip2013}, while recent work has revisited patent
 representation learning and embedding evaluation
-\citep{paecter2024,patentembeddings2026}. We use patents as controlled
-multilingual technical evidence rather than treating prior-art search as the sole
-target task.
-To make the evaluation chemistry-aware, we use chemical ontology and alias
-structure, including ChEBI \citep{chebi2016}, to construct hard negatives that
-are plausible in chemistry search but incorrect for the target query. This
-auxiliary alias-graph stress test complements ontology-grounded extraction work
-such as CEAR \citep{cear2024}: CEAR extracts chemical entities and roles, whereas
-our evaluation tests whether retrievers distinguish the intended evidence from
-chemically related but incorrect documents.
+\citep{paecter2024,patentembeddings2026}. Because patent publications often
+contain related technical disclosures across languages, they can serve as a
+source of comparable multilingual technical evidence beyond prior-art search
+alone.
+Chemical ontology and alias resources, including ChEBI \citep{chebi2016}, also
+make it possible to define hard negatives that are plausible in chemistry search
+but incorrect for a target query. Such chemistry-aware retrieval tests complement
+ontology-grounded extraction work such as CEAR \citep{cear2024}: CEAR extracts
+chemical entities and roles, whereas retrieval evaluation asks whether models
+distinguish intended evidence from chemically related but incorrect documents.
