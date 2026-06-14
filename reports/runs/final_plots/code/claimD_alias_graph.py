@@ -46,7 +46,7 @@ def _heatmap(ax, df, langs, title):
         for j in range(arr.shape[1]):
             v = arr[i, j]
             if not np.isnan(v):
-                ax.text(j, i, f"{v*100:.0f}", ha="center", va="center", fontsize=8.5,
+                ax.text(j, i, f"{v*100:.0f}%", ha="center", va="center", fontsize=8.5,
                         color="white" if v > 0.28 else "black",
                         fontweight="bold" if cols[j] == "ALL" else "normal")
     ax.set_title(title)
@@ -163,7 +163,7 @@ def d6_rbo_publication():
     axL.set_title("(a) Cross-lingual consistency (RBO ≈ 0.39 even at best)")
 
     # (b) publication-lens confusion heatmap — y-labels suppressed (shared with panel a, same order)
-    im = _heatmap(axR, conf, langs, "(b) Publication-lens confusion: look-alike out-ranks all gold")
+    im = _heatmap(axR, conf, langs, "(b) Confusion: a look-alike out-ranks all gold")
     axR.set_yticklabels([])
     fig.colorbar(im, ax=axR, fraction=0.046, pad=0.03, label="confusion rate")
 

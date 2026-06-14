@@ -143,18 +143,18 @@ def _panel_rrc(ax, m, curve, knee):
 
 
 def _panel_ari(ax, m):
-    # decomposition split at K=10 and K=100: re-rankable in a top-10 rerank, recoverable only with a
-    # deeper top-100 pool, and the alignment-only floor that lives beyond top-100.
+    # decomposition split at K=10 and K=1000: re-rankable in a top-10 rerank, recoverable only with a
+    # deeper pool up to top-1000, and the alignment-only floor that lives beyond top-1000 (= L_inf).
     good = m[~m["degenerate_clir"]].copy()
-    good["floor"] = 1.0 - good["RRC_at_100"]
+    good["floor"] = good["L_inf"]  # = 1 - RRC@1000
     good = good.sort_values("floor")
     ys = np.arange(len(good))[::-1]
     cheap = good["RRC_at_10"].to_numpy()
-    deep = (good["RRC_at_100"] - good["RRC_at_10"]).to_numpy()
+    deep = (1.0 - good["L_inf"] - good["RRC_at_10"]).to_numpy()  # RRC@1000 - RRC@10
     floor = good["floor"].to_numpy()
     ax.barh(ys, cheap, color="#2a924a", label="re-rankable in top-10")
-    ax.barh(ys, deep, left=cheap, color="#9bd49b", label="needs deeper pool (top-100)")
-    ax.barh(ys, floor, left=cheap + deep, color="#c44e52", label="alignment-only floor (beyond top-100)")
+    ax.barh(ys, deep, left=cheap, color="#9bd49b", label="recoverable in a deeper pool (top-1000)")
+    ax.barh(ys, floor, left=cheap + deep, color="#c44e52", label="alignment-only floor (beyond top-1000)")
     for y, fl in zip(ys, floor):
         ax.text(1.01, y, f"floor {fl:.2f}", va="center", fontsize=8)
     ax.set_yticks(ys); ax.set_yticklabels(good["short"])
