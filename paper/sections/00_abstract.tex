@@ -1,26 +1,51 @@
+% \begin{abstract}
+% Chemical knowledge is often searched and reused across language boundaries: a
+% user may ask a technical question in one language while the strongest supporting
+% document is written in another. Retrieval systems should therefore be tested on
+% whether they find that cross-language evidence, not only on whether they retrieve
+% an easier same-language match. Yet multilingual chemistry retrieval has little
+% clean public evaluation data, so models are often judged by a single aggregate
+% recall score that can hide poor cross-language retrieval. We address this gap
+% with a benchmark suite containing two public multilingual chemistry QAC retrieval
+% releases, one derived from Google Patents and one from EPO patent data, together
+% with a generation pipeline for cross-lingual retrieval evaluation. These two
+% patent-derived releases provide controlled multilingual technical evidence, while
+% chemistry ontologies enable an auxiliary chemically plausible hard-negative
+% diagnostic. We export the benchmark suite in retrieval-ready form with corpus,
+% queries, qrels, QAC records, and language metadata, enabling
+% evaluation by query language, document language, same-language versus
+% cross-language relevance, and chemical confusability. Aggregate Recall@10
+% overstates deployment readiness: the best cross-language Recall@10 is about
+% 0.55, same-language advantage remains visible in every query language, and
+% chemically confusable documents outrank gold evidence on 14--48\% of
+% publication-lens queries. The benchmark suite and pipeline provide a
+% practical framework for building and auditing specialized multilingual retrieval
+% evaluations in high-trust technical domains. Data and code are available on
+% \href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-chem-patents}{Hugging Face (Google Patents)},
+% \href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-epo}{Hugging Face (EPO)},
+% and
+% \href{https://github.com/MohammadKhodadad/Multi-Lingual-QAC}{GitHub}.
+% \end{abstract}
+
 \begin{abstract}
-Chemical knowledge is often searched and reused across language boundaries: a
-user may ask a technical question in one language while the strongest supporting
-document is written in another. Retrieval systems should therefore be tested on
-whether they find that cross-language evidence, not only on whether they retrieve
-an easier same-language match. Yet multilingual chemistry retrieval has little
-clean public evaluation data, so models are often judged by a single aggregate
-recall score that can hide poor cross-language retrieval. We address this gap
-with a benchmark suite containing two public multilingual chemistry QAC retrieval
-releases, one derived from Google Patents and one from EPO patent data, together
-with a generation pipeline for cross-lingual retrieval evaluation. These two
-patent-derived releases provide controlled multilingual technical evidence, while
-chemistry ontologies enable an auxiliary chemically plausible hard-negative
-diagnostic. We export the benchmark suite in retrieval-ready form with corpus,
-queries, qrels, QAC records, and language metadata, enabling
-evaluation by query language, document language, same-language versus
-cross-language relevance, and chemical confusability. Aggregate Recall@10
-overstates deployment readiness: the best cross-language Recall@10 is about
-0.55, same-language advantage remains visible in every query language, and
-chemically confusable documents outrank gold evidence on 14--48\% of
-publication-lens queries. The benchmark suite and pipeline provide a
-practical framework for building and auditing specialized multilingual retrieval
-evaluations in high-trust technical domains. Data and code are available on
+Chemical knowledge is often searched across language boundaries: a user may ask
+a technical question in one language while the strongest supporting document is
+written in another. Retrieval systems should therefore be tested on their ability
+to retrieve cross-language evidence, not only easier same-language matches. Yet
+multilingual chemistry retrieval has few clean public evaluation resources, and
+aggregate recall can conceal deployment-relevant failures. We address this gap
+with two public multilingual chemistry QAC retrieval releases derived from Google
+Patents and EPO data, together with a generation pipeline that preserves source,
+language, and quality metadata. The releases provide controlled multilingual
+technical evidence, while an auxiliary ontology-based diagnostic tests whether
+models confuse chemically plausible hard negatives with gold documents. Across
+the benchmark suite, aggregate Recall@10 overstates deployment readiness: the
+best cross-language Recall@10 is about 0.55, a same-language advantage remains
+visible for every query language, and chemically confusable documents outrank all
+gold documents on 14--48\% of alias-graph queries. The benchmark turns
+cross-language and chemistry-confusability failures into measurable
+model-selection criteria for high-trust technical retrieval. Data and code are
+available on
 \href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-chem-patents}{Hugging Face (Google Patents)},
 \href{https://huggingface.co/datasets/MehdiAstaraki/multi-lingual-qac-epo}{Hugging Face (EPO)},
 and

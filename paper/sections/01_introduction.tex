@@ -1,63 +1,112 @@
 \section{Introduction}
 
-Technical search in chemistry rarely respects a single language boundary. A
-researcher may ask a question in English, German, French, Spanish, or another
-working language, while the strongest evidence may be documented elsewhere:
-in a translated patent family, in a regional filing, or in technical text whose
-terminology follows a different linguistic convention. This is not only a
-translation problem. Chemistry search depends on aliases, abbreviations,
-formulae, compound families, process descriptions, and near-neighbor concepts
-that can be semantically close while still being wrong for the user's question.
-For a retrieval system used in a high-trust technical workflow, returning a
-plausible but chemically different document is not a harmless ranking error.
+% Technical search in chemistry rarely respects a single language boundary. A
+% researcher may ask a question in English, German, French, Spanish, or another
+% working language, while the strongest evidence may be documented elsewhere:
+% in a translated patent family, in a regional filing, or in technical text whose
+% terminology follows a different linguistic convention. This is not only a
+% translation problem. Chemistry search depends on aliases, abbreviations,
+% formulae, compound families, process descriptions, and near-neighbor concepts
+% that can be semantically close while still being wrong for the user's question.
+% For a retrieval system used in a high-trust technical workflow, returning a
+% plausible but chemically different document is not a harmless ranking error.
 
-This matters in multinational industrial settings, where technical documents may
-be stored in several languages but downstream users and systems need the relevant
-evidence regardless of the query language or document language. The same
-retrieval requirement appears in RAG systems, agentic workflows, and other
-decision-support pipelines that depend on finding the right evidence before
-reasoning over it. Translating every query or document can help in some cases,
-but it becomes less attractive as language coverage grows because translation
-adds latency, cost, and another source of technical-term errors.
+% This matters in multinational industrial settings, where technical documents may
+% be stored in several languages but downstream users and systems need the relevant
+% evidence regardless of the query language or document language. The same
+% retrieval requirement appears in RAG systems, agentic workflows, and other
+% decision-support pipelines that depend on finding the right evidence before
+% reasoning over it. Translating every query or document can help in some cases,
+% but it becomes less attractive as language coverage grows because translation
+% adds latency, cost, and another source of technical-term errors.
 
-Dense retrieval with neural sentence and passage embeddings
-\citep{reimers2019sentencebert,karpukhin2020dpr} is attractive for this setting
-because multilingual embedding models promise a single retrieval index over many
-languages \citep{labse2022,bgem3_2024}. In practice, however, the evaluation
-signal used to choose such a model is often too coarse. A model can achieve a
-strong average Recall@k by retrieving easy same-language evidence, while failing
-when the intended evidence is in another language, a bias also observed in
-recent cross-lingual retrieval analyses
-\citep{whatdrivesclir2025,crosslingualcost2025}. The problem is not only
-whether a multilingual encoder retrieves a relevant document, but whether it
-retrieves the right document when query language, document language, and
-chemical similarity pull the ranking in different directions. This is the
-failure mode that matters in deployment, and it is precisely the one that an
-aggregate retrieval score can hide.
+% Technical chemistry search rarely respects a single language boundary: a user
+% may ask in English, German, French, or Spanish while the strongest evidence
+% appears in a translated patent family, regional filing, or technical text with
+% different terminology. This is not only a translation problem. Chemistry
+% retrieval depends on aliases, abbreviations, formulae, compound families, process
+% descriptions, and near-neighbor concepts that can be semantically close but wrong
+% for the question. In high-trust industrial workflows, including RAG and
+% decision-support systems, retrievers must find the right evidence across query
+% and document languages; translating every query or document adds latency, cost,
+% and technical-term errors.
 
-Existing multilingual retrieval benchmarks provide important coverage for
-general cross-lingual search \citep{miracl2023,neuclir2023,muennighoff2023mteb,mmteb2025},
-but they do not directly capture this chemistry workflow. We need evaluation
-data where language variants are controlled, questions are grounded in technical
-contexts, and hard negatives are chemically plausible rather than arbitrary.
-Without this structure, an evaluation may reward the model that looks best on
-average while missing the model behavior that creates practical risk.
+% Dense retrieval with neural sentence and passage embeddings
+% \citep{reimers2019sentencebert,karpukhin2020dpr} is attractive for this setting
+% because multilingual embedding models promise a single retrieval index over many
+% languages \citep{labse2022,bgem3_2024}. In practice, however, the evaluation
+% signal used to choose such a model is often too coarse. A model can achieve a
+% strong average Recall@k by retrieving easy same-language evidence, while failing
+% when the intended evidence is in another language, a bias also observed in
+% recent cross-lingual retrieval analyses
+% \citep{whatdrivesclir2025,crosslingualcost2025}. The problem is not only
+% whether a multilingual encoder retrieves a relevant document, but whether it
+% retrieves the right document when query language, document language, and
+% chemical similarity pull the ranking in different directions. This is the
+% failure mode that matters in deployment, and it is precisely the one that an
+% aggregate retrieval score can hide.
 
-We present a multilingual chemistry question-answer-context (QAC) benchmark
-suite and generation pipeline for cross-lingual retrieval evaluation. Our goal
-is to evaluate multilingual chemistry retrieval, not patent search alone. We use
-patents as the benchmark substrate because patent families often contain related
-technical documents in multiple languages and include chemistry-rich descriptions
-at scale, building on the long history of patent retrieval evaluation
-\citep{clefip2013}.
+% Dense retrieval with neural sentence and passage embeddings
+% \citep{reimers2019sentencebert,karpukhin2020dpr} is attractive here because
+% multilingual encoders promise a single retrieval index across languages
+% \citep{labse2022,bgem3_2024}. Yet average Recall@k can be misleading: a model may
+% score well by retrieving easy same-language evidence while failing when the
+% intended evidence is in another language
+% \citep{whatdrivesclir2025,crosslingualcost2025}. Deployment requires knowing
+% whether models still retrieve the right document when query language, document
+% language, and chemical similarity pull rankings in different directions.
 
-This paper is therefore an evaluation-framework paper rather than a model
-leaderboard. Our contributions are: (1) two public multilingual
-chemistry-patent retrieval benchmark releases, derived from Google Patents and
-EPO patent data, with query/document language metadata and retrieval-ready
-corpus, queries, and qrels; (2) a reproducible LLM-assisted QAC generation and
-human-audit pipeline; (3) a language-aware retrieval evaluation that separates
-same-language and cross-language evidence; (4) an auxiliary
-chemistry-confusability stress test based on alias and ontology neighbors; and
-(5) a deployment-oriented model-selection analysis showing why aggregate recall
-is not a sufficient deployment dashboard.
+% Existing multilingual retrieval benchmarks provide important coverage for
+% general cross-lingual search \citep{miracl2023,neuclir2023,muennighoff2023mteb,mmteb2025},
+% but they do not directly capture this chemistry workflow. We need evaluation
+% data where language variants are controlled, questions are grounded in technical
+% contexts, and hard negatives are chemically plausible rather than arbitrary.
+% Without this structure, an evaluation may reward the model that looks best on
+% average while missing the model behavior that creates practical risk.
+
+% We present a multilingual chemistry question-answer-context (QAC) benchmark
+% suite and generation pipeline for cross-lingual retrieval evaluation. Our goal
+% is to evaluate multilingual chemistry retrieval, not patent search alone. We use
+% patents as the benchmark substrate because patent families often contain related
+% technical documents in multiple languages and include chemistry-rich descriptions
+% at scale, building on the long history of patent retrieval evaluation
+% \citep{clefip2013}.
+
+% This paper is therefore an evaluation-framework paper rather than a model
+% leaderboard. Our contributions are: (1) two public multilingual
+% chemistry-patent retrieval benchmark releases, derived from Google Patents and
+% EPO patent data, with query/document language metadata and retrieval-ready
+% corpus, queries, and qrels; (2) a reproducible LLM-assisted QAC generation and
+% human-audit pipeline; (3) a language-aware retrieval evaluation that separates
+% same-language and cross-language evidence; (4) an auxiliary
+% chemistry-confusability stress test based on alias and ontology neighbors; and
+% (5) a deployment-oriented model-selection analysis showing why aggregate recall
+% is not a sufficient deployment dashboard.
+
+Technical chemistry search rarely respects a single language boundary: a chemist may query in English, German, French, or Spanish, while the strongest evidence resides in a translated patent family, a regional filing, or a document whose language differs from that of the query. And it is not only a translation
+problem, chemistry retrieval must also separate a compound from its chemically similar
+but wrong neighbours. A retriever for a high-trust workflow such as patent search or
+RAG therefore has to do two hard things at once: cross the language barrier and resist
+chemical confusability.
+
+We present X-ChemIR, a patent-grounded benchmark suite that measures both. It pairs two
+multilingual chemistry question-answer-context (QAC) retrieval benchmarks built from
+Google Patents and EPO patent data, patent families carry the same invention in
+several languages at chemistry-rich scale \citep{clefip2013}, with an auxiliary
+alias-graph stress test whose hard negatives are chemically confusable neighbours, and
+evaluates eight off-the-shelf multilingual embedding models as dense retrievers. The
+suite is built to expose what a single averaged Recall@$k$ hides: even the best model
+leaves nearly half of the cross-language evidence out of the top-10, a same-language
+home advantage persists in every query language, and a confusable look-alike out-ranks
+the right document on $14$--$48\%$ of alias-graph queries. Existing multilingual
+benchmarks do not surface this, as they neither control language variants nor supply
+chemically plausible hard negatives.
+
+This is therefore an evaluation-framework paper. Our
+contributions are: (1) two patent-grounded multilingual chemistry-patent retrieval
+benchmarks (Google Patents and EPO) with query/document-language metadata, plus an
+auxiliary alias-graph confusability stress test; (2) a reproducible LLM-assisted QAC
+generation and human-audit pipeline; (3) a robustness-metric family reported next to
+recall-same- versus cross-language relevance (LT), cross-lingual coverage depth
+($k^\star$), cross-lingual ranking consistency (RBO), and three position based metrics on cross lingual gold (XRC, RRC, ARI); (4) an evaluation of eight multilingual embedders that
+quantifies the cross-lingual collapse and the chemical-confusion failure.

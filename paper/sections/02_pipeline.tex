@@ -1,64 +1,64 @@
 \section{QAC Generation Pipeline}
 
-Our method turns multilingual chemistry technical text into auditable
-question-answer-context (QAC) records for retrieval evaluation. The design goal
-is not simply to generate fluent questions. Each generated item must identify
-the evidence document it came from, preserve language metadata, and carry quality
-signals that make the benchmark suite inspectable after export. Figure~\ref{fig:qac-generation-flow}
-summarizes the automated generation and retrieval-evaluation flow.
+Our pipeline turns multilingual chemistry patent text into
+question--answer--context (QAC) records for retrieval evaluation. It produces
+questions in five languages, designed for cross-lingual retrieval and kept close
+to what a practitioner would actually search, in both technical and general
+modes. Figure~\ref{fig:qac-generation-flow} summarizes the generation and
+evaluation flow.
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=0.98\textwidth]{multilingual_chemistry_retrieval_pipeline_EDITABLE.png}
-    \caption{Overview of the multilingual chemistry retrieval benchmark
-    pipeline. The generation stage samples a source document, builds a grounded
-    title/abstract context, generates candidate queries, scores them, and exports
-    the best-scored items as a retrieval dataset. The evaluation stage embeds
-    queries and documents, ranks results, and reports language-aware,
-    chemistry-confusability, and deployment-oriented diagnostics.}
-    {\footnotesize\emph{Figure note:} Icons adapted from Font Awesome Free,
-    licensed under CC BY 4.0.\par}
+    \caption{Overview of the QAC generation pipeline: source documents are
+    converted into grounded candidate questions, scored, and exported as
+    retrieval-ready records. Icons adapted from Font Awesome, licensed under CC BY 4.0. }
     \label{fig:qac-generation-flow}
 \end{figure*}
-
 \paragraph{Corpus and context construction.}
-The input is a chemistry-relevant multilingual corpus. In this work, we use
-two patent-derived sources, Google Patents and EPO patent data, because patents
-provide technical descriptions and multilingual publication variants at scale.
-Both sources are normalized into the same document-language representation before
-QAC generation. For each document-language pair, the context builder assembles a
-compact evidence block from the title and abstract, adding first-claim text when
-available; longer description fields are source-dependent and are not assumed to
-be present for every document. This step keeps the generation grounded in a
-specific document rather than asking the model to produce generic chemistry
-questions from memory.
+We build on two patent-derived corpora that contribute complementary kinds of
+multilinguality. \textit{Google Patents} supplies scale and language breadth:
+23{,}787 published applications, predominantly WIPO (WO, 15{,}048) and European
+(EP, 4{,}610) filings, with a sizeable Mexican (MX, 3{,}952) share, spanning five
+languages (English, French, Spanish, German, Chinese), from which we take the
+title and abstract as the evidence block. On this side the non-English versions
+are Google's \emph{machine} translations, and because Chinese coverage was zero
+we machine-translated 400 documents to seed it using GPT 5.5. A subset of Machine-translated documents (10\%) are verified by Chinese native annotators to confirm the quality of the translation. More details on this topic is presented in ?? (supplementary Materials). \textit{EPO} supplies clean
+cross-lingual parallelism: 11{,}315 granted B1 specifications, each published as a
+\emph{human}-translated English/German/French triple ($\approx$3{,}770 per
+language) with professionally translated first claims, which we add to the
+evidence block; we introduce no translations of our own on this side.
+
 
 \paragraph{Candidate generation.}
-For each selected document, language, and generation mode, an LLM produces
-multiple QAC candidates. Each candidate contains a user-facing question, a short
-answer, the supporting context, and metadata linking the item back to the source
-document and language. We use both technical and semantic question modes so that
-the benchmark suite contains queries that reflect different retrieval intents: some
-ask for concrete technical details, while others ask for a higher-level
-description of what the document is about.
+For each source document we prompt \texttt{gpt-5-mini} to generate three
+candidate questions, each grounded in a completely by the passage. Table~\ref{tab:benchmark-stats} provide an overview of the dataset and its statistics. 
+% Two choices shape the query distribution. First, a question's \emph{target language} is sampled per document relative to the languages that document exists in: \emph{random-existing} picks a language the patent already has a version in, so the query has a same-language answer; \emph{random-missing} picks one it does \emph{not}, yielding a pure cross-lingual ``no-home'' query; and \emph{all} generates the question in every 5 languages we targeted. Second, each question is written in one of two \emph{modes}: \emph{technical} questions ask for a single concrete fact, a parameter, material, outcome, method, or structural detail, answerable by the document, while \emph{general} questions ask about the document's problem, approach, or application in deliberately paraphrased, low-overlap wording. The mode prompts are written in the target language so questions read natively. The prompts (English version) are available in  Figures~\ref{fig:prompt-technical} and~\ref{fig:prompt-general}.
 
-\paragraph{Scoring and filtering.}
-Generated candidates are then passed through an LLM-based scorer. The scorer
-scores whether the answer is faithful to the provided context, whether the
-question is answerable from that context, whether the language is appropriate,
-and whether the item is useful as a retrieval query. We retain the best-scored
-items together with their audit metadata rather than treating generation as a
-black box. This gives each QAC row a provenance trail: source document,
-language, generation mode, scores, and scorer feedback.
+Two choices shape the query distribution. First, the query \emph{language}: the queries are generated in three set ups: (i) the question's
+\emph{target language} is sampled per document relative to the languages that
+document exists in: \emph{random-existing} picks a language the patent already
+has a version in, so the query has both a cross-lingual gold context and a same-language gold context; (ii)
+\emph{random-missing} picks one it does \emph{not}, yielding a pure cross-lingual
+``no-home'' query, where no same-language gold-context is available for the query; and (iii) \emph{all} generates the question in every 5 languages
+we targeted independent of availability of the gold-context document in those languages. Second, each question is written in one of two \emph{modes}:
+\emph{technical} questions ask for (i) a single concrete fact, (ii) a parameter, (iii) a
+material, (iv) an outcome, (v) method, or (vi) structural detail, answerable by the document, while \emph{general} questions ask about the document's problem, approach,
+or application in deliberately paraphrased, low-overlap wording. The mode prompts
+are written in the target language to bring the generated questions closer to naitive quality. The prompts (English version) are available in  Figures~\ref{fig:prompt-technical}
+and~\ref{fig:prompt-general}.
 
-\paragraph{Human-audited validation sample and export.}
-Because the scorer is itself model-based, we audit its behavior after
-generation against a 97-item human-annotated sample from the EPO-derived QAC
-generation data. This audit is not an automatic stage for every item in
-Figure~\ref{fig:qac-generation-flow}; instead, it checks whether the automatic
-grading is directionally reliable enough for benchmark construction. The
-filtered QAC records are then exported with the retrieval artifacts used in later
-sections: a corpus table, query table, relevance judgments, and the full QAC
-table. These artifacts let us evaluate models with standard dense-retrieval
-tooling while still slicing results by query language, document language, and
-source provenance.
+\paragraph{Scoring, human audit.}
+The three generated candidates per document for each query are scored not by the generator but by a
+separate verifier, \texttt{claude-sonnet-4.6}, which rates each candidate
+on multiple metrics around faithfulness and mode-specific quality; we keep the highest-scoring
+candidate per document as the selected query (more details on verifier prompts are available in
+Figures~\ref{fig:verifier-faith}--\ref{fig:verifier-general}). We then export the standard retrieval artifacts.
+In the process of query generation, the full generation pipeline benefited from three rounds of domain-expert annotation and feedback collection which significantly refined both the generation quality and the verifier prompts. In the final set of generated queries, the
+verifier was audited against human-annotatation on a 97-sample
+subset of the queries using criteria that mirror the LLM rubric. %On the final sample
+In this evaluation, the human feedback's mean score was \textbf{8.33/10} (technical: \textbf{8.72}, general:
+\textbf{7.91}) and \emph{no} query was rejected (none scored in the 0--3 band;
+see Figure~\ref{fig:human-scores} for more details). %We then export the standard retrieval artifacts.
+Also the agreement between LLM-verifier and human expert annotator was ?.
+

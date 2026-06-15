@@ -1,3 +1,5 @@
+### Source: https://aclrollingreview.org/responsibleNLPresearch/
+
 # EMNLP Industry Track Paper Writing Guide
 
 This guide focuses on the **idea and writing aspect** of an EMNLP Industry Track paper, assuming you already have the official ACL/EMNLP template.

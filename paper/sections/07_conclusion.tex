@@ -1,18 +1,13 @@
 \section{Conclusion}
 
-Multilingual chemistry retrieval needs evaluation data that makes the right
-failure modes visible. In this paper, we presented a QAC generation and
-human-audit pipeline for building such data, released two patent-derived
-benchmark releases in retrieval-ready form, and used the resulting benchmark
-suite to evaluate dense multilingual retrievers beyond aggregate recall.
-Language metadata separates same-language from cross-language relevance; QAC
-provenance makes generated queries auditable; the human-audited sample checks
-the LLM-based verifier; and the auxiliary alias-graph stress test exposes
-chemistry-specific confusions.
 
-The central lesson is simple: a model that looks effective on average may still
-prefer same-language shortcuts or chemically plausible but wrong documents over
-the intended cross-language evidence. For high-trust multilingual retrieval,
-the question is not only whether the system retrieves something relevant on
-average, but whether it finds the intended evidence when language and chemical
-similarity create tempting shortcuts.
+We introduced X-ChemIR, a patent-grounded benchmark suite for cross-lingual chemistry
+retrieval: two multilingual QAC benchmarks built from Google Patents and EPO patent
+data, an auxiliary alias-graph confusability stress test, and a robustness-metric family
+reported next to recall (same- versus cross-language relevance and LT, cross-lingual
+coverage depth $k^\star$, ranking consistency RBO, and the position-based metrics
+XRC, RRC, and ARI). Evaluating eight off-the-shelf multilingual embedders, we find that a
+single averaged recall hides the failure that ships: even the best model leaves nearly
+half of the cross-language evidence out of the top-10, a same-language home advantage
+persists in every query language, and a chemically confusable look-alike out-ranks the
+right document on $14$--$48\%$ of alias-graph queries.
