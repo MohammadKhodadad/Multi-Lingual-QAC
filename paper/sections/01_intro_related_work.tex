@@ -47,9 +47,11 @@ multilingual technical evidence beyond prior-art search alone.
 
 These gaps motivate X-ChemIR, a patent-grounded benchmark suite for
 cross-lingual chemistry retrieval. Our contributions are: (1) two public QAC
-retrieval releases derived from Google Patents and EPO data; (2) a reproducible
-LLM-assisted QAC generation and human-audit pipeline; (3) language-aware
-diagnostics that separate same-language from cross-language evidence, plus an
-auxiliary alias-graph stress test for chemistry-confusability; and (4) an
-evaluation of eight off-the-shelf multilingual embedding models showing why
-aggregate recall is not a sufficient deployment dashboard.
+retrieval releases derived from Google Patents and EPO data, with
+query/document-language metadata, plus an auxiliary alias-graph confusability
+stress test; (2) a reproducible LLM-assisted QAC generation and human-audit
+pipeline; (3) language-aware robustness diagnostics reported next to recall,
+including same- versus cross-language relevance, coverage depth, ranking
+consistency, and cross-language gold position; and (4) an evaluation of eight
+off-the-shelf multilingual embedding models that quantifies cross-lingual
+collapse and chemical-confusion failures.
