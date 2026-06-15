@@ -1,0 +1,75 @@
+\section{Evaluation Setup}
+\label{sec:setup}
+
+We evaluate multilingual embedding models as drop-in dense retrievers, and design
+the setup to surface cross-lingual failure rather than average it away. Each query
+is judged against its source patent in \emph{both} its own language and every
+other, separating same-language from cross-language relevance; an auxiliary
+alias-graph stress test adds chemically confusable hard negatives. We report a
+metric family that places capability, cross-linguality, and deployment cost side
+by side, and run it over a fixed set of eight models against the shared
+multilingual corpus.
+
+\paragraph{Same- vs.\ cross-language relevance.}
+A query is relevant to its source patent in every language that patent
+exists in, so we split each judgment into same-language relevance and cross-language relevance
+(a foreign-language version to the query). Some
+queries have no same-language gold at all, a built-in ``no-home'' cross-lingual stress test. We retain query
+language, document language, source office, and question mode (technical or
+general) as metadata, so every result can be sliced along each axis.
+
+\paragraph{Alias-graph stress test.}
+The alias graph asks a sharper question: given a concept named in several
+languages, can a retriever find the right document across languages while
+ignoring documents about chemically similar concepts? We build it from the ChEBI
+ontology \citep{chebi2016}. For each compound we take a source patent passage
+that mentions it and prompt the generator with a technical-style prompt, but with
+the compound supplied, to write a question grounded in that passage whose answer
+is the compound itself, never naming the compound or any of its multilingual
+aliases (150 questions generated.). The gold is then the source publication and its parallel language
+versions, so a query in one language must reach that publication in another;
+the hard negatives are patents that mention a taxonomic neighbour of the compound
+(a sibling or parent in the graph) but not the compound itself: chemically close,
+but the wrong answer. These near-miss distractors operationalize, at the
+retrieval level, the distractor-latch failure that is destructive downstream,
+where a generator locks onto a plausible but wrong neighbour rather than the
+intended evidence \citep{astaraki2026iterativerag}.
+
+\paragraph{Metrics.}
+Alongside Recall@10 and its same- and cross-language split (MoLIR@10 and CLIR@10),
+we report measures aimed at cross-linguality. $\mathrm{LT}\%=
+\mathrm{CLIR@10}/\mathrm{MoLIR@10}$ is the share of a model's same-language ceiling
+it keeps cross-lingually (low LT signals language-siloing). For cross-lingual
+coverage we treat language as a retrieval facet: restricting to queries that have
+both gold types, $k^\star_{80}$ is the smallest depth at which the same-language
+gold document and the first cross-language gold document are present for $80\%$ of
+queries, with halves $k_{\mathrm{same}}$ and $k_{\mathrm{cross}}$ giving that depth
+for the same- and the cross-language gold separately (censored at $>$1000). On the
+alias-graph benchmark we add cross-lingual RBO (rank-biased overlap;
+\citealp{rbo2010}), a consistency measure: it compares the top-$k$ lists a model
+returns for the same concept asked in each of the five languages ($1$ $=$ identical,
+$0$ $=$ disjoint), so a low RBO means the same information need retrieves different
+documents depending on the query language. Three instruments read off deployment
+cost: XRC, the reading-cost multiplier
+$\mathrm{XRC}_C=D^{\text{cross}}_C/D^{\text{same}}_C$ (median XRC50), the factor by
+which one must read deeper to reach a cross-language gold than a same-language copy;
+RRC@$K=\Pr[\text{first cross-language gold rank}\le K]$, the re-ranker recoverability
+ceiling, so $1-\mathrm{RRC@}K$ is unrecoverable by any top-$K$ re-ranker and its
+budget curve has a knee $K^\star$; and ARI, which splits the shortfall at depth $K$
+into a re-rankable part $\mathrm{RRC@}K$, a deeper-pool part
+$\mathrm{RRC@1000}-\mathrm{RRC@}K$, and an alignment-only floor
+$L_\infty=1-\mathrm{RRC@1000}$ that no re-ranker over the retrieved top-1000 can move,
+reported as $\mathrm{ARI@}K=L_\infty/(1-\mathrm{RRC@}K)$. All recall-based figures are
+language-balanced (a mean over query languages).
+
+
+
+\paragraph{Models and protocol.}
+We evaluate 8 multilingual or domain-relevant embedding models under 1 billion parameters:
+\texttt{embeddinggemma}, \texttt{bge-m3} \citep{bgem3_2024},
+\texttt{granite-278m}, \texttt{nomic-v2-moe}, \texttt{qwen3-0.6B},
+\texttt{LaBSE} \citep{labse2022}, \texttt{SapBERT} \citep{sapbert2021},
+\texttt{e5-large-instruct}. All models retrieve against
+the same multilingual chemistry corpus, and all queries are evaluated with the
+same relevance judgments. 
+

@@ -1,0 +1,535 @@
+\section{Appendix}
+
+This appendix collects supporting analyses that are useful for interpretation
+but too detailed for the six-page body.
+
+\section{Additional Cross-Lingual Retrieval Diagnostics}
+
+These diagnostics expand the paper's main cross-language retrieval result. They
+show that the same-language advantage is not a single-score artifact: it appears
+as query-language variation, same-language gold advantage, transfer across
+patent offices, and weaker score separability when gold evidence competes with
+look-alike documents.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{claimC_C3_home_advantage.png}
+  \caption{Per query language, Recall@10 splits into same-language gold (MoLIR@10)
+  and cross-language gold (CLIR@10), pooled over the non-degenerate models. The home
+  advantage holds in every language.}
+  \label{fig:home-advantage}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figC6_query_doc_recall_grid.png}
+  \caption{Recall@10 by query language $\times$ document language, per model (white
+  cell = same-language; off-diagonal = cross-lingual). The cross-lingual loss lives
+  off the diagonal; e5-large-instruct's off-diagonal cells collapse to near zero.}
+  \label{fig:qd-grid}
+\end{figure}
+
+
+
+\begin{figure}[h!]
+\centering
+\fbox{%
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\begin{Verbatim}[breaklines=true, breakanywhere=true]
+You are an expert at creating technical chemistry and patent retrieval questions.
+
+The source context may be in any language. The questions and answers MUST be written in English. Preserve chemical names, compound identifiers (e.g., "Compound 3a"), trade names, reagent abbreviations, and all numerical values, units, and ranges in their original form — do not translate, round, or reformat them.
+
+Generate exactly THREE question-answer pairs from the context. Each should target a different fact.
+
+CORE RULES:
+- Single Focus: Each question must ask for exactly ONE specific piece of information. Never combine multiple asks (e.g., do not ask for a solvent and a yield in the same question).
+- Full Direct Support: The answer must be fully stated in a contiguous span of the passage. If any part of the answer requires inference, combination across sentences, or outside knowledge — even a small step — discard the question. Partial support is not acceptable.
+- Numerical Fidelity: Reproduce all numbers, units, ranges, and tolerances exactly as they appear in the source (e.g., "85–87°C", not "about 86°C" or "85 to 87 degrees").
+- Natural Search Wording: Write each question as a researcher or engineer would type it into a search bar — short, specific, and direct. Avoid patent-summary language and long noun phrases.
+- No Document Phrases: Never use "described in the invention," "according to the text," "mentioned in the disclosure," or similar. Rewrite into natural wording.
+- Standalone query for a search engine (no document references): each question is a query for an Information Retrieval (IR) system — the person typing it has NOT seen this document and is searching to FIND it. Never refer to the document or its contents: not only overt phrases ("described in the invention", "according to the text", "in the passage"), but ANY wording that presupposes the reader is looking at the document — "the example given", "the agent mentioned/described/disclosed here", "which compound is provided". Write self-contained questions. Bad: "Which agent example is given that increases ROS?" → Good: "Which agent increases ROS?"
+- Paraphrase, Don't Lift: Technical terms and named entities (e.g., "electrolysis unit," "decentralized water treatment system," "Pd/C catalyst") may be reused as needed for clarity. But do not lift descriptive phrases, multi-word modifiers, or sentence fragments from the source as question scaffolding — rewrite those in your own words.
+- Diversity: The three questions must target three different facts AND span at least two of the five categories listed under WHAT TO ASK. Do not ask three questions all about operating parameters, or all about materials.
+
+WHAT TO ASK:
+Target questions in these five categories:
+  1. Parameters & Conditions: temperature, pressure, time, concentration, pH, flow rate, voltage, atmosphere, stoichiometry, operating ranges and etc
+  2. Materials: catalyst, solvent, reagent, substrate, additive, precursor, equipment and etc
+  3. Outcomes: yield, selectivity, conversion, purity, efficiency and etc
+  4. Methods: synthesis route, characterization technique, separation method and etc
+  5. Structure: functional group, crystal form, polymorph, molecular weight, composition and etc
+
+Questions about function, role, or effect are acceptable ONLY when the passage explicitly and completely states that information — not when it must be inferred, even partially.
+
+EXAMPLES:
+
+Example 1
+Passage (Turkish):
+"Enerji̇ tüketi̇mi̇ düşürülmüş bi̇r tahri̇k terti̇bati Buluş hareket enerjisi üretebilen bir motorun (10) en az bir yanma odasında (11) ihtiyaç duyduğu kimyasal unsurlardan en azından bir kısmının temin edilerek enerji sarfiyatının azaltılabildiği bir tahrik tertibatı (1) ile ilgilidir. Buluşun yeniliği; bahsedilen tahrik tertibatının (1) en az bir elektroliz birimi (20) ve en az bir kontrol birimi (40) ile ilişkilendirilmiş olması, bahsedilen elektroliz biriminin (20) elektrolitin elektroliz edilmesini sağlayacak şekilde konfigüre edilmiş olması, bahsedilen kontrol biriminin (40) ise elektroliz biriminde bulunan elektroliti elektroliz edilirken yaklaşık 85-87°C aralığına kadar ısıtacak şekilde gerilim ve voltajı ayarlayabilir olması, elektroliz biriminde (20) elektroliz sonrasında elde edilen oksijen, hidrojen ve su buharının bahsedilen yanma odasına (11) karıştırılarak verilebilir olmasıdır."
+
+✓ Good: "What temperature range is maintained for the electrolyte during electrolysis?"
+  → Asks for one specific parameter directly stated in the passage. Answer: "85–87°C" — a contiguous span, exact numbers preserved.
+
+✗ Bad (inference-why): "Why is the electrolyte heated to about 85–87°C during electrolysis?"
+  → The passage states the temperature but never explains the reason for choosing it.
+
+✗ Bad (partial support): "What gases are produced by electrolysis and fed into the combustion chamber, and in what ratio?"
+  → The passage lists the gases (oxygen, hydrogen, water vapor) but never gives a ratio. The question is only partially answerable. Discard.
+
+Example 2
+Passage (French):
+"Système de surveillance de traitement d'eau décentralisé connecté à un réseau et dispositif de suivi de fonctionnement et de maintenance comprenant au moins un capteur connecté à Internet et une plateforme logicielle intégrée qui peut être utilisée par des installations de grande taille et/ou des organisations comprenant de multiples installations qui gèrent et maintiennent des systèmes de traitement d'eau potable décentralisés (p. ex. des filtres de point d'utilisation) ou des processus de traitement d'eau potable décentralisés (p. ex. un rinçage de robinet) à un ou à plusieurs emplacements. Au moins un capteur est installé en amont ou en aval d'un consommable ou d'un processus de traitement d'eau décentralisé et mesure des données d'eau, comprenant non exclusivement le volume d'eau traité dans le temps, et alerte l'utilisateur lorsque des actions de maintenance sont requises pour maintenir la qualité de l'eau."
+
+✓ Good: "What does the sensor measure in the decentralized water treatment system?"
+  → Short, natural, one specific fact directly stated. "Decentralized water treatment system" is a reused technical term, which is allowed.
+
+✗ Bad (lifted framing): "Why is at least one sensor installed upstream or downstream of a consumable or decentralized treatment process?"
+  → Lifts a long descriptive phrase from the source and asks for reasoning the passage does not give.
+
+✗ Bad (partial support): "How does the sensor determine when maintenance is required?"
+  → The passage says the sensor alerts the user when maintenance is needed, but never states the mechanism or threshold by which it makes that determination. Discard.
+
+SELF-CHECK for each question before finalizing:
+- Can the answer be produced by pointing to a contiguous span in the passage, with no inference or combination across sentences? If not, discard.
+- Does the question ask for exactly one piece of information?
+- Are all numbers, units, and ranges in the answer reproduced exactly as in the source?
+- Would a researcher plausibly type this query into a search bar?
+- Could someone who has never seen this document type this question into a search engine? It must not refer to the document, an "example given", or anything "mentioned/described" in it.
+- Are the three questions about three different facts, covering at least two categories from WHAT TO ASK?
+
+OUTPUT (valid JSON only, no markdown):
+[
+  {"question": "...", "answer": "...", "question_type": "..."},
+  {"question": "...", "answer": "...", "question_type": "..."},
+  {"question": "...", "answer": "...", "question_type": "..."}
+]
+- answer: the shortest span that fully and directly answers the question — typically a phrase or a single short sentence. Strictly grounded in the passage.
+- question_type: one of parameter_or_condition, material, outcome, method, structure.
+The same passage exists in all different languages. This should not impact your target language for questions and answers. They are declared before. Here are the passages:
+\end{Verbatim}
+\end{minipage}%
+}
+\caption{Technical-question generation prompt (English version). Language-specific variants differ only in the declared output language.}
+\label{fig:prompt-technical}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\fbox{%
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\begin{Verbatim}[breaklines=true, breakanywhere=true]
+You are an expert at creating semantic retrieval questions for chemistry and patent documents.
+
+The source context may be in any language. The questions and answers MUST be written in English. Preserve chemical names, compound identifiers (e.g., "Compound 3a"), trade names, reagent abbreviations, and all numerical values, units, and ranges in their original form — do not translate, round, or reformat them.
+
+Generate exactly THREE question-answer pairs from the context. The questions should target the passage's concepts, problems, approaches, or applications — not extract isolated facts. Each question should read like a user searching for this kind of document without already knowing the exact terminology used inside it.
+
+CORE RULES:
+
+- Conceptual Framing: Each question asks about a concept, problem, approach, use case, or capability discussed in the passage — not a single narrow data point like a temperature value or reagent name.
+
+- Lexical Distance: Actively paraphrase. A semantic retriever should match the question to the passage based on meaning, not keyword overlap. Avoid reusing the passage's distinctive vocabulary when a natural synonym or paraphrase works. Exception: proper nouns, compound identifiers, trade names, and standardized chemical/technical names (e.g., "Pd/C," "Compound 3a," specific polymer names) must stay as-is — otherwise the question becomes unanswerable from any document.
+
+- Grounded Answer: Even though the question is conceptual, the answer must be a short contiguous span taken from the passage that directly addresses the question. If you cannot point to a span in the passage that answers the question, discard the question. The answer is the evidence that this passage is the right match.
+
+- Retrieval Realism: Write each question the way someone would phrase a search when they are looking for a document like this one but haven't read it yet. They know what they want to find; they don't know the exact wording the document uses.
+
+- No Document Phrases: Never use "described in the invention," "according to the text," "mentioned in the disclosure," or similar. The question should not reveal that a specific document is being referenced.
+- Standalone query for a search engine (no document references): each question is a query for an Information Retrieval (IR) system — the person typing it has NOT seen this document and is searching to FIND it. Never refer to the document or its contents: not only overt phrases ("described in the invention", "according to the text", "in the passage"), but ANY wording that presupposes the reader is looking at the document — "the example given", "the approach mentioned/described/disclosed here", "which method is provided". Write self-contained questions. Bad: "Which agent example is given that increases ROS?" → Good: "Which agent increases ROS?"
+
+- Single Intent: Each question has one clear informational goal. It's fine if the goal is broader than a single fact (e.g., "how does X address Y"), but it should not bundle multiple unrelated asks.
+
+- Diversity: The three questions must target three distinguishable aspects of the passage. Span at least two of the following framings:
+  1. Problem-framed: what challenge or limitation does the passage address?
+  2. Solution-framed: what approach, mechanism, or method is proposed?
+  3. Application-framed: what use case, scenario, or capability does the passage enable?
+
+Broader conceptual questions about the overall approach are acceptable as long as the passage clearly and directly answers them in a contiguous span.
+
+EXAMPLES:
+
+Example 1
+Passage (Turkish):
+"Enerji̇ tüketi̇mi̇ düşürülmüş bi̇r tahri̇k terti̇bati Buluş hareket enerjisi üretebilen bir motorun (10) en az bir yanma odasında (11) ihtiyaç duyduğu kimyasal unsurlardan en azından bir kısmının temin edilerek enerji sarfiyatının azaltılabildiği bir tahrik tertibatı (1) ile ilgilidir. Buluşun yeniliği; bahsedilen tahrik tertibatının (1) en az bir elektroliz birimi (20) ve en az bir kontrol birimi (40) ile ilişkilendirilmiş olması, bahsedilen elektroliz biriminin (20) elektrolitin elektroliz edilmesini sağlayacak şekilde konfigüre edilmiş olması, bahsedilen kontrol biriminin (40) ise elektroliz biriminde bulunan elektroliti elektroliz edilirken yaklaşık 85-87°C aralığına kadar ısıtacak şekilde gerilim ve voltajı ayarlayabilir olması, elektroliz biriminde (20) elektroliz sonrasında elde edilen oksijen, hidrojen ve su buharının bahsedilen yanma odasına (11) karıştırılarak verilebilir olmasıdır."
+
+✓ Good (application-framed, paraphrased): "How can an engine reduce fuel consumption by generating part of its own combustion inputs?"
+  → Captures the passage's core concept. Uses "generating part of its own combustion inputs" instead of lifting "electrolysis" and "combustion chamber." The answer points to the drive arrangement producing oxygen, hydrogen, and water vapor and feeding them into the combustion chamber.
+
+✓ Good (solution-framed, paraphrased): "What role does on-board electrolysis play in supplying reactants to an engine?"
+  → "Electrolysis" is a technical term that stays; "supplying reactants to an engine" paraphrases what the passage calls "ihtiyaç duyduğu kimyasal unsurlardan ... yanma odasına ... verilebilir."
+
+✗ Bad (too extractive, keyword-heavy): "What temperature range is maintained for the electrolyte during electrolysis?"
+  → This is a fact-extraction question, not a semantic retrieval question. Belongs to the technical prompt, not this one.
+
+✗ Bad (ungrounded conceptual): "What are the environmental benefits of this fuel-saving approach?"
+  → Sounds like a retrieval question, but the passage does not discuss environmental benefits. Discard.
+
+Example 2
+Passage (French):
+"Système de surveillance de traitement d'eau décentralisé connecté à un réseau et dispositif de suivi de fonctionnement et de maintenance comprenant au moins un capteur connecté à Internet et une plateforme logicielle intégrée qui peut être utilisée par des installations de grande taille et/ou des organisations comprenant de multiples installations qui gèrent et maintiennent des systèmes de traitement d'eau potable décentralisés (p. ex. des filtres de point d'utilisation) ou des processus de traitement d'eau potable décentralisés (p. ex. un rinçage de robinet) à un ou à plusieurs emplacements. Au moins un capteur est installé en amont ou en aval d'un consommable ou d'un processus de traitement d'eau décentralisé et mesure des données d'eau, comprenant non exclusivement le volume d'eau traité dans le temps, et alerte l'utilisateur lorsque des actions de maintenance sont requises pour maintenir la qualité de l'eau."
+
+✓ Good (problem-framed, paraphrased): "How can organizations with multiple drinking water sites know when filters need servicing?"
+  → Captures the problem the passage addresses using natural search wording. Avoids lifting "consommable" or "actions de maintenance." Answer points to the sensor alerting the user when maintenance is required.
+
+✓ Good (application-framed): "Can IoT sensors monitor point-of-use water filters across many locations?"
+  → "IoT sensors" paraphrases "capteur connecté à Internet." "Point-of-use water filters" is a reused standard term (acceptable — it's the established English equivalent of "filtres de point d'utilisation"). Answer grounded in the passage's description of the monitoring system.
+
+✗ Bad (too extractive): "What does the sensor measure in the decentralized water treatment system?"
+  → Fact-extraction. Belongs to the technical prompt.
+
+✗ Bad (keyword-lifted): "What is a decentralized water treatment monitoring system connected to a network?"
+  → Near-verbatim reuse of the passage's opening phrase. Would match via keyword overlap, defeating the purpose of semantic retrieval.
+
+SELF-CHECK for each question before finalizing:
+- Does the question ask about a concept, problem, approach, or application — rather than a single extracted fact?
+- Is the question's vocabulary meaningfully different from the passage's, while preserving meaning? (Standard technical terms and proper nouns exempt.)
+- Can I point to a contiguous span in the passage that directly answers it? If not, discard.
+- Would someone searching for a document like this one plausibly type this query without already having read it?
+- Could someone who has never seen this document type this question into a search engine? It must not refer to the document, an "example given", or anything "mentioned/described" in it.
+- Do the three questions cover at least two framings (problem / solution / application)?
+
+OUTPUT (valid JSON only, no markdown):
+[
+  {"question": "...", "answer": "...", "framing": "..."},
+  {"question": "...", "answer": "...", "framing": "..."},
+  {"question": "...", "answer": "...", "framing": "..."}
+]
+- answer: a short contiguous span taken from the passage that directly answers the question. Kept as short as possible while fully addressing the question. In the question's language (English).
+- framing: one of problem, solution, application.
+The same passage exists in all different languages. This should not impact your target language for questions and answers. They are declared before. Here are the passages:
+\end{Verbatim}
+\end{minipage}%
+}
+\caption{General-question generation prompt (English version). Language-specific variants differ only in the declared output language.}
+\label{fig:prompt-general}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{score_distribution.png}
+  \caption{Distribution of human-annotator overall scores on the 97-item
+  audited QAC sample (mean 8.33/10; no item rated below 6).}
+  \label{fig:human-scores}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\fbox{%
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\begin{Verbatim}[breaklines=true, breakanywhere=true]
+You are a strict faithfulness grader for patent question-answer pairs.
+
+You will receive ONE passage (any language) and THREE question-answer pairs (questions may be in any language; each answer matches its question's language). Grade each pair on three sub-criteria, each 1–5. Do NOT evaluate query shape or retrieval quality — those are handled separately. Focus only on how faithfully each answer reflects the passage.
+
+GRADING INSTRUCTIONS:
+- Grade each of the three pairs independently and against the absolute rubric below — not relative to the other two.
+- Do not let similarity or dissimilarity between the three pairs influence any individual grade.
+- Evaluate each pair on its own merits before moving to the next.
+
+SCALE CALIBRATION:
+- Most generator outputs will be acceptable on most criteria. "Acceptable" is not the same as "excellent."
+- 5 is reserved for genuinely exceptional candidates with no identifiable weakness. If you can point to any imperfection, it is not a 5. 5s should be uncommon.
+- 4 means the candidate is very good but has exactly one minor, identifiable issue. You must be able to name the issue.
+- 3 is the default grade for a candidate that is acceptable and does the job, with one clear weakness. It is not a punishment grade — most acceptable candidates will receive 3s.
+- 2 and 1 are reserved for candidates with real, identifiable problems. Do not avoid using them when a candidate qualifies.
+- Before assigning any 4 or 5, pause and ask: "What specifically makes this better than a 3?" If you cannot answer concretely, the grade is 3.
+
+SUB-CRITERIA:
+
+1. GROUNDING (1–5): Is the answer supported by a contiguous span of the passage?
+   5 — Answer is taken directly from a single short contiguous span of the passage. Every word of the answer is explicitly present or is a trivial rewording of explicit content. No inference whatsoever. (Rare.)
+   4 — Answer is fully supported but requires reading across two adjacent sentences, OR is from a single span with minor trivial rewording that a strict reader might flag.
+   3 — Answer is grounded in the passage but requires one small, defensible inferential step — combining a definition with a value, or connecting a pronoun to its referent, or similar.
+   2 — Answer is partially supported: some parts grounded in the passage, other parts not.
+   1 — Answer requires significant inference, outside knowledge, or is not in the passage at all.
+
+2. PRECISION (1–5): Does the answer add unsupported details or padding?
+   5 — Answer is the shortest possible span that fully answers the question. Not one extra word. No surrounding context, no hedges, no elaboration. (Rare.)
+   4 — Answer is grounded and tight but includes one short fragment of adjacent context that could have been cut.
+   3 — Answer is grounded but includes one unsupported detail, generalization, or piece of padding.
+   2 — Answer includes multiple unsupported details, or uses speculative framing ("likely," "approximately," "it seems") where the passage is specific.
+   1 — Answer is largely padded with content not in the passage, or is a rewrite rather than an extraction.
+
+3. NUMERICAL FIDELITY (1–5): Are numbers, units, and ranges reproduced exactly?
+   5 — All numbers, units, symbols, and ranges match the passage character-for-character (e.g., "85–87°C" preserved as-is, en-dash included).
+   4 — All numerical values are correct and units are preserved, but with a trivial formatting difference (e.g., "85 to 87°C" vs. "85–87°C", or a missing non-breaking space).
+   3 — One number is rounded, one unit is dropped, or one range is converted to a midpoint.
+   2 — Multiple numerical values rounded, reformatted, or partially dropped.
+   1 — Numbers invented, significantly changed, or contradicted by the passage.
+   N/A — Answer contains no numerical content. Score this sub-criterion as 5 if N/A.
+
+Output valid JSON only — a list of three objects, one per candidate, in the order the candidates were provided (index 0, 1, 2):
+[
+  {
+    "index": 0,
+    "grounding": <1-5>,
+    "precision": <1-5>,
+    "numerical_fidelity": <1-5>,
+    "reason": "one short sentence explaining the grades"
+  },
+  {
+    "index": 1,
+    "grounding": <1-5>,
+    "precision": <1-5>,
+    "numerical_fidelity": <1-5>,
+    "reason": "..."
+  },
+  {
+    "index": 2,
+    "grounding": <1-5>,
+    "precision": <1-5>,
+    "numerical_fidelity": <1-5>,
+    "reason": "..."
+  }
+]
+\end{Verbatim}
+\end{minipage}%
+}
+\caption{Faithfulness verifier prompt (\texttt{claude-sonnet-4.6}). Grades each of three candidate answers on grounding, precision, and numerical fidelity.}
+\label{fig:verifier-faith}
+\end{figure}
+
+
+\begin{figure}[h!]
+\centering
+\fbox{%
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\begin{Verbatim}[breaklines=true, breakanywhere=true]
+You are a strict quality grader for retrieval questions built from technical patent text.
+
+You will receive ONE passage and THREE candidate questions. Grade each question on five sub-criteria, each 1–5. Do NOT check whether the answer is grounded — that is handled separately. Focus only on query shape, retrieval quality, and writing quality.
+
+The questions may be in any language. When evaluating SEARCH-BAR REALISM, PHRASING ECONOMY, and LINGUISTIC QUALITY, judge each question by the norms of its own language, not by English phrasing conventions. A natural Turkish, Japanese, or German search query will not read like a natural English one.
+
+GRADING INSTRUCTIONS:
+- Grade each of the three questions independently and against the absolute rubric below — not relative to the other two.
+- Do not penalize a question for being similar to another candidate, nor reward it for being different. Diversity across the three is not a criterion.
+- Evaluate each question on its own merits before moving to the next.
+
+SCALE CALIBRATION:
+- Most generator outputs will be acceptable on most criteria. "Acceptable" is not the same as "excellent."
+- 5 is reserved for genuinely exceptional candidates with no identifiable weakness. If you can point to any imperfection, it is not a 5. 5s should be uncommon.
+- 4 means the candidate is very good but has exactly one minor, identifiable issue. You must be able to name the issue.
+- 3 is the default grade for a question that is acceptable and does the job, with one clear weakness. It is not a punishment grade — most acceptable questions will receive 3s.
+- 2 and 1 are reserved for questions with real, identifiable problems. Do not avoid using them when a question qualifies.
+- Before assigning any 4 or 5, pause and ask: "What specifically makes this better than a 3?" If you cannot answer concretely, the grade is 3.
+
+BACKGROUND: Good retrieval questions target one of five categories from the source text:
+  1. Parameters & Conditions (temperature, pressure, time, concentration, pH, flow rate, voltage, atmosphere, stoichiometry)
+  2. Materials (catalyst, solvent, reagent, substrate, additive, precursor, equipment)
+  3. Outcomes (yield, selectivity, conversion, purity, efficiency)
+  4. Methods (synthesis route, characterization technique, separation method)
+  5. Structure (functional group, crystal form, polymorph, molecular weight, composition)
+
+SUB-CRITERIA:
+
+1. SEARCH-BAR REALISM (1–5): Does this read like a real user query in its own language?
+   5 — Exactly how a researcher would type it into a search bar. Every word earns its place. A domain expert would not suggest any rewording. (Rare.)
+   4 — Very close to a natural query, with one minor issue: slightly longer than needed, slightly formal, or one word that could be trimmed.
+   3 — Understandable and usable as a query, but has one clear issue — mild patent-summary phrasing, an awkward construction, or slight exam-question flavor.
+   2 — Reads more like a summary prompt or academic exam question than a search query.
+   1 — Document-centered phrasing (equivalents of "described in the invention," "according to the text"), or referring to the document's contents/examples (e.g. "the example given," "the agent mentioned"), or clearly unnatural.
+   NOTE — this is a query for an IR system: the user has NOT seen the document. Any phrasing that refers to the document or its contents fails this criterion. This includes not only overt phrases ("described in the invention," "according to the text") but also references to the document's internal structure or to something being stated in it: "the example given," "the agent mentioned/described/disclosed here," "which compound is provided," "in the passage." A question with any such reference scores at most 2 here (1 if overt or blatant), and its failure_type MUST be "document-phrasing." Example: "Which agent example is given that increases ROS?" → fails (says "example is given"); "Which agent increases ROS?" → fine.
+
+2. SPECIFICITY (1–5): Would this query narrow to the relevant document rather than match arbitrarily?
+   5 — Targets a concrete, specific technical detail from one of the five categories. A search with this query would return a handful of closely-related documents at most. (Rare.)
+   4 — Specific, but could match a small cluster of related patents in the same sub-domain.
+   3 — Moderately specific — would return many plausible matches across the domain. Acceptable but not distinguishing.
+   2 — Broad — asks about a general concept or outcome without a distinguishing detail.
+   1 — Generic summary question (equivalents of "What is the main object of the invention?", "What is the purpose of the method?") with no specific anchor.
+
+3. PHRASING ECONOMY (1–5): Is the question paraphrased, not lifted from the source?
+   5 — Reuses only unavoidable technical terms and named entities (e.g., "Pd/C catalyst," "electrolysis unit"). No descriptive phrases, modifiers, or sentence fragments copied from the source. (Rare.)
+   4 — Mostly paraphrased, with one short piece of source phrasing reused where a paraphrase was available.
+   3 — Reuses one multi-word descriptive phrase from the source, or several short phrases.
+   2 — Lifts a noun cluster or descriptive fragment from the source as question scaffolding.
+   1 — Near-verbatim copy of a source sentence with minimal edits.
+
+4. FOCUS (1–5): Does the question ask for exactly one fact?
+   5 — Single, clear, unambiguous fact requested. No room for the answerer to include extra information. (Rare.)
+   4 — Single fact, but with mild ambiguity in what's being asked — e.g., a word that could be read two ways.
+   3 — Single fact, but phrased in a way that invites a broader answer or includes redundant qualifiers.
+   2 — Asks for two related facts bundled together (e.g., "solvent and yield").
+   1 — Asks for three or more facts, or requests a summary.
+
+5. LINGUISTIC QUALITY (1–5): Is the question well-written in its own language?
+   5 — Indistinguishable from native-speaker writing. Grammatically correct, fluent, natural word order, no redundancy, no awkwardness anywhere. (Rare.)
+   4 — Grammatically correct and natural, with one minor stiffness or one slightly awkward word choice.
+   3 — Correct and understandable, but has one noticeable issue: a minor grammar slip, awkward word order, or translation-like phrasing.
+   2 — Multiple grammar errors, clearly unnatural phrasing, or reads like a poor machine translation.
+   1 — Ungrammatical, garbled, or incomprehensible.
+
+LANGUAGE CHECK: If a question is written in a language that is not a coherent single language (e.g., mixed languages mid-sentence, nonsense, or corrupted), score its SEARCH-BAR REALISM as 1 and set its failure_type to "language-issue".
+
+Output valid JSON only — a list of three objects, one per candidate, in the order the candidates were provided (index 0, 1, 2):
+[
+  {
+    "index": 0,
+    "search_bar_realism": <1-5>,
+    "specificity": <1-5>,
+    "phrasing_economy": <1-5>,
+    "focus": <1-5>,
+    "linguistic_quality": <1-5>,
+    "failure_type": "<one of: none, document-phrasing, broad-summary, high-overlap, bundled-facts, weak-query-shape, poor-writing, language-issue>",
+    "reason": "one short sentence explaining the grades"
+  },
+  {
+    "index": 1,
+    "search_bar_realism": <1-5>,
+    "specificity": <1-5>,
+    "phrasing_economy": <1-5>,
+    "focus": <1-5>,
+    "linguistic_quality": <1-5>,
+    "failure_type": "...",
+    "reason": "..."
+  },
+  {
+    "index": 2,
+    "search_bar_realism": <1-5>,
+    "specificity": <1-5>,
+    "phrasing_economy": <1-5>,
+    "focus": <1-5>,
+    "linguistic_quality": <1-5>,
+    "failure_type": "...",
+    "reason": "..."
+  }
+]
+\end{Verbatim}
+\end{minipage}%
+}
+\caption{Technical-mode quality verifier prompt (\texttt{claude-sonnet-4.6}). Grades query shape and writing quality on five sub-criteria.}
+\label{fig:verifier-tech}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\fbox{%
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\begin{Verbatim}[breaklines=true, breakanywhere=true]
+You are a strict quality grader for semantic retrieval questions built from technical chemistry and patent text.
+
+You will receive ONE passage and THREE candidate questions. Grade each question on five sub-criteria, each 1–5. Do NOT check whether the answer is grounded — that is handled separately. Focus only on query shape, retrieval quality, and writing quality.
+
+The questions may be in any language. When evaluating SEARCH REALISM, LEXICAL DISTANCE, and LINGUISTIC QUALITY, judge each question by the norms of its own language, not by English phrasing conventions. A natural Turkish, Japanese, or German search query will not read like a natural English one.
+
+GRADING INSTRUCTIONS:
+- Grade each of the three questions independently and against the absolute rubric below — not relative to the other two.
+- Do not penalize a question for being similar to another candidate, nor reward it for being different. Diversity across the three is not a criterion.
+- Evaluate each question on its own merits before moving to the next.
+
+SCALE CALIBRATION:
+- Most generator outputs will be acceptable on most criteria. "Acceptable" is not the same as "excellent."
+- 5 is reserved for genuinely exceptional candidates with no identifiable weakness. If you can point to any imperfection, it is not a 5. 5s should be uncommon.
+- 4 means the candidate is very good but has exactly one minor, identifiable issue. You must be able to name the issue.
+- 3 is the default grade for a question that is acceptable and does the job, with one clear weakness. It is not a punishment grade — most acceptable questions will receive 3s.
+- 2 and 1 are reserved for questions with real, identifiable problems. Do not avoid using them when a question qualifies.
+- Before assigning any 4 or 5, pause and ask: "What specifically makes this better than a 3?" If you cannot answer concretely, the grade is 3.
+
+BACKGROUND: Good semantic retrieval questions describe a passage's concept, problem, approach, or application in the way a user would search for such a document without already having read it. The three framings used by the generator are:
+  1. Problem-framed: what challenge or limitation does the passage address?
+  2. Solution-framed: what approach, mechanism, or method is proposed?
+  3. Application-framed: what use case, scenario, or capability does the passage enable?
+
+Unlike fact-extraction questions, semantic retrieval questions are allowed — and expected — to be somewhat broader than a single data point. They should still be clearly tied to the passage.
+
+SUB-CRITERIA:
+
+1. SEARCH REALISM (1–5): Does this read like a real user query searching for a document like this one?
+   5 — Exactly how someone searching for this kind of document would phrase it, without having read it. Every word earns its place. A domain expert would not suggest any rewording. (Rare.)
+   4 — Very close to a natural query, with one minor issue: slightly long, slightly formal, or one word that could be trimmed.
+   3 — Understandable and usable as a query, but has one clear issue — mild patent-summary phrasing, an awkward construction, or slight exam-question flavor.
+   2 — Reads more like a summary prompt or academic question than a search query.
+   1 — Document-centered phrasing (equivalents of "described in the invention," "according to the text"), or referring to the document's contents/examples (e.g. "the example given," "the approach mentioned"), or clearly unnatural.
+   NOTE — this is a query for an IR system: the user has NOT seen the document. Any phrasing that refers to the document or its contents fails this criterion. This includes not only overt phrases ("described in the invention," "according to the text") but also references to the document's internal structure or to something being stated in it: "the example given," "the approach mentioned/described/disclosed here," "which method is provided," "in the passage." A question with any such reference scores at most 2 here (1 if overt or blatant), and its failure_type MUST be "document-phrasing." Example: "Which agent example is given that increases ROS?" → fails (says "example is given"); "Which agent increases ROS?" → fine.
+
+2. LEXICAL DISTANCE (1–5): Is the question meaningfully paraphrased from the passage's vocabulary?
+   5 — Uses natural synonyms and paraphrases throughout. Only unavoidable shared vocabulary: proper nouns, compound identifiers, and established standard technical terms (e.g., "Pd/C," "polymerase," "electrolysis"). A keyword-based retriever would not trivially match this question to the passage. (Rare.)
+   4 — Mostly paraphrased, with one distinctive source term reused where a paraphrase was available.
+   3 — Moderate overlap — some distinctive source phrases reused where alternatives existed. Still paraphrased in structure.
+   2 — Heavy overlap — multiple distinctive phrases or noun clusters reused from the source.
+   1 — Near-verbatim or high-keyword-overlap question that would be matched by any sparse/keyword retriever without needing semantic understanding.
+
+3. CONCEPTUAL FRAMING (1–5): Does the question target a concept, problem, approach, or application — as intended for this prompt?
+   5 — Clearly and cleanly conceptual: asks about a problem, approach, mechanism, or use case in a way that captures what the passage is fundamentally about. The framing is unmistakable. (Rare.)
+   4 — Conceptual in intent, but slightly narrow — edges toward one specific detail while still framing as concept.
+   3 — Borderline — could be read as either conceptual or fact-extractive, depending on how one interprets it. Acceptable but not crisp.
+   2 — Fact-extraction question that belongs to the technical prompt, not this one (asks for a single parameter value, material name, or numerical outcome).
+   1 — Entirely fact-extractive with no conceptual framing (e.g., "What temperature is used?").
+
+4. RETRIEVABILITY (1–5): Would this query distinguish this passage from unrelated documents?
+   5 — Specific enough that a search with this query would return this passage or a handful of closely-related ones. Clearly anchored to this passage's content. (Rare.)
+   4 — Specific but could match a small cluster of related documents in the same sub-domain.
+   3 — Moderately specific — would return many plausible matches across a broad domain. Tied to the passage but not distinguishing.
+   2 — Broad — could match a large fraction of documents in the domain.
+   1 — Generic question with no distinguishing anchor to this passage (equivalents of "What problem does this invention solve?" with no domain specifics).
+
+5. LINGUISTIC QUALITY (1–5): Is the question well-written in its own language?
+   5 — Indistinguishable from native-speaker writing. Grammatically correct, fluent, natural word order, no redundancy, no awkwardness anywhere. (Rare.)
+   4 — Grammatically correct and natural, with one minor stiffness or one slightly awkward word choice.
+   3 — Correct and understandable, but has one noticeable issue: a minor grammar slip, awkward word order, or translation-like phrasing.
+   2 — Multiple grammar errors, clearly unnatural phrasing, or reads like a poor machine translation.
+   1 — Ungrammatical, garbled, or incomprehensible.
+
+LANGUAGE CHECK: If a question is written in a language that is not a coherent single language (e.g., mixed languages mid-sentence, nonsense, or corrupted), score its SEARCH REALISM as 1 and set its failure_type to "language-issue".
+
+Output valid JSON only — a list of three objects, one per candidate, in the order the candidates were provided (index 0, 1, 2):
+[
+  {
+    "index": 0,
+    "search_realism": <1-5>,
+    "lexical_distance": <1-5>,
+    "conceptual_framing": <1-5>,
+    "retrievability": <1-5>,
+    "linguistic_quality": <1-5>,
+    "failure_type": "<one of: none, document-phrasing, keyword-lifted, too-extractive, too-generic, weak-query-shape, poor-writing, language-issue>",
+    "reason": "one short sentence explaining the grades"
+  },
+  {
+    "index": 1,
+    "search_realism": <1-5>,
+    "lexical_distance": <1-5>,
+    "conceptual_framing": <1-5>,
+    "retrievability": <1-5>,
+    "linguistic_quality": <1-5>,
+    "failure_type": "...",
+    "reason": "..."
+  },
+  {
+    "index": 2,
+    "search_realism": <1-5>,
+    "lexical_distance": <1-5>,
+    "conceptual_framing": <1-5>,
+    "retrievability": <1-5>,
+    "linguistic_quality": <1-5>,
+    "failure_type": "...",
+    "reason": "..."
+  }
+]
+\end{Verbatim}
+\end{minipage}%
+}
+\caption{General-mode (semantic) quality verifier prompt (\texttt{claude-sonnet-4.6}). Grades conceptual query shape and writing quality on five sub-criteria.}
+\label{fig:verifier-general}
+\end{figure}
+
+\begin{table*}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrr@{}}
+    \toprule
+    Source & Corpus & Queries & Qrels & Cross-lang qrels & Q tokens & Q vocab & C tokens & C vocab \\
+    \midrule
+    Google Patents & 23,787 & 524 & 1,284 & 1,023 & 11.3 $\pm$ 6.3 & 2,742 & 145.0 $\pm$ 63.8 & 83,333 \\
+    EPO & 11,315 & 198 & 594 & 396 & 14.1 $\pm$ 5.4 & 1,371 & 178.2 $\pm$ 71.1 & 72,256 \\
+    \bottomrule
+  \end{tabular*}
+  \caption{Statistics for the two released patent-derived multilingual QAC retrieval benchmark releases. Question and corpus token columns report mean $\pm$ standard deviation using regex token counts. Vocabularies are unique case-folded tokens.}
+  \label{tab:benchmark-stats}
+\end{table*}

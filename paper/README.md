@@ -40,9 +40,29 @@ To resume after an interruption, just run `/paper-loop` again — it reads
 - Strategy: keep ~5–7 floats in the 6-page body; move all other figures/tables to the Appendix (free).
 
 ## Compiling
-No LaTeX toolchain is installed in this environment. Compile locally / on Overleaf:
+This machine has a local Tectonic install at
+`%LOCALAPPDATA%\Programs\Tectonic\tectonic.exe`; new terminals should pick it up
+from the user `PATH`.
+
+From `paper/`, compile the short scaffold with:
+
+```powershell
+tectonic short_main.tex
 ```
-latexmk -pdf main.tex     # or: pdflatex main && bibtex main && pdflatex main && pdflatex main
+
+The output is `paper/short_main.pdf`. The current scaffold intentionally comments
+out `\bibliography{custom}` until the short draft contains citations; re-enable it
+once section prose starts citing papers.
+
+To compile the full archived draft:
+
+```powershell
+tectonic main.tex
 ```
-The writer runs a structural lint (balanced braces, matched `\begin`/`\end`, every
-`\includegraphics` target exists) in lieu of a real compile.
+
+On a full TeX Live / MiKTeX install, this is equivalent to:
+
+```powershell
+latexmk -pdf short_main.tex
+latexmk -pdf main.tex
+```
