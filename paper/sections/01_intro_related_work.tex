@@ -1,13 +1,13 @@
 \section{Introduction and Related Work}
 
 Technical chemistry search rarely respects a single language boundary: a chemist
-may query in English, German, French, or Spanish while the strongest evidence
-resides in a translated patent family, a regional filing, or a document whose
+may query in English, German, French, or Spanish while relevant evidence resides
+in a multilingual patent publication, a regional filing, or a document whose
 language differs from the query. This is not only a translation problem:
-chemistry retrieval must also separate a compound from chemically similar but
-wrong neighbours. A retriever for a high-trust workflow such as patent search or
-RAG therefore has to do two hard things at once: cross the language barrier and
-resist chemical confusability.
+chemistry retrieval must also distinguish a target compound from chemically
+related but incorrect alternatives. A retriever for a high-trust workflow such as
+patent search or RAG therefore has to do two hard things at once: cross the
+language barrier and resist chemical confusability.
 
 Dense retrieval with neural sentence and passage embeddings
 \citep{reimers2019sentencebert,karpukhin2020dpr} is attractive in this setting
@@ -16,9 +16,10 @@ because multilingual encoders promise a single retrieval index across languages
 and multilingual RAG shows that retrieval behavior can depend strongly on
 language alignment, translation effects, and same-language preference
 \citep{whatdrivesclir2025,crosslingualcost2025,bordirlines2024,xrag2025,nepotism2025}.
-Aggregate Recall@$k$ can therefore overstate readiness when a model succeeds on
-easier same-language matches but misses cross-language evidence or retrieves a
-chemically similar wrong document above the right one.
+Aggregate Recall@$k$ can therefore overstate readiness when strong performance
+on easier same-language matches masks failures to retrieve cross-language
+evidence. It also does not reveal whether chemically related but incorrect
+documents outrank the intended evidence.
 
 Existing benchmark lines cover important parts of this space. General embedding
 and multilingual retrieval benchmarks such as MTEB, MMTEB, MIRACL, NeuCLIR, and
@@ -30,12 +31,13 @@ ChemKGMultiHopQA, and ChEmbed extend evaluation to chemical embeddings, RAG, and
 scientific reasoning
 \citep{chemteb2024,chemlitqa2024,khodadad2026chemcomp,astaraki2026iterativerag,chembed2025}.
 What remains missing is their combination: multilingual chemistry retrieval data
-with controlled technical variants, explicit same-language and cross-language
-relevance judgments, and chemically plausible hard negatives. Chemical ontology
-and alias resources such as ChEBI \citep{chebi2016} provide the structure needed
-to define such hard negatives. This use is complementary to ontology-grounded
-extraction work such as CEAR \citep{cear2024}, which extracts chemical entities
-and roles rather than testing retrieval against chemically related look-alikes.
+with related technical evidence across languages, explicit same-language and
+cross-language relevance judgments, and chemically plausible hard negatives.
+Chemical ontology and alias resources such as ChEBI \citep{chebi2016} provide
+the structure needed to define such hard negatives. This use is complementary to
+ontology-grounded extraction work such as CEAR \citep{cear2024}, which extracts
+chemical entities and roles rather than testing retrieval against chemically
+related look-alikes.
 
 Patents are a practical substrate for this evaluation. Patent retrieval has a
 long evaluation history, including NTCIR and CLEF-IP
@@ -48,10 +50,11 @@ multilingual technical evidence beyond prior-art search alone.
 These gaps motivate X-ChemIR, a patent-grounded benchmark suite for
 cross-lingual chemistry retrieval. Our contributions are: (1) two public QAC
 retrieval releases derived from Google Patents and EPO data, with
-query/document-language metadata, plus an auxiliary alias-graph confusability
-stress test; (2) a reproducible LLM-assisted QAC generation and human-audit
-pipeline; (3) language-aware robustness diagnostics reported next to recall,
-including same- versus cross-language relevance, coverage depth, ranking
-consistency, and cross-language gold position; and (4) an evaluation of eight
-off-the-shelf multilingual embedding models that quantifies cross-lingual
-collapse and chemical-confusion failures.
+query/document-language metadata, plus an auxiliary ontology-based
+chemical-confusability stress test; (2) a reproducible LLM-assisted QAC
+generation and human-audit pipeline; (3) language-aware robustness diagnostics
+reported next to recall, including same- versus cross-language relevance,
+coverage depth, ranking consistency, reading cost, reranker recoverability, and
+alignment-only failures; and (4) an evaluation of eight off-the-shelf
+multilingual embedding models that quantifies cross-lingual degradation and
+chemical-confusion failures.
