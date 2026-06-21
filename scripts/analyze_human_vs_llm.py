@@ -12,10 +12,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 ROOT = Path(__file__).resolve().parents[1]
-HUMAN_XLSX = ROOT / "Evaluated data.xlsx"
-LLM_CSV = ROOT / "balanced_100_qac_regraded.csv"
+# Human annotations cover only a 97-row subset; the agreement metrics are
+# computed on that subset (inner-joined to the LLM grades).
+HUMAN_XLSX = ROOT / "Evaluated data_by_annotator.xlsx"
+LLM_CSV = ROOT / "data" / "google_patents" / "qac" / "qac_chempatents_best.csv"
 OUT_DIR = ROOT / "reports" / "human_eval"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -29,6 +32,89 @@ def bucket(score: float, scale: int) -> str:
     if s10 <= 6:
         return "ok"
     return "good"
+
+
+def icc_two_way(rater_a: np.ndarray, rater_b: np.ndarray, alpha: float = 0.05) -> dict:
+    """Two-rater intra-class correlation (Shrout & Fleiss 1979 / McGraw & Wong
+    1996), single-measurement forms, with 95% CIs.
+
+    - ICC(2,1) = absolute agreement: penalizes systematic rater offset.
+    - ICC(3,1) = consistency: rank/scaling agreement, ignores the offset
+      (≈ Pearson on a paired design); use this to compare against Pearson r.
+
+    Inputs are paired scores for n subjects; they must be on the SAME scale
+    (here: the 0–1 normalized human/LLM percentages). ICC is scale-invariant.
+    """
+    x = np.column_stack([np.asarray(rater_a, float), np.asarray(rater_b, float)])
+    n, k = x.shape  # subjects, raters (k=2)
+
+    grand = x.mean()
+    ss_total = ((x - grand) ** 2).sum()
+    ss_rows = k * ((x.mean(axis=1) - grand) ** 2).sum()      # between subjects
+    ss_cols = n * ((x.mean(axis=0) - grand) ** 2).sum()      # between raters
+    ss_err = ss_total - ss_rows - ss_cols
+
+    msr = ss_rows / (n - 1)
+    msc = ss_cols / (k - 1)
+    mse = ss_err / ((n - 1) * (k - 1))
+
+    icc2 = (msr - mse) / (msr + (k - 1) * mse + (k / n) * (msc - mse))
+    icc3 = (msr - mse) / (msr + (k - 1) * mse)
+
+    # CI for ICC(3,1) — consistency
+    f3 = msr / mse
+    fl = f3 / stats.f.ppf(1 - alpha / 2, n - 1, (n - 1) * (k - 1))
+    fu = f3 * stats.f.ppf(1 - alpha / 2, (n - 1) * (k - 1), n - 1)
+    icc3_lo = (fl - 1) / (fl + (k - 1))
+    icc3_hi = (fu - 1) / (fu + (k - 1))
+
+    # CI for ICC(2,1) — absolute agreement (McGraw & Wong 1996)
+    a = (k * icc2) / (n * (1 - icc2))
+    b = 1 + (k * icc2 * (n - 1)) / (n * (1 - icc2))
+    v = (a * msc + b * mse) ** 2 / (
+        (a * msc) ** 2 / (k - 1) + (b * mse) ** 2 / ((n - 1) * (k - 1))
+    )
+    f_u = stats.f.ppf(1 - alpha / 2, n - 1, v)
+    f_l = stats.f.ppf(1 - alpha / 2, v, n - 1)
+    icc2_lo = (
+        n * (msr - f_u * mse)
+        / (f_u * (k * msc + (k * n - k - n) * mse) + n * msr)
+    )
+    icc2_hi = (
+        n * (f_l * msr - mse)
+        / (k * msc + (k * n - k - n) * mse + n * f_l * msr)
+    )
+
+    return {
+        "n": n,
+        "icc2_1_absolute_agreement": round(float(icc2), 3),
+        "icc2_1_ci95": [round(float(icc2_lo), 3), round(float(icc2_hi), 3)],
+        "icc3_1_consistency": round(float(icc3), 3),
+        "icc3_1_ci95": [round(float(icc3_lo), 3), round(float(icc3_hi), 3)],
+    }
+
+
+def weighted_kappa(a: pd.Series, b: pd.Series, order=("poor", "ok", "good")) -> float:
+    """Linear-weighted Cohen's kappa on ordered categorical buckets.
+
+    Chance-corrected: ~0 means agreement is no better than expected from the
+    marginal rates alone. Collapses toward 0 when one rater has (near-)zero
+    spread across buckets, which the raw agreement % hides.
+    """
+    idx = {c: i for i, c in enumerate(order)}
+    n, m = len(a), len(order)
+    ai = a.map(idx).to_numpy()
+    bi = b.map(idx).to_numpy()
+    obs = np.zeros((m, m))
+    for x, y in zip(ai, bi):
+        obs[x, y] += 1
+    row, col = obs.sum(1), obs.sum(0)
+    exp = np.outer(row, col) / n
+    w = np.array([[abs(i - j) / (m - 1) for j in range(m)] for i in range(m)])
+    denom = (w * exp).sum()
+    if denom == 0:
+        return float("nan")
+    return round(float(1 - (w * obs).sum() / denom), 3)
 
 
 def main() -> None:
@@ -156,6 +242,7 @@ def main() -> None:
         "mean_signed_diff_pct_human_minus_llm": round(
             (joined["human_norm"] - joined["llm_norm"]).mean() * 100, 2
         ),
+        "icc": icc_two_way(joined["human_norm"].to_numpy(), joined["llm_norm"].to_numpy()),
     }
 
     # Per-mode
@@ -179,6 +266,9 @@ def main() -> None:
                 ),
                 "mean_signed_diff_pct": round(
                     (sub["human_norm"] - sub["llm_norm"]).mean() * 100, 2
+                ),
+                "icc": icc_two_way(
+                    sub["human_norm"].to_numpy(), sub["llm_norm"].to_numpy()
                 ),
             }
         )
@@ -221,6 +311,9 @@ def main() -> None:
     summary["bucket_crosstab"] = crosstab.to_dict()
     agree = (joined["human_bucket"] == joined["llm_bucket"]).mean()
     summary["bucket_agreement_pct"] = round(float(agree) * 100, 1)
+    summary["bucket_weighted_kappa"] = weighted_kappa(
+        joined["human_bucket"], joined["llm_bucket"]
+    )
 
     # Save artifacts
     (OUT_DIR / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

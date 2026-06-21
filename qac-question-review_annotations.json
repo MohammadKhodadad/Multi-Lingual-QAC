@@ -1,0 +1,1069 @@
+{
+  "dataset": "qac-question-review",
+  "workspace": "qac-evaluation",
+  "total_records": 20,
+  "records_with_responses": 9,
+  "questions": [
+    "faith_grounding",
+    "faith_precision",
+    "faith_numerical_fidelity",
+    "qual_search_bar_realism",
+    "qual_specificity",
+    "qual_phrasing_economy",
+    "qual_focus",
+    "qual_search_realism",
+    "qual_lexical_distance",
+    "qual_conceptual_framing",
+    "qual_retrievability",
+    "qual_linguistic_quality",
+    "accept",
+    "notes"
+  ],
+  "records": [
+    {
+      "id": "bc1c0644-1a76-4c24-ada8-b7fca6add11d",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "question_type": "structure",
+        "publication_number": "4322294"
+      },
+      "fields": {
+        "question": "Quelle forme a la portion de début de trajectoire de soudage ?",
+        "answer": "de forme ponctuelle ou en forme de queue",
+        "context": "**Mode:** technical  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Question type:** structure",
+        "passage": "**[EN]**\n\nTitle: SECONDARY BATTERY MANUFACTURING METHOD AND SECONDARY BATTERY\n\nFirst claim: A method of manufacturing a secondary battery comprising: inserting a battery assembly into a battery casing; injecting an electrolyte solution into the battery casing; arranging a battery exterior cap with an electrode in an opening of the battery casing; and welding and sealing the battery exterior cap along a circular trajectory, the sealing comprising forming a welding trajectory beginning portion on the battery exterior cap, and performing welding along the circular trajectory from the welding trajectory beginning portion, wherein the welding trajectory beginning portion is spot-shaped or tail-shaped, and characterized in that the spot-shaped or tail-shaped welding trajectory beginning portion is formed on an inner side of the circular welding trajectory of the battery exterior cap.\n\n---\n\n**[DE]**\n\nTitle: VERFAHREN ZUR HERSTELLUNG EINER SEKUNDÄRBATTERIE UND SEKUNDÄRBATTERIE\n\nFirst claim: Verfahren zur Herstellung einer Sekundärbatterie, umfassend: Einführen einer Batterieanordnung in ein Batteriegehäuse; Einspritzen einer Elektrolytlösung in das Batteriegehäuse; Anordnen eines äußeren Batteriedeckels mit einer Elektrode in einer Öffnung des Batteriegehäuses; und Verschweißen und Abdichten des äußeren Batteriedeckels entlang einer kreisförmigen Bahn, wobei das Abdichten das Ausbilden eines Anfangsabschnitts der Schweißbahn an dem äußeren Batteriedeckel und das Durchführen eines Schweißvorgangs entlang der kreisförmigen Bahn von dem Anfangsabschnitt der Schweißbahn aus umfasst, wobei der Anfangsabschnitt der Schweißbahn punktförmig oder schwanzförmig ist, und dadurch gekennzeichnet, dass der punktförmige oder schwanzförmige Anfangsabschnitt der Schweißbahn auf einer Innenseite der kreisförmigen Schweißbahn des äußeren Batteriedeckels gebildet ist.\n\n---\n\n**[FR]**\n\nTitle: PROCÉDÉ DE FABRICATION DE BATTERIE SECONDAIRE ET BATTERIE SECONDAIRE\n\nFirst claim: Procédé de fabrication d'une batterie secondaire comprenant: l'insertion d'un ensemble batterie dans un boîtier de batterie; l'injection, dans le boîtier de batterie, d'une solution électrolytique; la disposition, dans une ouverture du boîtier de batterie, d'un capot extérieur de batterie muni d'une électrode; et le soudage et le scellement du capot extérieur de batterie le long d'une trajectoire circulaire, le scellement comprenant le fait de former, sur le capot extérieur de batterie, une portion de début de trajectoire de soudage, et de réaliser un soudage le long de la trajectoire circulaire à partir de la portion de début de trajectoire de soudage, la portion de début de trajectoire de soudage étant de forme ponctuelle ou en forme de queue, et caractérisé en ce que la portion de début de trajectoire de soudage de forme ponctuelle ou en forme de queue est formée sur un côté interne de la trajectoire de soudage circulaire du capot extérieur de batterie."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_bar_realism",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_specificity",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_phrasing_economy",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_focus",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:15:54.144508",
+          "updated_at": "2026-06-15T19:15:54.144508"
+        }
+      ]
+    },
+    {
+      "id": "c9703038-e6a9-4bfe-a054-16012a123d7a",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "question_type": "structure",
+        "publication_number": "4109587"
+      },
+      "fields": {
+        "question": "Which elements can M be selected from in Li1+aFe1-xMx(PO4-b)Xb?",
+        "answer": "Al, Mg and Ti",
+        "context": "**Mode:** technical  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Question type:** structure",
+        "passage": "**[EN]**\n\nTitle: POSITIVE ELECTRODE FOR LITHIUM SECONDARY BATTERY, AND LITHIUM SECONDARY BATTERY\n\nFirst claim: A positive electrode for a lithium secondary battery, the positive electrode comprising: a first positive electrode mixture layer contacting a positive electrode current collector; and at least one second positive electrode mixture layer arranged on the first positive electrode mixture layer, wherein the first positive electrode mixture layer includes a first positive electrode active material and a first binder, wherein the second positive electrode mixture layer includes a second positive electrode active material and a second binder, and wherein an average particle diameter (Dv50) the first positive electrode active material is smaller than an average particle diameter (Dv50) of the second positive electrode active material and is equal to or less than 3μm, being the average particle diameter (Dv50) measured by laser diffraction method, and a specific surface area (BET) of the first positive electrode active material is equal to or greater than 3m2/g, being the specific surface area (BET) measured by BET (Brunauer-Emmett-Teller) method with nitrogen; wherein the first positive electrode active material contains lithium iron phosphate having an olivine structure, represented by a following chemical formula 2: [Chemical formula 2] Li1+aFe1-xMx(PO4-b)Xb, wherein M is at least one selected from the group consisting of Al, Mg and Ti, X is at least one selected from the group consisting of F, S and N, -0.5≤a≤+0.5, 0≤x≤0.5, and 0≤b≤0.1; wherein an elongation rate of the positive\n\n---\n\n**[DE]**\n\nTitle: POSITIVELEKTRODE FÜR LITHIUMSEKUNDÄRBATTERIE UND LITHIUMSEKUNDÄRBATTERIE\n\nFirst claim: Positive Elektrode für eine Lithium-Sekundärbatterie, die positive Elektrode umfassend: eine erste positive Elektrodenmischung-Schicht, welche einen positiven Elektroden-Stromsammler kontaktiert; und wenigstens eine zweite positive Elektrodenmischung-Schicht, welche an der ersten positiven Elektrodenmischung-Schicht angeordnet ist, wobei die erste positive Elektrodenmischung-Schicht ein erstes positives aktives Elektrodenmaterial und ein erstes Bindemittel umfasst, wobei die zweite positive Elektrodenmischung-Schicht ein zweites positives aktives Elektrodenmaterial und ein zweites Bindemittel umfasst, und wobei ein durchschnittlicher Partikeldurchmesser (Dv50) des ersten positiven aktiven Elektrodenmaterials kleiner als ein durchschnittlicher Partikeldurchmesser (Dv50) des zweiten positiven aktiven Elektrodenmaterials und gleich oder kleiner als 3 μm ist, wobei der durchschnittliche Partikeldurchmesser (Dv50) durch ein Laser-Diffraktionsverfahren gemessen wird, und eine spezifische Oberfläche (BET) des ersten positiven aktiven Elektrodenmaterials gleich oder größer als 3 m2/g ist, wobei die spezifische Oberfläche (BET) durch ein BET (Brunauer-Emmett-Teller)-Verfahren mit Stickstoff gemessen wird; wobei das erste positive aktive Elektrodenmaterial Lithium-Eisen-Phosphat mit einer Olivin-Struktur enthält, welches durch eine folgende chemische Formel 2 repräsentiert ist: [Chemische Formel 2] Li1+aFe1-xMx(PO4-b)Xb, wobei M wenigstens eines ist, ausgewählt aus der Gruppe,\n\n---\n\n**[FR]**\n\nTitle: ÉLECTRODE POSITIVE POUR BATTERIE SECONDAIRE AU LITHIUM ET BATTERIE SECONDAIRE AU LITHIUM\n\nFirst claim: Électrode positive pour une batterie secondaire au lithium, l'électrode positive comprenant: une première couche de mélange d'électrode positive en contact avec un collecteur de courant d'électrode positive; et au moins une deuxième couche de mélange d'électrode positive agencée sur la première couche de mélange d'électrode positive, dans laquelle la première couche de mélange d'électrode positive comporte un premier matériau actif d'électrode positive et un premier liant, dans laquelle la deuxième couche de mélange d'électrode positive comporte un deuxième matériau actif d'électrode positive et un deuxième liant, et dans laquelle un diamètre particulaire moyen (Dv50) du premier matériau actif d'électrode positive est inférieur à un diamètre particulaire moyen (Dv50) du deuxième matériau actif d'électrode positive et est inférieur ou égal à 3 μm, le diamètre particulaire moyen (Dv50) étant mesuré par un procédé de diffraction laser, et une surface spécifique (BET) du premier matériau actif d'électrode positive est supérieure ou égale à 3 m2/g, la surface spécifique (BET) étant mesurée par le procédé BET (Brunauer-Emmett-Teller) avec de l'azote; dans laquelle le premier matériau actif d'électrode positive contient un phosphate de fer et de lithium ayant une structure d'olivine, représenté par une formule chimique 2 suivante: [Formule chimique 2] Li1+aFe1-xMx(PO4-b)Xb, dans laquelle M est au moins l'un sélectionné dans le groupe consistant en Al, Mg et Ti, X est au moins l'un"
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_bar_realism",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_specificity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_phrasing_economy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_focus",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:30:23.172991",
+          "updated_at": "2026-06-15T20:30:23.172991"
+        }
+      ]
+    },
+    {
+      "id": "5d7b5082-734d-460e-a006-0a27d5d1fce3",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "question_type": "outcome",
+        "publication_number": "3847566"
+      },
+      "fields": {
+        "question": "Under what condition is the encrypted command correctly decrypted?",
+        "answer": "the encrypted command being correctly decrypted if the second encryption key corresponds to the first encryption key",
+        "context": "**Mode:** technical  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Question type:** outcome",
+        "passage": "**[EN]**\n\nTitle: METHOD FOR SECURING THE USE OF AN APPARATUS OPERATING WITH AN ACCESSORY OR A CONSUMABLE\n\nFirst claim: A method of controlling a removable peripheral device, comprising: intercepting, by a secure microcircuit (AMC) internal to the peripheral device (P1), a command received by the peripheral device and intended to be executed by a circuit to be controlled (ADV) of the peripheral device, the command being encrypted using a first encryption key (SSK, SKD), performing a mutual authentication procedure between the secure microcircuit and a processor (DMC) of a device (1) in communication with the peripheral device, and if the mutual authentication succeeds: transforming, by the microcircuit, the received command into a command (CMD) executable by the circuit to be controlled, said transformation comprising a decryption of the encrypted command using a second encryption key (SSK, PKD), the encrypted command being correctly decrypted if the second encryption key corresponds to the first encryption key, transmitting, by the microcircuit to the circuit to be controlled, the decrypted command, and executing the decrypted command by the circuit to be controlled.\n\n---\n\n**[DE]**\n\nTitle: VERFAHREN ZUM SICHERN DER NUTZUNG EINES MIT EINEM ZUBEHÖR ODER EINEM VERBRAUCHSMATERIAL ARBEITENDEN GERÄTS\n\nFirst claim: Verfahren zum Steuern eines abnehmbaren Peripheriegeräts, umfassend die Schritte bestehend aus: Abfangen, durch eine interne sichere Mikroschaltung (AMC) des Peripheriegeräts (P1), eines von dem Peripheriegerät empfangenen und zur Ausführung durch eine zu steuernde Schaltung (ADV) des Peripheriegeräts bestimmten Befehls, wobei der Befehl mittels eines ersten Verschlüsselungsschlüssels (SSK, SKD) verschlüsselt ist, Ausführen eines Verfahrens für die gegenseitige Authentifizierung zwischen der sicheren Mikroschaltung und einem Prozessor (DMC) einer Einrichtung (1), die in Kommunikation mit dem Peripheriegerät gebracht ist, und falls die gegenseitige Authentifizierung erfolgreich abgeschlossen wird: Umwandeln, durch die Mikroschaltung, des empfangenen Befehls in einen durch die zu steuernde Schaltung ausführbaren Befehl (CMD), wobei diese Umwandlung eine Entschlüsselung des verschlüsselten Befehls unter Verwendung eines zweiten Verschlüsselungsschlüssels (SSK, PKD) umfasst, wobei der verschlüsselte Befehl korrekt entschlüsselt wird, wenn der zweite Verschlüsselungsschlüssel dem ersten Verschlüsselungsschlüssel entspricht, Übertragen, durch die Mikroschaltung an die zu steuernde Schaltung, des entschlüsselten Befehls, und Ausführen des entschlüsselten Befehls durch die zu steuernde Schaltung.\n\n---\n\n**[FR]**\n\nTitle: PROCEDE DE SECURISATION DE L'UTILISATION D'UN APPAREIL FONCTIONNANT AVEC UN ACCESSOIRE OU UN CONSOMMABLE\n\nFirst claim: Procédé de commande d'un organe périphérique amovible, comprenant des étapes consistant à: intercepter, par un microcircuit sécurisé (AMC) interne de l'organe périphérique (P1), une commande reçue par l'organe périphérique et destinée à être exécutée par un circuit à commander (ADV) de l'organe périphérique, la commande étant chiffrée à l'aide d'une première clé de chiffrement (SSK, SKD), exécuter une procédure d'authentification mutuelle entre le microcircuit sécurisé et un processeur (DMC) d'un appareil (1) placé en communication avec l'organe périphérique, et si l'authentification mutuelle se termine avec succès: transformer, par le microcircuit, la commande reçue en une commande (CMD) exécutable par le circuit à commander, ladite transformation comprenant un déchiffrement de la commande chiffrée en utilisant une seconde clé de chiffrement (SSK, PKD), la commande chiffrée étant correctement déchiffrée si la seconde clé de chiffrement correspond à la première clé de chiffrement, transmettre, par le microcircuit au circuit à commander, la commande déchiffrée, et exécuter la commande déchiffrée par le circuit à commander."
+      },
+      "responses": []
+    },
+    {
+      "id": "cde07988-fdce-4f45-ad6d-31277e502fac",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "de",
+        "context_language": "en,de,fr",
+        "question_type": "material",
+        "publication_number": "3634441"
+      },
+      "fields": {
+        "question": "Welcher Bacillus coagulans-Stamm wird verwendet?",
+        "answer": "Bacillus coagulans MTCC 5856",
+        "context": "**Mode:** technical  \n**Question language:** de  \n**Context language:** en,de,fr  \n**Question type:** material",
+        "passage": "**[EN]**\n\nTitle: SKIN CARE APPLICATIONS OF EXTRACELLULAR METABOLITES FROM BACILLUS COAGULANS\n\nFirst claim: A composition containing partially purified extracellular metabolite preparation from Bacillus coagulans for use in a method of skin protection by a) protecting the skin against UV-A and UV-B induced cell damage and apoptosis, b) reducing oxidative stress in the skin by scavenging ROS and c) reducing inflammation by decreasing the levels of inflammatory markers in the skin, wherein Bacillus coagulans is of strain Bacillus coagulans MTCC 5856.\n\n---\n\n**[DE]**\n\nTitle: HAUTPFLEGEANWENDUNGEN VON EXTRAZELLULÄREN METABOLITEN AUS BACILLUS COAGULANS\n\nFirst claim: Zusammensetzung, die eine teilweise gereinigte extrazelluläre Metabolit-Zubereitung aus Bacillus coagulans enthält, zur Verwendung in einem Verfahren zum Hautschutz durch a) Schutz der Haut vor UV-A- und UV-B-induzierter Zellschädigung und Apoptose, b) Verringerung von oxidativem Stress in der Haut durch Abfangen von ROS und c) Verringerung von Entzündungen durch Verringerung der Spiegel von Entzündungsmarkern in der Haut, wobei Bacillus coagulans vom Stamm Bacillus coagulans MTCC 5856 ist.\n\n---\n\n**[FR]**\n\nTitle: APPLICATIONS DE SOINS DE LA PEAU DE MÉTABOLITES EXTRACELLULAIRES PROVENANT DE BACILLUS COAGULANS\n\nFirst claim: Composition contenant une préparation de métabolite extracellulaire partiellement purifié provenant de Bacillus coagulans destinée à être utilisée dans un procédé de protection cutanée en a) protégeant la peau contre une lésion cellulaire et apoptose induite par UV-A et UV-B, b) réduisant le stress oxydatif dans la peau en piégeant ROS et c) réduisant l'inflammation en diminuant les niveaux de marqueurs inflammatoires dans la peau, dans laquelle Bacillus coagulans est de souche Bacillus coagulans MTCC 5856."
+      },
+      "responses": []
+    },
+    {
+      "id": "0375db2c-4a94-43aa-be2e-8eab8964524b",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "de",
+        "context_language": "en,de,fr",
+        "question_type": "outcome",
+        "publication_number": "3854885"
+      },
+      "fields": {
+        "question": "Welche Kopienzahl von MLIP-AS1 ist ein Hinweis auf Ansprechen auf Prostaglandine?",
+        "answer": "mehr als eine Kopie von MLIP-AS1",
+        "context": "**Mode:** technical  \n**Question language:** de  \n**Context language:** en,de,fr  \n**Question type:** outcome",
+        "passage": "**[EN]**\n\nTitle: PHARMACOGENOMIC SCREENING METHOD FOR ANTICIPATING A PATIENT'S RESPONSE TO THE TREATMENT OF OCULAR HYPERTENSION\n\nFirst claim: An in vitro screening method to determine a patient's response to the treatment of ocular hypertension, comprising the step of: a) determining the copy number of MLIP-AS1 gene in a sample of a biological fluid from a patient; wherein more than one copy of said MLIP-AS1 is an indication that the patient is responder to the treatment with prostaglandins, and wherein less than one copy of said MLIP-AS1 is an indication that the patient is responder to the treatment with β-blockers.\n\n---\n\n**[DE]**\n\nTitle: PHARMAKOGENOMISCHES SCREENING-VERFAHREN ZUR VORHERSATZUNG DER REAKTION EINES PATIENTEN AUF DIE BEHANDLUNG VON AUGENHYPERTENSION\n\nFirst claim: Ein In-vitro-Screeningverfahren zur Bestimmung des Ansprechens eines Patienten auf die Behandlung der okulären Hypertonie, umfassend den Schritt: • (a) Bestimmung der Kopienzahl des MLIP-AS1-Gens in einer Probe einer biologischen Flüssigkeit eines Patienten, wobei mehr als eine Kopie von MLIP-AS1 ein Hinweis darauf ist, dass der Patient auf die Behandlung mit Prostaglandinen anspricht, und wobei weniger als eine Kopie von MLIP-AS1 ein Hinweis darauf ist, dass der Patient auf die Behandlung mit β-Blockern anspricht.\n\n---\n\n**[FR]**\n\nTitle: PROCÉDÉ DE CRIBLAGE PHARMACOGÉNOMIQUE POUR ANTICIPER LA RÉPONSE D'UN PATIENT AU TRAITEMENT DE L'HYPERTENSION OCULAIRE\n\nFirst claim: Procédé de dépistage in vitro permettant de déterminer la réponse d'un patient au traitement de l'hypertension oculaire, comprenant les étapes suivantes: a) déterminer le nombre de copies du gène MLIP-AS1 dans un échantillon de fluide biologique provenant d'un patient; dans lequel la présence de plus d'une copie dudit MLIP-AS1 est une indication que le patient répond au traitement par les prostaglandines, et dans lequel la présence de moins d'une copie dudit MLIP-AS1 est une indication que le patient répond au traitement par les β-bloquants."
+      },
+      "responses": []
+    },
+    {
+      "id": "3b0934f8-5db2-4900-9c7a-be5452a8cd4b",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "question_type": "parameter_or_condition",
+        "publication_number": "3602003"
+      },
+      "fields": {
+        "question": "Comment la seconde distance se compare-t-elle à la première distance ?",
+        "answer": "la seconde distance étant supérieure à la première distance,",
+        "context": "**Mode:** technical  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Question type:** parameter_or_condition",
+        "passage": "**[EN]**\n\nTitle: APPARATUSES, SYSTEMS AND METHODS FOR IMAGING FLOW CYTOMETRY\n\nFirst claim: A system (100, 200,300,400, 500), comprising: a flow channel (220, 320, 420, 520). the flow channel having an inlet, and the flow channel defining a flow path for fluid communicated therethrough; a first optical train comprising a first illumination source (102, 202, 302, 402, 502) and a first detection module (104, 204,306,404, 504), the first detection module being disposed so as to receive a signal related to illumination of a first region (290a. 390a. 490a. 590a) of the flow channel by the first illumination source, the first region being located at a first distance from the inlet of the flow channel; a second optical train comprising a second illumination source (106, 206, 304, 406, 460, 5505, 555) and a second detection module (110, 210, 308, 408, 560), the second detection module being disposed so as to receive a signal related to illumination of a second region (290b, 390b, 490b, 590b) of the flow channel by the second illumination source, the second region being located at a second distance from the inlet of the flow channel, the second distance being greater from the first distance, wherein at least one of the first detection module and the second detection module comprises an image detector, wherein within the flow channel a particle transits from a first position (380a) within the first region (390a) to a second position (380b) within the second region (390b), wherein the system comprises a first flowrate modulator (350) and a second flowrate modulator (352),\n\n---\n\n**[DE]**\n\nTitle: VORRICHTUNG, SYSTEM UND VERFAHREN FÜR BILDGEBUNGSDURCHFLUSSZYTOMETRIE\n\nFirst claim: System (100, 200, 300, 400, 500), umfassend: einen Flusskanal (220, 320, 420, 520), wobei der Flusskanal einen Einlass aufweist, und wobei der Flusskanal einen Flussweg für durch ihn geleitete Fluid definiert; einen ersten optischen Strahlengang, der eine erste Beleuchtungsquelle (102, 202, 302, 402, 502) und ein erstes Detektionsmodul (104, 204, 306, 404, 504) umfasst, wobei das erste Detektionsmodul so angeordnet ist, dass es ein Signal empfängt, das sich auf Beleuchtung eines ersten Bereichs (290a, 390a, 490a, 590a) des Flusskanals durch die erste Beleuchtungsquelle bezieht, wobei sich der erste Bereich in einem ersten Abstand vom Einlass des Flusskanals befindet; einen zweiten optischen Strahlengang, der eine zweite Beleuchtungsquelle (106, 206, 304, 406, 460, 5505, 555) und ein zweites Detektionsmodul (110, 210, 308, 408, 560) umfasst, wobei das zweite Detektionsmodul so angeordnet ist, dass es ein Signal empfängt, das sich auf Beleuchtung eines zweiten Bereichs (290b, 390b, 490b, 590b) des Flusskanals durch die zweite Beleuchtungsquelle bezieht, wobei sich der zweite Bereich in einem zweiten Abstand vom Einlass des Flusskanals befindet, wobei der zweite Abstand größer als der erste Abstand ist, wobei mindestens eines von dem ersten Detektionsmodul und dem zweiten Detektionsmodul einen Bilddetektor umfasst, wobei ein Partikel innerhalb des Flusskanals von einer ersten Position (380a) innerhalb des ersten Bereichs (390a) zu einer zweiten Position (380b) innerhalb des\n\n---\n\n**[FR]**\n\nTitle: APPAREIL, SYSTÈME ET PROCÉDÉ POUR CYTOMÉTRIE DE FLUX PAR IMAGERIE\n\nFirst claim: Système (100, 200, 300, 400, 500), comprenant: un canal d'écoulement (220, 320, 420, 520). le canal d'écoulement ayant une entrée, et le canal d'écoulement définissant une voie d'écoulement pour un fluide qui le traverse; un premier train optique comprenant une première source d'éclairage (102, 202, 302, 402, 502) et un premier module de détection (104, 204, 306, 404, 504), le premier module de détection étant disposé de manière à recevoir un signal relatif à un éclairage d'une première région (290a, 390a, 490a, 590a) du canal d'écoulement par la première source d'éclairage, la première région étant située à une première distance de l'entrée du canal d'écoulement; un second train optique comprenant une seconde source d'éclairage (106, 206, 304, 406, 460, 5505, 555) et un second module de détection (110, 210, 308, 408, 560), le second module de détection étant disposé de manière à recevoir un signal se rapportant à un éclairage d'une seconde région (290b, 390b, 490b, 590b) du canal d'écoulement par la seconde source d'éclairage, la seconde région étant située à une seconde distance de l'entrée du canal d'écoulement, la seconde distance étant supérieure à la première distance, dans lequel au moins l'un parmi le premier module de détection et le second module de détection comprend un détecteur d'image, dans lequel, à l'intérieur du canal d'écoulement, une particule transite d'une première position (380a) à l'intérieur de la première région (390a) à une seconde position (380b) à"
+      },
+      "responses": []
+    },
+    {
+      "id": "8304bd5a-99f6-41d3-a967-0b4f0f7bccd1",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "de",
+        "context_language": "en,de,fr",
+        "question_type": "parameter_or_condition",
+        "publication_number": "3835063"
+      },
+      "fields": {
+        "question": "Welchen WVTR-Koeffizienten hat der Stapel?",
+        "answer": "einen WVTR-Koeffizienten von strikt unter 5,10-2 g.-2.Tag-1",
+        "context": "**Mode:** technical  \n**Question language:** de  \n**Context language:** en,de,fr  \n**Question type:** parameter_or_condition",
+        "passage": "**[EN]**\n\nTitle: HIGHLY GAS-BARRIERED STACK, ESPECIALLY FOR PHOTOVOLTAIC CELLS\n\nFirst claim: A highly gas-barrier stack (10), having a WVTR coefficient strictly less than 5x10-2 g.-2.day-1, having a total thickness of less than 150μm and comprising two gas barrier films (11, 13) separated by a gas-barrier adhesive layer (12), the gas barrier adhesive layer being in direct contact with the two gas barrier films, the gas barrier adhesive layer (12) being made of poly(epoxy), poly(acrylate) or poly(methacrylate) and containing additives, such as absorbers and/or passive fillers, the gas barrier adhesive layer (12) having a water permeability less than 2 g.mm.nr-2.day-1 and a water diffusion coefficient D less than 1x10-6 mm2 day-1.\n\n---\n\n**[DE]**\n\nTitle: HOCHGRADIG GASUNDURCHLÄSSIGER STAPEL, INSBESONDERE FÜR PHOTOVOLTAISCHE ZELLEN\n\nFirst claim: Stapelung (10) mit hoher Gasbarriere, die einen WVTR-Koeffizienten von strikt unter 5,10-2 g.-2.Tag-1 aufweist, eine Gesamtdicke von weniger als 150 μm aufweist und zwei Gasbarrierefolien (11, 13) umfasst, die durch eine Gasbarriere-Klebeschicht (12) getrennt sind, wobei die Gasbarriere-Klebeschicht in direktem Kontakt mit den beiden Gasbarrierefolien steht, wobei die Gasbarriere-Klebeschicht (12) aus Poly(epoxid), Poly(acrylat) oder Poly(methacrylat) besteht und Additive wie Absorber und/oder passive Füllstoffe enthält, wobei die Gasbarriere-Klebeschicht (12) eine Wasserdurchlässigkeit von weniger als 2 g.mm.nr-2.Tag-1 und einen Wasserdiffusionskoeffizienten D von weniger als 1,10-6 mm2 Tag-1 aufweist.\n\n---\n\n**[FR]**\n\nTitle: EMPILEMENT HAUTEMENT BARRIERE AUX GAZ NOTAMMENT POUR CELLULES PHOTOVOLTAIQUES\n\nFirst claim: Empilement (10) hautement barrière aux gaz, présentant un coefficient WVTR strictement inférieur à 5.10-2 g.-2.jour-1, ayant une épaisseur totale inférieure à 150μm et comprenant deux films barrières aux gaz (11, 13) séparés par une couche adhésive barrière aux gaz (12), la couche adhésive barrière aux gaz étant en contact direct avec les deux films barrière au gaz, la couche adhésive barrière aux gaz (12) étant en poly(époxy), en poly(acrylate) ou en poly(méthacrylate) et contient des additifs, tels que des absorbeurs et/ou des charges passives, la couche adhésive barrière aux gaz (12) ayant une perméabilité à l'eau inférieure à 2 g.mm.m-2.jour-1 et un coefficient de diffusion à l'eau D inférieur à 1.10-6 mm2 jour-1."
+      },
+      "responses": []
+    },
+    {
+      "id": "3a7b69c8-24d5-4379-a634-6e956395d726",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "question_type": "material",
+        "publication_number": "4402440"
+      },
+      "fields": {
+        "question": "Quel élément du doseur est muni d'un rail (25,75) ?",
+        "answer": "le récipient (2,54) étant pour sa part muni d'un rail (25,75) qui en dépasse",
+        "context": "**Mode:** technical  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Question type:** material",
+        "passage": "**[EN]**\n\nTitle: GRAVIMETRIC DOSING UNIT FOR FLOWABLE BULK MATERIAL\n\nFirst claim: Gravimetric dosing unit for bulk materials, with at least one weighing device (14,68), with a suspension (12) and with a dosing device (2,55) which has a container (3,54) for the bulk material to be dosed and a base unit (4,73) which has a conveyor for the bulk material that is not arranged vertically, whereby the container (3,54) and base unit (4,73) being detachable from one another for maintenance purposes, and with a frame (16,64) on which the at least one weighing device (14,68) is arranged, on which in turn the dosing device (2,55) is operatively supported via the suspension (12) in such a way that the dosing unit (1,50) is designed for gravimetric dosing, characterised in that the suspension (12) is connected to the container (3,54) of the dosing unit (2,55) and supports it via its container (2,54), the container (2,54) in turn is provided with a rail (25,75) projecting away from it, and that the base unit (4,73) has a support structure (28,83) running on the rail (25,75) in such a way that it can be moved back and forth between an operating position and a maintenance position.\n\n---\n\n**[DE]**\n\nTitle: GRAVIMETRISCHE DOSIEREINHEIT FÜR FLIESSFÄHIGES SCHÜTTGUT\n\nFirst claim: Gravimetrische Dosiereinheit für Schüttgüter, mit wenigstens einer Waage (14,68), mit einer Aufhängung (12) und mit einem Dosierer (2,55), der einem Behälter (3,54) für zu dosierendes Schüttgut und eine Basiseinheit (4,73), die einen nicht vertikal angeordneten Förderer für das Schüttgut aufweist, wobei Behälter (3,54) und Basiseinheit (4,73) für die Wartung von einander lösbar sind, und mit einem Rahmen (16,64), an dem die wenigstens eine Waage (14,68) angeordnet ist, auf der wiederum über die Aufhängung (12) der Dosierer (2,55) betriebsfähig abgestützt ist, derart, dass die Dosiereinheit (1,50) für gravimetrische Dosierung ausgebildet ist, dadurch gekennzeichnet, dass die Aufhängung (12) mit dem Behälter (3,54) des Dosierers (2,55) verbunden ist und diesen über seinen Behälter (2,54) trägt, der Behälter (2,54) seinerseits mit einer von ihm weg ragenden Schiene (25,75) versehen ist, und dass die Basiseinheit (4,73) ein an der Schiene (25,75) laufendes Tragwerk (28, 83) aufweist, derart, dass sie zwischen einer Betriebsposition und einer Wartungsposition hin- und her bewegt werden kann.\n\n---\n\n**[FR]**\n\nTitle: UNITÉ DE DOSAGE GRAVIMÉTRIQUE POUR MATIÈRES EN VRAC FLUIDES\n\nFirst claim: Unité de dosage gravimétrique pour produits en vrac, comprenant au moins une balance (14,68) avec une suspension (12) et avec un doseur (2,55) qui comprend un récipient (3,54) pour le produit en vrac à doser et une unité de base (4,73) qui présente un convoyeur non disposé verticalement pour le produit en vrac, le récipient (3,54) et l'unité de base (4,73) pouvant être séparés l'un de l'autre pour la maintenance, et avec un châssis (16,64) sur lequel est disposée au moins une balance (14,68) sur laquelle, à son tour, le doseur (2,55) est supporté de manière opérationnelle via la suspension (12), de telle sorte que l'unité de dosage (1,50) est conçue pour le dosage gravimétrique, caractérisé en ce que la suspension (12) est reliée au récipient (3,54) du doseur (2,55) et le supporte par l'intermédiaire de son récipient (2,54), le récipient (2,54) étant pour sa part muni d'un rail (25,75) qui en dépasse, et en ce que l'unité de base (4,73) comporte une structure porteuse (28,83) se déplaçant sur le rail (25,75), de telle sorte qu'elle peut être déplacée entre une position de fonctionnement et une position de maintenance."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_bar_realism",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_specificity",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_phrasing_economy",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_focus",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:54:08.133607",
+          "updated_at": "2026-06-15T19:54:08.133607"
+        }
+      ]
+    },
+    {
+      "id": "eb3c4ded-d40e-4182-aeb0-558a9e99f7e3",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "question_type": "parameter_or_condition",
+        "publication_number": "2828317"
+      },
+      "fields": {
+        "question": "What range is given for n in -H2C-CHRb-(CH2)n-O-(C2H4O)p-(C3H6O)q-(C4H8O)r-X?",
+        "answer": "n is 1 to 20;",
+        "context": "**Mode:** technical  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Question type:** parameter_or_condition",
+        "passage": "**[EN]**\n\nTitle: HYDROPHILIC SILICONE MONOMERS, PROCESS FOR PREPARATION THEREOF AND THIN FILMS CONTAINING THE SAME\n\nFirst claim: A hydrogel composition comprising at least one silicone acrylamide monomer, the silicone acrylamide monomer having a formula as set forth in Formulas (I) or (II) below: R3Si-O-[Si(R)(Z)O]a-[SiR2O]b-SiR3 (I) wherein a is 1 to 50; b is 0 to 100; each R is independently selected from the group comprising of a monovalent aliphatic, cycloaliphatic, or aromatic hydrocarbon group of 1 to 10 carbons, a halogenated hydrocarbon group of 1 to 10 carbons, and a radical comprising 1 to 50 silicon atoms, or a trialkylsilyloxy group and Z is a polyether moiety having a non-isomerizable hydrosilylation effective terminal olefinic residue having Formula (III): -H2C-CHRb-(CH2)n-O-(C2H4O)p-(C3H6O)q-(C4H8O)r-X (III) wherein n is 1 to 20; p and q are independently 0 to 100; r is 0 to 50, and (p + q + r) is greater than 0; Rb is an alkyl group having from 1 to 4 carbon atoms, X is a polyether-capping group having the formula: or wherein L is wherein s is an integer from 0 to 15, and R3 and R4 independently are either hydrogen or a substituted or unsubstituted saturated monovalent hydrocarbon group of 1 to 20 carbons or -COOH or -CH2-COOH.\n\n---\n\n**[DE]**\n\nTitle: HYDROPHILE SILIKONMONOMERE, VERFAHREN ZUR HERSTELLUNG DAVON UND DÜNNSCHICHTEN DAMIT\n\nFirst claim: Eine Hydrogelzusammensetzung, die mindestens ein Silikonacrylamidmonomer umfasst, wobei das Silikonacrylamidmonomer eine Formel hat, wie sie in den Formeln (I) oder (II) unten angegeben ist: R3Si-O-[Si(R)(Z)O]a-[SiR2O]b-SiR3 (I) worin a 1 bis 50 ist; b 0 bis 100 ist; jedes R in unabhängiger Weise aus der Gruppe ausgewählt ist, die eine einwertige aliphatische, cycloaliphatische oder aromatische Kohlenwasserstoffgruppe mit 1 bis 10 Kohlenstoffatomen, eine halogenierte Kohlenwasserstoffgruppe mit 1 bis 10 Kohlenstoffatomen, und einen 1 bis 50 Siliciumatome umfassenden Rest, oder eine Trialkylsilyloxygruppe umfasst, und Z eine Polyethereinheit mit einem nicht isomerisierbaren, für die Hydrosilylierung geeigneten terminalen olefinischen Rest mit der Formel (III) ist: -H2C-CHRb-(CH2)n-O-(C2H4O)p-(C3H6O)q-(C4H8O)r-X (III) worin n 1 bis 20 ist; p und q unabhängig voneinander 0 bis 100 sind; r 0 bis 50 ist, und (p + q + r) größer als 0 ist; Rb eine Alkylgruppe mit 1 bis 4 Kohlenstoffatomen ist, X eine Polyether-Kappgruppe ist, die die Formel oder hat, worin L ist, worin s eine ganze Zahl von 0 bis 15 ist, und R3 und R4 in voneinander unabhängiger Weise entweder Wasserstoff oder eine substituierte oder unsubstituierte gesättigte einwertige Kohlenwasserstoffgruppe mit 1 bis 20 Kohlenstoffen oder -COOH oder -CH2-COOH sind.\n\n---\n\n**[FR]**\n\nTitle: MONOMÈRES DE SILICONE HYDROPHILES, LEUR PROCÉDÉ DE PRÉPARATION ET FILMS MINCES LES CONTENANT\n\nFirst claim: Une composition d'hydrogel comprenant au moins un monomère d'acrylamide de silicone, le monomère d'acrylamide de silicone ayant une formule telle que définie dans les formules (I) ou (II) ci-dessous: R3Si-O-[Si(R)(Z)O]a-[SiR2O]b-SiR3 (I) dans lesquelles a est de 1 à 50; b est de 0 à 100; chaque R est indépendamment choisi dans le groupe comprenant un groupe d'hydrocarbures aliphatiques, cycloaliphatiques ou aromatiques monovalents de 1 à 10 carbones, un groupe d'hydrocarbures halogénés de 1 à 10 carbones, et un radical comprenant 1 à 50 atomes de silicium, ou un groupe trialkylsilyloxy, et Z est un groupement polyéther ayant un résidu oléfinique terminal non-isomérisable efficace par hydrosilylation ayant la formule (III): -H2C-CHRb-(CH2)n-O-(C2H4O)p-(C3H6O)q-(C4H8O)r-X (III) dans laquelle n est compris entre 1 et 20; p et q sont indépendamment compris entre 0 et 100; r est compris entre 0 et 50, et (p + q + r) est supérieur à 0; Rb est un groupe alkyle ayant de 1 à 4 atomes de carbone, X est un groupe polyéther-capuchon ayant la formule: ou dans laquelle L est, dans laquelle s est un nombre entier de 0 à 15, et R3 et R4 sont indépendamment soit de l'hydrogène, soit un groupe d'hydrocarbures monovalents saturés substitués ou non substitués de 1 à 20 carbones, soit - COOH ou -CH2-COOH."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_bar_realism",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_specificity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_phrasing_economy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_focus",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:26:35.039712",
+          "updated_at": "2026-06-15T21:26:35.039712"
+        }
+      ]
+    },
+    {
+      "id": "09e282d4-0f9a-4b01-9f2f-545791e1b25a",
+      "metadata": {
+        "mode": "technical",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "question_type": "material",
+        "publication_number": "4106028"
+      },
+      "fields": {
+        "question": "X1 est choisi parmi quels éléments ?",
+        "answer": "X1 est choisi parmi O, S, NAr1a;",
+        "context": "**Mode:** technical  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Question type:** material",
+        "passage": "**[EN]**\n\nTitle: ORGANIC ELECTRONIC DEVICE COMPRISING A COMPOUND OF FORMULA (I), DISPLAY DEVICE COMPRISING THE ORGANIC ELECTRONIC DEVICE AS WELL AS COMPOUNDS OF FORMULA (I)\n\nFirst claim: A benzo diphenyl fluorene compound, represented by formula (I): wherein Ar4 is represented by formula (Ia) or (Ib), wherein the asterix \"*\" denotes the binding position of (Ia) and (Ib), and wherein Ar =Ar1 and Ar1 is selected from substituted or unsubstituted C6 to C24 aryl, or substituted or unsubstituted C3 to C25 heteroaryl, at least one substituent on Ar1 is selected from C1 to C6 alkyl, C6 to C12 aryl, C3 to C12 heteroaryl; Ra, Rb, Rc and Rd are independently selected from H, C1 to C6 alkyl, C6 to C18 aryl, and C2 to C18 heteroaryl, and one of the Ra, Rb, Rc or Rd represents a single bond that bonds to N of formula (I), optional two of adjacent substituents selected from the group of Ra, Rb. Rc and Rd form a substituted or unsubstituted condensed ring system, wherein at least one substituent on the condensed ring system is independently selected from C1 to C6 alkyl, C6 to C12 aryl, and C2 to C12 heteroaryl; Re, Rf, Rg, and Rh are independently selected from H, C1 to C6 alkyl, C6 to C18 aryl, and C2 to C18 heteroaryl; X1 is selected from O, S, NAr1a; Ar1a is selected from C6 to C12 aryl; or Ar =Ar2 and Ar2 is selected from C6 to C12 aryl or C2 to C25 heteroaryl; Ra2, Rb2, Rc2 and Rd2 are independently selected from H, C1 to C6 alkyl, C6 to C18 aryl, and C2 to C18 heteroaryl, and one of the Ra2, Rb2, Rc2 or Rd2 represents a single bond that bonds to N of formula (I), optional two of adjacent substituents selected from the group of Ra2, Rb2, Rc2 and Rd2 form a substituted\n\n---\n\n**[DE]**\n\nTitle: ORGANISCHE ELEKTRONISCHE VORRICHTUNG MIT EINER VERBINDUNG DER FORMEL (I), ANZEIGEVORRICHTUNG MIT DER ORGANISCHEN ELEKTRONISCHEN VORRICHTUNG SOWIE VERBINDUNGEN DER FORMEL (I)\n\nFirst claim: Benzodiphenylfluorenverbindung, wiedergegeben durch Formel (I): wobei Ar4 durch Formel (Ia) oder (Ib) wiedergegeben wird, wobei das Sternchen \"*\" die Anbindungsposition von (Ia) und (Ib) bezeichnet und wobei Ar = Ar1 und Ar1 aus substituiertem oder unsubstituiertem C6- bis C24-Aryl oder substituiertem oder unsubstituiertem C3- bis C25-Heteroaryl ausgewählt ist, mindestens ein Substituent an Ar1 aus C1- bis C6-Alkyl, C6- bis C12-Aryl und C3- bis C12-Heteroaryl ausgewählt ist; Ra, Rb, Rc und Rd unabhängig aus H, C1- bis C6-Alkyl, C6- bis C18-Aryl und C2- bis C18-Heteroaryl ausgewählt sind und eines von Ra, Rb, Rc oder Rd für eine Einfachbindung steht, die an N der Formel (I) bindet, und gegebenenfalls zwei benachbarte Substituenten aus der Gruppe von Ra, Rb, Rc und Rd ein substituiertes oder unsubstituiertes kondensiertes Ringsystem bilden, wobei mindestens ein Substituent an dem kondensierten Ringsystem unabhängig aus C1- bis C6-Alkyl, C6- bis C12-Aryl und C2- bis C12-Heteroaryl ausgewählt ist; Re, Rf, Rg und Rh unabhängig aus H, C1- bis C6-Alkyl, C6- bis C18-Aryl und C2- bis C18-Heteroaryl ausgewählt sind; X1 aus O, S, NAr1a ausgewählt ist; Ar1a aus C6- bis C12-Aryl ausgewählt ist; oder Ar = Ar2 und Ar2 aus C6- bis C12-Aryl oder C2- bis C25-Heteroaryl ausgewählt ist; Ra2, Rb2 Rc2 und Rd2 unabhängig aus H, C1- bis C6-Alkyl, C6- bis C18-Aryl und C2- bis C18-Heteroaryl ausgewählt sind und eines von Ra2, Rb2, Rc2 oder Rd2 für eine Einfachbindung steht, die an N der Formel (I)\n\n---\n\n**[FR]**\n\nTitle: DISPOSITIF ÉLECTRONIQUE ORGANIQUE COMPRENANT UN COMPOSÉ DE FORMULE (I), DISPOSITIF D'AFFICHAGE COMPRENANT LE DISPOSITIF ÉLECTRONIQUE ORGANIQUE, AINSI QUE COMPOSÉS DE FORMULE (I)\n\nFirst claim: Composé benzodiphénylfluorène, représenté par la formule (I): Ar4 étant représenté par la formule (Ia) ou (Ib), l'astérisque « * » désignant la position de liaison de (Ia) et (Ib), et dans lesquelles Ar = Ar1 et Ar1 est choisi parmi C6 à C24 aryle substitué ou non substitué, ou C3 à C25 hétéroaryle substitué ou non substitué, au moins un substituant sur Ar1 est choisi parmi C1 à C6 alkyle, C6 à C12 aryle, C3 à C12 hétéroaryle; Ra, Rb, Rc et Rd sont indépendamment choisis parmi H, C1 à C6 alkyle, C6 à C18 aryle, et C2 à C18 hétéroaryle, et l'un parmi le Ra, Rb, Rc ou Rd représente une simple liaison qui se lie à N de la formule (I), éventuellement deux des substituants adjacents choisis dans le groupe de Ra, Rb, Rc et Rd forment un système cyclique condensé substitué ou non substitué, au moins un substituant sur le système cyclique condensé étant indépendamment choisi parmi C1 à C6 alkyle, C6 à C12 aryle, et C2 à C12 hétéroaryle; Re, Rf, Rg, et Rh sont indépendamment choisis parmi H, C1 à C6 alkyle, C6 à C18 aryle, et C2 à C18 hétéroaryle; X1 est choisi parmi O, S, NAr1a; Ar1a est choisi parmi C6 à C12 aryle; ou Ar = Ar2 et Ar2 est choisi parmi C6 à C12 aryle ou C2 à C25 hétéroaryle; Ra2, Rb2 Rc2 et Rd2 sont indépendamment choisis parmi H, C1 à C6 alkyle, C6 à C18 aryle, et C2 à C18 hétéroaryle, et l'un parmi le Ra2, Rb2, Rc2 ou Rd2 représente une simple liaison qui se lie à N de la formule (I), éventuellement deux des substituants adjacents choisis dans le groupe de Ra2,"
+      },
+      "responses": []
+    },
+    {
+      "id": "8bba5da3-b965-42af-a784-0c566f047aaa",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "de",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "4327072"
+      },
+      "fields": {
+        "question": "Wie wird eine präzise und gleichzeitig lösbare Befestigung des Gehäuses an einem Einsatzort, etwa an der Außenwand eines Prozessraums, realisiert?",
+        "answer": "wobei das Gehäuse (20) eine mechanische Schnittstelle (50) zur lagegenauen lösbaren Befestigung des Gehäuses (20) an einem Einsatzort, insbesondere an einer Außenwand (81) eines Prozessraums (80), aufweist",
+        "context": "**Mode:** semantic  \n**Question language:** de  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: HOUSING FOR A MEASURING ARRANGEMENT FOR THE OPTICAL DETERMINATION OF A PARAMETER OF A MEDIUM\n\nFirst claim: Housing (20) for receiving components (81, 82, 83, 84) of a measuring arrangement (80) for optical determination of at least one characteristic of a medium, wherein the housing (20) comprises a component carrier (38) for the fastening of the components (81, 82, 83, 84) and at least one inlet/outlet region (40) for the entry and/or exit of optical radiation, wherein the housing (20) has a mechanical interface (50) for the positionally precise and releasable fastening of the housing (20) at a place of use, in particular on an outer wall (81) of a process space (80), characterized in that the housing (20) is designed in at least two parts and comprises an upper shell (22) and a lower shell (23), and a seal (29) is provided between the upper shell (22) and the lower shell (23), the seal (29) being secured against loss by means of locking screws (102).\n\n---\n\n**[DE]**\n\nTitle: GEHÄUSE FÜR EINE MESSANORDNUNG ZUR OPTISCHEN BESTIMMUNG EINER KENNGRÖSSE EINES MEDIUMS\n\nFirst claim: Gehäuse (20) zur Aufnahme von Komponenten (81, 82, 83, 84) einer Messanordnung (80) zur optischen Bestimmung mindestens einer Kenngröße eines Mediums, wobei das Gehäuse (20) einen Komponententräger (38) zur Befestigung der Komponenten (81, 82, 83, 84) und mindestens einen Ein-/Austrittsbereich (40) zum Ein- und/oder Austritt optischer Strahlung umfasst, wobei das Gehäuse (20) eine mechanische Schnittstelle (50) zur lagegenauen lösbaren Befestigung des Gehäuses (20) an einem Einsatzort, insbesondere an einer Außenwand (81) eines Prozessraums (80), aufweist dadurch gekennzeichnet, dass das Gehäuse (20) mindestens zweiteilig ausgestaltet ist und eine Oberschale (22) und eine Unterschale (23) umfasst und zwischen der Oberschale (22) und der Unterschale (23) eine Dichtung (29) vorgesehen ist, wobei die Dichtung (29) mittels Sicherungsschrauben (102) gegen Verlust gesichert ist.\n\n---\n\n**[FR]**\n\nTitle: BOÎTIER POUR UN AGENCEMENT DE MESURE POUR LA DÉTERMINATION OPTIQUE D'UN PARAMÈTRE D'UN MILIEU\n\nFirst claim: Boîtier (20) destiné à recevoir des composants (81, 82, 83, 84) d'un ensemble de mesure (80) destiné à déterminer visuellement au moins un paramètre caractéristique d'un milieu, le boîtier (20) comprenant un support de composant (38) destiné à fixer les composants (81, 82, 83, 84) et au moins une zone d'entrée/sortie (40) pour l'entrée et/ou la sortie d'un rayonnement optique, le boîtier (20) comportant une interface mécanique (50) destinée à fixer de manière amovible et avec une précision de position le boîtier (20) sur un emplacement d'utilisation, en particulier sur un mur extérieur (81) d'un local de traitement (80), caractérisé en ce que le boîtier (20) est configuré au moins en deux parties et comprend une coque supérieure (22) et une coque inférieure (23) et un joint d'étanchéité (29) est prévu entre la coque supérieure (22) et la coque inférieure (23), le joint d'étanchéité (29) étant bloqué pour éviter toute perte au moyen de vis de blocage (102)."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_realism",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_lexical_distance",
+          "value": 2,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_conceptual_framing",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_retrievability",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        },
+        {
+          "user": "amirreza",
+          "question": "notes",
+          "value": "Faithful and useful, but the question reuses too much wording from the passage and sounds somewhat patent-like.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:05:26.834210",
+          "updated_at": "2026-06-15T20:05:26.834210"
+        }
+      ]
+    },
+    {
+      "id": "5298be4d-ee7c-46c4-902b-69e449789c38",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "4043106"
+      },
+      "fields": {
+        "question": "What substrate type and surface composition does this film-forming process target when the material must resist liquid penetration?",
+        "answer": "the target coating material (102) includes a non-permeable substrate and a layer that is provided on the non-permeable substrate, the layer having particles as a main component.",
+        "context": "**Mode:** semantic  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: FILM FORMING METHOD AND FILM FORMING APPARATUS\n\nFirst claim: A film forming method for forming a film on a target coating material (102), the method comprising: a coating step of coating a target coating material (102) by discharging liquid from each of a plurality of discharge heads (103) that are arranged in a conveyance direction (10) of the target coating material (102) to be conveyed, wherein, in the coating step, the liquid discharged from each of the plurality of discharge heads (103) is applied to a different location on the target coating material in the conveyance direction (10), characterized in that the target coating material (102) includes a non-permeable substrate and a layer that is provided on the non-permeable substrate, the layer having particles as a main component.\n\n---\n\n**[DE]**\n\nTitle: FILMAUSBILDUNGSVERFAHREN UND FILMAUSBILDUNGSVORRICHTUNG\n\nFirst claim: Verfahren zum Bilden einer Schicht auf einem Zielbeschichtungsmaterial (102), wobei das Verfahren umfasst: einen Beschichtungsschritt zum Beschichten eines Zielbeschichtungsmaterials (102) durch Ausstoßen von Flüssigkeit aus jedem einer Vielzahl von Ausstoßköpfen (103), die in einer Förderrichtung (10) des zu fördernden Zielbeschichtungsmaterials (102) angeordnet sind, wobei in dem Beschichtungsschritt die aus jedem der mehreren Ausstoßköpfe (103) ausgestoßene Flüssigkeit an einer anderen Stelle auf dem Zielbeschichtungsmaterial in der Förderrichtung (10) aufgebracht wird, dadurch gekennzeichnet, dass das Zielbeschichtungsmaterial (102) ein undurchlässiges Substrat und eine auf dem undurchlässigen Substrat vorgesehene Schicht umfasst, wobei die Schicht Partikel als Hauptkomponente aufweist.\n\n---\n\n**[FR]**\n\nTitle: PROCÉDÉ ET APPAREIL DE FORMATION DE FILM\n\nFirst claim: Procédé de formation d'un film sur un matériau cible à revêtir (102), le procédé comprenant: une étape de revêtement consistant à revêtir un matériau cible à revêtir (102) par éjection d'un liquide par chaque tête d'une pluralité de têtes d'éjection (103) qui sont agencées dans une direction de transport (10) du matériau cible à revêtir (102) à transporter; le liquide éjecté par chacune des têtes d'éjection (103) étant appliqué, au cours de l'étape de revêtement, à un emplacement différent sur le matériau cible à revêtir dans la direction de transport (10); caractérisé en ce que le matériau cible à revêtir (102) comprend un substrat non perméable et une couche qui est prévue sur le substrat non perméable, la couche ayant des particules comme composant principal."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_realism",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_lexical_distance",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_conceptual_framing",
+          "value": 2,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_retrievability",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "no",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T20:12:15.462701",
+          "updated_at": "2026-06-15T20:12:15.462701"
+        }
+      ]
+    },
+    {
+      "id": "2c1a8dcf-4b76-4f25-ae35-ba50c87bb669",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "4187683"
+      },
+      "fields": {
+        "question": "Comment la structure de l'ailette empêche-t-elle le contact direct entre ses parties pour maintenir un espace d'air isolant ?",
+        "answer": "une couche d'air (AL) est formée entre la première partie (310), la deuxième partie (320) et la troisième partie (330)",
+        "context": "**Mode:** semantic  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: BATTERY MODULE AND MANUFACTURING METHOD OF THE SAME\n\nFirst claim: A battery module (100) comprising: a battery cell stack (200) in which a plurality of battery cells (110) are stacked; and a cooling fin (300) located between the battery cells (110), characterized in that the cooling fin (300) is one metal plate and comprises a first portion (310) facing one of the battery cells (110), a second portion (320) facing the other of the battery cells (110), and a third portion (330) located between the first portion (310) and the second portion (320) in a superimposed state, wherein an air layer (AL) is formed between the first portion (310), the second portion (320) and the third portion (330), and wherein a first bending portion (BD1) connecting the first portion (310) and the second portion (320) is formed, and a second bending portion (BD2) connecting the second portion (320) and the third portion (330) is formed, so that the first portion (310), the second portion (320) and the third portion (330) are superimposed on each other.\n\n---\n\n**[DE]**\n\nTitle: BATTERIEMODUL UND HERSTELLUNGSVERFAHREN DAFÜR\n\nFirst claim: Batteriemodul (100), umfassend: einen Batteriezellenstapel (200), in welchem eine Mehrzahl von Batteriezellen (110) gestapelt ist; und eine Kühlrippe (300), welche zwischen den Batteriezellen (110) angeordnet ist, dadurch gekennzeichnet, dass die Kühlrippe (300) eine Metallplatte ist und einen ersten Abschnitt (310), welcher einer der Batteriezellen (110) zugewandt ist, einen zweiten Abschnitt (320), welcher der anderen der Batteriezellen (110) zugewandt ist, und einen dritten Abschnitt (330) umfasst, welcher zwischen dem ersten Abschnitt (310) und dem zweiten Abschnitt (320) in einem überlagerten Zustand angeordnet ist, wobei eine Luftschicht (AL) zwischen dem ersten Abschnitt (310), dem zweiten Abschnitt (320) und dem dritten Abschnitt (330) ausgebildet ist, und wobei ein erster Biegeabschnitt (BD1), welcher den ersten Abschnitt (310) und den zweiten Abschnitt (320) verbindet, ausgebildet ist, und ein zweiter Biegeabschnitt (BD2), welcher den zweiten Abschnitt (320) und den dritten Abschnitt (330) verbindet, ausgebildet ist, so dass der erste Abschnitt (310), der zweite Abschnitt (320) und der dritte Abschnitt (330) einander überlagert sind.\n\n---\n\n**[FR]**\n\nTitle: MODULE DE BATTERIE ET SON PROCÉDÉ DE FABRICATION\n\nFirst claim: Module de batterie (100) comprenant: un empilement d'éléments de batterie (200) dans lequel une pluralité d'éléments de batterie (110) sont empilés; et une ailette de refroidissement (300) située entre les éléments de batterie (110), caractérisé en ce que l'ailette de refroidissement (300) est une plaque métallique et comprend une première partie (310) faisant face à l'un des éléments de batterie (110), une deuxième partie (320) faisant face à l'autre des éléments de batterie (110) et une troisième partie (330) située entre la première partie (310) et la deuxième partie (320) dans un état superposé, dans lequel une couche d'air (AL) est formée entre la première partie (310), la deuxième partie (320) et la troisième partie (330), et dans lequel une première partie de pliage (BD1) reliant la première partie (310) et la deuxième partie (320) est formée, et une deuxième partie de pliage (BD2) reliant la deuxième partie (320) et la troisième partie (330) est formée, de sorte que la première partie (310), la deuxième partie (320) et la troisième partie (330) soient superposées les unes sur les autres."
+      },
+      "responses": []
+    },
+    {
+      "id": "05c2db29-0306-47b6-b606-0e80504bd1b6",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "de",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "3530728"
+      },
+      "fields": {
+        "question": "Wie lässt sich die Herstellung peripherer Nervenzellen so gestalten, dass auf Feederzellen verzichtet wird und die Zellen während der Umwandlung nicht vom Kulturträger gelöst werden müssen?",
+        "answer": "(a') Kultivieren der undifferenzierten Zellen ... durch Adhäsionskultur ohne Verwendung von Feederzellen in einem Kulturgefäß, das mit einem Material mit Zelladhäsionseigenschaften beschichtet ist, bis die Dichte der Kolonien der undifferenzierten Zellen im Kulturgefäß etwa 50 % erreicht; (a) Kultivieren der undifferenzierten Zellen ... um eine Differenzierung zu neuralen Vorläuferzellen zu induzieren, ohne die undifferenzierten Zellen aus dem Kulturgefäß zu lösen;",
+        "context": "**Mode:** semantic  \n**Question language:** de  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: METHOD FOR PRODUCING PERIPHERAL NERVE CELLS\n\nFirst claim: A method for manufacturing peripheral nerve cells from undifferentiated cells having an ability to differentiate into peripheral nerve cells, the method comprising, in this order, the following steps (a'), (a) and (b): (a') culturing the undifferentiated cells having an ability to differentiate into peripheral nerve cells by adherent culture without using feeder cells in a culture vessel coated with a material having cell adhesion properties until the density of colonies of undifferentiated cells reaches about 50% in the culture vessel, wherein the undifferentiated cells having an ability to differentiate into peripheral nerve cells are iPS cells; (a) culturing the undifferentiated cells having an ability to differentiate into peripheral nerve cells to induce differentiation into neural progenitor cells without detaching the undifferentiated cells from the culture vessel; and (b) detaching the neural progenitor cells produced in the step (a) from the culture vessel, then seeding the cells at a seeding density of 2×105 to 6×105 cells/cm2 to a culture vessel coated with the same scaffold material as that used in the step (a), and culturing the cells for 14 to 42 days, wherein a medium for the culturing in the step (b) includes NGF.\n\n---\n\n**[DE]**\n\nTitle: VERFAHREN ZUR HERSTELLUNG VON PERIPHEREN NERVENZELLEN\n\nFirst claim: Verfahren zur Herstellung peripherer Nervenzellen aus undifferenzierten Zellen, die eine Fähigkeit besitzen, sich zu peripheren Nervenzellen zu differenzieren, wobei das Verfahren in dieser Reihenfolge die folgenden Schritte (a'), (a) und (b) umfasst: (a') Kultivieren der undifferenzierten Zellen, die eine Fähigkeit besitzen, sich zu peripheren Nervenzellen zu differenzieren, durch Adhäsionskultur ohne Verwendung von Feederzellen in einem Kulturgefäß, das mit einem Material mit Zelladhäsionseigenschaften beschichtet ist, bis die Dichte der Kolonien der undifferenzierten Zellen im Kulturgefäß etwa 50 % erreicht, wobei die undifferenzierten Zellen, die die Fähigkeit besitzen, sich zu peripheren Nervenzellen zu differenzieren, iPS-Zellen sind; (a) Kultivieren der undifferenzierten Zellen, die eine Fähigkeit besitzen, sich zu peripheren Nervenzellen zu differenzieren, um eine Differenzierung zu neuralen Vorläuferzellen zu induzieren, ohne die undifferenzierten Zellen aus dem Kulturgefäß zu lösen; und (b) Ablösen der in Schritt (a) erzeugten neuralen Vorläuferzellen vom Kulturgefäß, anschließendes Ausplattieren der Zellen mit einer Ausplattierungsdichte von 2×105 bis 6×105 Zellen/cm2 in ein Kulturgefäß, das mit demselben Gerüstmaterial beschichtet ist wie das in Schritt (a) verwendete, und Kultivieren der Zellen für 14 bis 42 Tage, wobei ein Medium für die Kultivierung in Schritt (b) NGF enthält.\n\n---\n\n**[FR]**\n\nTitle: PROCÉDÉ DE PRODUCTION DE CELLULES DE NERF PÉRIPHÉRIQUE\n\nFirst claim: Procédé de fabrication de cellules de nerf périphérique à partir de cellules indifférenciées ayant la capacité de se différencier en cellules de nerf périphérique, le procédé comprenant, dans cet ordre, les étapes (a'), (a) et (b) suivantes: (a') la culture des cellules indifférenciées ayant la capacité de se différencier en cellules de nerf périphérique par culture adhérente sans utiliser de cellules nourricières dans un récipient de culture revêtu d'un matériau présentant des propriétés d'adhérence cellulaire jusqu'à ce que la densité de colonies de cellules indifférenciées atteigne environ 50 % dans le récipient de culture, dans lequel les cellules indifférenciées ayant la capacité de se différencier en cellules de nerf périphérique sont des cellules iPS; (a) la culture des cellules indifférenciées ayant la capacité de se différencier en cellules de nerf périphérique pour induire la différenciation en cellules progénitrices neuronales sans détacher les cellules indifférenciées du récipient de culture; et (b) le détachement des cellules progénitrices neuronales produites à l'étape (a) du récipient de culture, l'ensemencement des cellules à une densité d'ensemencement de 2×105 à 6×105 cellules/cm2 dans un récipient de culture revêtu du même matériau d'échafaudage que celui utilisé à l'étape (a), et la culture des cellules pendant 14 à 42 jours, dans lequel un milieu pour la culture à l'étape (b) comporte un NGF."
+      },
+      "responses": []
+    },
+    {
+      "id": "72d9a852-6145-486a-9beb-c2b5f40850fc",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "3",
+        "strategy_name": "random_existing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "3999056"
+      },
+      "fields": {
+        "question": "What disease condition is this two-compound therapy intended to prevent and treat?",
+        "answer": "THE PREVENTION AND TREATMENT OF CANCER",
+        "context": "**Mode:** semantic  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: PHARMACEUTICAL COMBINATION AND ITS USE IN THE PREVENTION AND TREATMENT OF CANCER\n\nFirst claim: A pharmaceutical combination comprising: substance M, wherein the substance M is a pharmaceutically acceptable salt thereof or a solvate thereof; and substance N, wherein the substance N is a pharmaceutically acceptable salt thereof or a solvate thereof\n\n---\n\n**[DE]**\n\nTitle: PHARMAZEUTISCHE KOMBINATION UND IHRE VERWENDUNG ZUR VORBEUGUNG UND BEHANDLUNG VON KREBS\n\nFirst claim: Pharmazeutische Kombination, umfassend: eine Substanz M, wobei die Substanz M, ein pharmazeutisch annehmbares Salz davon oder ein Solvat davon ist; und eine Substanz N, wobei die Substanz N ein pharmazeutisch annehmbares Salz davon oder ein Solvat davon ist.\n\n---\n\n**[FR]**\n\nTitle: COMBINAISON PHARMACEUTIQUE ET SON UTILISATION POUR LA PRÉVENTION ET LE TRAITEMENT DU CANCER\n\nFirst claim: Combinaison pharmaceutique comprenant: une substance M, dans laquelle la substance M est un sel pharmaceutiquement acceptable de celle-ci ou un solvate de celle-ci; et une substance N, dans laquelle la substance N est un sel pharmaceutiquement acceptable de celle-ci ou un solvate de celle-ci."
+      },
+      "responses": []
+    },
+    {
+      "id": "0f319745-8f41-4f23-975e-a6475cf04c5b",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "de",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "3856696"
+      },
+      "fields": {
+        "question": "Wie lässt sich eine transparente Matrix so formulieren, dass sie nur sehr geringe Mengen an anorganischen Streupartikeln (im Bereich von 0,1 ppm bis 100 ppm) enthält?",
+        "answer": "Zusammensetzung C1, umfassend: a) ein transparentes Material M1 und b) anorganische Partikel P1, ... wobei die Zusammensetzung C1 zwischen 0,1 ppm und 100 ppm, bezogen auf das Gewicht der anorganischen Partikel P1 in der Zusammensetzung C1, berechnet auf die Komponenten a) und b., umfasst.",
+        "context": "**Mode:** semantic  \n**Question language:** de  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: COMPOSITION COMPRISING SCATTERING PARTICLES\n\nFirst claim: A composition C1 comprising: a) a transparent material M1 and, b) inorganic particles P1 comprising an inorganic compound either of the formula ABxC1-xX3, wherein x is from 0 to 1 and A, B, and C are cations and X is an anion; or inorganic particles P1 comprising an inorganic compound of the formula A'1-yA\"yCX3, wherein y is from 0 to 1 and A', A\", and C are cations and X is an anion; or inorganic particles P1 comprising an inorganic compound of the formula A'1-yA\"yBxC1-xX3, wherein x is from 0 to 1, y is from 0 to 1 and A', A\", B, and C are cations and X is an anion; said particles are having a weight average particle diameter between 1nm and 1μm, the measuring method being disclosed in the description, wherein the composition C1 comprises between 0.1ppm and 100ppm by weight of the inorganic particles P1 in the composition C1 calculated on the components a) and b).\n\n---\n\n**[DE]**\n\nTitle: ZUSAMMENSETZUNG MIT LICHTSTREUENDEN PARTIKELN\n\nFirst claim: Zusammensetzung C1, umfassend: a) ein transparentes Material M1 und b) anorganische Partikel P1, die eine anorganische Verbindung entweder der Formel ABxC1-xX3 umfassen, wobei x von 0 bis 1 ist und A, B und C Kationen sind und X ein Anion ist; oder anorganische Partikel P1, die eine anorganische Verbindung der Formel A'1-y A\"yCX3 umfassen, wobei y von 0 bis 1 ist und A', A\" und C Kationen sind und X ein Anion ist; oder anorganische Partikel P1, die eine anorganische Verbindung der Formel A'1-yA\"yBxC1-xX3 umfassen, wobei x von 0 bis 1 ist, y von 0 bis 1 ist und A', A\", B und C Kationen sind und X ein Anion ist; wobei die Partikel einen gewichtsmittleren Partikeldurchmesser zwischen 1 nm und 1 μm aufweisen, wobei das Messverfahren in der Beschreibung offenbart ist, wobei die Zusammensetzung C1 zwischen 0,1 ppm und 100 ppm, bezogen auf das Gewicht der anorganischen Partikel P1 in der Zusammensetzung C1, berechnet auf die Komponenten a) und b), umfasst.\n\n---\n\n**[FR]**\n\nTitle: COMPOSITION COMPRENANT DES PARTICULES DIFFUSANTES\n\nFirst claim: Composition C1 comprenant: a) un matériau transparent M1, et b) des particules inorganiques P1 comprenant un composé inorganique répondant à la formule ABxC1-xX3, où x vaut de 0 à 1 et A, B et C sont des cations et X est un anion; ou des particules inorganiques P1 comprenant un composé inorganique répondant à la formule A'1-yA\"yCX3, où y vaut de 0 à 1 et A', A\" et C sont des cations et X est un anion; ou des particules inorganiques P1 comprenant un composé inorganique répondant à la formule A'1-yA\"yBxC1-xX3, où x vaut de 0 à 1, y vaut de 0 à 1 et A', A\", B et C sont des cations et X est un anion; lesdites particules ayant un diamètre moyen en poids compris entre 1 nm et 1 μm, la méthode de mesure étant décrite dans la description, la composition C1 comprenant entre 0,1 ppm et 100 ppm en poids de particules inorganiques P1 dans la composition C1 d'après un calcul effectué sur les composants a) et b)."
+      },
+      "responses": []
+    },
+    {
+      "id": "7ddbacca-74d0-4f47-ae60-4a0f4b96fa3c",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "framing": "solution",
+        "publication_number": "4276075"
+      },
+      "fields": {
+        "question": "How does the system use alternating illumination and optical feedback to decide when to initiate sterilization of the flow channel?",
+        "answer": "alternately operate the first light source (210) to emit the first light and the second light source (220) to emit the second light, receive a first signal from the first optical sensor (230) while the first light source (210) emits the first light, control the valve (140) and the electrodes to sterilize the flow path (90) based on the first signal",
+        "context": "**Mode:** semantic  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Framing:** solution",
+        "passage": "**[EN]**\n\nTitle: PURIFICATION APPARATUS AND CONTROL METHOD THEREOF\n\nFirst claim: A filtration apparatus (1) comprising: a flow path (90); a valve (140) provided on the flow path (90); a first light source (210) configured to emit a first light comprising ultraviolet, UV light toward the flow path (90); a second light source (220) configured to emit a second light comprising visible light or infrared light toward the flow path (90); a first optical sensor (230) located out of a path of the first light and the second light; electrodes provided on the flow path (90); and a processor (190) electrically coupled to the valve (140), the first light source (210), the second light source (220), the first optical sensor (230) and the electrodes, and configured to: alternately operate the first light source (210) to emit the first light and the second light source (220) to emit the second light, receive a first signal from the first optical sensor (230) while the first light source (210) emits the first light, control the valve (140) and the electrodes to sterilize the flow path (90) based on the first signal, receive, while the second light source (220) emits the second light, a second signal from the first optical sensor (230) and/or a third signal from a second optical sensor (240) located on a path of the first light and the second light, and control the valve (140) to clean the flow path (90) based on the second signal and/or the third signal.\n\n---\n\n**[DE]**\n\nTitle: REINIGUNGSVORRICHTUNG UND STEUERUNGSVERFAHREN DAFÜR\n\nFirst claim: Reinigungsvorrichtung (1), umfassend: einen Strömungspfad (90); ein Ventil (140), das an dem Strömungspfad (90) vorgesehen ist; eine erste Lichtquelle (210), die eingerichtet ist, ein erstes Licht, das ultraviolettes Licht, UV-Licht, umfasst, in Richtung des Strömungspfads (90) zu emittieren; eine zweite Lichtquelle (220), die eingerichtet ist, ein zweites Licht, das sichtbares Licht oder Infrarotlicht umfasst, in Richtung des Strömungspfads (90) zu emittieren; einen ersten optischen Sensor (230), der sich außerhalb eines Pfads des ersten Lichts und des zweiten Lichts befindet; Elektroden, die an dem Strömungspfad (90) vorgesehen sind; und einen Prozessor (190), der mit dem Ventil (140), der ersten Lichtquelle (210), der zweiten Lichtquelle (220), dem ersten optischen Sensor (230) und den Elektroden elektrisch gekoppelt ist und eingerichtet ist, zum: abwechselnden Betreiben der ersten Lichtquelle (210), um das erste Licht zu emittieren, und der zweiten Lichtquelle (220), um das zweite Licht zu emittieren, Empfangen eines ersten Signals von dem ersten optischen Sensor (230), während die erste Lichtquelle (210) das erste Licht emittiert, Steuern des Ventils (140) und der Elektroden, um den Strömungspfad (90) bezogen auf das erste Signal zu sterilisieren, Empfangen, während die zweite Lichtquelle (220) das zweite Licht emittiert, eines zweiten Signals von dem ersten optischen Sensor (230) und/oder eines dritten Signals von einem zweiten optischen Sensor (240), der sich auf\n\n---\n\n**[FR]**\n\nTitle: APPAREIL DE PURIFICATION ET SON PROCÉDÉ DE COMMANDE\n\nFirst claim: Appareil de filtration (1) comprenant: un passage d'écoulement (90); une vanne (140) prévue sur le passage d'écoulement (90); une première source lumineuse (210) configurée pour émettre une première lumière comprenant de la lumière ultraviolet UV vers le passage d'écoulement (90); une seconde source lumineuse (220) configurée pour émettre une seconde lumière comprenant de la lumière visible ou de la lumière infrarouge vers le passage d'écoulement (90); un premier capteur optique (230) situé en dehors d'un trajet de la première lumière et de la seconde lumière; des électrodes prévues sur le passage d'écoulement (90); et un processeur (190) connecté électriquement à la vanne (140), à la première source lumineuse (210), à la seconde source lumineuse (220), au premier capteur optique (230) et aux électrodes, et configuré pour: manipuler de manière alternative la première source lumineuse (210) à émettre la première lumière et la seconde source lumineuse (220) à émettre la seconde lumière, recevoir un premier signal à partir du premier capteur optique (230) lorsque la première source lumineuse (210) émet la première lumière, commander la vanne (140) et les électrodes à stériliser le passage d'écoulement (90) sur la base du premier signal, recevoir, lorsque la seconde source lumineuse (220) émet la seconde lumière, un deuxième signal à partir du premier capteur optique (230) et/ou un troisième signal à partir d'un second capteur optique (240) situé sur un trajet de la première"
+      },
+      "responses": []
+    },
+    {
+      "id": "004cb902-2b44-48f4-bba5-d8562ded182f",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "framing": "solution",
+        "publication_number": "3926328"
+      },
+      "fields": {
+        "question": "Comment les spectres mesurés à différentes excitations sont-ils combinés pour former un profil exploitable en longueurs d'onde ?",
+        "answer": "une unité de liaison (131) configurée pour générer un spectre de fluorescence lié en liant au moins des parties de la pluralité de spectres de fluorescence les unes aux autres dans une direction de longueur d'onde;",
+        "context": "**Mode:** semantic  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Framing:** solution",
+        "passage": "**[EN]**\n\nTitle: INFORMATION PROCESSING DEVICE AND MICROSCOPE SYSTEM\n\nFirst claim: An information processing apparatus (100) comprising: a fluorescence signal acquisition unit (112) configured to acquire a plurality of fluorescence spectra corresponding to each of a plurality of excitation lights having different wavelengths and irradiated to a reagent fluorescence stained specimen (30), the reagent fluorescence stained specimen being created by staining a specimen (20) with a fluorescence reagent (10); a link unit (131) configured to generate a linked fluorescence spectrum by linking at least parts of the plurality of fluorescence spectra to each other in a wavelength direction; a first color separation unit (1321a) configured to separate the linked fluorescence spectrum into spectra for every fluorescent substance by executing color separation processing using a reference spectrum including a linked autofluorescence reference spectrum in which spectra of autofluorescent substances in the specimen (20) are linked to each other in the wavelength direction and a linked fluorescence reference spectrum in which the spectra of the reagent fluorescent substances of the fluorescence reagent (10) in the reagent fluorescence stained specimen (30) are linked to each other in the wavelength direction; characterized by: an extraction unit (1322) configured to update the linked autofluorescence reference spectrum using the spectra for every fluorescent substance separated by the first color separation unit; and a second color separation unit (1321b) configured tc\n\n---\n\n**[DE]**\n\nTitle: INFORMATIONSVERARBEITUNGSVORRICHTUNG UND MIKROSKOPISCHES SYSTEM\n\nFirst claim: Informationsverarbeitungseinrichtung (100), umfassend: eine Fluoreszenzsignal-Erfassungseinheit (112), die konfiguriert ist, um eine Vielzahl von Fluoreszenzspektren zu erfassen, die jeweils einer Vielzahl von Anregungslichtern mit unterschiedlichen Wellenlängen entsprechen und auf eine reagenzfluoreszenzgefärbte Probe (30) gestrahlt werden, wobei die reagenzfluoreszenzgefärbte Probe durch Färben einer Probe (20) mit einem Fluoreszenzreagenz (10) erstellt wird; eine Verknüpfungseinheit (131), die konfiguriert ist, um ein verknüpftes Fluoreszenzspektrum durch Verknüpfen mindestens von Teilen der Vielzahl von Fluoreszenzspektren miteinander in einer Wellenlängenrichtung zu erzeugen; eine erste Farbtrennungseinheit (1321a), die konfiguriert ist, um das verknüpfte Fluoreszenzspektrum durch Ausführen einer Farbtrennungsverarbeitung unter Verwendung eines Referenzspektrums einschließlich eines verknüpften Autofluoreszenz-Referenzspektrums, in dem Spektren von autofluoreszierenden Substanzen in der Probe (20) in Wellenlängenrichtung miteinander verknüpft sind, und eines verknüpften Fluoreszenz-Referenzspektrums, in dem die Spektren der reagenzfluoreszierenden Substanzen des Fluoreszenzreagenz (10) in der reagenzfluoreszenzgefärbten Probe (30) in Wellenlängenrichtung miteinander verknüpft sind, in Spektren für jede fluoreszierende Substanz zu trennen; gekennzeichnet durch: eine Extraktionseinheit (1322), die konfiguriert ist, um das verknüpfte Autofluoreszenz-Referenzspektrum unter\n\n---\n\n**[FR]**\n\nTitle: DISPOSITIF DE TRAITEMENT D'INFORMATIONS ET SYSTÈME DE MICROSCOPE\n\nFirst claim: Appareil de traitement d'informations (100) comprenant: une unité d'acquisition de signal de fluorescence (112) configurée pour acquérir une pluralité de spectres de fluorescence correspondant à chacune parmi une pluralité de lumières d'excitation ayant des longueurs d'onde différentes et irradiées sur un échantillon coloré par fluorescence de réactif (30), l'échantillon coloré par fluorescence de réactif étant créé par coloration d'un échantillon (20) avec un réactif de fluorescence (10); une unité de liaison (131) configurée pour générer un spectre de fluorescence lié en liant au moins des parties de la pluralité de spectres de fluorescence les unes aux autres dans une direction de longueur d'onde; une première unité de séparation de couleurs (1321a) configurée pour séparer le spectre de fluorescence lié, en spectres pour chaque substance fluorescente en exécutant un traitement de séparation de couleurs à l'aide d'un spectre de référence comportant un spectre de référence d'autofluorescence lié dans lequel des spectres de substances autofluorescentes dans l'échantillon (20) sont liés les uns aux autres dans la direction de longueur d'onde et un spectre de référence de fluorescence lié dans lequel les spectres des substances fluorescentes de réactif du réactif de fluorescence (10) dans l'échantillon coloré par fluorescence de réactif (30) sont liés les uns aux autres dans la direction de longueur d'onde; caractérisé par: une unité d'extraction (1322) configurée pour mettre"
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_realism",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_lexical_distance",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_conceptual_framing",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_retrievability",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:07:13.350855",
+          "updated_at": "2026-06-15T22:07:13.350855"
+        }
+      ]
+    },
+    {
+      "id": "74b98846-4551-4e4a-bdc0-38d995e57aba",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "fr",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "3887359"
+      },
+      "fields": {
+        "question": "Comment la conception garantit-elle la présence d'un traceur fluoré pour l'imagerie in vivo ?",
+        "answer": "dans lequel l'un parmi R1 à R5 est 18F",
+        "context": "**Mode:** semantic  \n**Question language:** fr  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: NOVEL TETRAZINE COMPOUNDS FOR IN VIVO IMAGING\n\nFirst claim: A tetrazine compound having the following formula I: wherein one of R1-R5 is 18F, at least two of the remaining R1-R5 are H, and the other remaining R1-R5 are the same or different and are selected from H, alkyl, halogen, - CF3, -CN, -O-alkyl, -S-alkyl, -NH-alkyl, -N(alkyl)2, -NH(C=O)-alkyl, -N-alkyl-(C=O)-alkyl, -SO2-alkyl, -SO2-NH2, -SO2-NHalkyl, -SO2-N(alkyl)2 -C(=O)-NH2, -C(=O)-NH-alkyl, -C(=O)-N(alkyl)2, -C(=O)-OH, - C(=O)-O-alkyl, -CH2-NH2, -CH2-NH-alkyl, -OH, CH2-O-alkyl, CH2-O-aryl, CH2-O-phenyl, CH2-O-naphthyl, wherein n is an integer from 1 to 4, and R6 is selected from H, CH3, phenyl, wherein the curly bond indicates the link to the tetrazine moiety.\n\n---\n\n**[DE]**\n\nTitle: NEUARTIGE TETRAZINVERBINDUNGEN FÜR IN-VIVO-BILDGEBUNG\n\nFirst claim: Eine Tetrazinverbindung mit der folgenden Formel I: wobei eines von R1-R5 18F ist, mindestens zwei der verbleibenden R1-R5 H sind und die anderen verbleibenden R1-R5 gleich oder unterschiedlich sind und ausgewählt sind aus H, Alkyl, Halogen, -CF3, -CN, - O-Alkyl, -S-Alkyl, -NH-Alkyl, -N(Alkyl)2, -NH(C=O)-Alkyl, -N-Alkyl-(C=O)-Alkyl, -SO2-Alkyl, -SO2-NH2, -SO2-NH-Alkyl, -SO2-N(Alkyl)2 -C(=O)-NH2, -C(=O)-NH-Alkyl, -C(=O)-N(Alkyl)2, -C(=O)-OH, -C(=O)-O-Alkyl, -CH2-NH2, -CH2-NH-Alkyl, -OH, CH2-O-Alkyl, CH2-O-Aryl, CH2-O-Phenyl, CH2-O-Naphthyl, wobei n eine ganze Zahl von 1 bis 4 ist, und R6 ausgewählt ist aus H, CH3, Phenyl, wobei die geschwungene Bindung die Verbindung zum Tetrazinrest angibt.\n\n---\n\n**[FR]**\n\nTitle: NOUVEAUX COMPOSÉS DE TÉTRAZINE POUR L'IMAGERIE IN VIVO\n\nFirst claim: Composé de tétrazine ayant la formule I suivante: dans lequel l'un parmi R1 à R5 est 18F, au moins deux parmi les R1 à R5 restants sont H, et les autres R1 à R5 restants sont identiques ou différents et sont sélectionnés parmi H, alkyle, halogène, -CF3, -CN, -O-alkyle, -S-alkyle, -NH-alkyle, -N(alkyle)2, -NH(C=O)-alkyle, -N-alkyle-(C=O)-alkyle, -SO2-alkyle, -SO2-NH2, -SO2-NHalkyle, -SO2-N(alkyle)2 -C(=O)-NH2, -C(=O)-NH-alkyle, - C(=O)-N(alkyle)2, -C(=O)-OH, -C(=O)-O-alkyle, -CH2-NH2, -CH2-NH-alkyle, -OH, CH2-O-alkyle, CH2-O-aryle, CH2-O-phényle, CH2-O-naphtyle, dans lequel n est un nombre entier de 1 à 4, et R6 est sélectionné parmi H, CH3, phényle, dans lequel la liaison ondulée indique le lien avec le groupement tétrazine."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_realism",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_lexical_distance",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_conceptual_framing",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_retrievability",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T21:44:11.927353",
+          "updated_at": "2026-06-15T21:44:11.927353"
+        }
+      ]
+    },
+    {
+      "id": "2307e4a1-09e8-4b1e-bbd5-8db5d20e78f4",
+      "metadata": {
+        "mode": "semantic",
+        "strategy": "2",
+        "strategy_name": "random_missing",
+        "question_language": "en",
+        "context_language": "en,de,fr",
+        "framing": "problem",
+        "publication_number": "3747538"
+      },
+      "fields": {
+        "question": "How can one photoreactor be adapted to accept different shaped reaction vessels for either static samples or flowing media?",
+        "answer": "a set of holding elements (36) for holding differently configured reaction vessels (30) for the static reception of a medium and/or for the dynamic guidance of a medium,",
+        "context": "**Mode:** semantic  \n**Question language:** en  \n**Context language:** en,de,fr  \n**Framing:** problem",
+        "passage": "**[EN]**\n\nTitle: PHOTOREACTOR AND PHOTOREACTOR SYSTEM WITH PHOTOREACTOR\n\nFirst claim: A photoreactor system comprising - a set of holding elements (36) for holding differently configured reaction vessels (30) for the static reception of a medium and/or for the dynamic guidance of a medium, and - a photoreactor (10) for radiation-induced reactions in the medium, which has a sleeve-like base body (14) extending along an axis (12), a plurality of LED lighting bodies (24), which are arranged on the inner circumference (26) of the sleeve-like base body (14) circumferentially around the axis (12), and a free space (28) circumferentially surrounded by the LED lighting bodies (24) for at least one of the reaction vessels (30), wherein each of the holding elements (36) from the set of holding elements (36) is detachably attachable for holding the at least one reaction vessel (30) into the free space (28) via a bayonet locking mechanism (42) at one end (16) of the base body (14), and wherein the photoreactor (10) has a compressed air cooling device (50, 52, 54) for the LED lighting bodies (24) that operates with air as the cooling fluid, with cooling channels for the cooling fluid formed in the sleeve-like base body (14).\n\n---\n\n**[DE]**\n\nTitle: PHOTOREAKTOR UND PHOTOREAKTORSYSTEM MIT PHOTOREAKTOR\n\nFirst claim: Photoreaktorsystem mit - einem Satz von Halteelementen (36) zum Halten von unterschiedlich ausgestalteten Reaktionsgefäßen (30) für die statische Aufnahme eines Mediums und/oder die dynamische Führung eines Mediums und - einem Photoreaktor (10) für strahleninduzierte Reaktionen in dem Medium, der einen sich entlang einer Achse (12) erstreckenden hülsenartigen Grundkörper (14), eine Mehrzahl von LED-Beleuchtungskörpern (24), die am Innenumfang (26) des hülsenartigen Grundkörpers (14) umfänglich um die Achse (12) herum angeordnet sind und einen von den LED-Beleuchtungskörpern (24) umfänglich umgebenen Freiraum (28) für mindestens eines der Reaktionsgefäße (30) aufweist, wobei ein jedes der Halteelemente (36) aus dem Satz von Halteelementen (36) zum Halten des mindestens einen Reaktionsgefäßes (30) in den Freiraum (28) hinein über einen Bajonett-Verschlussmechanismus (42) an einem Ende (16) des Grundkörpers (14) lösbar befestigbar ist, und wobei der Photoreaktor (10) eine mit Luft als Kühlfluid arbeitende Druckluft-Kühleinrichtung (50, 52, 54) für die LED-Beleuchtungskörper (24) mit im hülsenartigen Grundkörper (14) ausgebildeten Kühlkanälen für das Kühlfluid aufweist.\n\n---\n\n**[FR]**\n\nTitle: PHOTORÉACTEUR ET SYSTÈME DE PHOTORÉACTEUR POURVU DE PHOTORÉACTEUR\n\nFirst claim: Système de photoréacteur avec - un ensemble d'éléments de maintien (36) destiné à maintenir des récipients de réaction (30) de configuration différente pour la réception statique d'un milieu et/ou le guidage dynamique d'un milieu, et - un photoréacteur (10) pour des réactions induites par rayonnement dans le milieu, lequel comporte un corps principal (14) en forme de manchon s'étendant le long d'un axe (12), une multitude de corps d'éclairage à DEL (24), qui sont disposés tout autour de l'axe (12) en périphérie sur la périphérie intérieure (26) du corps principal (14) en forme de manchon et un espace libre (28) pour au moins un des récipients de réaction (30) entouré en périphérie par les corps d'éclairage à DEL (24), chacun des éléments de maintien (36) de l'ensemble d'éléments de maintien (36) destiné à maintenir l'au moins un récipient de réaction (30) dans l'espace libre (28) pouvant être fixé de manière amovible sur une extrémité (16) du corps principal (14) par un mécanisme de fermeture à baïonnette (42), et le photoréacteur (10) comportant un dispositif de refroidissement à air comprimé (50, 52, 54), fonctionnant avec de l'air comme fluide de refroidissement, pour les corps d'éclairage à DEL (24) avec des canaux de refroidissement pour le fluide de refroidissement formés dans le corps principal (14) en forme de manchon."
+      },
+      "responses": [
+        {
+          "user": "amirreza",
+          "question": "faith_grounding",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_precision",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "faith_numerical_fidelity",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_search_realism",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_lexical_distance",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_conceptual_framing",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_retrievability",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "qual_linguistic_quality",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        },
+        {
+          "user": "amirreza",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T19:28:47.219289",
+          "updated_at": "2026-06-15T19:28:47.219289"
+        }
+      ]
+    }
+  ]
+}

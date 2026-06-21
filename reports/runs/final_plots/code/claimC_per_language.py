@@ -111,8 +111,8 @@ def c3_home_advantage():
     fig, ax = plt.subplots(figsize=(8.6, 5.0))
     xs = np.arange(len(d))
     w = 0.38
-    ax.bar(xs - w / 2, d["molir"], width=w, color="#4c72b0", label="same-language gold (MoLIR@10)")
-    ax.bar(xs + w / 2, d["clir"], width=w, color="#c44e52", label="cross-language gold (CLIR@10)")
+    ax.bar(xs - w / 2, d["molir"], width=w, color="#4c72b0", label=r"same-language gold (R$_{\mathrm{same}}$@10)")
+    ax.bar(xs + w / 2, d["clir"], width=w, color="#c44e52", label=r"cross-language gold (R$_{\mathrm{cross}}$@10)")
     for i, r in d.iterrows():
         if not np.isnan(r["molir"]):
             ax.text(i - w / 2, r["molir"] + 0.012, f"{r['molir']:.2f}", ha="center", fontsize=8)

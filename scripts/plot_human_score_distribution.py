@@ -105,7 +105,7 @@ def main() -> None:
                  fontweight="bold", color=INK, pad=14)
     ax.set_xlabel("Score (/10)", fontsize=13, fontweight="bold", color=INK)
     ax.set_xticks(xs)
-    ax.set_ylim(0, 50)
+    ax.set_ylim(0, 58)
     ax.set_yticks(range(0, 51, 5))
     ax.tick_params(colors=INK, labelsize=12, length=0)
     for spine in ("top", "right"):

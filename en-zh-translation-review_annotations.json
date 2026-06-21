@@ -1,0 +1,1282 @@
+{
+  "dataset": "en-zh-translation-review",
+  "workspace": "chinese-translation",
+  "total_records": 30,
+  "records_with_responses": 30,
+  "questions": [
+    "adequacy",
+    "fluency",
+    "accept",
+    "notes"
+  ],
+  "records": [
+    {
+      "id": "9fc6f964-b9e3-42a1-91a9-8a16ada072ee",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025207825-A1",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nStat6 degraders\n\n### Abstract\n\nThe present disclosure provides a compound according to formula (I) and pharmaceutically acceptable salts, hydrates, or solvates thereof. The disclosure further relates to said compounds for use in therapy, to pharmaceutical compositions comprising said compounds, to methods of treating diseases, e.g. dermal diseases, with said compounds, and to the use of said compounds in the manufacture of medicaments.",
+        "chinese": "### Title\n\nStat6降解剂\n\n### Abstract\n\n本公开提供了根据式(I)的化合物及其药学上可接受的盐、水合物或溶剂化物。本公开还涉及所述化合物在治疗中的用途、包含所述化合物的药物组合物、使用所述化合物治疗疾病（例如皮肤疾病）的方法，以及所述化合物在制备药物中的用途。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:28:40.749764",
+          "updated_at": "2026-06-16T19:28:40.749764"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:28:40.749764",
+          "updated_at": "2026-06-16T19:28:40.749764"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:28:40.749764",
+          "updated_at": "2026-06-16T19:28:40.749764"
+        }
+      ]
+    },
+    {
+      "id": "e3a6ff19-f861-4ff5-8394-a6088ff3837d",
+      "metadata": {
+        "country_code": "MX",
+        "publication_number": "MX-2025002183-A",
+        "publication_date": 20250602
+      },
+      "fields": {
+        "english": "### Title\n\nMethod and system for recovery of metals from spent lithium ion batteries\n\n### Abstract\n\nA method for obtaining a metal salt from a spent lithium-ion (Li-ion) battery may include contacting a leaching solvent to a portion of the spent lithium-ion battery to form a first dispersion. The first dispersion is heated to a temperature in a range from 50 Â°C to 90 Â°C by applying microwave radiation. The temperature of the first dispersion is maintained to be in the range from 50 Â°C to 90 Â°C for a period in a range from 10 seconds to 5 minutes by further applying microwave radiation to the heated first dispersion. The first dispersion is filtered to obtain a first filtrate. A first base is contacted with the first filtrate to increase a pH of the first filtrate to a first predetermined value to precipitate a first metal salt.",
+        "chinese": "### Title\n\n从废旧锂离子电池中回收金属的方法和系统\n\n### Abstract\n\n一种从废旧锂离子（Li-ion）电池中获得金属盐的方法可包括：使浸出溶剂与废旧锂离子电池的一部分接触，以形成第一分散体。通过施加微波辐射将第一分散体加热至50 Â°C至90 Â°C范围内的温度。通过向经加热的第一分散体进一步施加微波辐射，将第一分散体的温度维持在50 Â°C至90 Â°C范围内，持续10 seconds至5 minutes范围内的一段时间。过滤第一分散体以获得第一滤液。使第一碱与第一滤液接触，以将第一滤液的pH提高至第一预定值，从而沉淀第一金属盐。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:52:25.818144",
+          "updated_at": "2026-06-16T18:21:37.565792"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:52:25.818144",
+          "updated_at": "2026-06-16T18:21:37.565792"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:52:25.818144",
+          "updated_at": "2026-06-16T18:21:37.565792"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Some Chinese doesn't sound super natural, but it is adequate to understand.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:52:25.818144",
+          "updated_at": "2026-06-16T18:21:37.565792"
+        }
+      ]
+    },
+    {
+      "id": "1cbc074e-624b-4075-a2c4-8248bc8357d8",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2024059922-A1",
+        "publication_date": 20240328
+      },
+      "fields": {
+        "english": "### Title\n\nBattery cell, additive for modulating the charging speed and/or the cyclability of a battery cell, method for modulating the charging speed and/or cyclability of a battery cell, use of niobium or titanium nanoparticles or combinations thereof, and use of the battery cell\n\n### Abstract\n\nThe present invention relates to a battery cell for use in vehicles, portable electronic devices or other suitable devices. Specifically, the present invention discloses a battery cell comprising niobium or titanium nanoparticles, or combinations thereof, in its cathode, anode or electrolyte, and having a charging speed and/or cyclability much superior to that of battery cells of the prior art. In addition, the present invention relates to the use of nanoparticles as a cathode, anode or electrolyte dopant and to the use of the battery cells. The present invention pertains to the technical fields of materials science, electrochemistry and nanotechnology.",
+        "chinese": "### Title\n\n电池单元、用于调节电池单元充电速度和/或循环性能的添加剂、用于调节电池单元充电速度和/或循环性能的方法、铌或钛纳米颗粒或其组合的用途，以及该电池单元的用途\n\n### Abstract\n\n本发明涉及一种用于车辆、便携式电子设备或其他合适设备的电池单元。具体而言，本发明公开了一种电池单元，其在正极、负极或电解质中包含铌或钛纳米颗粒或其组合，并且其充电速度和/或循环性能显著优于现有技术的电池单元。此外，本发明涉及纳米颗粒作为正极、负极或电解质掺杂剂的用途，以及该电池单元的用途。本发明属于材料科学、电化学和纳米技术技术领域。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:02:55.870684",
+          "updated_at": "2026-06-16T19:02:55.870684"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:02:55.870684",
+          "updated_at": "2026-06-16T19:02:55.870684"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:02:55.870684",
+          "updated_at": "2026-06-16T19:02:55.870684"
+        }
+      ]
+    },
+    {
+      "id": "f644c3e9-c8a6-462b-a420-b30f3aefd88b",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025206094-A1",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nNovel application of tissue plasminogen activator\n\n### Abstract\n\nProvided is a pharmaceutical composition with which it is possible to prevent the development of late-onset cerebral ischemia and obtain a prognosis-improving effect by performing active hematoma removal using a tissue plasminogen activator. This pharmaceutical composition contains a tissue plasminogen activator as an active ingredient and is for use in hematoma removal therapy in the cerebral cistern to remove a dislodged hematoma by suction by using the tissue plasminogen activator in an aqueous solution state as a cleansing agent, said therapy being performed at the same time as treatment of a cerebral aneurysm by means of craniotomy with clipping during the acute phase of a subarachnoid hemorrhage associated with a ruptured cerebral aneurysm.",
+        "chinese": "### Title\n\n组织纤溶酶原激活剂的新用途\n\n### Abstract\n\n提供一种药物组合物，通过使用组织纤溶酶原激活剂进行主动血肿清除，能够预防迟发性脑缺血的发生并获得改善预后的效果。该药物组合物含有组织纤溶酶原激活剂作为活性成分，用于脑池内血肿清除疗法，在该疗法中，将水溶液状态的组织纤溶酶原激活剂作为清洗剂使用，通过吸引去除脱落的血肿；该疗法在与破裂性脑动脉瘤相关的蛛网膜下腔出血急性期，通过开颅夹闭术治疗脑动脉瘤的同时进行。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:24:24.692471",
+          "updated_at": "2026-06-16T19:24:24.692471"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:24:24.692471",
+          "updated_at": "2026-06-16T19:24:24.692471"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:24:24.692471",
+          "updated_at": "2026-06-16T19:24:24.692471"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "The way the last sentence organizes the words is a little bit weird.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:24:24.692471",
+          "updated_at": "2026-06-16T19:24:24.692471"
+        }
+      ]
+    },
+    {
+      "id": "1d763cb2-909e-4a73-9b5e-d31d2f621438",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025073021-A1",
+        "publication_date": 20250410
+      },
+      "fields": {
+        "english": "### Title\n\nMethod for removing impurities from phosphate concentrate, high purity phosphate concentrate and use of a high purity phosphate concentrate\n\n### Abstract\n\nThe present invention relates to a method for removing impurities from phosphate concentrate, comprising leaching the phosphate concentrate with an acid and a reducing solution under controlled temperature, time period and pH to obtain a high purity concentrate. The invention further relates to the high purity phosphate concentrate obtained by said method and to use of the high purity phosphate concentrate in manufacturing phosphoric acid or phosphate products.",
+        "chinese": "### Title\n\n从磷酸盐精矿中去除杂质的方法、高纯度磷酸盐精矿及高纯度磷酸盐精矿的用途\n\n### Abstract\n\n本发明涉及一种从磷酸盐精矿中去除杂质的方法，包括在受控的温度、时间段和 pH 下，用酸和还原溶液对磷酸盐精矿进行浸出，以获得高纯度精矿。本发明还涉及通过所述方法获得的高纯度磷酸盐精矿，以及该高纯度磷酸盐精矿在制造磷酸或磷酸盐产品中的用途。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:20:56.056499",
+          "updated_at": "2026-06-16T19:20:56.056499"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:20:56.056499",
+          "updated_at": "2026-06-16T19:20:56.056499"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:20:56.056499",
+          "updated_at": "2026-06-16T19:20:56.056499"
+        }
+      ]
+    },
+    {
+      "id": "f9c98da5-461b-47bd-8ea8-df3945ff5d3b",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025170306-A1",
+        "publication_date": 20250814
+      },
+      "fields": {
+        "english": "### Title\n\nAntibacterial composition comprising plantaricin peptide derived from lactiplantibacillus plantarum km2 strain as active ingredient\n\n### Abstract\n\nThe present invention relates to an antibacterial composition comprising, as an active ingredient, a plantaricin peptide derived from a Lactiplantibacillus plantarum KM2 strain, wherein the plantaricin peptide derived from the strain and a plantaricin peptide combination were found to have antimicrobial activity against at least one selected from the group consisting of Flavobacterium sp, Enterococcus faecalis , Listeria monocytogenes , Staphylococcus aureus , and acromobacter xylosoxidans ( Alcaligenese xylosoxidans ), Salmonella enterica , <i />and Vibrio parahaemolyticus , and the plantaricin peptide and the plantaricin peptide combination were found to have antibacterial activity and a cell wall lysis effect against the Flavobacterium sp. strain, and accordingly, the plantaricin peptide derived from the Lactiplantibacillus plantarum KM2 strain and the plantaricin peptide combination are provided as antimicrobial agents.",
+        "chinese": "### Title\n\n包含源自Lactiplantibacillus plantarum km2菌株的plantaricin peptide作为活性成分的抗菌组合物\n\n### Abstract\n\n本发明涉及一种抗菌组合物，其包含源自Lactiplantibacillus plantarum KM2菌株的plantaricin peptide作为活性成分，其中发现源自该菌株的plantaricin peptide及plantaricin peptide组合对选自由Flavobacterium sp、Enterococcus faecalis、Listeria monocytogenes、Staphylococcus aureus、acromobacter xylosoxidans (Alcaligenese xylosoxidans)、Salmonella enterica、<i />以及Vibrio parahaemolyticus组成的组中的至少一种具有抗微生物活性，并且发现该plantaricin peptide及该plantaricin peptide组合对Flavobacterium sp.菌株具有抗菌活性和细胞壁裂解作用，因此，提供源自Lactiplantibacillus plantarum KM2菌株的plantaricin peptide及该plantaricin peptide组合作为抗微生物剂。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:27:16.668707",
+          "updated_at": "2026-06-16T19:27:16.668707"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:27:16.668707",
+          "updated_at": "2026-06-16T19:27:16.668707"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "no",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:27:16.668707",
+          "updated_at": "2026-06-16T19:27:16.668707"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Too many terms are not translated, and I'm pretty sure some of them have a corresponding way of translation.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:27:16.668707",
+          "updated_at": "2026-06-16T19:27:16.668707"
+        }
+      ]
+    },
+    {
+      "id": "bf5908df-8211-441f-8c08-a037bfd1cbf7",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025200089-A1",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nIron phosphate having low sulfur content and high iron-phosphorus ratio, preparation method therefor, and use thereof\n\n### Abstract\n\nThe present application relates to the technical field of battery materials, and provides iron phosphate having low sulfur content and a high iron-phosphorus ratio, a preparation method therefor, and a use thereof. The preparation method for the iron phosphate having low sulfur content and a high iron-phosphorus ratio comprises: providing amorphous iron phosphate; adding water and phosphoric acid into the amorphous iron phosphate for slurrying treatment, and then heating and aging to obtain an aged slurry; carrying out slurry washing and filter pressing on the aged slurry to obtain a first filter cake; adding water and a first pH regulator into the first filter cake for slurry washing to obtain a first slurry having a pH value range of 3.0-5.0, and carrying out filter pressing on the first slurry to obtain a second filter cake; and rinsing, drying and calcining the second filter cake to obtain iron phosphate having low sulfur content and a high iron-phosphorus ratio. The present application facilitates preparation of iron phosphate having low sulfur content, a high iron-phosphorus ratio, and a large specific surface area. The iron phosphate can be used for preparing lithium iron phosphate having good electrochemical performance, and the lithium iron phosphate can be further used for preparing a positive electrode sheet and a secondary battery having good electrochemical performance.",
+        "chinese": "### Title\n\n具有低硫含量和高铁磷比的iron phosphate、其制备方法及其用途\n\n### Abstract\n\n本申请涉及电池材料技术领域，提供了一种具有低硫含量和高铁磷比的iron phosphate、其制备方法及其用途。所述具有低硫含量和高铁磷比的iron phosphate的制备方法包括：提供amorphous iron phosphate；向所述amorphous iron phosphate中加入水和phosphoric acid进行浆化处理，然后加热并陈化，得到陈化浆料；对所述陈化浆料进行洗浆和压滤，得到第一滤饼；向所述第一滤饼中加入水和第一pH调节剂进行洗浆，得到pH值范围为3.0-5.0的第一浆料，并对所述第一浆料进行压滤，得到第二滤饼；以及对所述第二滤饼进行漂洗、干燥和煅烧，得到具有低硫含量和高铁磷比的iron phosphate。本申请有利于制备具有低硫含量、高铁磷比和大比表面积的iron phosphate。所述iron phosphate可用于制备具有良好电化学性能的lithium iron phosphate，且所述lithium iron phosphate可进一步用于制备具有良好电化学性能的正极片和二次电池。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:54:55.674277",
+          "updated_at": "2026-06-16T18:21:56.821699"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 3,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:54:55.674277",
+          "updated_at": "2026-06-16T18:21:56.821699"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "no",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:54:55.674277",
+          "updated_at": "2026-06-16T18:21:56.821699"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "There are many terms that aren't translated.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:54:55.674277",
+          "updated_at": "2026-06-16T18:21:56.821699"
+        }
+      ]
+    },
+    {
+      "id": "1ed98352-deb8-478a-8356-b9d2278e9c65",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025183515-A1",
+        "publication_date": 20250904
+      },
+      "fields": {
+        "english": "### Title\n\nEncapsulant composition for organic light-emitting diode, and encapsulant prepared using same\n\n### Abstract\n\nThe present invention relates to an encapsulant composition for an organic light-emitting diode, comprising: 1) a polyorganosiloxane having an average of 0.5 or more alkenyl groups bound to a silicon atom in one molecule; 2) a polyorganohydrogensiloxane having an average of two or more hydrogen atoms bound to a silicon atom in one molecule; 3) a platinum-based catalyst; and 4) a reaction inhibitor including a compound having at least two unsaturated ethylene groups, wherein the amount of the reaction inhibitor is 0.005-1.2 wt% on the basis of the total weight of the polyorganosiloxane, and the amount of ions, other than platinum group element ions, is 50 ppm or less on the basis of the total weight of the encapsulant composition.",
+        "chinese": "### Title\n\n用于有机发光二极管的封装剂组合物，以及使用其制备的封装剂\n\n### Abstract\n\n本发明涉及一种用于有机发光二极管的封装剂组合物，其包含：1) 在一个分子中平均具有 0.5 或更多个与硅原子键合的烯基的 polyorganosiloxane；2) 在一个分子中平均具有两个或更多个与硅原子键合的氢原子的 polyorganohydrogensiloxane；3) 铂基催化剂；以及 4) 反应抑制剂，其包括具有至少两个不饱和 ethylene 基团的化合物，其中，所述反应抑制剂的含量基于所述 polyorganosiloxane 的总重量为 0.005-1.2 wt%，并且除铂族元素离子之外的离子的含量基于所述封装剂组合物的总重量为 50 ppm 或更少。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:07:40.668436",
+          "updated_at": "2026-06-16T19:07:40.668436"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:07:40.668436",
+          "updated_at": "2026-06-16T19:07:40.668436"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:07:40.668436",
+          "updated_at": "2026-06-16T19:07:40.668436"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Only two terms are not translated.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:07:40.668436",
+          "updated_at": "2026-06-16T19:07:40.668436"
+        }
+      ]
+    },
+    {
+      "id": "3f6b4efd-9574-4c4c-9974-0779f4772b51",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025202347-A1",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nComposition comprising iota-carrageenan for use in the treatment of dry eyes, non-viral and non-allergic eye conditions\n\n### Abstract\n\nThe present invention relates to iota-carrageenan for use as a main or sole active ingredient in an aqueous pharmaceutical composition for the prevention or treatment of non-viral non-allergic clinically relevant eye conditions affecting at least one of mucosal tissues at or around an individual's eye, an eye surface, corneal tissue, and fluid inside the eye, said clinically relevant eye conditions selected from the group consisting of increased intraocular pressure, non- allergic and non-viral conjunctivitis, irritations caused by airborne particulate matter other than allergens, and late complications of non-viral and non-allergic conjunctivitis selected from the group consisting of corneal opacities, subepithelial infiltrates, and formation of ocular pseudomembranes.",
+        "chinese": "### Title\n\n包含 iota-carrageenan 的组合物，用于治疗干眼、非病毒性和非过敏性眼部病症\n\n### Abstract\n\n本发明涉及 iota-carrageenan，其作为水性药物组合物中的主要或唯一活性成分，用于预防或治疗非病毒性、非过敏性的具有临床相关性的眼部病症，所述病症影响个体眼部处或周围的黏膜组织、眼表、角膜组织以及眼内液体中的至少一种；所述具有临床相关性的眼部病症选自由眼内压升高、非过敏性和非病毒性结膜炎、由除过敏原以外的空气传播颗粒物引起的刺激，以及非病毒性和非过敏性结膜炎的晚期并发症组成的组，所述晚期并发症选自由角膜混浊、上皮下浸润和眼部假膜形成组成的组。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:16:58.448513",
+          "updated_at": "2026-06-16T18:22:13.952714"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:16:58.448513",
+          "updated_at": "2026-06-16T18:22:13.952714"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:16:58.448513",
+          "updated_at": "2026-06-16T18:22:13.952714"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "The specific term isn't directly translated.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:16:58.448513",
+          "updated_at": "2026-06-16T18:22:13.952714"
+        }
+      ]
+    },
+    {
+      "id": "c549b2ed-dacd-44e8-9df9-543ded25cb34",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025188899-A8",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nSelective electromagnetic heating\n\n### Abstract\n\nAn example system includes at least one processing chamber defining an interior region. The system also includes one or more heating elements configured to heat one or more hot materials disposed in the interior region and at least one EM radiation source. The system includes a controller configured to control at least the heating elements and the EM radiation source. The controller is configured to cause the EM radiation source to, in a first stage, generate calcining EM radiation exhibiting first parameters and direct the calcining EM radiation towards the hot materials. The controller is configured to cause the EM radiation source to, in a second stage, generate primary EM radiation exhibiting second parameters and direct the primary EM radiation towards the one or more hot materials.",
+        "chinese": "### Title\n\n选择性电磁加热\n\n### Abstract\n\n一种示例系统包括至少一个处理腔室，其限定内部区域。该系统还包括一个或多个加热元件，所述加热元件被配置为加热设置在内部区域中的一种或多种热材料，以及至少一个 EM 辐射源。该系统包括控制器，所述控制器被配置为控制至少所述加热元件和所述 EM 辐射源。所述控制器被配置为使所述 EM 辐射源在第一阶段产生呈现第一参数的煅烧 EM 辐射，并将所述煅烧 EM 辐射引向所述热材料。所述控制器被配置为使所述 EM 辐射源在第二阶段产生呈现第二参数的初级 EM 辐射，并将所述初级 EM 辐射引向所述一种或多种热材料。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:58:37.524911",
+          "updated_at": "2026-06-16T18:58:37.524911"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:58:37.524911",
+          "updated_at": "2026-06-16T18:58:37.524911"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:58:37.524911",
+          "updated_at": "2026-06-16T18:58:37.524911"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "The expression sounds a little bit weird, but it doesn't affect understanding.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:58:37.524911",
+          "updated_at": "2026-06-16T18:58:37.524911"
+        }
+      ]
+    },
+    {
+      "id": "3bda5fed-3428-4568-88db-65642932492b",
+      "metadata": {
+        "country_code": "EP",
+        "publication_number": "EP-4630534-A1",
+        "publication_date": 20251015
+      },
+      "fields": {
+        "english": "### Title\n\nMethods for increasing transfer cell density in seed culture and realizing high cell density inoculation in production cultures\n\n### Abstract\n\nThe present application discloses methods for increasing transfer cell density in seed cultures and realizing high cell density inoculation in production cultures. The method for increasing the transfer cell density of a culture comprises cultivating cells by perfusion in a seed culture; and subjecting the seed culture to concentration by perfusion.",
+        "chinese": "### Title\n\n提高种子培养中的转移细胞密度并在生产培养中实现高细胞密度接种的方法\n\n### Abstract\n\n本申请公开了提高种子培养中的转移细胞密度并在生产培养中实现高细胞密度接种的方法。提高培养物的转移细胞密度的方法包括：在种子培养中通过灌流培养细胞；以及通过灌流对所述种子培养物进行浓缩。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:06:35.184933",
+          "updated_at": "2026-06-16T18:21:42.565766"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:06:35.184933",
+          "updated_at": "2026-06-16T18:21:42.565766"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:06:35.184933",
+          "updated_at": "2026-06-16T18:21:42.565766"
+        }
+      ]
+    },
+    {
+      "id": "b0318b08-bc07-4f20-8bc8-2ca616f0130c",
+      "metadata": {
+        "country_code": "EP",
+        "publication_number": "EP-4626392-A1",
+        "publication_date": 20251008
+      },
+      "fields": {
+        "english": "### Title\n\nCosmetic composition containing an alcohol, a plant oil, a fatty acid monoester, an emulsifier and a plant ingredient\n\n### Abstract\n\nThe invention relates to a, substantially plant-based, cosmetic composition, which is almost water-free, and when applied topically to the skin, preferably dry skin, a comfortable heat is generated upon contact with water, such that the skin pores are opened and plant ingredients can advantageously penetrate the skin. The invention also relates to the production of a cosmetic composition of this type and to the use thereof, in particular as a cleaning product or rinse-off product.",
+        "chinese": "### Title\n\n包含醇、植物油、脂肪酸单酯、乳化剂和植物成分的化妆品组合物\n\n### Abstract\n\n本发明涉及一种基本上以植物为基础的化妆品组合物，其几乎不含水，并且当局部施用于皮肤、优选干性皮肤时，在与水接触时会产生舒适的热感，从而使皮肤毛孔打开，并且植物成分能够有利地渗透入皮肤。本发明还涉及此类化妆品组合物的制备及其用途，特别是作为清洁产品或冲洗型产品的用途。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:59.455852",
+          "updated_at": "2026-06-16T18:53:59.455852"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:59.455852",
+          "updated_at": "2026-06-16T18:53:59.455852"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:59.455852",
+          "updated_at": "2026-06-16T18:53:59.455852"
+        }
+      ]
+    },
+    {
+      "id": "ce79634c-9e83-4c02-be2d-38eb3563d697",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025209205-A1",
+        "publication_date": 20251009
+      },
+      "fields": {
+        "english": "### Title\n\nPolyethylene terephthalate (pet) /polyethylene terephthalate glycol (petg) material, substrate with such material, and forming method\n\n### Abstract\n\nA modified polyethylene terephthalate (PET) /polyethylene terephthalate glycol (PETG) material is disclosed as including polyethylene terephthalate (PET) /polyethylene terephthalate glycol (PETG) in an amount of 80-99.7 wt%(preferably 85-99 wt%); a masterbatch for accelerating anaerobic digestion (ADG) in an amount of 0.2-10 wt% (preferably 0.5-4 wt%); a cross-linker in an amount of 0.1-5 wt% (preferably 0.5-2 wt %); and optionally, a color masterbatch in an amount of not more than 18 wt%.",
+        "chinese": "### Title\n\n聚对苯二甲酸乙二醇酯 (PET) /聚对苯二甲酸乙二醇酯二醇 (PETG) 材料、具有该材料的基材及其成型方法\n\n### Abstract\n\n公开了一种改性聚对苯二甲酸乙二醇酯 (PET) /聚对苯二甲酸乙二醇酯二醇 (PETG) 材料，其包含：含量为80-99.7 wt%（优选85-99 wt%）的聚对苯二甲酸乙二醇酯 (PET) /聚对苯二甲酸乙二醇酯二醇 (PETG)；含量为0.2-10 wt%（优选0.5-4 wt%）的用于促进厌氧消化 (ADG) 的母粒；含量为0.1-5 wt%（优选0.5-2 wt %）的交联剂；以及任选地，含量不超过18 wt%的色母粒。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:04:58.199469",
+          "updated_at": "2026-06-16T18:20:58.301575"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:04:58.199469",
+          "updated_at": "2026-06-16T18:20:58.301575"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "no",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:04:58.199469",
+          "updated_at": "2026-06-16T18:20:58.301575"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "We can accept, BUT the translated term of PETG seems to have some problems!",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:04:58.199469",
+          "updated_at": "2026-06-16T18:20:58.301575"
+        }
+      ]
+    },
+    {
+      "id": "3fcdab58-2910-4fe9-8e72-1974489d0fc2",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025153646-A1",
+        "publication_date": 20250724
+      },
+      "fields": {
+        "english": "### Title\n\nSheet steel component for a working device of a working machine and method for producing a sheet steel component of this kind\n\n### Abstract\n\nThe invention relates to a sheet steel component (10) for a working device of a working machine, which sheet steel component has at least one receptacle (14) for a bearing element, in particular a receptacle (14) for a bolt. According to the invention, the at least one receptacle (14) is formed as a region of the sheet steel component (10) that surrounds the circumference of an opening (18), wherein said region has a sheet metal portion (20) having a sheet metal thickness d and a drawn collar (22) which adjoins the sheet metal portion (20) and extends in the axial direction (24) of the opening (18). The invention further relates to a use of the sheet steel component as a device component of a working device of a working machine, to a device unit for a working device of a working machine, having at least one sheet steel component (10) of this kind, and to a corresponding method for producing a sheet steel component (10) for a working device of a working machine having a receptacle (14) for a bearing element.",
+        "chinese": "### Title\n\n用于工作机械的工作装置的钢板部件及制造这种钢板部件的方法\n\n### Abstract\n\n本发明涉及一种用于工作机械的工作装置的钢板部件 (10)，该钢板部件具有至少一个用于轴承元件的容纳部 (14)，尤其是用于螺栓的容纳部 (14)。根据本发明，所述至少一个容纳部 (14)形成为钢板部件 (10)的围绕开口 (18)圆周的区域，其中所述区域具有板厚为 d 的板材部分 (20)，以及与该板材部分 (20)相邻并沿开口 (18)的轴向方向 (24)延伸的拉深凸缘 (22)。本发明还涉及该钢板部件作为工作机械的工作装置的装置部件的用途，涉及一种用于工作机械的工作装置的装置单元，其具有至少一个这种钢板部件 (10)，并涉及一种相应的用于制造用于工作机械的工作装置的钢板部件 (10)的方法，该钢板部件具有用于轴承元件的容纳部 (14)。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:19:43.432101",
+          "updated_at": "2026-06-16T19:19:43.432101"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:19:43.432101",
+          "updated_at": "2026-06-16T19:19:43.432101"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:19:43.432101",
+          "updated_at": "2026-06-16T19:19:43.432101"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Some terms sound a little bit odd, but at least doesn't influence understanding.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:19:43.432101",
+          "updated_at": "2026-06-16T19:19:43.432101"
+        }
+      ]
+    },
+    {
+      "id": "5812d13d-9cd8-41b9-9cef-7657100b880f",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025132391-A1",
+        "publication_date": 20250626
+      },
+      "fields": {
+        "english": "### Title\n\nProduction of aminobenzoic acid\n\n### Abstract\n\nThe invention relates to the production of aminobenzoic acid using a method having the steps of (A) providing an aminobenzoate anion-containing fermentation broth by carrying out a fermentation process in the presence of microorganisms selected from Escherichia coli, Pseudomonas putida, Corynebacterium glutamicum, Bacillus coagulans, or a mixture of two or more of the aforementioned microorganisms and subsequently carrying out a clarification process, (B) setting a pH value of 3.0 to 5.5 in the aminobenzoate anion-containing fermentation broth by adding formic acid, (C) separating aminobenzoic acid precipitated in step (B), and (D) partly or completely introducing the mother liquor precipitated in step (C) to the fermentation, thereby depleting the formate anions contained in the mother liquor and the formic acid by means of (i) an added enzyme preparation and/or (ii) the microorganisms used in step (A) and/or (iii) added additional microorganisms which differ from the microorganisms used in step (A). The aminobenzoic acid obtained in this manner can be converted into secondary products, in particular into aniline and, in the case of ortho-aminobenzoic acid, into isatoic anhydride or anthranilic acid ester, which can be used as starting materials in the production of polymeric compounds such as polyurethanes or poly(anthranilamide).",
+        "chinese": "### Title\n\naminobenzoic acid的生产\n\n### Abstract\n\n本发明涉及使用一种方法生产aminobenzoic acid，该方法包括以下步骤：(A) 通过在选自Escherichia coli、Pseudomonas putida、Corynebacterium glutamicum、Bacillus coagulans或前述微生物中两种或更多种的混合物的微生物存在下进行发酵工艺，并随后进行澄清工艺，提供含aminobenzoate anion的发酵液；(B) 通过添加formic acid，将含aminobenzoate anion的发酵液的pH值调节至3.0 to 5.5；(C) 分离在步骤(B)中沉淀的aminobenzoic acid；以及(D) 将步骤(C)中析出母液部分或完全引入发酵中，从而通过(i) 添加的酶制剂和/或(ii) 步骤(A)中使用的微生物和/或(iii) 添加的、不同于步骤(A)中使用的微生物的其他微生物，消耗母液中所含的formate anions和formic acid。以这种方式获得的aminobenzoic acid可转化为二级产物，特别是aniline，并且在ortho-aminobenzoic acid的情况下，可转化为isatoic anhydride或anthranilic acid ester，其可用作生产聚合物化合物如polyurethanes或poly(anthranilamide)的起始原料。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:14.024830",
+          "updated_at": "2026-06-16T18:53:25.733402"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:14.024830",
+          "updated_at": "2026-06-16T18:53:25.733402"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "no",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:14.024830",
+          "updated_at": "2026-06-16T18:53:25.733402"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Still, terms are not translated. For example, aminobenzoic acid could be translated as 氨基苯甲酸, etc.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:53:14.024830",
+          "updated_at": "2026-06-16T18:53:25.733402"
+        }
+      ]
+    },
+    {
+      "id": "02f561c0-2ae5-4913-86f4-ca4335c2c4bb",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025132504-A1",
+        "publication_date": 20250626
+      },
+      "fields": {
+        "english": "### Title\n\nProduction method for a stabilised diamine oxidase lyophilisate and pharmaceutical dosage form\n\n### Abstract\n\nThe invention relates to a method for the production of a stabilised lyophilisate with plant diamine oxidase (DAO), comprising the following steps: providing DAO-containing plants or DAO-containing parts thereof; homogenising the DAO-containing plants or DAO-containing parts thereof in aqueous solution in order to obtain an aqueous homogenised product; adding (a) a sugar or sugar alcohol and (b) an amino acid as stabiliser; and lyophilising the aqueous homogenised product or a DAO-containing fraction thereof in the presence of the stabiliser. The invention also relates to a lyophilisate obtained according to this method, and to a solid pharmaceutical dosage form for oral administration, containing said lyophilisate. This dosage form is intended for therapeutic use, preferably in the treatment of histamine-induced disorders, or can be used as a food supplement or dietetic food.",
+        "chinese": "### Title\n\n稳定化 diamine oxidase 冻干物和药物剂型的生产方法\n\n### Abstract\n\n本发明涉及一种生产含植物 diamine oxidase (DAO) 的稳定化冻干物的方法，包括以下步骤：提供含 DAO 的植物或其含 DAO 的部分；在水溶液中将含 DAO 的植物或其含 DAO 的部分均质化，以获得水性均质产物；添加 (a) 糖或糖醇和 (b) 氨基酸作为稳定剂；以及在稳定剂存在下，将所述水性均质产物或其含 DAO 的级分冻干。本发明还涉及根据该方法获得的冻干物，以及一种用于口服给药的固体药物剂型，其含有所述冻干物。该剂型旨在用于治疗用途，优选用于治疗由组胺诱导的障碍，或者可用作膳食补充剂或特殊膳食用食品。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:15:01.265558",
+          "updated_at": "2026-06-16T18:21:50.562555"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:15:01.265558",
+          "updated_at": "2026-06-16T18:21:50.562555"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:15:01.265558",
+          "updated_at": "2026-06-16T18:21:50.562555"
+        }
+      ]
+    },
+    {
+      "id": "516e1f4f-8da2-4ca7-a8d4-dc7029b6b3e5",
+      "metadata": {
+        "country_code": "EP",
+        "publication_number": "EP-4627120-A1",
+        "publication_date": 20251008
+      },
+      "fields": {
+        "english": "### Title\n\nMethods for in vitro detection of a bladder cancer in a urine sample\n\n### Abstract\n\nThe present invention relates to methods for in vitro detection of bladder cancers in urine samples by determination in the DNA isolated from the urine sample of the presence of a DNA segment hypermethylated in comparison with a reference sample. The DNA segment analyzed is a gene region more strongly methylated in tumor cells than the corresponding gene region in healthy cells, wherein the gene regions analyzed are IRX2 (Iroquois homeobox 2), LHX4 (LIM homeobox 4) and/or KIFC2 (kinesin family member C2) or a combination thereof with NKX1-1 (NK1 homeobox 1). The invention further relates to associated kits and to the use of the methods or kits for detection of bladder cancers in an isolated urine sample.",
+        "chinese": "### Title\n\n用于在尿液样本中体外检测膀胱癌的方法\n\n### Abstract\n\n本发明涉及通过测定从尿液样本中分离的DNA中是否存在相对于参考样本发生高甲基化的DNA片段，从而在尿液样本中体外检测膀胱癌的方法。所分析的DNA片段是肿瘤细胞中甲基化程度高于健康细胞中相应基因区域的基因区域，其中所分析的基因区域为IRX2 (Iroquois homeobox 2)、LHX4 (LIM homeobox 4)和/或KIFC2 (kinesin family member C2)，或其与NKX1-1 (NK1 homeobox 1)的组合。本发明还涉及相关试剂盒，以及所述方法或试剂盒用于在分离的尿液样本中检测膀胱癌的用途。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:17:57.387163",
+          "updated_at": "2026-06-16T18:21:48.246228"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:17:57.387163",
+          "updated_at": "2026-06-16T18:21:48.246228"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:17:57.387163",
+          "updated_at": "2026-06-16T18:21:48.246228"
+        }
+      ]
+    },
+    {
+      "id": "9534e7f1-adbf-4291-bb5a-5edfaf93b0f7",
+      "metadata": {
+        "country_code": "EP",
+        "publication_number": "EP-4493403-A1",
+        "publication_date": 20250122
+      },
+      "fields": {
+        "english": "### Title\n\nMetal layer-containing multi-layer body for diffuse transillumination\n\n### Abstract\n\nThe invention relates to a multi-layer body, comprising (I) a carrier layer made of a special thermoplastic polycarbonate molding compound and (II) a metal layer which has one or more recesses. The invention also relates to a lighting or display unit, comprising the multi-layer body and a light source, to a method for producing the multi-layer body, and to the use of the special thermoplastic polycarbonate molding compound as a carrier layer of such a multi-layer body.",
+        "chinese": "### Title\n\n含金属层的用于漫射透照的多层体\n\n### Abstract\n\n本发明涉及一种多层体，其包括 (I) 由特殊热塑性聚碳酸酯模塑料制成的载体层和 (II) 具有一个或多个凹部的金属层。本发明还涉及一种包括该多层体和光源的照明或显示单元、用于制备该多层体的方法，以及该特殊热塑性聚碳酸酯模塑料作为这种多层体的载体层的用途。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:00:34.268278",
+          "updated_at": "2026-06-16T19:00:34.268278"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:00:34.268278",
+          "updated_at": "2026-06-16T19:00:34.268278"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:00:34.268278",
+          "updated_at": "2026-06-16T19:00:34.268278"
+        }
+      ]
+    },
+    {
+      "id": "8374b744-5ef1-47b6-aecb-b1781deaa8f3",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025175366-A1",
+        "publication_date": 20250828
+      },
+      "fields": {
+        "english": "### Title\n\nSystem and method for continuous flow treatment of sewage/effluent\n\n### Abstract\n\nThe invention relates to a system and method for continuous flow treatment of sewage/effluent using a compact, hermetic advanced oxidation tower, wherein the advanced oxidation process occurs by injecting high concentrations of ozone directly into the raw sewage/effluent inside the advanced oxidation tower (8), in combination with an advanced microfiltration process for the treatment and proper discharge of sewage/effluent and/or production of reusable water, complying with current standards and legislation.",
+        "chinese": "### Title\n\n用于污水/废水连续流处理的系统和方法\n\n### Abstract\n\n本发明涉及一种使用紧凑型密闭高级氧化塔对污水/废水进行连续流处理的系统和方法，其中，通过将高浓度臭氧直接注入高级氧化塔(8)内的原始污水/废水中来进行高级氧化过程，并结合高级微滤过程，以实现污水/废水的处理和合规排放和/或可再利用水的生产，符合现行标准和法规。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:55:34.129761",
+          "updated_at": "2026-06-16T18:55:34.129761"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:55:34.129761",
+          "updated_at": "2026-06-16T18:55:34.129761"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:55:34.129761",
+          "updated_at": "2026-06-16T18:55:34.129761"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "The punctuation sounds a little bit weird in the second half, but acceptable.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:55:34.129761",
+          "updated_at": "2026-06-16T18:55:34.129761"
+        }
+      ]
+    },
+    {
+      "id": "c4522899-570a-4402-8ce1-5868325b1e2c",
+      "metadata": {
+        "country_code": "MX",
+        "publication_number": "MX-2025007532-A",
+        "publication_date": 20251001
+      },
+      "fields": {
+        "english": "### Title\n\nChimeric antigen receptors for the treatment of cancer\n\n### Abstract\n\nThe invention provides compositions and methods for treating diseases associated with expression of CD20 or CD22. The invention also relates to chimeric antigen receptor (CAR) specific to CD20 or CD22, vectors encoding the same, and recombinant T or natural killer (NK) cells comprising the CD20 CAR or CD22 CAR. The invention also includes methods of administering a genetically modified T cell or NK cell expressing a CAR that comprises a CD20 or CD22 binding domain.",
+        "chinese": "### Title\n\n用于治疗癌症的嵌合抗原受体\n\n### Abstract\n\n本发明提供用于治疗与CD20或CD22表达相关的疾病的组合物和方法。本发明还涉及对CD20或CD22具有特异性的嵌合抗原受体（CAR）、编码其的载体，以及包含CD20 CAR或CD22 CAR的重组T细胞或自然杀伤（NK）细胞。本发明还包括施用表达CAR的基因修饰T细胞或NK细胞的方法，所述CAR包含CD20或CD22结合结构域。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:50:30.315115",
+          "updated_at": "2026-06-16T18:50:30.315115"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:50:30.315115",
+          "updated_at": "2026-06-16T18:50:30.315115"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T18:50:30.315115",
+          "updated_at": "2026-06-16T18:50:30.315115"
+        }
+      ]
+    },
+    {
+      "id": "e37a7a7a-2749-4193-89bc-f5f495b88447",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025212762-A1",
+        "publication_date": 20251009
+      },
+      "fields": {
+        "english": "### Title\n\nLaser-based surface processing for semiconductor workpiece\n\n### Abstract\n\nSystems and methods for laser-based surface processing operations on a wide bandgap semiconductor wafer, such as a silicon carbide semiconductor wafer, are provided. In one example, a method includes removing a wide bandgap semiconductor wafer from a boule using a removal process. The method includes ablating, with one or more lasers, an exposed surface resulting from the removal process to remove material from the exposed surface, wherein ablating, with one or more lasers, the exposed surface reduces a thickness of semiconductor material (e.g., by about 25 microns or greater).",
+        "chinese": "### Title\n\n用于半导体工件的基于激光的表面处理\n\n### Abstract\n\n提供了用于对宽带隙半导体晶圆（例如碳化硅半导体晶圆）进行基于激光的表面处理操作的系统和方法。在一个示例中，一种方法包括使用移除工艺从晶锭中移除宽带隙半导体晶圆。该方法包括利用一个或多个激光器对由该移除工艺产生的暴露表面进行烧蚀，以从该暴露表面去除材料，其中，利用一个或多个激光器对该暴露表面进行烧蚀会减小半导体材料的厚度（例如，减小约 25 microns 或更大）。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:13:57.206503",
+          "updated_at": "2026-06-16T19:13:57.206503"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:13:57.206503",
+          "updated_at": "2026-06-16T19:13:57.206503"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:13:57.206503",
+          "updated_at": "2026-06-16T19:13:57.206503"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Microns could be translated. The first sentence's punctuation sounds a little bit weird.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:13:57.206503",
+          "updated_at": "2026-06-16T19:13:57.206503"
+        }
+      ]
+    },
+    {
+      "id": "93da1477-d06b-41fd-82ee-bb2b0ee6f9cc",
+      "metadata": {
+        "country_code": "MX",
+        "publication_number": "MX-2025009468-A",
+        "publication_date": 20250902
+      },
+      "fields": {
+        "english": "### Title\n\nLow temperature curing composition for rubber based adhesives and sealants\n\n### Abstract\n\nThe invention relates to a rubber-based composition that can be thermally cured at reduced temperature while retaining performance over a broad cure temperature window comprising at least one solid rubber, at least one diene-based polymer or copolymer containing an olefinic double bond and/or an aromatically substituted olefin, suitable for undergoing curing with a curing system present as quinone dioxime, peroxides and optional multifunctional acrylates, preferably in the absence of elemental sulfur. The cured composition exhibits improved reversion resistance and adhesion strength on aluminum.",
+        "chinese": "### Title\n\n用于橡胶基粘合剂和密封剂的低温固化组合物\n\n### Abstract\n\n本发明涉及一种橡胶基组合物，其可在降低的温度下进行热固化，同时在宽固化温度窗口内保持性能，所述组合物包含至少一种固体橡胶、至少一种含有烯属双键和/或芳香取代烯烃的二烯基聚合物或共聚物，适于通过以醌二肟、过氧化物以及任选的多官能丙烯酸酯形式存在的固化体系进行固化，优选在不存在元素硫的情况下进行。固化后的组合物在铝上的抗返原性和粘附强度得到改善。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:04:55.059593",
+          "updated_at": "2026-06-16T19:04:55.059593"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:04:55.059593",
+          "updated_at": "2026-06-16T19:04:55.059593"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:04:55.059593",
+          "updated_at": "2026-06-16T19:04:55.059593"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Looks legit overall, while some terms are too professional, so I'm not sure whether the way of expression sounds natural or not.",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:04:55.059593",
+          "updated_at": "2026-06-16T19:04:55.059593"
+        }
+      ]
+    },
+    {
+      "id": "22737c29-b311-4416-b368-110d7fb103b3",
+      "metadata": {
+        "country_code": "EP",
+        "publication_number": "EP-4626938-A1",
+        "publication_date": 20251008
+      },
+      "fields": {
+        "english": "### Title\n\nMethod for manufacturing fluoroelastomers in aqueous emulsion without using fluorinated surfactants\n\n### Abstract\n\nThe present invention relates to a method for manufacturing fluoroelastomers via emulsion polymerization in the absence of fluorinated surfactants and in the presence of one or more polycarboxylic acid having from 2 to 22 carbon atoms. The invention also relates to an aqueous fluoroelastomer latex and to a fluoroelastomer which can be obtained from the process.",
+        "chinese": "### Title\n\n不使用氟化表面活性剂在水性乳液中制造氟橡胶的方法\n\n### Abstract\n\n本发明涉及一种在不存在氟化表面活性剂且存在一种或多种具有2至22个碳原子的多羧酸的条件下，通过乳液聚合制造氟橡胶的方法。本发明还涉及一种水性氟橡胶乳胶以及可由该工艺获得的氟橡胶。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:10:11.722385",
+          "updated_at": "2026-06-16T19:10:11.722385"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:10:11.722385",
+          "updated_at": "2026-06-16T19:10:11.722385"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:10:11.722385",
+          "updated_at": "2026-06-16T19:10:11.722385"
+        }
+      ]
+    },
+    {
+      "id": "1087c839-dd5b-4b4c-b985-1790d7fbfbfe",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2005032252-A1",
+        "publication_date": 20050414
+      },
+      "fields": {
+        "english": "### Title\n\nPolymer matrix for extending vase life of cut flowers\n\n### Abstract\n\nThe invention relates to a polymer matrix for extending the vase life of cut flowers, which matrix comprises a charged and crosslinked polymer, wherein the matrix, in the presence of water, forms a gel, which gel immobilizes bacteria on the basis of electrostatic interactions between the gel and the bacterial. Further, the invention relates to a gel obtained by contacting the polymer matrix according to the invention with a limited amount of water. Also, the invention relates to an envelope containing a particular amount of the matrix or gel according to the invention. The invention also relates to a care product for cut flowers which comprises the polymer matrix or the gel according to the invention.",
+        "chinese": "### Title\n\n用于延长切花瓶插寿命的聚合物基质\n\n### Abstract\n\n本发明涉及一种用于延长切花瓶插寿命的聚合物基质，该基质包含带电且交联的聚合物，其中所述基质在水存在下形成凝胶，该凝胶基于凝胶与细菌之间的静电相互作用固定细菌。此外，本发明涉及一种通过使本发明的聚合物基质与有限量的水接触而获得的凝胶。本发明还涉及一种包含特定量的本发明基质或凝胶的封套。本发明还涉及一种用于切花的养护产品，其包含本发明的聚合物基质或凝胶。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:06:05.693368",
+          "updated_at": "2026-06-16T19:06:05.693368"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:06:05.693368",
+          "updated_at": "2026-06-16T19:06:05.693368"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:06:05.693368",
+          "updated_at": "2026-06-16T19:06:05.693368"
+        }
+      ]
+    },
+    {
+      "id": "f0352378-355f-4d3e-9b28-681818d67145",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025216023-A1",
+        "publication_date": 20251016
+      },
+      "fields": {
+        "english": "### Title\n\nAdhesive composition for optical film\n\n### Abstract\n\nThe present invention addresses the problem of providing an adhesive composition which is capable of forming an adhesive that has enhanced refractive index and transparency regardless of film thickness. An adhesive composition for an optical film according to the present invention contains a copolymer (A), a monomer (a), and inorganic particles (B). The adhesive composition is characterized in that: the copolymer (A) contains a constituent unit (A1) derived from an aromatic hydrocarbon group-containing (meth)acrylic acid ester-based monomer (a1) and a constituent unit (A2) derived from a hydroxyl group-containing (meth)acrylic acid ester-based monomer (a2); the monomer (a) includes an aromatic hydrocarbon group-containing (meth)acrylic acid ester-based monomer (a1) and a hydroxyl group-containing (meth)acrylic acid ester-based monomer (a2); the content of the constituent unit (A2) is 1-40 mass% in 100 mass% of the copolymer (A); and the proportion of the monomer (a) is 45-95 mass% in a total of 100 mass% of the copolymer (A) and the monomer (a).",
+        "chinese": "### Title\n\n用于光学膜的粘合剂组合物\n\n### Abstract\n\n本发明旨在解决提供一种粘合剂组合物的问题，该粘合剂组合物能够形成一种无论膜厚如何均具有提高的折射率和透明性的粘合剂。本发明的用于光学膜的粘合剂组合物包含共聚物(A)、单体(a)和无机颗粒(B)。该粘合剂组合物的特征在于：共聚物(A)包含来源于含芳香烃基的(甲基)丙烯酸酯类单体(a1)的构成单元(A1)以及来源于含羟基的(甲基)丙烯酸酯类单体(a2)的构成单元(A2)；单体(a)包括含芳香烃基的(甲基)丙烯酸酯类单体(a1)和含羟基的(甲基)丙烯酸酯类单体(a2)；构成单元(A2)的含量在共聚物(A)的100 mass%中为1-40 mass%；并且单体(a)的比例在共聚物(A)和单体(a)的合计100 mass%中为45-95 mass%。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:01:31.916756",
+          "updated_at": "2026-06-16T18:21:33.611234"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:01:31.916756",
+          "updated_at": "2026-06-16T18:21:33.611234"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:01:31.916756",
+          "updated_at": "2026-06-16T18:21:33.611234"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "The mass% part might have a corresponding Chinese translation.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:01:31.916756",
+          "updated_at": "2026-06-16T18:21:33.611234"
+        }
+      ]
+    },
+    {
+      "id": "7a8eae2a-017b-451f-b036-0d46a4a7e404",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025200809-A1",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nMethod for induced differentiation of hair follicle stem cells into neural stem cells\n\n### Abstract\n\nA method for induced differentiation of hair follicle stem cells into neural stem cells, comprising: inoculating hair follicle stem cells into a complete culture solution, culturing for 1-2 days, then using a differentiation culture solution A for induced culture for 2-5 days, then using a differentiation culture solution B for secondary induced culture for 3-5 days, and using a differentiation culture solution C for ternary induced culture for 4-6 days to obtain target neural stem cells, wherein before the ternary induced culture, a magnetic field treatment is carried out for 10-30 s with a magnetic field intensity of 2-8 mT. By providing a mode of stage-based induced differentiation culture, the usage amounts of differentiation culture medium components are reduced; in addition, by applying a low-intensity magnetic field, the hair follicle stem cells can be induced and differentiated into neural stem cells. The induction time is relatively short, the induced differentiation is uniform, the obtained hair follicle-derived neural stem cells have good activity, the proliferative activity of fibroblasts can be effectively promoted, and a certain foundation can be provided for tissue repair and remodeling.",
+        "chinese": "### Title\n\n毛囊干细胞诱导分化为神经干细胞的方法\n\n### Abstract\n\n一种将毛囊干细胞诱导分化为神经干细胞的方法，包括：将毛囊干细胞接种于完全培养液中，培养1-2天，然后使用分化培养液A进行诱导培养2-5天，再使用分化培养液B进行二次诱导培养3-5天，并使用分化培养液C进行三次诱导培养4-6天，获得目标神经干细胞，其中，在三次诱导培养前，以2-8 mT的磁场强度进行10-30 s的磁场处理。通过提供一种分阶段诱导分化培养方式，减少了分化培养基组分的使用量；此外，通过施加低强度磁场，可诱导毛囊干细胞分化为神经干细胞。诱导时间相对较短，诱导分化均一，获得的毛囊来源神经干细胞具有良好活性，能够有效促进成纤维细胞的增殖活性，并可为组织修复和重塑提供一定基础。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:22:18.239053",
+          "updated_at": "2026-06-16T19:22:18.239053"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:22:18.239053",
+          "updated_at": "2026-06-16T19:22:18.239053"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:22:18.239053",
+          "updated_at": "2026-06-16T19:22:18.239053"
+        }
+      ]
+    },
+    {
+      "id": "d259879c-83f8-4635-9998-0d4256bd914a",
+      "metadata": {
+        "country_code": "EP",
+        "publication_number": "EP-4633613-A1",
+        "publication_date": 20251022
+      },
+      "fields": {
+        "english": "### Title\n\nPharmaceutical composition comprising rupatadine and montelukast\n\n### Abstract\n\nThe present invention relates to new pharmaceutical compositions comprising Rupatadine or a pharmaceutically acceptable salt thereof and Montelukast or a pharmaceutically acceptable salt thereof. The new pharmaceutical compositions can be manufactured by a simple process and show excellent compatibility of both APIs, while at the same time allowing for an excellent bioavailability of the two APIs.",
+        "chinese": "### Title\n\n包含 rupatadine 和 montelukast 的药物组合物\n\n### Abstract\n\n本发明涉及新的药物组合物，其包含 Rupatadine 或其药学上可接受的盐以及 Montelukast 或其药学上可接受的盐。所述新的药物组合物可通过简单工艺制备，并显示出两种 API 的优异相容性，同时还能够使这两种 API 具有优异的生物利用度。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:08:16.813688",
+          "updated_at": "2026-06-16T18:22:18.306781"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:08:16.813688",
+          "updated_at": "2026-06-16T18:22:18.306781"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:08:16.813688",
+          "updated_at": "2026-06-16T18:22:18.306781"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "There might be a Chinese way to describe these terms if necessary.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T23:08:16.813688",
+          "updated_at": "2026-06-16T18:22:18.306781"
+        }
+      ]
+    },
+    {
+      "id": "0229ef30-e05e-4e5e-b616-8523d2c9fcdf",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025215251-A1",
+        "publication_date": 20251016
+      },
+      "fields": {
+        "english": "### Title\n\nApparatus and method of producing nanobubbles\n\n### Abstract\n\nThe present invention relates to an apparatus for generating nanobubbles in an aqueous medium. Preferably, the aqueous medium may be any media comprising water such as liquid water including any mixture of water together with other media including liquids, gases and/or solids. Advantageously, the apparatus for generating nanobubbles in the aqueous medium does not require provision of any external source of gas. In another aspect, the present invention provides a method for generating nanobubbles comprising oxygen in liquid water comprising dissolved oxygen. In another aspect, the present invention provides a method for generating nanobubbles comprising a significantly higher concentration of oxygen than ambient air in liquid water comprising dissolved oxygen and dissolved nitrogen arising from prior dissolution of ambient air in the water. In another aspect, the present invention provides a method for generating nanobubbles comprising any gas in liquid water comprising that dissolved gas. In another aspect, the present invention provides a method for generating nanobubbles of a particular size distribution and concentration comprising any gas in liquid water comprising that dissolved gas. In another aspect, the present invention provides a method for electronically controlling the size distribution and concentration of nanobubbles generated by the apparatus.",
+        "chinese": "### Title\n\n产生纳米气泡的装置和方法\n\n### Abstract\n\n本发明涉及一种用于在水性介质中生成纳米气泡的装置。优选地，该水性介质可以是任何包含水的介质，例如液态水，包括水与其他介质的任何混合物，所述其他介质包括液体、气体和/或固体。有利地，用于在水性介质中生成纳米气泡的装置不需要提供任何外部气体来源。在另一方面，本发明提供一种用于在包含溶解氧的液态水中生成包含氧气的纳米气泡的方法。在另一方面，本发明提供一种用于在液态水中生成纳米气泡的方法，所述纳米气泡包含显著高于环境空气的氧气浓度，所述液态水包含因环境空气先前溶解于水中而产生的溶解氧和溶解氮。在另一方面，本发明提供一种用于在包含某种溶解气体的液态水中生成包含该气体的纳米气泡的方法。在另一方面，本发明提供一种用于在包含某种溶解气体的液态水中生成具有特定尺寸分布和浓度且包含该气体的纳米气泡的方法。在另一方面，本发明提供一种用于以电子方式控制由该装置生成的纳米气泡的尺寸分布和浓度的方法。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:57:43.556295",
+          "updated_at": "2026-06-16T18:21:46.056401"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 4,
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:57:43.556295",
+          "updated_at": "2026-06-16T18:21:46.056401"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:57:43.556295",
+          "updated_at": "2026-06-16T18:21:46.056401"
+        },
+        {
+          "user": "rocky",
+          "question": "notes",
+          "value": "Some adverbs sound unnatural.",
+          "status": "submitted",
+          "submitted_at": "2026-06-15T22:57:43.556295",
+          "updated_at": "2026-06-16T18:21:46.056401"
+        }
+      ]
+    },
+    {
+      "id": "76ddca26-c231-4e59-bcf7-3bf7c9d840d7",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2025205743-A1",
+        "publication_date": 20251002
+      },
+      "fields": {
+        "english": "### Title\n\nMethod for producing solubilized keratin aqueous solution and solubilized keratin, solubilized keratin aqueous solution and solubilized keratin, and molded article and composition comprising solubilized keratin\n\n### Abstract\n\nIn this method for producing a solubilized keratin aqueous solution, keratin fibers and water with a pH of 6-8 are brought into contact with each other in a reactor heated to 135-230°C at a mass ratio of the water to the keratin fibers (water/keratin fibers) of at least 1 but less than 18.",
+        "chinese": "### Title\n\n增溶角蛋白水溶液和增溶角蛋白的制备方法、增溶角蛋白水溶液和增溶角蛋白、以及包含增溶角蛋白的成型制品和组合物\n\n### Abstract\n\n在该增溶角蛋白水溶液的制备方法中，使角蛋白纤维与pH为6-8的水在加热至135-230°C的反应器中相互接触，其中水相对于角蛋白纤维的质量比（水/角蛋白纤维）为至少1但小于18。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:30:19.678033",
+          "updated_at": "2026-06-16T19:30:19.678033"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:30:19.678033",
+          "updated_at": "2026-06-16T19:30:19.678033"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:30:19.678033",
+          "updated_at": "2026-06-16T19:30:19.678033"
+        }
+      ]
+    },
+    {
+      "id": "0fccc6d9-7308-48c1-b64a-ed30327dbf69",
+      "metadata": {
+        "country_code": "WO",
+        "publication_number": "WO-2021255541-A1",
+        "publication_date": 20211223
+      },
+      "fields": {
+        "english": "### Title\n\nPlant for purifying wastewater\n\n### Abstract\n\nThe present plant comprises, mounted in succession, a receiving tank, a device for removing mechanical impurities from water, an electric flotation tank, an ultrafiltration unit, a desalination unit including a first stage reverse osmosis module and a second stage reverse osmosis module for permeate, and a filter for removing ammonium ions, as well as devices for supplying chemical reagents, wherein a tubular coagulator is mounted between the device for removing mechanical impurities and the electric flotation tank, and an ozonation unit is mounted between the electric flotation tank and the ultrafiltration unit, said ozonation unit comprising two labyrinth columns mounted in succession and an ozone generator. The technical result is an increase in overall hydraulic efficiency and in the degree of purification.",
+        "chinese": "### Title\n\n用于净化废水的装置\n\n### Abstract\n\n本装置依次安装有接收罐、用于去除水中机械杂质的装置、电浮选罐、超滤单元、脱盐单元（包括第一阶段反渗透模块和用于渗透液的第二阶段反渗透模块）、以及用于去除铵离子的过滤器，并且还包括用于供应化学试剂的装置，其中，在用于去除机械杂质的装置与电浮选罐之间安装有管式混凝器，并且在电浮选罐与超滤单元之间安装有臭氧化单元，所述臭氧化单元包括依次安装的两个迷宫柱和臭氧发生器。技术效果在于提高整体水力效率和净化程度。"
+      },
+      "responses": [
+        {
+          "user": "rocky",
+          "question": "adequacy",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:11:36.082937",
+          "updated_at": "2026-06-16T19:11:36.082937"
+        },
+        {
+          "user": "rocky",
+          "question": "fluency",
+          "value": 5,
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:11:36.082937",
+          "updated_at": "2026-06-16T19:11:36.082937"
+        },
+        {
+          "user": "rocky",
+          "question": "accept",
+          "value": "yes",
+          "status": "submitted",
+          "submitted_at": "2026-06-16T19:11:36.082937",
+          "updated_at": "2026-06-16T19:11:36.082937"
+        }
+      ]
+    }
+  ]
+}

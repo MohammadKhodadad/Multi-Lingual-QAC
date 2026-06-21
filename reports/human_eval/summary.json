@@ -227,7 +227,20 @@
     "pearson": 0.4,
     "spearman": 0.398,
     "mean_abs_diff_pct": 8.22,
-    "mean_signed_diff_pct_human_minus_llm": 4.25
+    "mean_signed_diff_pct_human_minus_llm": 4.25,
+    "icc": {
+      "n": 97,
+      "icc2_1_absolute_agreement": 0.324,
+      "icc2_1_ci95": [
+        0.116,
+        0.5
+      ],
+      "icc3_1_consistency": 0.37,
+      "icc3_1_ci95": [
+        0.185,
+        0.529
+      ]
+    }
   },
   "compare_by_mode": [
     {
@@ -238,7 +251,20 @@
       "pearson": 0.214,
       "spearman": 0.199,
       "mean_abs_diff_pct": 7.18,
-      "mean_signed_diff_pct": 2.18
+      "mean_signed_diff_pct": 2.18,
+      "icc": {
+        "n": 47,
+        "icc2_1_absolute_agreement": 0.169,
+        "icc2_1_ci95": [
+          -0.107,
+          0.427
+        ],
+        "icc3_1_consistency": 0.176,
+        "icc3_1_ci95": [
+          -0.115,
+          0.438
+        ]
+      }
     },
     {
       "mode": "technical",
@@ -248,7 +274,20 @@
       "pearson": 0.364,
       "spearman": 0.408,
       "mean_abs_diff_pct": 9.2,
-      "mean_signed_diff_pct": 6.2
+      "mean_signed_diff_pct": 6.2,
+      "icc": {
+        "n": 50,
+        "icc2_1_absolute_agreement": 0.273,
+        "icc2_1_ci95": [
+          -0.01,
+          0.516
+        ],
+        "icc3_1_consistency": 0.358,
+        "icc3_1_ci95": [
+          0.091,
+          0.577
+        ]
+      }
     }
   ],
   "compare_by_strategy": [
@@ -358,5 +397,6 @@
       "good": 94
     }
   },
-  "bucket_agreement_pct": 96.9
+  "bucket_agreement_pct": 96.9,
+  "bucket_weighted_kappa": 0.0
 }
