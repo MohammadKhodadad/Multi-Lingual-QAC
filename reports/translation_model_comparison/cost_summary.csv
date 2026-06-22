@@ -1,0 +1,5 @@
+label,slug,n_ok,n_total,sum_prompt_tokens,sum_completion_tokens,sum_reasoning_tokens,sum_total_tokens,avg_input_tokens,avg_output_tokens,measured_cost_sampled,measured_cost_100docs,listprice_cost_100docs
+gemma-4-31b,google/gemma-4-31b-it,30,30,18920,53396,50066,72316,630.7,1779.9,0.024206,0.0807,0.0699
+qwen3.6-35b-a3b,qwen/qwen3.6-35b-a3b,30,30,18867,108079,114185,126946,628.9,3602.6,0.132967,0.4432,0.3691
+qwen3.7-max,qwen/qwen3.7-max,30,30,18867,46448,41309,65315,628.9,1548.3,0.197764,0.6592,0.6592
+gpt-5.5,gpt-5.5,30,30,18169,13857,7376,32026,605.6,461.9,0.506555,1.6885,1.6885
