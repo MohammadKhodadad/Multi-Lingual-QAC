@@ -1,0 +1,6 @@
+label,slug,verifier,n_ok,n_total,avg_gen_in_tok,avg_gen_out_tok,avg_verify_in_tok,avg_verify_out_tok,avg_gen_cost,avg_verify_cost,avg_total_cost_per_batch,measured_total_cost_sampled,est_1000_keep_best_1,est_1000_use_all_3,est_1000_gen_only,est_1000_verify_only
+gpt-5-mini,gpt-5-mini,anthropic/claude-sonnet-4.6,30,30,2748.3,2305.8,5408.9,538.0,0.002663,0.024296,0.026959,0.808781,26.9594,8.9865,2.6631,24.2963
+gpt-5.4-mini,gpt-5.4-mini,anthropic/claude-sonnet-4.6,30,30,2748.3,1398.1,5324.1,532.1,0.008352,0.023954,0.032306,0.969187,32.3062,10.7687,8.3525,23.9537
+sonnet-4.6,anthropic/claude-sonnet-4.6,gpt-5.5,30,30,3500.9,503.3,4684.9,1135.9,0.018052,0.056197,0.074249,2.227481,74.2494,24.7498,18.0523,56.1971
+grok-4.3,x-ai/grok-4.3,anthropic/claude-sonnet-4.6,30,30,2810.3,2558.5,5404.7,549.7,0.009775,0.02446,0.034235,1.027047,34.2349,11.4116,9.7747,24.4602
+gemini-3.5-flash,google/gemini-3.5-flash,anthropic/claude-sonnet-4.6,30,30,2729.9,2899.6,5380.6,543.9,0.030191,0.024301,0.054492,1.634762,54.4921,18.164,30.1913,24.3008
