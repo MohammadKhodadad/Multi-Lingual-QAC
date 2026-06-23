@@ -89,6 +89,7 @@ class PipelineConfig:
     alias_molecular_only: bool = True
     alias_leaf_only: bool = True
     check_wiki_names: bool = False
+    cache_all_chebi_wiki: bool = False
     export_concept: Optional[str] = None
     alias_generate_qa: bool = False
     alias_qa_strategy: int = 1

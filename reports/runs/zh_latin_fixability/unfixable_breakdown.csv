@@ -1,0 +1,7 @@
+category,n_token_types,n_occurrences,examples
+other non-chemical Latin,1321,2344,aluminium; argon; converter; helium; krypton; magnesium; mao; oxygen; quasi; resonance; titanium; xenon
+element symbol,120,225,al; at; co; cr; fe; li; lu; mn; nb; rb; si; zr
+english prose (needs MT),114,313,and; by; from; less; more; no; not; of; or; than; to; volume
+unit,103,239,gpa; mass; mg; ml; mm; mol; mw; ng; nm; ppm; vol; wt
+acronym / markup / roman,103,246,dna; dpp; fc; formula; id; ii; iii; iv; nmr; pcr; seq; uv
+"chemical (ChEBI match, no Chinese Wikipedia article)",74,168,acrylate; anthraquinone; antigen; cobalamins; filler; halides; maleate; methacrylate; methyl; shikimate; silicone; trimebutine

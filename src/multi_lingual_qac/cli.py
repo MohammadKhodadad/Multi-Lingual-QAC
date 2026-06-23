@@ -309,6 +309,14 @@ def parse_args() -> PipelineConfig:
         "L-language translation of the same patent. Writes reports/wiki_name_quality/.",
     )
     parser.add_argument(
+        "--cache-all-chebi-wiki",
+        action="store_true",
+        help="Populate data/chebi/wiki_names_cache.json with Wikipedia names for ALL ChEBI "
+        "terms (~205k ids; several hours; ~98%% return no article). Uses --alias-langs and "
+        "--chebi-variant. Resumable: re-run the same command to continue after an "
+        "interruption -- only ids not already in the cache are queried.",
+    )
+    parser.add_argument(
         "--export-concept",
         type=str,
         default=None,
@@ -546,6 +554,7 @@ def parse_args() -> PipelineConfig:
         alias_molecular_only=not args.alias_include_non_molecular,
         alias_leaf_only=not args.alias_include_classes,
         check_wiki_names=args.check_wiki_names,
+        cache_all_chebi_wiki=args.cache_all_chebi_wiki,
         export_concept=args.export_concept,
         alias_generate_qa=args.alias_generate_qa,
         alias_qa_strategy=args.alias_qa_strategy,
@@ -862,6 +871,17 @@ def main() -> None:
             output_dir=output_dir,
             langs=config.alias_langs,
             variant=config.chebi_variant,
+        )
+        return
+
+    if config.cache_all_chebi_wiki:
+        from src.alias_graph.cache_all import cache_all_chebi_wiki
+
+        paths = PipelinePaths.from_project_root(project_root)
+        cache_all_chebi_wiki(
+            chebi_cache_dir=paths.chebi_dir,
+            variant=config.chebi_variant,
+            langs=config.alias_langs,
         )
         return
 
