@@ -89,6 +89,7 @@ MODELS: List[Dict[str, Any]] = [
     {"label": "sonnet-4.6", "slug": SONNET_SLUG},
     {"label": "grok-4.3", "slug": "x-ai/grok-4.3"},
     {"label": "gemini-3.5-flash", "slug": "google/gemini-3.5-flash"},
+    {"label": "qwen3.6-35b-a3b", "slug": "qwen/qwen3.6-35b-a3b"},
 ]
 
 # List price, USD per 1M tokens. gpt-* cost is computed from this (OpenAI returns no
@@ -100,6 +101,7 @@ PRICING: Dict[str, Dict[str, float]] = {
     "anthropic/claude-sonnet-4.6": {"in": 3.00, "out": 15.00},
     "x-ai/grok-4.3": {"in": 1.25, "out": 2.50},
     "google/gemini-3.5-flash": {"in": 1.50, "out": 9.00},
+    "qwen/qwen3.6-35b-a3b": {"in": 0.14, "out": 1.00},
 }
 
 PER_DOC_FIELDS = [

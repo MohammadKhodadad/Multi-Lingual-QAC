@@ -11,6 +11,7 @@ Verifier = `anthropic/claude-sonnet-4.6` by default; `gpt-5.5` when the generato
 | sonnet-4.6 | `gpt-5.5` | 30/30 | 3501 / 503 | 4685 / 1136 | $0.01805 | $0.05620 | $0.07425 | $74.25 | $24.75 |
 | grok-4.3 | `anthropic/claude-sonnet-4.6` | 30/30 | 2810 / 2558 | 5405 / 550 | $0.00978 | $0.02446 | $0.03424 | $34.23 | $11.41 |
 | gemini-3.5-flash | `anthropic/claude-sonnet-4.6` | 30/30 | 2730 / 2900 | 5381 / 544 | $0.03019 | $0.02430 | $0.05449 | $54.49 | $18.16 |
+| qwen3.6-35b-a3b | `anthropic/claude-sonnet-4.6` | 30/30 | 2777 / 4542 | 5385 / 527 | $0.00527 | $0.02407 | $0.02933 | $29.33 | $9.78 |
 
 - A **batch** = 1 generation call + 2 verifier calls (faithfulness + quality), producing 3 graded queries.
 - **est. 1000 (keep best 1)** = total $/batch × 1000 — 1 kept query per batch (matches qac_chempatents_best: generate 3, keep the best).
