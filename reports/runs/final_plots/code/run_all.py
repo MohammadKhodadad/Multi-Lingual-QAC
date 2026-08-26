@@ -17,6 +17,7 @@ import claimC_per_language as C
 import claimD_alias_graph as D
 import claimE_metrics
 import claimE_xrc_rrc_ari as E
+import claimF_significance as F
 import table_main
 
 
@@ -28,6 +29,7 @@ def main():
     for mod in (A, B, C, D, E):
         mod.main()
     table_main.main()  # main results table (both benchmarks) -> tables/main_table.tex + data CSV
+    F.main()           # CIs + significance tests for primary Recall@10 comparisons + per-route counts
     print("\nAll candidates regenerated in", fp.CAND)
 
 
